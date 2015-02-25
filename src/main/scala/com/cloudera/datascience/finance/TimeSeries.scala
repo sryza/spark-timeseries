@@ -18,17 +18,31 @@ package com.cloudera.datascience.finance
 import com.github.nscala_time.time.Imports._
 
 class TimeSeries(val dates: Array[DateTime], val data: Array[Array[Double]]) {
-  def filter(): TimeSeries = {
+  def observations(): Array[Array[Double]] = {
+    Util.transpose(data)
+  }
 
+  def differences(windowSize: Int): TimeSeries = {
+    new TimeSeries(dates.drop(windowSize), data.map { hist =>
+      hist.sliding(windowSize).map(window => window.last - window.head).toArray
+    })
+  }
+
+  def differences(): TimeSeries = {
+    differences(1)
   }
 }
 
 object TimeSeries {
-  def fillTimeSeries(ts: TimeSeries, fillMethod: String): Unit = {
+  def fillts(ts: Array[Double], fillMethod: String): Unit = {
     fillMethod match {
-      case "linear" => ts.data.foreach(fillLinear)
-      case "nearest" => ts.data.foreach(fillNearest)
+      case "linear" => fillLinear(ts)
+      case "nearest" => fillNearest(ts)
     }
+  }
+
+  def fillts(ts: TimeSeries, fillMethod: String): Unit = {
+    ts.data.foreach(fillts(_, fillMethod))
   }
 
   def fillNearest(values: Array[Double]): Unit = {
@@ -85,4 +99,13 @@ object TimeSeries {
       i += 1
     }
   }
+}
+
+trait TimeSeriesFilter extends Serializable {
+  /**
+   * Takes a time series of i.i.d. observations and filters it to take on this model's
+   * characteristics. Modifies the given array in place.
+   * @param ts Time series of i.i.d. observations.
+   */
+  def filter(ts: Array[Double]): Unit
 }
