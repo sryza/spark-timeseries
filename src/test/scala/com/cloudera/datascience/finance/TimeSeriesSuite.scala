@@ -24,6 +24,40 @@ import org.scalatest.Matchers._
 
 class TimeSeriesSuite extends FunSuite {
   test("nearest") {
+    fillNearest(Array(1.0)) should be (Array(1.0))
+    fillNearest(Array(1.0, 1.0, 2.0)) should be (Array(1.0, 1.0, 2.0))
     fillNearest(Array(1.0, NaN, NaN, 2.0)) should be (Array(1.0, 1.0, 2.0, 2.0))
+    // round down to previous
+    fillNearest(Array(1.0, NaN, 2.0)) should be (Array(1.0, 1.0, 2.0))
+    fillNearest(Array(1.0, NaN, NaN, NaN, 2.0)) should be (Array(1.0, 1.0, 1.0, 2.0, 2.0))
+    fillNearest(Array(1.0, NaN, 3.0, NaN, 2.0)) should be (Array(1.0, 1.0, 3.0, 3.0, 2.0))
+  }
+
+  test("previous") {
+    fillPrevious(Array(1.0)) should be (Array(1.0))
+    fillPrevious(Array(1.0, 1.0, 2.0)) should be (Array(1.0, 1.0, 2.0))
+    fillPrevious(Array(1.0, NaN, 2.0)) should be (Array(1.0, 1.0, 2.0))
+    fillPrevious(Array(1.0, NaN, NaN, 2.0)) should be (Array(1.0, 1.0, 1.0, 2.0))
+    fillPrevious(Array(1.0, NaN, NaN, NaN, 2.0)) should be (Array(1.0, 1.0, 1.0, 1.0, 2.0))
+    fillPrevious(Array(1.0, NaN, 3.0, NaN, 2.0)) should be (Array(1.0, 1.0, 3.0, 3.0, 2.0))
+  }
+
+  test("next") {
+    fillNext(Array(1.0)) should be (Array(1.0))
+    fillNext(Array(1.0, 1.0, 2.0)) should be (Array(1.0, 1.0, 2.0))
+    fillNext(Array(1.0, NaN, 2.0)) should be (Array(1.0, 2.0, 2.0))
+    fillNext(Array(1.0, NaN, NaN, 2.0)) should be (Array(1.0, 2.0, 2.0, 2.0))
+    fillNext(Array(1.0, NaN, NaN, NaN, 2.0)) should be (Array(1.0, 2.0, 2.0, 2.0, 2.0))
+    fillNext(Array(1.0, NaN, 3.0, NaN, 2.0)) should be (Array(1.0, 3.0, 3.0, 2.0, 2.0))
+  }
+
+  test("linear") {
+    fillLinear(Array(1.0)) should be (Array(1.0))
+    fillLinear(Array(1.0, 1.0, 2.0)) should be (Array(1.0, 1.0, 2.0))
+    fillLinear(Array(1.0, NaN, 2.0)) should be (Array(1.0, 1.5, 2.0))
+    fillLinear(Array(2.0, NaN, 1.0)) should be (Array(2.0, 1.5, 1.0))
+    fillLinear(Array(1.0, NaN, NaN, 4.0)) should be (Array(1.0, 2.0, 3.0, 4.0))
+    fillLinear(Array(1.0, NaN, NaN, NaN, 5.0)) should be (Array(1.0, 2.0, 3.0, 4.0, 5.0))
+    fillLinear(Array(1.0, NaN, 3.0, NaN, 2.0)) should be (Array(1.0, 2.0, 3.0, 1.5, 2.0))
   }
 }
