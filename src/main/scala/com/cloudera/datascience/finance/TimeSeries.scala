@@ -18,9 +18,7 @@ package com.cloudera.datascience.finance
 import com.github.nscala_time.time.Imports._
 
 class TimeSeries(val dates: Array[DateTime], val data: Array[Array[Double]]) {
-  def observations(): Array[Array[Double]] = {
-    Util.transpose(data)
-  }
+  def observations(): Array[Array[Double]] = Util.transpose(data)
 
   def differences(windowSize: Int): TimeSeries = {
     new TimeSeries(dates.drop(windowSize), data.map { hist =>
@@ -28,9 +26,7 @@ class TimeSeries(val dates: Array[DateTime], val data: Array[Array[Double]]) {
     })
   }
 
-  def differences(): TimeSeries = {
-    differences(1)
-  }
+  def differences(): TimeSeries = differences(1)
 }
 
 object TimeSeries {
