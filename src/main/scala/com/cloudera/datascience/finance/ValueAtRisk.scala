@@ -26,6 +26,7 @@ import org.apache.spark.rdd.RDD
 
 object ValueAtRisk {
   /**
+   * Constructs an RDD representing a simulation.
    *
    * @param seed
    * @param factorDistribution Multivariate distribution used to generate factor returns for each
@@ -33,8 +34,7 @@ object ValueAtRisk {
    * @param numTrials The number of simulations to run.
    * @param parallelism The maximum number of concurrent computations to run.
    * @param sc The SparkContext to create the RDD against.
-
-   * @return
+   * @return an RDD where each element is the total portfolio return from a single trial.
    */
   def simulationReturns(
       seed: Long,
