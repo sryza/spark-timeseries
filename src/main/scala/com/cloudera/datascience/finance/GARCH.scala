@@ -16,14 +16,14 @@
 package com.cloudera.datascience.finance
 
 import net.finmath.timeseries.models.parametric.{GARCH => FinmathGARCH, ARMAGARCH}
-import cern.colt.matrix.DoubleMatrix1D
+import org.apache.commons.math3.random.RandomGenerator
 
 object GARCH {
   /**
    * @param ts
    * @return The model and its log likelihood on the input data.
    */
-  def fitModel(ts: Array[Double]): (GARCHModel, Double) = {
+  def fitModel(ts: Array[Double]): (ARGARCHModel, Double) = {
 /*    val model = new FinmathGARCH(ts)
     // Fit the model
     val params = model.getBestParameters
@@ -42,7 +42,7 @@ object GARCH {
     val params = garchRegressNormal.Calc_MLE_by_NelderMead()
     (new GARCHModel(params(3), params(4), params(2)), 0.0)
     */
-    null
+    throw new UnsupportedOperationException
   }
 }
 
@@ -52,61 +52,64 @@ object GARCH {
  * and h(i), the variance of eta(i), is given by
  *   h(i) = omega + alpha * eta(i) ** 2 + beta * h(i - 1) ** 2
  */
-class GARCHModel(val c: Double, val phi: Double, val alpha: Double, val beta: Double, val omega: Double) extends TimeSeriesFilter {
-
-  def variances(ts: Array[Double]): Array[Double] = {
-    val h = new Array[Double](ts.length)
-    val e = new Array[Double](ts.length)
-
-    h(0) = omega / (1.0 - alpha - beta)
-    e(0) = ts(0) - kappa
-    for (i <- 1 until ts.length) {
-      val eval = e(i - 1)
-      h(i) = omega + alpha * eval * eval + beta * h(i - 1)
-      e(i) = ts(i) - kappa // TODO: also subtract ((element of x) * gamma)
-    }
-    h
-  }
+class ARGARCHModel(
+    val c: Double,
+    val phi: Double,
+    val alpha: Double,
+    val beta: Double,
+    val omega: Double) extends TimeSeriesFilter {
 
   /**
    * Takes a time series that is assumed to have this model's characteristics and standardizes it
    * to make the observations i.i.d.
    * @param ts Time series of observations with this model's characteristics.
+   * @param dest Array to put the filtered series, can be the same as ts.
+   * @return the dest series.
    */
-  def standardize(ts: Array[Double]): Array[Double] = {
-    val standardized = new Array[Double](ts.length)
-
+  def standardize(ts: Array[Double], dest: Array[Double]): Array[Double] = {
     var prevEta = ts(0) - c
     var prevVariance = omega / (1.0 - alpha - beta)
-    standardized(0) = prevEta / math.sqrt(prevVariance)
+    dest(0) = prevEta / math.sqrt(prevVariance)
     for (i <- 1 until ts.length) {
       val variance = omega + alpha * prevEta * prevEta + beta * prevVariance
       val eta = ts(i) - c - phi * ts(i - 1)
-      standardized(i) = eta / math.sqrt(variance)
+      dest(i) = eta / math.sqrt(variance)
 
       prevEta = eta
       prevVariance = variance
     }
-    standardized
+    dest
   }
 
-  /**
-   * Takes a time series of i.i.d. observations and filters it to take on this model's
-   * characteristics. Modifies the given array in place.
-   * @param ts Time series of i.i.d. observations.
-   */
-  def filter(ts: Array[Double]): Unit = {
+  def filter(ts: Array[Double], dest: Array[Double]): Array[Double] = {
     var prevVariance = omega / (1.0 - alpha - beta)
     var prevEta = ts(0) * math.sqrt(prevVariance)
-    ts(0) = c + prevEta
+    dest(0) = c + prevEta
     for (i <- 1 until ts.length) {
       val variance = omega + alpha * prevEta * prevEta + beta * prevVariance
       val standardizedEta = ts(i)
       val eta = standardizedEta * math.sqrt(variance)
-      ts(i) = c + phi * ts(i - 1) + eta
+      dest(i) = c + phi * dest(i - 1) + eta
 
       prevEta = eta
       prevVariance = variance
     }
+    dest
   }
+
+  def sampleWithVariances(n: Int, rand: RandomGenerator): (Array[Double], Array[Double]) = {
+    val ts = new Array[Double](n)
+    val variances = new Array[Double](n)
+    variances(0) = omega / (1 - alpha - beta)
+    var eta = 0.0
+    for (i <- 1 until n) {
+      variances(i) = omega + beta * variances(i-1) * variances(i-1) + alpha * eta * eta
+      eta = math.sqrt(variances(i)) * rand.nextGaussian()
+      ts(i) = c + alpha * ts(i - 1) + eta
+    }
+
+    (ts, variances)
+  }
+
+  def sample(n: Int, rand: RandomGenerator): Array[Double] = sampleWithVariances(n, rand)._1
 }

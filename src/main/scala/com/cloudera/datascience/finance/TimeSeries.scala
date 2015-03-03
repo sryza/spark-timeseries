@@ -100,8 +100,10 @@ object TimeSeries {
 trait TimeSeriesFilter extends Serializable {
   /**
    * Takes a time series of i.i.d. observations and filters it to take on this model's
-   * characteristics. Modifies the given array in place.
+   * characteristics.
    * @param ts Time series of i.i.d. observations.
+   * @param dest Array to put the filtered time series, can be the same as ts.
+   * @return the dest param.
    */
-  def filter(ts: Array[Double]): Unit
+  def filter(ts: Array[Double], dest: Array[Double]): Array[Double]
 }

@@ -31,7 +31,7 @@ object Autoregression {
 
   def fitAutoregression(kAr: Int, endog: Array[Double], method: String, maxLagArg: Option[Int]): AutoregressionModel = {
     val numObservations = endog.size
-    val maxLag = maxLagArg.getOrElse(math.round(math.pow(12*(numObservations/100.0), 1/4.0))).toInt
+    val maxLag = maxLagArg.getOrElse(math.round(math.pow(12*(numObservations/100.0), 1/4.0)).toInt)
     val kAr = maxLag
 
     // Make left hand side

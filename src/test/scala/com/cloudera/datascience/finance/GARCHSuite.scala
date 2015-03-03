@@ -15,51 +15,23 @@
 
 package com.cloudera.datascience.finance
 
-import java.util.Random
+import org.apache.commons.math3.random.MersenneTwister
 
 import org.scalatest.FunSuite
 
 class GARCHSuite extends FunSuite {
-  test("fit AR(1) + GARCH(1, 1) model") {
-    val alpha = .3
-    val beta = .4
-    val omega = .2
-//    val a = .5
+  test("standardize and filter") {
+    val model = new ARGARCHModel(40.0, .4, .2, .3, .4)
+    val rand = new MersenneTwister(5L)
+    val n  = 10000
 
-    val n = 10000
-    // generate time series
-    val rand = new Random(1000)
-    val ts = new Array[Double](n)
-    val stddevs = new Array[Double](n)
-    stddevs(0) = 1.0
-    var eta = 0.0
-    for (i <- 1 until n) {
-      stddevs(i) = math.sqrt(omega + beta * stddevs(i-1) * stddevs(i-1) + alpha * eta * eta)
-      eta = stddevs(i) * rand.nextGaussian()
-      ts(i) = eta
-    }
-
-    // fit model
-    /*
-    val (model, likelihood) = GARCH.fitModel(ts)
-    println(s"alpha: ${model.alpha}")
-    println(s"beta: ${model.beta}")
-    println(s"omega: ${model.omega}")
-    println(s"likelihood: $likelihood")
-    */
-    val model = new GARCHModel(0.0, 0.0, alpha, beta, omega)
+    val ts = model.sample(n, rand)
 
     // de-heteroskedasticize
-    val standardized = model.standardize(ts)
-//    println(stddevs.take(20).mkString(", "))
-//    println(modelVariances.map(math.sqrt(_)).take(20).mkString(", "))
-
+    val standardized = model.standardize(ts, new Array[Double](n))
     // heteroskedasticize
-    val standardizedCopy = new Array[Double](standardized.length)
-    System.arraycopy(standardized, 0, standardizedCopy, 0, standardized.length)
-    model.filter(standardized)
-    val filtered = standardized
+    val filtered = model.filter(standardized, new Array[Double](n))
 
-    assert(filtered.zip(standardizedCopy).forall(x => x._1 - x._2 < .001))
+    assert(filtered.zip(standardized).forall(x => x._1 - x._2 < .001))
   }
 }

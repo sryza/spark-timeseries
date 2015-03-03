@@ -64,7 +64,7 @@ object ValueAtRisk {
    * @return Value at risk at each of the given p values.
    */
   def valueAtRisk(simulationReturns: RDD[Double], pValues: Array[Double]): Array[Double] = {
-
+    null
   }
 
   /**
@@ -74,7 +74,7 @@ object ValueAtRisk {
    * @return Expected shortfall at each of the given p values.
    */
   def expectedShortfall(simulationReturns: RDD[Double], pValues: Array[Double]): Array[Double] = {
-
+    null
   }
 }
 

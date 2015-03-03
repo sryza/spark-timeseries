@@ -21,7 +21,7 @@ import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression
 
 private[examples] object ExampleUtil {
   def readHistories(dir: String): TimeSeries = {
-
+    null
   }
 
   def linearModel(factors: TimeSeries, depVar: TimeSeries): Array[Double] = {

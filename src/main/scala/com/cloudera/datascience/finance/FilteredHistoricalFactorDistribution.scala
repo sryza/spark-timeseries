@@ -41,7 +41,7 @@ class FilteredHistoricalFactorDistribution(
     }
 
     for (i <- 0 until numHistories) {
-      filters(i).filter(resampledHistories(i))
+      filters(i).filter(resampledHistories(i), resampledHistories(i))
     }
 
     val timePoint = rand.nextInt(numTimePoints)
