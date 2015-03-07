@@ -18,7 +18,7 @@ package com.cloudera.datascience.finance
 import org.apache.commons.math3.distribution.MultivariateRealDistribution
 import org.apache.commons.math3.random.RandomGenerator
 
-class FilteredHistoricalFactorDistribution(
+private[finance] class FilteredHistoricalFactorDistribution(
     rand: RandomGenerator,
     iidHistories: Array[Array[Double]],
     filters: Array[TimeSeriesFilter]) extends MultivariateRealDistribution with Serializable {
