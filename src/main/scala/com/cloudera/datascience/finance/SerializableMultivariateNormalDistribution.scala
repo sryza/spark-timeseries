@@ -16,11 +16,18 @@
 package com.cloudera.datascience.finance
 
 import org.apache.commons.math3.distribution.MultivariateNormalDistribution
+import org.apache.commons.math3.random.{MersenneTwister, RandomGenerator}
 
 /**
  * Version of MultivariateNormalDistribution that can be serialized in closures.
  */
 class SerializableMultivariateNormalDistribution(
+    rand: RandomGenerator,
     means: Array[Double],
     covariances: Array[Array[Double]])
-  extends MultivariateNormalDistribution(means, covariances) with Serializable
+  extends MultivariateNormalDistribution(rand, means, covariances) with Serializable {
+
+  def this(means: Array[Double], covariances: Array[Array[Double]]) = {
+    this(new MersenneTwister(), means, covariances)
+  }
+}
