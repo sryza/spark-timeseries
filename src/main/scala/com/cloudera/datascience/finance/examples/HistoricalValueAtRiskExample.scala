@@ -15,7 +15,7 @@
 
 package com.cloudera.datascience.finance.examples
 
-import com.cloudera.datascience.finance.{FilteredHistoricalFactorDistribution, GARCH,
+import com.cloudera.datascience.finance.{FilteredHistoricalFactorDistribution, ARGARCH,
   LinearInstrumentReturnsModel, TimeSeriesFilter}
 import com.cloudera.datascience.finance.ValueAtRisk._
 import com.cloudera.datascience.finance.Util._
@@ -55,7 +55,7 @@ object HistoricalValueAtRiskExample {
     val instrumentReturnsModel = new LinearInstrumentReturnsModel(arrsToMat(linearModels))
 
     // Fit an AR(1) + GARCH(1, 1) model to each factor
-    val garchModels = factorReturns.data.map(GARCH.fitModel(_)._1)
+    val garchModels = factorReturns.data.map(ARGARCH.fitModel(_)._1)
     val iidFactorReturns = factorReturns.data.zip(garchModels).map { case (history, model) =>
       model.standardize(history, new Array[Double](history.length))
     }

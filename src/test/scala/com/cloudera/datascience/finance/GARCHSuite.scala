@@ -20,6 +20,56 @@ import org.apache.commons.math3.random.MersenneTwister
 import org.scalatest.FunSuite
 
 class GARCHSuite extends FunSuite {
+  test("log likelihood") {
+    val model = new ARGARCHModel(0.0, 0.0, .2, .3, .4)
+    val rand = new MersenneTwister(5L)
+    val n  = 10000
+
+    val ts = model.sample(n, rand)
+    val logLikelihoodWithRightModel = model.logLikelihood(ts)
+
+    val logLikelihoodWithWrongModel1 = new ARGARCHModel(0.0, 0.0, .3, .4, .5).logLikelihood(ts)
+    val logLikelihoodWithWrongModel2 = new ARGARCHModel(0.0, 0.0, .25, .35, .45).logLikelihood(ts)
+    val logLikelihoodWithWrongModel3 = new ARGARCHModel(0.0, 0.0, .1, .2, .3).logLikelihood(ts)
+
+    assert(logLikelihoodWithRightModel > logLikelihoodWithWrongModel1)
+    assert(logLikelihoodWithRightModel > logLikelihoodWithWrongModel2)
+    assert(logLikelihoodWithRightModel > logLikelihoodWithWrongModel3)
+    assert(logLikelihoodWithWrongModel2 > logLikelihoodWithWrongModel1)
+  }
+
+  test("gradient") {
+    val alpha = 0.3
+    val beta = 0.4
+    val omega = 0.2
+    val genModel = new ARGARCHModel(0.0, 0.0, alpha, beta, omega)
+    val rand = new MersenneTwister(5L)
+    val n = 10000
+
+    val ts = genModel.sample(n, rand)
+
+    val gradient1 = new ARGARCHModel(0.0, 0.0, alpha + .05, beta + .1, omega + .1).gradient(ts)
+    assert(gradient1.forall(_ < 0.0))
+    val gradient2 = new ARGARCHModel(0.0, 0.0, alpha - .05, beta - .1, omega - .1).gradient(ts)
+    assert(gradient2.forall(_ > 0.0))
+  }
+
+  test("fit model") {
+    val omega = 0.2
+    val alpha = 0.3
+    val beta = 0.5
+    val genModel = new ARGARCHModel(0.0, 0.0, alpha, beta, omega)
+    val rand = new MersenneTwister(5L)
+    val n = 10000
+
+    val ts = genModel.sample(n, rand)
+
+    val model = ARGARCH.fitModel(ts)._1
+    assert(model.omega - omega < .02)
+    assert(model.alpha - alpha < .02)
+    assert(model.beta - beta < .02)
+  }
+
   test("standardize and filter") {
     val model = new ARGARCHModel(40.0, .4, .2, .3, .4)
     val rand = new MersenneTwister(5L)
@@ -32,6 +82,6 @@ class GARCHSuite extends FunSuite {
     // heteroskedasticize
     val filtered = model.filter(standardized, new Array[Double](n))
 
-    assert(filtered.zip(standardized).forall(x => x._1 - x._2 < .001))
+    assert(filtered.zip(ts).forall(x => x._1 - x._2 < .001))
   }
 }
