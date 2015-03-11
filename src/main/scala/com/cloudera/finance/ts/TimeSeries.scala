@@ -13,7 +13,9 @@
  * License.
  */
 
-package com.cloudera.datascience.finance
+package com.cloudera.finance.ts
+
+import com.cloudera.finance.Util
 
 import com.github.nscala_time.time.Imports._
 
@@ -70,11 +72,11 @@ object TimeSeries {
   }
 
   def fillNext(values: Array[Double]): Unit = {
-
+    throw new UnsupportedOperationException()
   }
 
   def fillPrevious(values: Array[Double]): Unit = {
-
+    throw new UnsupportedOperationException()
   }
 
   def fillLinear(values: Array[Double]): Unit = {

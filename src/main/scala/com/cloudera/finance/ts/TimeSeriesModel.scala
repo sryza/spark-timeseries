@@ -13,21 +13,10 @@
  * License.
  */
 
-package com.cloudera.datascience.finance.examples
+package com.cloudera.finance.ts
 
-import com.cloudera.datascience.finance._
+trait TimeSeriesModel {
+  def removeTimeDependencies(ts: Array[Double], dest: Array[Double]): Array[Double]
 
-import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression
-
-private[examples] object ExampleUtil {
-  def readHistories(dir: String): TimeSeries = {
-    null
-  }
-
-  def linearModel(factors: TimeSeries, depVar: TimeSeries): Array[Double] = {
-    val factorMat = factors.observations()
-    val regression = new OLSMultipleLinearRegression()
-    regression.newSampleData(depVar.data.head, factorMat)
-    regression.estimateRegressionParameters()
-  }
+  def addTimeDependencies(ts: Array[Double], dest: Array[Double]): Array[Double]
 }

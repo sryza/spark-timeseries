@@ -13,11 +13,11 @@
  * License.
  */
 
-package com.cloudera.datascience.finance
+package com.cloudera.finance.ts
 
 import scala.Double.NaN
 
-import com.cloudera.datascience.finance.TimeSeries._
+import TimeSeries._
 
 import org.scalatest.FunSuite
 import org.scalatest.Matchers._

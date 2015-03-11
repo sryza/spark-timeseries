@@ -13,12 +13,22 @@
  * License.
  */
 
-package com.cloudera.datascience.finance
+package com.cloudera.finance.examples
 
-import org.scalatest.FunSuite
+import com.cloudera.datascience.finance._
 
-class UtilSuite extends FunSuite {
-  test("vecArrToMats") {
+import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression
+import com.cloudera.finance.ts.TimeSeries
 
+private[examples] object ExampleUtil {
+  def readHistories(dir: String): TimeSeries = {
+    null
+  }
+
+  def linearModel(factors: TimeSeries, depVar: TimeSeries): Array[Double] = {
+    val factorMat = factors.observations()
+    val regression = new OLSMultipleLinearRegression()
+    regression.newSampleData(depVar.data.head, factorMat)
+    regression.estimateRegressionParameters()
   }
 }

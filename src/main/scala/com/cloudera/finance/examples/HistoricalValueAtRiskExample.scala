@@ -13,17 +13,18 @@
  * License.
  */
 
-package com.cloudera.datascience.finance.examples
+package com.cloudera.finance.examples
 
-import com.cloudera.datascience.finance.{FilteredHistoricalFactorDistribution, ARGARCH,
-  LinearInstrumentReturnsModel, TimeSeriesFilter}
-import com.cloudera.datascience.finance.ValueAtRisk._
-import com.cloudera.datascience.finance.Util._
+import com.cloudera.finance.risk.{FilteredHistoricalFactorDistribution, LinearInstrumentReturnsModel, ValueAtRisk}
+import ValueAtRisk._
+import com.cloudera.finance.Util
+import Util._
 
 import org.apache.commons.math3.random.MersenneTwister
 
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression
+import com.cloudera.finance.ts.{TimeSeriesFilter, GARCH}
 
 object HistoricalValueAtRiskExample {
   def main(args: Array[String]): Unit = {
@@ -55,7 +56,7 @@ object HistoricalValueAtRiskExample {
     val instrumentReturnsModel = new LinearInstrumentReturnsModel(arrsToMat(linearModels))
 
     // Fit an AR(1) + GARCH(1, 1) model to each factor
-    val garchModels = factorReturns.data.map(ARGARCH.fitModel(_)._1)
+    val garchModels = factorReturns.data.map(GARCH.fitModel(_)._1)
     val iidFactorReturns = factorReturns.data.zip(garchModels).map { case (history, model) =>
       model.standardize(history, new Array[Double](history.length))
     }

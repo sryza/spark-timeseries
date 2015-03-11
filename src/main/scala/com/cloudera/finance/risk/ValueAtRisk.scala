@@ -13,7 +13,7 @@
  * License.
  */
 
-package com.cloudera.datascience.finance
+package com.cloudera.finance.risk
 
 import breeze.linalg.DenseMatrix
 
@@ -23,6 +23,7 @@ import org.apache.commons.math3.random.RandomGenerator
 
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
+import com.cloudera.finance.Util
 
 object ValueAtRisk {
   /**

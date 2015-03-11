@@ -13,7 +13,7 @@
  * License.
  */
 
-package com.cloudera.datascience.finance
+package com.cloudera.finance
 
 import org.apache.commons.math3.distribution.MultivariateNormalDistribution
 import org.apache.commons.math3.random.{MersenneTwister, RandomGenerator}

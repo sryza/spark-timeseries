@@ -13,12 +13,13 @@
  * License.
  */
 
-package com.cloudera.datascience.finance
+package com.cloudera.finance.risk
 
 import org.apache.commons.math3.distribution.MultivariateRealDistribution
 import org.apache.commons.math3.random.RandomGenerator
+import com.cloudera.finance.ts.TimeSeriesFilter
 
-private[finance] class FilteredHistoricalFactorDistribution(
+private[risk] class FilteredHistoricalFactorDistribution(
     rand: RandomGenerator,
     iidHistories: Array[Array[Double]],
     filters: Array[TimeSeriesFilter]) extends MultivariateRealDistribution with Serializable {

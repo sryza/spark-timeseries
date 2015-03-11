@@ -13,16 +13,19 @@
  * License.
  */
 
-package com.cloudera.datascience.finance.examples
+package com.cloudera.finance.examples
 
 import com.cloudera.datascience.finance._
-import com.cloudera.datascience.finance.ValueAtRisk._
-import com.cloudera.datascience.finance.Util._
+import com.cloudera.finance.risk.{LinearInstrumentReturnsModel, ValueAtRisk}
+import ValueAtRisk._
+import com.cloudera.finance.{Util, SerializableMultivariateNormalDistribution}
+import Util._
 
 import org.apache.commons.math3.stat.correlation.Covariance
 
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression
+import com.cloudera.finance.SerializableMultivariateNormalDistribution
 
 object MonteCarloValueAtRiskExample {
   def main(args: Array[String]): Unit = {

@@ -13,9 +13,10 @@
  * License.
  */
 
-package com.cloudera.datascience.finance
+package com.cloudera.finance.ts
 
-import com.cloudera.datascience.finance.Autoregression._
+import com.cloudera.finance.ts.Autoregression
+import Autoregression._
 
 import org.scalatest.FunSuite
 import org.scalatest.Matchers._

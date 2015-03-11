@@ -13,7 +13,7 @@
  * License.
  */
 
-package com.cloudera.datascience.finance
+package com.cloudera.finance.ts
 
 import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression
 

@@ -13,7 +13,7 @@
  * License.
  */
 
-package com.cloudera.datascience.finance
+package com.cloudera.finance
 
 import breeze.linalg.DenseMatrix
 
