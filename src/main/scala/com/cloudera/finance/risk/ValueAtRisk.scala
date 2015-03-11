@@ -15,15 +15,14 @@
 
 package com.cloudera.finance.risk
 
+import com.cloudera.finance.Util
+
 import breeze.linalg.DenseMatrix
 
-
 import org.apache.commons.math3.distribution.MultivariateRealDistribution
-import org.apache.commons.math3.random.RandomGenerator
 
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
-import com.cloudera.finance.Util
 
 object ValueAtRisk {
   /**
@@ -65,7 +64,7 @@ object ValueAtRisk {
    * @return Value at risk at each of the given p values.
    */
   def valueAtRisk(simulationReturns: RDD[Double], pValues: Array[Double]): Array[Double] = {
-    null
+    throw new UnsupportedOperationException()
   }
 
   /**
@@ -75,7 +74,7 @@ object ValueAtRisk {
    * @return Expected shortfall at each of the given p values.
    */
   def expectedShortfall(simulationReturns: RDD[Double], pValues: Array[Double]): Array[Double] = {
-    null
+    throw new UnsupportedOperationException()
   }
 }
 
@@ -102,7 +101,7 @@ abstract class InstrumentReturnsModel extends Serializable {
 /**
  * Model parameterized with a vector of factor weights w for each instrument and, given factor
  * returns r, predicts the instrument's return as w T * r.
- *@param instrumentFactorWeights Matrix where rows are instruments and cols are factors.
+ * @param instrumentFactorWeights Matrix where rows are instruments and cols are factors.
  */
 class LinearInstrumentReturnsModel(
     instrumentFactorWeights: DenseMatrix[Double]) extends InstrumentReturnsModel {
