@@ -21,7 +21,6 @@ import org.apache.commons.math3.optim.nonlinear.scalar.{ObjectiveFunction,
   ObjectiveFunctionGradient}
 import org.apache.commons.math3.optim.nonlinear.scalar.gradient.NonLinearConjugateGradientOptimizer
 import org.apache.commons.math3.random.RandomGenerator
-import com.cloudera.finance.ts.TimeSeriesModel
 
 object GARCH {
   /**
