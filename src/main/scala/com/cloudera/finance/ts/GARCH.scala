@@ -43,7 +43,7 @@ object GARCH {
         new GARCHModel(params(0), params(1), params(2)).logLikelihood(ts)
       }
     })
-    val initialGuess = new InitialGuess(Array(.2, .2, .2)) //  TODO
+    val initialGuess = new InitialGuess(Array(.2, .2, .2)) // TODO: make this smarter
     val maxIter = new MaxIter(10000)
     val maxEval = new MaxEval(10000)
     val optimal = optimizer.optimize(objectiveFunction, gradient, initialGuess, maxIter, maxEval)
@@ -123,7 +123,10 @@ class GARCHModel(
     }
   }
 
-  def removeTimeDependencies(ts: Array[Double], dest: Array[Double]): Array[Double] = {
+  /**
+   * {@inheritDoc}
+   */
+  def removeTimeDependentEffects(ts: Array[Double], dest: Array[Double]): Array[Double] = {
     var prevEta = ts(0)
     var prevVariance = omega / (1.0 - alpha - beta)
     dest(0) = prevEta / math.sqrt(prevVariance)
@@ -138,7 +141,10 @@ class GARCHModel(
     dest
   }
 
-  def addTimeDependencies(ts: Array[Double], dest: Array[Double]): Array[Double] = {
+  /**
+   * {@inheritDoc}
+   */
+  override def addTimeDependentEffects(ts: Array[Double], dest: Array[Double]): Array[Double] = {
     var prevVariance = omega / (1.0 - alpha - beta)
     var prevEta = ts(0) * math.sqrt(prevVariance)
     dest(0) = prevEta
@@ -154,7 +160,7 @@ class GARCHModel(
     dest
   }
 
-  def sampleWithVariances(n: Int, rand: RandomGenerator): (Array[Double], Array[Double]) = {
+  private def sampleWithVariances(n: Int, rand: RandomGenerator): (Array[Double], Array[Double]) = {
     val ts = new Array[Double](n)
     val variances = new Array[Double](n)
     variances(0) = omega / (1 - alpha - beta)
@@ -168,6 +174,13 @@ class GARCHModel(
     (ts, variances)
   }
 
+  /**
+   * Samples a random time series of a given length with the properties of the model.
+   *
+   * @param n The length of the time series to sample.
+   * @param rand The random generator used to generate the observations.
+   * @return The samples time series.
+   */
   def sample(n: Int, rand: RandomGenerator): Array[Double] = sampleWithVariances(n, rand)._1
 }
 
@@ -189,13 +202,9 @@ class ARGARCHModel(
     val beta: Double) extends TimeSeriesModel {
 
   /**
-   * Takes a time series that is assumed to have this model's characteristics and standardizes it
-   * to make the observations i.i.d.
-   * @param ts Time series of observations with this model's characteristics.
-   * @param dest Array to put the filtered series, can be the same as ts.
-   * @return the dest series, for convenience.
+   * {@inheritDoc}
    */
-  def removeTimeDependencies(ts: Array[Double], dest: Array[Double]): Array[Double] = {
+  override def removeTimeDependentEffects(ts: Array[Double], dest: Array[Double]): Array[Double] = {
     var prevEta = ts(0) - c
     var prevVariance = omega / (1.0 - alpha - beta)
     dest(0) = prevEta / math.sqrt(prevVariance)
@@ -210,7 +219,10 @@ class ARGARCHModel(
     dest
   }
 
-  def addTimeDependencies(ts: Array[Double], dest: Array[Double]): Array[Double] = {
+  /**
+   * {@inheritDoc}
+   */
+  override def addTimeDependentEffects(ts: Array[Double], dest: Array[Double]): Array[Double] = {
     var prevVariance = omega / (1.0 - alpha - beta)
     var prevEta = ts(0) * math.sqrt(prevVariance)
     dest(0) = c + prevEta
@@ -226,7 +238,7 @@ class ARGARCHModel(
     dest
   }
 
-  def sampleWithVariances(n: Int, rand: RandomGenerator): (Array[Double], Array[Double]) = {
+  private def sampleWithVariances(n: Int, rand: RandomGenerator): (Array[Double], Array[Double]) = {
     val ts = new Array[Double](n)
     val variances = new Array[Double](n)
     variances(0) = omega / (1 - alpha - beta)
@@ -240,6 +252,13 @@ class ARGARCHModel(
     (ts, variances)
   }
 
+  /**
+   * Samples a random time series of a given length with the properties of the model.
+   *
+   * @param n The length of the time series to sample.
+   * @param rand The random generator used to generate the observations.
+   * @return The samples time series.
+   */
   def sample(n: Int, rand: RandomGenerator): Array[Double] = sampleWithVariances(n, rand)._1
 }
 
@@ -257,11 +276,17 @@ class EGARCHModel(
     throw new UnsupportedOperationException()
   }
 
-  def removeTimeDependencies(ts: Array[Double], dest: Array[Double]): Array[Double] = {
+  /**
+   * {@inheritDoc}
+   */
+  override def removeTimeDependentEffects(ts: Array[Double], dest: Array[Double]): Array[Double] = {
     throw new UnsupportedOperationException()
   }
 
-  def addTimeDependencies(ts: Array[Double], dest: Array[Double]): Array[Double] = {
+  /**
+   * {@inheritDoc}
+   */
+  override def addTimeDependentEffects(ts: Array[Double], dest: Array[Double]): Array[Double] = {
     throw new UnsupportedOperationException()
   }
 }
