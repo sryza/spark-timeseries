@@ -82,6 +82,6 @@ class GARCHSuite extends FunSuite {
     // heteroskedasticize
     val filtered = model.addTimeDependentEffects(standardized, new Array[Double](n))
 
-    assert(filtered.zip(ts).forall(x => x._1 - x._2 < .001))
+    assert(filtered.zip(ts).forall(x => math.abs(x._1 - x._2) < .001))
   }
 }
