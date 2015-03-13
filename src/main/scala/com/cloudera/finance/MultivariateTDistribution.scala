@@ -18,7 +18,6 @@ package com.cloudera.finance
 import org.apache.commons.math3.distribution.{AbstractMultivariateRealDistribution,
   ChiSquaredDistribution}
 import org.apache.commons.math3.random.RandomGenerator
-import com.cloudera.finance.SerializableMultivariateNormalDistribution
 
 /**
  * @param v The number of degrees of freedom in the distribution.

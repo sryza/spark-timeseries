@@ -19,7 +19,7 @@ import org.apache.commons.math3.distribution.MultivariateRealDistribution
 import org.apache.commons.math3.random.RandomGenerator
 import com.cloudera.finance.ts.TimeSeriesFilter
 
-private[risk] class FilteredHistoricalFactorDistribution(
+class FilteredHistoricalFactorDistribution(
     rand: RandomGenerator,
     iidHistories: Array[Array[Double]],
     filters: Array[TimeSeriesFilter]) extends MultivariateRealDistribution with Serializable {

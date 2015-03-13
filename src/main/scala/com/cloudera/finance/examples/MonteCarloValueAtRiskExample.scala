@@ -15,11 +15,9 @@
 
 package com.cloudera.finance.examples
 
-import com.cloudera.datascience.finance._
-import com.cloudera.finance.risk.{LinearInstrumentReturnsModel, ValueAtRisk}
-import ValueAtRisk._
-import com.cloudera.finance.{Util, SerializableMultivariateNormalDistribution}
-import Util._
+import com.cloudera.finance.risk.LinearInstrumentReturnsModel
+import com.cloudera.finance.risk.ValueAtRisk._
+import com.cloudera.finance.Util._
 
 import org.apache.commons.math3.stat.correlation.Covariance
 

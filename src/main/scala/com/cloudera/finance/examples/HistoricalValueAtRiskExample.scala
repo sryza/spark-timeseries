@@ -58,7 +58,7 @@ object HistoricalValueAtRiskExample {
     // Fit an AR(1) + GARCH(1, 1) model to each factor
     val garchModels = factorReturns.data.map(GARCH.fitModel(_)._1)
     val iidFactorReturns = factorReturns.data.zip(garchModels).map { case (history, model) =>
-      model.standardize(history, new Array[Double](history.length))
+      model.removeTimeDependentEffects(history, new Array[Double](history.length))
     }
 
     // Generate an RDD of simulations
