@@ -18,7 +18,8 @@ package com.cloudera.finance.ts
 import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression
 
 object Autoregression {
-  def lagMatTrimBoth(x: Array[Double], maxLag: Int): Array[Array[Double]] = {
+  // TODO: credit statsmodels
+  private[ts] def lagMatTrimBoth(x: Array[Double], maxLag: Int): Array[Array[Double]] = {
     val numObservations = x.size
     val lagMat = Array.ofDim[Double](numObservations - maxLag, maxLag)
     for (j <- 0 until numObservations - maxLag) {
@@ -29,7 +30,8 @@ object Autoregression {
     lagMat
   }
 
-  def fitAutoregression(kAr: Int, endog: Array[Double], method: String, maxLagArg: Option[Int]): AutoregressionModel = {
+  // TODO: credit statsmodels
+  def fitModel(kAr: Int, endog: Array[Double], method: String, maxLagArg: Option[Int]): ARModel = {
     val numObservations = endog.size
     val maxLag = maxLagArg.getOrElse(math.round(math.pow(12*(numObservations/100.0), 1/4.0)).toInt)
     val kAr = maxLag
@@ -43,10 +45,42 @@ object Autoregression {
     regression.newSampleData(Y, X)
     val params = regression.estimateRegressionParameters()
     // TODO: figure out the constant term
-    new AutoregressionModel(params, 0.0)
+    new ARModel(0.0, params)
   }
 }
 
-class AutoregressionModel(coefficients: Array[Double], c: Double) {
+class ARModel(c: Double, coefficients: Array[Double]) extends TimeSeriesModel {
+  /**
+   * {@inheritDoc}
+   */
+  def removeTimeDependentEffects(ts: Array[Double], dest: Array[Double]): Array[Double] = {
+    var i = 0
+    while (i < ts.length) {
+      dest(i) = ts(i) - c
+      var j = 0
+      while (j < coefficients.length && i - j - 1 >= 0) {
+        dest(i) -= ts(i - j - 1) * coefficients(j)
+        j += 1
+      }
+      i += 1
+    }
+    dest
+  }
 
+  /**
+   * {@inheritDoc}
+   */
+  def addTimeDependentEffects(ts: Array[Double], dest: Array[Double]): Array[Double] = {
+    var i = 0
+    while (i < ts.length) {
+      dest(i) = c + ts(i)
+      var j = 0
+      while (j < coefficients.length && i - j - 1 >= 0) {
+        dest(i) += dest(i - j - 1) * coefficients(j)
+        j += 1
+      }
+      i += 1
+    }
+    dest
+  }
 }
