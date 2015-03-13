@@ -19,6 +19,8 @@ import Autoregression._
 
 import java.util.Random
 
+import org.apache.commons.math3.random.MersenneTwister
+
 import org.scalatest.FunSuite
 import org.scalatest.Matchers._
 
@@ -26,6 +28,25 @@ class AutoregressionSuite extends FunSuite {
   test("lagMatTrimBoth") {
     val expected = Array(Array(2.0, 1.0), Array(3.0, 2.0))
     lagMatTrimBoth(Array(1.0, 2.0, 3.0, 4.0), 2) should be (expected)
+    val expected2 = Array(Array(1.0), Array(2.0), Array(3.0))
+    lagMatTrimBoth(Array(1.0, 2.0, 3.0, 4.0), 1) should be (expected2)
+  }
+
+  test("fit AR(1) model") {
+    val model = new ARModel(1.5, Array(.2))
+    val ts = model.sample(5000, new MersenneTwister(10L))
+    val fittedModel = Autoregression.fitModel(ts, 1)
+    assert(math.abs(fittedModel.c - 1.5) < .07)
+    assert(math.abs(fittedModel.coefficients(0) - .2) < .03)
+  }
+
+  test("fit AR(2) model") {
+    val model = new ARModel(1.5, Array(.2, .3))
+    val ts = model.sample(5000, new MersenneTwister(10L))
+    val fittedModel = Autoregression.fitModel(ts, 2)
+    assert(math.abs(fittedModel.c - 1.5) < .15)
+    assert(math.abs(fittedModel.coefficients(0) - .2) < .03)
+    assert(math.abs(fittedModel.coefficients(1) - .3) < .03)
   }
 
   test("add and remove time dependent effects") {
@@ -34,6 +55,6 @@ class AutoregressionSuite extends FunSuite {
     val model = new ARModel(1.5, Array(.2, .3))
     val added = model.addTimeDependentEffects(ts, new Array[Double](ts.length))
     val removed = model.removeTimeDependentEffects(added, new Array[Double](ts.length))
-    assert(ts.zip(removed).forall(x => x._1 - x._2 < .001))
+    assert(ts.zip(removed).forall(x => math.abs(x._1 - x._2) < .001))
   }
 }

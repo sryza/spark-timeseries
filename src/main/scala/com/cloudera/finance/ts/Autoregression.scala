@@ -15,6 +15,7 @@
 
 package com.cloudera.finance.ts
 
+import org.apache.commons.math3.random.RandomGenerator
 import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression
 
 object Autoregression {
@@ -24,32 +25,29 @@ object Autoregression {
     val lagMat = Array.ofDim[Double](numObservations - maxLag, maxLag)
     for (j <- 0 until numObservations - maxLag) {
       for (k <- 0 until maxLag) {
-        lagMat(j)(k) = x((numObservations - maxLag - k - 1) + j)
+        lagMat(j)(k) = x(j - k + maxLag - 1)
       }
     }
     lagMat
   }
+  
+  def fitModel(ts: Array[Double]): ARModel = fitModel(ts, 1)
 
   // TODO: credit statsmodels
-  def fitModel(kAr: Int, endog: Array[Double], method: String, maxLagArg: Option[Int]): ARModel = {
-    val numObservations = endog.size
-    val maxLag = maxLagArg.getOrElse(math.round(math.pow(12*(numObservations/100.0), 1/4.0)).toInt)
-    val kAr = maxLag
-
+  def fitModel(ts: Array[Double], maxLag: Int): ARModel = {
     // Make left hand side
-    val Y = endog.slice(kAr, endog.length)
+    val Y = ts.slice(maxLag, ts.length)
     // Make lagged right hand side
-    val X = lagMatTrimBoth(endog, kAr)
+    val X = lagMatTrimBoth(ts, maxLag)
 
     val regression = new OLSMultipleLinearRegression()
     regression.newSampleData(Y, X)
     val params = regression.estimateRegressionParameters()
-    // TODO: figure out the constant term
-    new ARModel(0.0, params)
+    new ARModel(params(0), params.slice(1, params.length))
   }
 }
 
-class ARModel(c: Double, coefficients: Array[Double]) extends TimeSeriesModel {
+class ARModel(val c: Double, val coefficients: Array[Double]) extends TimeSeriesModel {
   /**
    * {@inheritDoc}
    */
@@ -82,5 +80,10 @@ class ARModel(c: Double, coefficients: Array[Double]) extends TimeSeriesModel {
       i += 1
     }
     dest
+  }
+
+  def sample(n: Int, rand: RandomGenerator): Array[Double] = {
+    val arr = Array.fill[Double](n)(rand.nextGaussian())
+    addTimeDependentEffects(arr, arr)
   }
 }
