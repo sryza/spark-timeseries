@@ -19,22 +19,18 @@ import org.apache.commons.math3.random.RandomGenerator
 import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression
 
 object Autoregression {
-  // TODO: credit statsmodels
-  private[ts] def lagMatTrimBoth(x: Array[Double], maxLag: Int): Array[Array[Double]] = {
-    val numObservations = x.size
-    val lagMat = Array.ofDim[Double](numObservations - maxLag, maxLag)
-    for (j <- 0 until numObservations - maxLag) {
-      for (k <- 0 until maxLag) {
-        lagMat(j)(k) = x(j - k + maxLag - 1)
-      }
-    }
-    lagMat
-  }
-  
+  /**
+   * Fits an AR(1) model to the given time series
+   */
   def fitModel(ts: Array[Double]): ARModel = fitModel(ts, 1)
 
-  // TODO: credit statsmodels
+  /**
+   * Fits an AR model to the given time series.
+   */
   def fitModel(ts: Array[Double], maxLag: Int): ARModel = {
+    // This is loosely based off of the implementation in statsmodels:
+    // https://github.com/statsmodels/statsmodels/blob/master/statsmodels/tsa/ar_model.py
+
     // Make left hand side
     val Y = ts.slice(maxLag, ts.length)
     // Make lagged right hand side
@@ -45,6 +41,22 @@ object Autoregression {
     val params = regression.estimateRegressionParameters()
     new ARModel(params(0), params.slice(1, params.length))
   }
+
+  /**
+   * Makes a lag matrix from the given time series with the given lag, trimming both rows and
+   * columns so that every element in the matrix is full.
+   */
+  private[ts] def lagMatTrimBoth(x: Array[Double], maxLag: Int): Array[Array[Double]] = {
+    val numObservations = x.size
+    val lagMat = Array.ofDim[Double](numObservations - maxLag, maxLag)
+    for (j <- 0 until numObservations - maxLag) {
+      for (k <- 0 until maxLag) {
+        lagMat(j)(k) = x(j - k + maxLag - 1)
+      }
+    }
+    lagMat
+  }
+
 }
 
 class ARModel(val c: Double, val coefficients: Array[Double]) extends TimeSeriesModel {
