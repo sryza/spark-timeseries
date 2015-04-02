@@ -59,8 +59,12 @@ object ARGARCH {
    * @param ts The time series to fit the model to.
    * @return The model and its log likelihood on the input data.
    */
-  def fitModel(ts: Array[Double]): (ARGARCHModel, Double) = {
-    throw new UnsupportedOperationException()
+  def fitModel(ts: Array[Double]): ARGARCHModel = {
+    val arModel = Autoregression.fitModel(ts)
+    val residuals = arModel.removeTimeDependentEffects(ts, new Array(ts.length))
+    val garchModel = GARCH.fitModel(residuals)._1
+    new ARGARCHModel(arModel.c, arModel.coefficients(1), garchModel.omega, garchModel.alpha,
+      garchModel.beta)
   }
 }
 
