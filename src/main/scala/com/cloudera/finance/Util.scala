@@ -35,6 +35,14 @@ object Util {
     mat
   }
 
+  def matToRowArrs(mat: DenseMatrix[Double]): Array[Array[Double]] = {
+    val arrs = new Array[Array[Double]](mat.rows)
+    for (r <- 0 until mat.rows) {
+      arrs(r) = mat(r to r + 1, 0 to mat.cols).toArray
+    }
+    arrs
+  }
+
   def arrsToMat(arrs: Array[Array[Double]]): DenseMatrix[Double] = {
     vecArrsToMats(arrs.iterator, arrs.length).next
   }

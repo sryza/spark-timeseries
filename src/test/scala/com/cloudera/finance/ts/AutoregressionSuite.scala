@@ -27,9 +27,9 @@ import org.scalatest.Matchers._
 class AutoregressionSuite extends FunSuite {
   test("lagMatTrimBoth") {
     val expected = Array(Array(2.0, 1.0), Array(3.0, 2.0))
-    lagMatTrimBoth(Array(1.0, 2.0, 3.0, 4.0), 2) should be (expected)
+    Lag.lagMatTrimBoth(Array(1.0, 2.0, 3.0, 4.0), 2) should be (expected)
     val expected2 = Array(Array(1.0), Array(2.0), Array(3.0))
-    lagMatTrimBoth(Array(1.0, 2.0, 3.0, 4.0), 1) should be (expected2)
+    Lag.lagMatTrimBoth(Array(1.0, 2.0, 3.0, 4.0), 1) should be (expected2)
   }
 
   test("fit AR(1) model") {

@@ -19,11 +19,11 @@ import com.cloudera.finance.Util
 
 import com.github.nscala_time.time.Imports._
 
-class TimeSeries(val dates: Array[DateTime], val data: Array[Array[Double]]) {
+class TimeSeries(val index: DateTimeIndex, val data: Array[Array[Double]]) {
   def observations(): Array[Array[Double]] = Util.transpose(data)
 
   def differences(windowSize: Int): TimeSeries = {
-    new TimeSeries(dates.drop(windowSize), data.map { hist =>
+    new TimeSeries(index.drop(windowSize), data.map { hist =>
       hist.sliding(windowSize).map(window => window.last - window.head).toArray
     })
   }
@@ -31,7 +31,11 @@ class TimeSeries(val dates: Array[DateTime], val data: Array[Array[Double]]) {
   def differences(): TimeSeries = differences(1)
 }
 
-object TimeSeries {
+private object TimeSeries {
+  def select(oldIndex: DateTimeIndex, newIndex: DateTimeIndex): Array[Double] = {
+    throw new UnsupportedOperationException()
+  }
+
   def fillts(ts: Array[Double], fillMethod: String): Unit = {
     fillMethod match {
       case "linear" => fillLinear(ts)

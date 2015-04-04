@@ -34,32 +34,19 @@ object Autoregression {
     // Make left hand side
     val Y = ts.slice(maxLag, ts.length)
     // Make lagged right hand side
-    val X = lagMatTrimBoth(ts, maxLag)
+    val X = Lag.lagMatTrimBoth(ts, maxLag)
 
     val regression = new OLSMultipleLinearRegression()
     regression.newSampleData(Y, X)
     val params = regression.estimateRegressionParameters()
     new ARModel(params(0), params.slice(1, params.length))
   }
-
-  /**
-   * Makes a lag matrix from the given time series with the given lag, trimming both rows and
-   * columns so that every element in the matrix is full.
-   */
-  private[ts] def lagMatTrimBoth(x: Array[Double], maxLag: Int): Array[Array[Double]] = {
-    val numObservations = x.size
-    val lagMat = Array.ofDim[Double](numObservations - maxLag, maxLag)
-    for (j <- 0 until numObservations - maxLag) {
-      for (k <- 0 until maxLag) {
-        lagMat(j)(k) = x(j - k + maxLag - 1)
-      }
-    }
-    lagMat
-  }
-
 }
 
 class ARModel(val c: Double, val coefficients: Array[Double]) extends TimeSeriesModel {
+
+  def this(c: Double, coef: Double) = this(c, Array(coef))
+
   /**
    * {@inheritDoc}
    */
