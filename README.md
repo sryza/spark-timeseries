@@ -24,7 +24,7 @@ value for every minute of every trading day for ten years needs less than a coup
 elements.
 
 The library sits on a few other excellent Java and Scala libraries.
-* [Breeze](https://github.com/scalanlp/breeze] for NumPy-like, BLAS-able linear algebra.
+* [Breeze](https://github.com/scalanlp/breeze) for NumPy-like, BLAS-able linear algebra.
 * [JodaTime](http://www.joda.org/joda-time/) for dates and times. 
 * [Apache Commons Math](https://commons.apache.org/proper/commons-math/) for general math and
   statistics functionality.
