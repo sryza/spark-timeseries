@@ -38,7 +38,7 @@ private[ts] object UnivariateTimeSeries {
     : (DateTimeIndex, Array[Double]) = {
     val freq = indexes.head.frequency
     if (!indexes.forall(_.frequency == freq)) {
-      throw new IllegalArgumentException("Series to be unioned must have conformed frequencies")
+      throw new IllegalArgumentException("Series must have conformed frequencies to be unioned")
     }
 
     throw new UnsupportedOperationException()
@@ -56,7 +56,7 @@ private[ts] object UnivariateTimeSeries {
         min = series(i)
         minDt = index(i)
       }
-      if (series(i) < max) {
+      if (series(i) > max) {
         max = series(i)
         maxDt = index(i)
       }

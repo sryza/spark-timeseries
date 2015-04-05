@@ -21,13 +21,25 @@ import org.apache.commons.math3.random.MersenneTwister
 import org.scalatest.FunSuite
 
 class AugmentedDickeyFullerSuite extends FunSuite {
-  test ("adftest with lag 1 and no constant term") {
+  test("non-stationary AR model") {
     val rand = new MersenneTwister(10L)
-    val arModel = new ARModel(0.0, 0.3)
+    val arModel = new ARModel(0.0, .95)
     val sample = arModel.sample(500, rand)
 
-    val (adfStat, pValue) = AugmentedDickeyFuller.adftest(new DenseVector(sample), 1)
+    val (adfStat, pValue) = TimeSeriesStatisticalTests.adftest(new DenseVector(sample), 1)
     assert(!java.lang.Double.isNaN(adfStat))
     assert(!java.lang.Double.isNaN(pValue))
+    println("adfStat: " + adfStat)
+    println("pValue: " + pValue)
+  }
+
+  test("iid samples") {
+    val rand = new MersenneTwister(11L)
+    val iidSample = Array.fill(500)(rand.nextDouble())
+    val (adfStat, pValue) = TimeSeriesStatisticalTests.adftest(new DenseVector(iidSample), 1)
+    assert(!java.lang.Double.isNaN(adfStat))
+    assert(!java.lang.Double.isNaN(pValue))
+    println("adfStat: " + adfStat)
+    println("pValue: " + pValue)
   }
 }

@@ -38,7 +38,7 @@ object Util {
   def matToRowArrs(mat: DenseMatrix[Double]): Array[Array[Double]] = {
     val arrs = new Array[Array[Double]](mat.rows)
     for (r <- 0 until mat.rows) {
-      arrs(r) = mat(r to r + 1, 0 to mat.cols).toArray
+      arrs(r) = mat(r to r, 0 to mat.cols - 1).toArray
     }
     arrs
   }

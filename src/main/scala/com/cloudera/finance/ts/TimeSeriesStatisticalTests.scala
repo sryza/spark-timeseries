@@ -27,29 +27,29 @@ import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression
  *    https://github.com/statsmodels/statsmodels/blob/master/statsmodels/tsa/stattools.py
  *    https://github.com/statsmodels/statsmodels/blob/master/statsmodels/tsa/adfvalues.py
  */
-object AugmentedDickeyFuller {
-  private val TAU_STAR = Map[String, Array[Double]](
+object TimeSeriesStatisticalTests {
+  private val ADF_TAU_STAR = Map[String, Array[Double]](
     "nc" -> Array(-1.04, -1.53, -2.68, -3.09, -3.07, -3.77),
     "c" -> Array(-1.61, -2.62, -3.13, -3.47, -3.78, -3.93),
     "ct" -> Array(-2.89, -3.19, -3.50, -3.65, -3.80, -4.36),
     "ctt" -> Array(-3.21, -3.51, -3.81, -3.83, -4.12, -4.63)
   )
 
-  private val TAU_MIN = Map[String, Array[Double]](
+  private val ADF_TAU_MIN = Map[String, Array[Double]](
     "nc" -> Array(-19.04, -19.62, -21.21, -23.25, -21.63, -25.74),
     "c" -> Array(-18.83, -18.86, -23.48, -28.07, -25.96, -23.27),
     "ct" -> Array(-16.18, -21.15, -25.37, -26.63, -26.53, -26.18),
     "ctt" -> Array(-17.17, -21.1, -24.33, -24.03, -24.33, -28.22)
   )
 
-  private val TAU_MAX = Map[String, Array[Double]](
+  private val ADF_TAU_MAX = Map[String, Array[Double]](
     "nc" -> Array(Double.PositiveInfinity, 1.51, 0.86, 0.88, 1.05, 1.24),
     "c" -> Array(2.74, 0.92, 0.55, 0.61, 0.79, 1),
     "ct" -> Array(0.7, 0.63, 0.71, 0.93, 1.19, 1.42),
     "ctt" -> Array(0.54, 0.79, 1.08, 1.43, 3.49, 1.92)
   )
 
-  private val TAU_SMALLP = Map[String, Array[Array[Double]]](
+  private val ADF_TAU_SMALLP = Map[String, Array[Array[Double]]](
     "nc" -> Array(
       Array(0.6344, 1.2378, 3.2496 * 1e-2),
       Array(1.9129, 1.3857, 3.5322 * 1e-2),
@@ -84,8 +84,8 @@ object AugmentedDickeyFuller {
     )
   )
 
-  private val LARGE_SCALING = Array(1.0, 1e-1, 1e-1, 1e-2)
-  private val TAU_LARGEP = Map[String, Array[Array[Double]]](
+  private val ADF_LARGE_SCALING = Array(1.0, 1e-1, 1e-1, 1e-2)
+  private val ADF_TAU_LARGEP = Map[String, Array[Array[Double]]](
     "nc" -> Array(
       Array(0.4797,9.3557,-0.6999,3.3066),
       Array(1.5578,8.558,-2.083,-3.3549),
@@ -120,7 +120,7 @@ object AugmentedDickeyFuller {
     )
   ).mapValues {
     arr => arr.map {
-      subarr => (0 until 4).map(i => LARGE_SCALING(i) * subarr(i)).toArray
+      subarr => (0 until 4).map(i => ADF_LARGE_SCALING(i) * subarr(i)).toArray
     }.toArray
   }
 
@@ -139,27 +139,27 @@ object AugmentedDickeyFuller {
    * @return The p-value for the ADF statistic using MacKinnon 1994.
    */
   private def mackinnonp(testStat: Double, regression: String = "c", n: Int = 1): Double = {
-    val maxStat = TAU_MAX(regression)
-    val minStat = TAU_MIN(regression)
-    val starStat = TAU_STAR(regression)
+    val maxStat = ADF_TAU_MAX(regression)
+    val minStat = ADF_TAU_MIN(regression)
+    val starStat = ADF_TAU_STAR(regression)
     if (testStat > maxStat(n - 1)) {
       return 1.0
     } else if (testStat < minStat(n - 1)) {
       return 0.0
     }
     val tauCoef = if (testStat <= starStat(n - 1)) {
-      TAU_SMALLP(regression)(n - 1)
+      ADF_TAU_SMALLP(regression)(n - 1)
     } else {
-      TAU_LARGEP(regression)(n - 1)
+      ADF_TAU_LARGEP(regression)(n - 1)
     }
-    return new NormalDistribution().cumulativeProbability(polyval(tauCoef.reverse, testStat))
+    new NormalDistribution().cumulativeProbability(polyval(tauCoef.reverse, testStat))
   }
 
   def vanderflipped(vec: Array[Double], n: Int): Matrix[Double] = {
     val numRows = vec.size
-    val matArr = new Array[Double](numRows * n)
-    Array.fill(0, numRows)(1.0)
+    val matArr = Array.fill[Double](numRows * n)(1.0)
     val mat = new DenseMatrix[Double](numRows, matArr, 0)
+
     for (c <- 1 until n) {
       for (r <- 0 until numRows) {
         mat.update(r, c, vec(r) * mat(r, c - 1))
@@ -203,9 +203,10 @@ object AugmentedDickeyFuller {
     val nObs = lagMat.rows
 
     // replace 0 tsDiff with level of ts
-    lagMat(0 to nObs, 0 to 1) := ts(ts.length - nObs - 1 to ts.length - 1)
+    // TODO: unnecessary extra copying here
+    lagMat(0 to nObs - 1, 0 to 0) := ts(ts.length - nObs - 1 to ts.length - 1).toDenseMatrix.t
     // trim
-    val tsdShort = tsDiff(tsDiff.length - nObs to tsDiff.length)
+    val tsdShort = tsDiff(tsDiff.length - nObs to tsDiff.length - 1)
 
     val ols = new OLSMultipleLinearRegression()
     ols.setNoIntercept(true)
@@ -222,5 +223,25 @@ object AugmentedDickeyFuller {
 
     val pValue = mackinnonp(adfStat, regression, 1)
     (adfStat, pValue)
+  }
+
+  /**
+   * Durbin-Watson test for serial correlation.
+   *
+   * @return The Durbin-Watson test statistic.  A value close to 0.0 gives evidence for positive
+   *         serial correlation, a value close to 4.0 gives evidence for negative serial
+   *         correlation, and a value close to 2.0 gives evidence for no serial correlation.
+   */
+  def dwtest(residuals: DenseVector[Double]): Double = {
+    var residsSum = residuals(0) * residuals(0)
+    var diffsSum = 0.0
+    var i = 1
+    while (i < residuals.length) {
+      residsSum += residuals(i) * residuals(i)
+      val diff = residuals(i) - residuals(i - 1)
+      diffsSum += diff * diff
+      i += 1
+    }
+    diffsSum / residsSum
   }
 }
