@@ -21,19 +21,17 @@ import org.apache.spark.util.StatCounter
 
 import org.joda.time.DateTime
 
-class MultiTimeSeries[K](
-    val index: DateTimeIndex,
-    val rdd: RDD[(K, Array[Double])]) {
+class TimeSeriesRDD[K](val index: DateTimeIndex) extends RDD[(K, Array[Double])] {
 
-  def sliceSeries(start: DateTime, end: DateTime): MultiTimeSeries[K] = {
+  def sliceSeries(start: DateTime, end: DateTime): TimeSeriesRDD[K] = {
     throw new UnsupportedOperationException()
   }
 
-  def sliceSeries(start: Int, end: Int): MultiTimeSeries[K] = {
+  def sliceSeries(start: Int, end: Int): TimeSeriesRDD[K] = {
     throw new UnsupportedOperationException()
   }
 
-  def unionSeries(other: MultiTimeSeries[K]): MultiTimeSeries[K] = {
+  def unionSeries(other: TimeSeriesRDD[K]): TimeSeriesRDD[K] = {
     // TODO: allow unioning series with different indices
     // they need to have the same period though
 //    val unionRdd = rdd.join(other.rdd).mapValues { tt =>
@@ -64,6 +62,13 @@ class MultiTimeSeries[K](
     throw new UnsupportedOperationException()
   }
 
+}
+
+object TimeSeriesRDD {
+  def timeSeriesRDD[K](index: DateTimeIndex, seriesRDD: RDD[(K, DateTimeIndex, Array[Double])])
+    : TimeSeriesRDD[K] = {
+
+  }
 }
 
 class TimeSamples {
