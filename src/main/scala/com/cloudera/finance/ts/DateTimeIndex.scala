@@ -19,6 +19,16 @@ import com.github.nscala_time.time.Imports._
 
 class DateTimeIndex(val start: DateTime, val periods: Int, val frequency: Period) {
 
+  def end(): DateTime = {
+
+  }
+
+  def size: Int = periods
+
+  def locOfDateTime(dateTime: DateTime, round: Boolean): Int = {
+
+  }
+
   def apply(i: Int): DateTime = {
     start + frequency * i
   }
