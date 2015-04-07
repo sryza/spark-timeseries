@@ -51,7 +51,7 @@ trait DateTimeIndex {
   def dateTimeAtLoc(loc: Int): DateTime
 }
 
-class UniformDateTimeIndex(val start: DateTime, val periods: Int, val frequency: Period)
+class UniformDateTimeIndex(val start: DateTime, val periods: Int, val frequency: Frequency)
   extends DateTimeIndex {
 
   def sliceSeries(start: DateTime, end: DateTime, series: Vector[Double])
@@ -70,19 +70,15 @@ class UniformDateTimeIndex(val start: DateTime, val periods: Int, val frequency:
   }
 
   def apply(i: Int): DateTime = {
-    start + frequency * i
+    frequency.advance(start, i)
   }
 
   def slice(start: DateTime, end: DateTime): UniformDateTimeIndex = {
     throw new UnsupportedOperationException()
   }
 
-  def slice(startIndex: Int, endIndex: Int): UniformDateTimeIndex = {
-    new UniformDateTimeIndex(start + (frequency * startIndex), endIndex - startIndex, frequency)
-  }
-
-  def drop(startIndex: Int): UniformDateTimeIndex = {
-    new UniformDateTimeIndex(start + (frequency * startIndex), periods - 1, frequency)
+  def slice(lower: Int, upper: Int): UniformDateTimeIndex = {
+    new UniformDateTimeIndex(frequency.advance(start, lower), upper - lower, frequency)
   }
 
   def union(other: UniformDateTimeIndex): UniformDateTimeIndex = {
@@ -135,7 +131,49 @@ class IrregularDateTimeIndex(val instants: Array[Long]) extends DateTimeIndex {
 }
 
 object DateTimeIndex {
-  def uniform(start: DateTime, end: DateTime, frequency: Period): UniformDateTimeIndex = {
+  def uniform(start: DateTime, end: DateTime, frequency: Frequency): UniformDateTimeIndex = {
+    1.days
+  }
 
+  implicit def periodToFrequency(period: Period): Frequency = new PeriodFrequency(period)
+
+  implicit def intToBusinessDayRichInt(n: Int): BusinessDayRichInt = new BusinessDayRichInt(n)
+}
+
+class BusinessDayRichInt(n: Int) {
+  def businessDays(): BusinessDayFrequency = new BusinessDayFrequency(n)
+}
+
+/**
+ * A frequency for a uniform index.
+ */
+trait Frequency {
+  /**
+   * Advances the given DateTime by this frequency n times.
+   */
+  def advance(dt: DateTime, n: Int): DateTime
+}
+
+class PeriodFrequency(period: Period) extends Frequency {
+  /**
+   * Advances the given DateTime by the period n times.
+   */
+  def advance(dt: DateTime, n: Int): DateTime = dt + (n * period)
+}
+
+class BusinessDayFrequency(days: Int) extends Frequency {
+  /**
+   * Advances the given DateTime by n business days.
+   */
+  def advance(dt: DateTime, n: Int): DateTime = {
+    val dayOfWeek = dt.getDayOfWeek
+    if (dayOfWeek > 5) {
+      throw new IllegalArgumentException(s"$dt is not a business day")
+    }
+    val totalDays = n * days
+    val standardWeekendDays = (totalDays / 5) * 2
+    val remaining = totalDays % 5
+    val extraWeekendDays = if (dayOfWeek + remaining <= 5) 2 else 0
+    dt + (standardWeekendDays + extraWeekendDays).days
   }
 }

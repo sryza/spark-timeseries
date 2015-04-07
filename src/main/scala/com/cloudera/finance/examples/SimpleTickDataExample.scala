@@ -43,7 +43,7 @@ class SimpleTickDataExample {
     // Merge the series from individual files into a TimeSeriesRDD
     val start = seriesByFile.map(_.index.start).reduce { case (a, b) => if (a < b) a else b }
     val end = seriesByFile.map(_.index.end).reduce { case (a, b) => if (a > b) a else b }
-    val dtIndex = uniform(start, end, 1.day)
+    val dtIndex = uniform(start, end, 1.businessDays)
     val tsRdd = timeSeriesRDD(dtIndex, seriesByFile)
 
     seriesByFile.unpersist()
