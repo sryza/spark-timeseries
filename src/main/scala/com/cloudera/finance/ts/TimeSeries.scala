@@ -31,6 +31,10 @@ class TimeSeries[K](val index: DateTimeIndex, val data: Matrix[Double], labels: 
   }
 
   def differences(): TimeSeries = differences(1)
+
+  def univariateSeriesIterator(): Iterator[(K, Vector[Double])] = {
+
+  }
 }
 
 object TimeSeries {

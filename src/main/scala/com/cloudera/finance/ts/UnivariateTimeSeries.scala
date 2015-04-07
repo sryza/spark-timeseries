@@ -51,14 +51,31 @@ private[ts] object UnivariateTimeSeries {
   }
 
   /**
+   * Accepts a series of values indexed by the given source index and slices it to conform to a
+   * target index. The target index need not fit inside the source index - non-overlapping regions
+   * will be filled with NaNs.
+   */
+  def openSlice(sourceIndex: DateTimeIndex, targetIndex: DateTimeIndex, vec: Vector[Double])
+    : Vector[Double] = {
+    if (sourceIndex.isInstanceOf[UniformDateTimeIndex] &&
+        targetIndex.isInstanceOf[UniformDateTimeIndex]) {
+      openSliceUniformIndices(sourceIndex.asInstanceOf[UniformDateTimeIndex],
+        targetIndex.asInstanceOf[UniformDateTimeIndex], vec)
+    }
+    throw new UnsupportedOperationException()
+  }
+
+  /**
    * Accepts a series of values indexed by the given uniform source index and slices it to conform
    * to a uniform target index. The target index need not fit inside the source index -
    * non-overlapping regions will be filled with NaNs.
    *
    * The source and target index must have the same frequencies.
    */
-  def openSlice(sourceIndex: UniformDateTimeIndex, targetIndex: UniformDateTimeIndex,
-    vec: Vector[Double]): Vector[Double] = {
+  private def openSliceUniformIndices(
+      sourceIndex: UniformDateTimeIndex,
+      targetIndex: UniformDateTimeIndex,
+      vec: Vector[Double]): Vector[Double] = {
     val startLoc = sourceIndex.locOfDateTime(targetIndex.start, false)
     // TODO: there could be an off-by-one here because UniformDateTimeIndex.end is inclusive
     val endLoc = sourceIndex.locOfDateTime(targetIndex.end, false)
