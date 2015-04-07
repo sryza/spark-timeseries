@@ -42,6 +42,8 @@ trait DateTimeIndex {
   def size(): Int
 
   def splitEvenly(numPartitions: Int): Array[DateTimeIndex]
+
+  def dateTimeAtLoc(loc: Int): DateTime
 }
 
 class UniformDateTimeIndex(val start: DateTime, val periods: Int, val frequency: Period)
@@ -49,17 +51,17 @@ class UniformDateTimeIndex(val start: DateTime, val periods: Int, val frequency:
 
   def sliceSeries(start: DateTime, end: DateTime, series: Vector[Double])
     : (DateTimeIndex, Vector[Double]) = {
-
+    throw new UnsupportedOperationException()
   }
 
   def end(): DateTime = {
-
+    throw new UnsupportedOperationException()
   }
 
   def size: Int = periods
 
   def locOfDateTime(dateTime: DateTime, round: Boolean): Int = {
-
+    throw new UnsupportedOperationException()
   }
 
   def apply(i: Int): DateTime = {
@@ -88,6 +90,9 @@ class UniformDateTimeIndex(val start: DateTime, val periods: Int, val frequency:
     others.fold(this)(_.union(_))
   }
 
+  def splitEvenly(numPartitions: Int): Array[DateTimeIndex] = ???
+
+  def dateTimeAtLoc(loc: Int): DateTime = ???
 }
 
 class IrregularDateTimeIndex(val instants: Array[Long]) extends DateTimeIndex {
@@ -96,9 +101,24 @@ class IrregularDateTimeIndex(val instants: Array[Long]) extends DateTimeIndex {
     : (IrregularDateTimeIndex, Vector[Double]) = {
     // binary search for start
     // binary search for end
+    throw new UnsupportedOperationException()
   }
 
   override def slice(start: DateTime, end: DateTime): IrregularDateTimeIndex = {
-
+    throw new UnsupportedOperationException()
   }
+
+  /**
+   * The last date-time in the index. Inclusive.
+   */
+  def end(): DateTime = ???
+
+  /**
+   * The number of date-times in the index.
+   */
+  def size(): Int = ???
+
+  def splitEvenly(numPartitions: Int): Array[DateTimeIndex] = ???
+
+  def dateTimeAtLoc(loc: Int): DateTime = ???
 }

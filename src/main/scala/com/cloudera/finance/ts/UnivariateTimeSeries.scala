@@ -125,7 +125,9 @@ private[ts] object UnivariateTimeSeries {
           firstValue
         } else {
           if (curUniformDT > curSamplesDT) {
-            (curSamplesDT, curSamplesValue) = samples.next()
+            val next = samples.next()
+            curSamplesDT = next._1
+            curSamplesValue = next._2
           }
           if (curUniformDT < curSamplesDT) {
             Double.NaN
