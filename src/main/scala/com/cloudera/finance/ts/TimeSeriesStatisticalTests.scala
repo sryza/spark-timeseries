@@ -232,7 +232,7 @@ object TimeSeriesStatisticalTests {
    *         serial correlation, a value close to 4.0 gives evidence for negative serial
    *         correlation, and a value close to 2.0 gives evidence for no serial correlation.
    */
-  def dwtest(residuals: DenseVector[Double]): Double = {
+  def dwtest(residuals: Vector[Double]): Double = {
     var residsSum = residuals(0) * residuals(0)
     var diffsSum = 0.0
     var i = 1

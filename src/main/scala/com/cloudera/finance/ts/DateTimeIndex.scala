@@ -114,22 +114,28 @@ class IrregularDateTimeIndex(val instants: Array[Long]) extends DateTimeIndex {
   }
 
   /**
+   * The first date-time in the index.
+   */
+  override def start(): DateTime = new DateTime(instants(0))
+
+  /**
    * The last date-time in the index. Inclusive.
    */
-  def end(): DateTime = ???
+  override def end(): DateTime = new DateTime(instants(instants.length - 1))
 
   /**
    * The number of date-times in the index.
    */
-  def size(): Int = ???
+  override def size(): Int = instants.length
 
-  def splitEvenly(numPartitions: Int): Array[DateTimeIndex] = ???
+  override def splitEvenly(numPartitions: Int): Array[DateTimeIndex] = ???
 
-  def dateTimeAtLoc(loc: Int): DateTime = ???
+  override def dateTimeAtLoc(loc: Int): DateTime = new DateTime(instants(loc))
+
 }
 
 object DateTimeIndex {
-  def uniform(start: DateTime, end: DateTime): UniformDateTimeIndex = {
+  def uniform(start: DateTime, end: DateTime, frequency: Period): UniformDateTimeIndex = {
 
   }
 }
