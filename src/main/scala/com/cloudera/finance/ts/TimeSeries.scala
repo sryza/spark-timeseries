@@ -19,7 +19,7 @@ import com.cloudera.finance.Util
 
 import com.github.nscala_time.time.Imports._
 
-class TimeSeries(val index: DateTimeIndex, val data: Array[Array[Double]]) {
+class TimeSeries(val index: UniformDateTimeIndex, val data: Array[Array[Double]]) {
   def observations(): Array[Array[Double]] = Util.transpose(data)
 
   def differences(windowSize: Int): TimeSeries = {
@@ -32,7 +32,7 @@ class TimeSeries(val index: DateTimeIndex, val data: Array[Array[Double]]) {
 }
 
 private object TimeSeries {
-  def select(oldIndex: DateTimeIndex, newIndex: DateTimeIndex): Array[Double] = {
+  def select(oldIndex: UniformDateTimeIndex, newIndex: UniformDateTimeIndex): Array[Double] = {
     throw new UnsupportedOperationException()
   }
 

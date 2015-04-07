@@ -15,13 +15,17 @@
 
 package com.cloudera.finance.ts
 
+import breeze.linalg._
+
 import org.apache.spark.SparkContext._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.util.StatCounter
 
 import org.joda.time.DateTime
+import org.apache.spark.{TaskContext, Partition}
 
-class TimeSeriesRDD[K](val index: DateTimeIndex) extends RDD[(K, Array[Double])] {
+class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector[Double])])
+  extends RDD[(K, Vector[Double])](parent) {
 
   def sliceSeries(start: DateTime, end: DateTime): TimeSeriesRDD[K] = {
     throw new UnsupportedOperationException()
@@ -41,16 +45,16 @@ class TimeSeriesRDD[K](val index: DateTimeIndex) extends RDD[(K, Array[Double])]
     throw new UnsupportedOperationException()
   }
 
-  def mapSeries[U](f: (K, Array[Double]) => U): RDD[(K, U)] = {
-    rdd.map(kt => (kt._1, f(kt._1, kt._2)))
+  def mapSeries[U](f: (K, Vector[Double]) => U): RDD[(K, U)] = {
+    map(kt => (kt._1, f(kt._1, kt._2)))
   }
 
   def foldLeftSeries[U](zero: U)(f: ((U, K, Double)) => U): RDD[(K, U)] = {
-    mapSeries((k, t) => t.foldLeft(zero)((u, v) => f(u, k, v)))
+    mapSeries((k, t) => t.valuesIterator.foldLeft(zero)((u, v) => f(u, k, v)))
   }
 
   def seriesStats(): RDD[StatCounter] = {
-    rdd.map(kt => new StatCounter(kt._2))
+    map(kt => new StatCounter(kt._2.valuesIterator))
   }
 
   def seriesMinMaxDates(): RDD[(K, (DateTime, DateTime))] = {
@@ -58,16 +62,26 @@ class TimeSeriesRDD[K](val index: DateTimeIndex) extends RDD[(K, Array[Double])]
     throw new UnsupportedOperationException()
   }
 
-  def toSamples(): TimeSamples = {
+  def toSamples(numPartitions: Int): RDD[(DateTime, Vector[Double])] = {
+
     throw new UnsupportedOperationException()
   }
 
+  def compute(split: Partition, context: TaskContext): Iterator[(K, Vector[Double])] = {
+    parent.iterator(split, context)
+  }
+
+  protected def getPartitions: Array[Partition] = parent.partitions
 }
 
 object TimeSeriesRDD {
-  def timeSeriesRDD[K](index: DateTimeIndex, seriesRDD: RDD[(K, DateTimeIndex, Array[Double])])
-    : TimeSeriesRDD[K] = {
-
+  def timeSeriesRDD[K](targetIndex: UniformDateTimeIndex,
+      seriesRDD: RDD[(K, UniformDateTimeIndex, Vector[Double])]): TimeSeriesRDD[K] = {
+    val rdd = seriesRDD.map { case (key, index, vec) =>
+      val newVec = UnivariateTimeSeries.openSlice(index, targetIndex, vec)
+      (key, newVec)
+    }
+    new TimeSeriesRDD(targetIndex, rdd)
   }
 }
 

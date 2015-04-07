@@ -17,7 +17,40 @@ package com.cloudera.finance.ts
 
 import com.github.nscala_time.time.Imports._
 
-class DateTimeIndex(val start: DateTime, val periods: Int, val frequency: Period) {
+/**
+ * A DateTimeIndex maintains a bi-directional mapping between integers and an ordered collection of
+ * date-times. Multiple date-times may correspond to the same integer, implying multiple samples
+ * at the same date-time.
+ */
+trait DateTimeIndex {
+  /**
+   * Returns a sub-slice of the index, starting and ending at the given date-times.
+   */
+  def slice(start: DateTime, end: DateTime): DateTimeIndex
+
+  def sliceSeries(start: DateTime, end: DateTime, series: Vector[Double])
+    : (DateTimeIndex, Vector[Double])
+
+  /**
+   * The last date-time in the index. Inclusive.
+   */
+  def end(): DateTime
+
+  /**
+   * The number of date-times in the index.
+   */
+  def size(): Int
+
+  def splitEvenly(numPartitions: Int): Array[DateTimeIndex]
+}
+
+class UniformDateTimeIndex(val start: DateTime, val periods: Int, val frequency: Period)
+  extends DateTimeIndex {
+
+  def sliceSeries(start: DateTime, end: DateTime, series: Vector[Double])
+    : (DateTimeIndex, Vector[Double]) = {
+
+  }
 
   def end(): DateTime = {
 
@@ -33,26 +66,39 @@ class DateTimeIndex(val start: DateTime, val periods: Int, val frequency: Period
     start + frequency * i
   }
 
-  def slice(start: DateTime, end: DateTime): DateTimeIndex = {
+  def slice(start: DateTime, end: DateTime): UniformDateTimeIndex = {
     throw new UnsupportedOperationException()
   }
 
-  def slice(startIndex: Int, endIndex: Int): DateTimeIndex = {
-    new DateTimeIndex(start + (frequency * startIndex), endIndex - startIndex, frequency)
+  def slice(startIndex: Int, endIndex: Int): UniformDateTimeIndex = {
+    new UniformDateTimeIndex(start + (frequency * startIndex), endIndex - startIndex, frequency)
   }
 
-  def drop(startIndex: Int): DateTimeIndex = {
-    new DateTimeIndex(start + (frequency * startIndex), periods - 1, frequency)
+  def drop(startIndex: Int): UniformDateTimeIndex = {
+    new UniformDateTimeIndex(start + (frequency * startIndex), periods - 1, frequency)
   }
 
-  def union(other: DateTimeIndex): DateTimeIndex = {
+  def union(other: UniformDateTimeIndex): UniformDateTimeIndex = {
 //    val minStart =
 //    val maxEnd =
     throw new UnsupportedOperationException()
   }
 
-  def union(others: Seq[DateTimeIndex]): DateTimeIndex = {
+  def union(others: Seq[UniformDateTimeIndex]): UniformDateTimeIndex = {
     others.fold(this)(_.union(_))
   }
 
+}
+
+class IrregularDateTimeIndex(val instants: Array[Long]) extends DateTimeIndex {
+
+  override def sliceSeries(start: DateTime, end: DateTime, series: Vector[Double])
+    : (IrregularDateTimeIndex, Vector[Double]) = {
+    // binary search for start
+    // binary search for end
+  }
+
+  override def slice(start: DateTime, end: DateTime): IrregularDateTimeIndex = {
+
+  }
 }
