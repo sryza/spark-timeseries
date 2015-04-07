@@ -15,11 +15,13 @@
 
 package com.cloudera.finance.ts
 
+import breeze.linalg._
+
 import com.cloudera.finance.Util
 
 import com.github.nscala_time.time.Imports._
 
-class TimeSeries(val index: UniformDateTimeIndex, val data: Array[Array[Double]]) {
+class TimeSeries[K](val index: DateTimeIndex, val data: Matrix[Double], labels: Array[K]) {
   def observations(): Array[Array[Double]] = Util.transpose(data)
 
   def differences(windowSize: Int): TimeSeries = {
@@ -31,7 +33,19 @@ class TimeSeries(val index: UniformDateTimeIndex, val data: Array[Array[Double]]
   def differences(): TimeSeries = differences(1)
 }
 
-private object TimeSeries {
+object TimeSeries {
+  def timeSeriesFromSamples[K](samples: Seq[(DateTime, Seq[Double])], labels: Array[K])
+    : TimeSeries[K] = {
+    val mat = new DenseMatrix[Double](samples.head._2.size, samples.size)
+    val dts = new Array[Long](samples.length)
+    for (i <- 0 until samples.length) {
+      val (dt, values) = samples(i)
+      dts(i) = dt.getMillis
+      mat(i to i, ::) := values
+    }
+    new TimeSeries[K](new IrregularDateTimeIndex(dts), mat, labels)
+  }
+
   def select(oldIndex: UniformDateTimeIndex, newIndex: UniformDateTimeIndex): Array[Double] = {
     throw new UnsupportedOperationException()
   }

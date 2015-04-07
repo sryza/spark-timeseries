@@ -32,6 +32,11 @@ trait DateTimeIndex {
     : (DateTimeIndex, Vector[Double])
 
   /**
+   * The first date-time in the index.
+   */
+  def start(): DateTime
+
+  /**
    * The last date-time in the index. Inclusive.
    */
   def end(): DateTime
@@ -121,4 +126,10 @@ class IrregularDateTimeIndex(val instants: Array[Long]) extends DateTimeIndex {
   def splitEvenly(numPartitions: Int): Array[DateTimeIndex] = ???
 
   def dateTimeAtLoc(loc: Int): DateTime = ???
+}
+
+object DateTimeIndex {
+  def uniform(start: DateTime, end: DateTime): UniformDateTimeIndex = {
+
+  }
 }

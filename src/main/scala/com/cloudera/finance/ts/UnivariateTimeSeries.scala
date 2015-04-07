@@ -143,6 +143,10 @@ private[ts] object UnivariateTimeSeries {
     }
   }
 
+  def differences(ts: Vector[Double]): Vector[Double] = {
+
+  }
+
   def minMaxDateTimes(index: UniformDateTimeIndex, series: Array[Double]): (DateTime, DateTime) = {
     var min = Double.MaxValue
     var minDt: DateTime = null

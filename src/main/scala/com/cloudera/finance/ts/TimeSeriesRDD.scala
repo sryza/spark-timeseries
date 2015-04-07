@@ -20,11 +20,11 @@ import scala.collection.mutable.ArrayBuffer
 import breeze.linalg._
 
 import org.apache.spark.SparkContext._
+import org.apache.spark.{Partition, Partitioner, TaskContext}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.util.StatCounter
 
 import org.joda.time.DateTime
-import org.apache.spark.{Partition, Partitioner, TaskContext}
 
 class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector[Double])])
   extends RDD[(K, Vector[Double])](parent) {
@@ -172,5 +172,10 @@ object TimeSeriesRDD {
       (key, newVec)
     }
     new TimeSeriesRDD(targetIndex, rdd)
+  }
+
+  def timeSeriesRDD[K](targetIndex: DateTimeIndex, seriesRDD: RDD[TimeSeries[K]])
+    : TimeSeriesRDD[K] = {
+
   }
 }
