@@ -47,34 +47,34 @@ object HistoricalValueAtRiskExample {
     val sc = new SparkContext(conf)
 
     // Fit factor return -> instrument return predictive models
-    val factorObservations = factorReturns.observations()
-    val linearModels = instrumentReturns.data.map { instrumentReturns =>
-      val regression = new OLSMultipleLinearRegression()
-      regression.newSampleData(instrumentReturns, factorObservations)
-      regression.estimateRegressionParameters()
-    }
-    val instrumentReturnsModel = new LinearInstrumentReturnsModel(arrsToMat(linearModels))
+//    val factorObservations = factorReturns.observations()
+//    val linearModels = instrumentReturns.data.map { instrumentReturns =>
+//      val regression = new OLSMultipleLinearRegression()
+//      regression.newSampleData(instrumentReturns, factorObservations)
+//      regression.estimateRegressionParameters()
+//    }
+//    val instrumentReturnsModel = new LinearInstrumentReturnsModel(arrsToMat(linearModels))
 
     // Fit an AR(1) + GARCH(1, 1) model to each factor
-    val garchModels = factorReturns.data.map(GARCH.fitModel(_)._1)
-    val iidFactorReturns = factorReturns.data.zip(garchModels).map { case (history, model) =>
-      model.removeTimeDependentEffects(history, new Array[Double](history.length))
-    }
+//    val garchModels = factorReturns.data.map(GARCH.fitModel(_)._1)
+//    val iidFactorReturns = factorReturns.data.zip(garchModels).map { case (history, model) =>
+//      model.removeTimeDependentEffects(history, new Array[Double](history.length))
+//    }
 
     // Generate an RDD of simulations
-    val rand = new MersenneTwister()
-    val factorsDist = new FilteredHistoricalFactorDistribution(rand, iidFactorReturns,
-      garchModels.asInstanceOf[Array[TimeSeriesFilter]])
-    val returns = simulationReturns(0L, factorsDist, numTrials, parallelism, sc,
-      instrumentReturnsModel)
-    returns.cache()
+//    val rand = new MersenneTwister()
+//    val factorsDist = new FilteredHistoricalFactorDistribution(rand, iidFactorReturns,
+//      garchModels.asInstanceOf[Array[TimeSeriesFilter]])
+//    val returns = simulationReturns(0L, factorsDist, numTrials, parallelism, sc,
+//      instrumentReturnsModel)
+//    returns.cache()
 
     // Calculate VaR and expected shortfall
-    val pValues = Array(.01, .03, .05)
-    val valueAtRisks = valueAtRisk(returns, pValues)
-    println(s"Value at risk at ${pValues.mkString(",")}: ${valueAtRisks.mkString(",")}")
+//    val pValues = Array(.01, .03, .05)
+//    val valueAtRisks = valueAtRisk(returns, pValues)
+//    println(s"Value at risk at ${pValues.mkString(",")}: ${valueAtRisks.mkString(",")}")
 
-    val expectedShortfalls = expectedShortfall(returns, pValues)
-    println(s"Expected shortfall at ${pValues.mkString(",")}: ${expectedShortfalls.mkString(",")}")
+//    val expectedShortfalls = expectedShortfall(returns, pValues)
+//    println(s"Expected shortfall at ${pValues.mkString(",")}: ${expectedShortfalls.mkString(",")}")
   }
 }

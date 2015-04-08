@@ -22,30 +22,34 @@ import com.cloudera.finance.Util
 import com.github.nscala_time.time.Imports._
 
 class TimeSeries[K](val index: DateTimeIndex, val data: Matrix[Double], labels: Array[K]) {
-  def observations(): Array[Array[Double]] = Util.transpose(data)
-
-  def differences(windowSize: Int): TimeSeries = {
-    new TimeSeries(index.drop(windowSize), data.map { hist =>
-      hist.sliding(windowSize).map(window => window.last - window.head).toArray
-    })
+  def observations(): Array[Array[Double]] = {
+//    Util.transpose(data)
+    throw new UnsupportedOperationException()
   }
 
-  def differences(): TimeSeries = differences(1)
+  def differences(windowSize: Int): TimeSeries[K] = {
+//    new TimeSeries(index.drop(windowSize), data.map { hist =>
+//      hist.sliding(windowSize).map(window => window.last - window.head).toArray
+//    })
+    throw new UnsupportedOperationException()
+  }
+
+  def differences(): TimeSeries[K] = differences(1)
 
   def univariateSeriesIterator(): Iterator[(K, Vector[Double])] = {
-
+    throw new UnsupportedOperationException()
   }
 }
 
 object TimeSeries {
-  def timeSeriesFromSamples[K](samples: Seq[(DateTime, Seq[Double])], labels: Array[K])
+  def timeSeriesFromSamples[K](samples: Seq[(DateTime, Array[Double])], labels: Array[K])
     : TimeSeries[K] = {
     val mat = new DenseMatrix[Double](samples.head._2.size, samples.size)
     val dts = new Array[Long](samples.length)
     for (i <- 0 until samples.length) {
       val (dt, values) = samples(i)
       dts(i) = dt.getMillis
-      mat(i to i, ::) := values
+      mat(i to i, ::) := new DenseVector[Double](values)
     }
     new TimeSeries[K](new IrregularDateTimeIndex(dts), mat, labels)
   }
@@ -61,8 +65,9 @@ object TimeSeries {
     }
   }
 
-  def fillts(ts: TimeSeries, fillMethod: String): Unit = {
-    ts.data.foreach(fillts(_, fillMethod))
+  def fillts[K](ts: TimeSeries[K], fillMethod: String): Unit = {
+//    ts.data.foreach(fillts(_, fillMethod))
+    throw new UnsupportedOperationException()
   }
 
   def fillNearest(values: Array[Double]): Unit = {

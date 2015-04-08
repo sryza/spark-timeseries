@@ -91,7 +91,7 @@ private[ts] object UnivariateTimeSeries {
     }
   }
 
-  def samplesToTimeSeries(samples: Iterator[(DateTime, Double)], frequency: Period)
+  def samplesToTimeSeries(samples: Iterator[(DateTime, Double)], frequency: Frequency)
     : (UniformDateTimeIndex, DenseVector[Double]) = {
     val arr = new ArrayBuffer[Double]()
     val iter = iterateWithUniformFrequency(samples, frequency)
@@ -122,7 +122,7 @@ private[ts] object UnivariateTimeSeries {
    *
    * The input samples must be aligned on the given frequency.
    */
-  def iterateWithUniformFrequency(samples: Iterator[(DateTime, Double)], frequency: Period)
+  def iterateWithUniformFrequency(samples: Iterator[(DateTime, Double)], frequency: Frequency)
     : Iterator[(DateTime, Double)] = {
     // TODO: throw exceptions for points with non-aligned frequencies
     new Iterator[(DateTime, Double)]() {
@@ -154,14 +154,14 @@ private[ts] object UnivariateTimeSeries {
           }
         }
         val ret = (curUniformDT, value)
-        curUniformDT += frequency
+        curUniformDT = frequency.advance(curUniformDT, 1)
         ret
       }
     }
   }
 
   def differences(ts: Vector[Double]): Vector[Double] = {
-
+    throw new UnsupportedOperationException()
   }
 
   def minMaxDateTimes(index: UniformDateTimeIndex, series: Array[Double]): (DateTime, DateTime) = {

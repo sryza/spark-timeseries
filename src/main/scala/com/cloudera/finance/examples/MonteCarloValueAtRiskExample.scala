@@ -47,27 +47,27 @@ object MonteCarloValueAtRiskExample {
 
     // Fit factor return -> instrument return predictive models
     val factorObservations = factorReturns.observations()
-    val linearModels = instrumentReturns.data.map { instrumentReturns =>
-      val regression = new OLSMultipleLinearRegression()
-      regression.newSampleData(instrumentReturns, factorObservations)
-      regression.estimateRegressionParameters()
-    }
-    val instrumentReturnsModel = new LinearInstrumentReturnsModel(arrsToMat(linearModels))
+//    val linearModels = instrumentReturns.data.map { instrumentReturns =>
+//      val regression = new OLSMultipleLinearRegression()
+//      regression.newSampleData(instrumentReturns, factorObservations)
+//      regression.estimateRegressionParameters()
+//    }
+//    val instrumentReturnsModel = new LinearInstrumentReturnsModel(arrsToMat(linearModels))
 
     // Generate an RDD of simulations
-    val factorCov = new Covariance(factorObservations).getCovarianceMatrix().getData()
-    val factorMeans = factorHistories.data.map(factor => factor.sum / factor.size).toArray
-    val factorsDist = new SerializableMultivariateNormalDistribution(factorMeans, factorCov)
-    val returns = simulationReturns(0L, factorsDist, numTrials, parallelism, sc,
-      instrumentReturnsModel)
-    returns.cache()
+//    val factorCov = new Covariance(factorObservations).getCovarianceMatrix().getData()
+//    val factorMeans = factorHistories.data.map(factor => factor.sum / factor.size).toArray
+//    val factorsDist = new SerializableMultivariateNormalDistribution(factorMeans, factorCov)
+//    val returns = simulationReturns(0L, factorsDist, numTrials, parallelism, sc,
+//      instrumentReturnsModel)
+//    returns.cache()
 
     // Calculate VaR and expected shortfall
-    val pValues = Array(.01, .03, .05)
-    val valueAtRisks = valueAtRisk(returns, pValues)
-    println(s"Value at risk at ${pValues.mkString(",")}: ${valueAtRisks.mkString(",")}")
+//    val pValues = Array(.01, .03, .05)
+//    val valueAtRisks = valueAtRisk(returns, pValues)
+//    println(s"Value at risk at ${pValues.mkString(",")}: ${valueAtRisks.mkString(",")}")
 
-    val expectedShortfalls = expectedShortfall(returns, pValues)
-    println(s"Expected shortfall at ${pValues.mkString(",")}: ${expectedShortfalls.mkString(",")}")
+//    val expectedShortfalls = expectedShortfall(returns, pValues)
+//    println(s"Expected shortfall at ${pValues.mkString(",")}: ${expectedShortfalls.mkString(",")}")
   }
 }

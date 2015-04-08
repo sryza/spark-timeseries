@@ -62,7 +62,7 @@ class SimpleTickDataExample {
     val samples = lines.tail.map { line =>
       val tokens = line.split(',')
       val dt = new DateTime(tokens.head)
-      (dt, line.tail.map(_.toDouble))
+      (dt, line.tail.map(_.toDouble).toArray)
     }
     timeSeriesFromSamples(samples, labels)
   }

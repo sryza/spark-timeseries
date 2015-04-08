@@ -132,7 +132,7 @@ class IrregularDateTimeIndex(val instants: Array[Long]) extends DateTimeIndex {
 
 object DateTimeIndex {
   def uniform(start: DateTime, end: DateTime, frequency: Frequency): UniformDateTimeIndex = {
-    1.days
+    throw new UnsupportedOperationException()
   }
 
   implicit def periodToFrequency(period: Period): Frequency = new PeriodFrequency(period)
@@ -173,7 +173,7 @@ class BusinessDayFrequency(days: Int) extends Frequency {
     val totalDays = n * days
     val standardWeekendDays = (totalDays / 5) * 2
     val remaining = totalDays % 5
-    val extraWeekendDays = if (dayOfWeek + remaining <= 5) 2 else 0
-    dt + (standardWeekendDays + extraWeekendDays).days
+    val extraWeekendDays = if (dayOfWeek + remaining > 5) 2 else 0
+    dt + (totalDays + standardWeekendDays + extraWeekendDays).days
   }
 }
