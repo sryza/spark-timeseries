@@ -15,13 +15,16 @@
 
 package com.cloudera.finance.risk
 
+import breeze.linalg._
+
+import com.cloudera.finance.ts.TimeSeriesFilter
+
 import org.apache.commons.math3.distribution.MultivariateRealDistribution
 import org.apache.commons.math3.random.RandomGenerator
-import com.cloudera.finance.ts.TimeSeriesFilter
 
 class FilteredHistoricalFactorDistribution(
     rand: RandomGenerator,
-    iidHistories: Array[Array[Double]],
+    iidHistories: Array[Vector[Double]],
     filters: Array[TimeSeriesFilter]) extends MultivariateRealDistribution with Serializable {
 
   def reseedRandomGenerator(seed: Long): Unit = rand.setSeed(seed)

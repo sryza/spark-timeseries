@@ -36,7 +36,15 @@ class TimeSeries[K](val index: DateTimeIndex, val data: Matrix[Double], labels: 
 
   def differences(): TimeSeries[K] = differences(1)
 
-  def univariateSeriesIterator(): Iterator[(K, Vector[Double])] = {
+  def univariateSeriesIterator(): Iterator[Vector[Double]] = {
+    throw new UnsupportedOperationException()
+  }
+
+  def univariateKeyAndSeriesIterator(): Iterator[(K, Vector[Double])] = {
+    throw new UnsupportedOperationException()
+  }
+
+  def mapSeries[U](f: (Vector[Double]) => U): Seq[U] = {
     throw new UnsupportedOperationException()
   }
 }

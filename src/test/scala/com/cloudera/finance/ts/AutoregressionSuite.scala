@@ -15,9 +15,9 @@
 
 package com.cloudera.finance.ts
 
-import Autoregression._
-
 import java.util.Random
+
+import breeze.linalg._
 
 import org.apache.commons.math3.random.MersenneTwister
 
@@ -53,10 +53,10 @@ class AutoregressionSuite extends FunSuite {
 
   test("add and remove time dependent effects") {
     val rand = new Random()
-    val ts = Array.fill(1000)(rand.nextDouble())
+    val ts = new DenseVector[Double](Array.fill(1000)(rand.nextDouble()))
     val model = new ARModel(1.5, Array(.2, .3))
-    val added = model.addTimeDependentEffects(ts, new Array[Double](ts.length))
-    val removed = model.removeTimeDependentEffects(added, new Array[Double](ts.length))
-    assert(ts.zip(removed).forall(x => math.abs(x._1 - x._2) < .001))
+    val added = model.addTimeDependentEffects(ts, DenseVector.zeros[Double](ts.length))
+    val removed = model.removeTimeDependentEffects(added, DenseVector.zeros[Double](ts.length))
+    assert((ts - removed).toArray.forall(math.abs(_) < .001))
   }
 }

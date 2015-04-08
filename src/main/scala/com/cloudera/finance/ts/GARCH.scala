@@ -15,6 +15,8 @@
 
 package com.cloudera.finance.ts
 
+import breeze.linalg._
+
 import org.apache.commons.math3.analysis.{MultivariateFunction, MultivariateVectorFunction}
 import org.apache.commons.math3.optim.{MaxEval, MaxIter, InitialGuess, SimpleValueChecker}
 import org.apache.commons.math3.optim.nonlinear.scalar.{ObjectiveFunction,
@@ -29,13 +31,13 @@ object GARCH {
    * @param ts The time series to fit the model to.
    * @return The model and its log likelihood on the input data.
    */
-  def fitModel(ts: Array[Double]): (GARCHModel, Double) = {
+  def fitModel(ts: Vector[Double]): (GARCHModel, Double) = {
     val optimizer = new NonLinearConjugateGradientOptimizer(
       NonLinearConjugateGradientOptimizer.Formula.FLETCHER_REEVES,
       new SimpleValueChecker(1e-6, 1e-6))
     val gradient = new ObjectiveFunctionGradient(new MultivariateVectorFunction() {
       def value(params: Array[Double]): Array[Double] = {
-        new GARCHModel(params(0), params(1), params(2)).gradient(ts)
+        new GARCHModel(params(0), params(1), params(2)).gradient(ts).toArray
       }
     })
     val objectiveFunction = new ObjectiveFunction(new MultivariateFunction() {
@@ -59,9 +61,9 @@ object ARGARCH {
    * @param ts The time series to fit the model to.
    * @return The model and its log likelihood on the input data.
    */
-  def fitModel(ts: Array[Double]): ARGARCHModel = {
+  def fitModel(ts: Vector[Double]): ARGARCHModel = {
     val arModel = Autoregression.fitModel(ts)
-    val residuals = arModel.removeTimeDependentEffects(ts, new Array(ts.length))
+    val residuals = arModel.removeTimeDependentEffects(ts, DenseVector.zeros[Double](ts.length))
     val garchModel = GARCH.fitModel(residuals)._1
     new ARGARCHModel(arModel.c, arModel.coefficients(1), garchModel.omega, garchModel.alpha,
       garchModel.beta)
@@ -78,7 +80,7 @@ class GARCHModel(
    *
    * Based on http://www.unc.edu/~jbhill/Bollerslev_GARCH_1986.pdf
    */
-  def logLikelihood(ts: Array[Double]): Double = {
+  def logLikelihood(ts: Vector[Double]): Double = {
     var sum = 0.0
     iterateWithHAndEta(ts) { (i, h, eta, prevH, prevEta) =>
       sum += -.5 * math.log(h) - .5 * eta * eta / h
@@ -92,7 +94,7 @@ class GARCHModel(
    * Based on http://www.unc.edu/~jbhill/Bollerslev_GARCH_1986.pdf
    * @return an 3-element array containing the gradient for the alpha, beta, and omega parameters.
    */
-  private[finance] def gradient(ts: Array[Double]): Array[Double] = {
+  private[finance] def gradient(ts: Vector[Double]): Array[Double] = {
     var omegaGradient = 0.0
     var alphaGradient = 0.0
     var betaGradient = 0.0
@@ -113,7 +115,7 @@ class GARCHModel(
     Array(alphaGradient * .5, betaGradient * .5, omegaGradient * .5)
   }
 
-  private def iterateWithHAndEta(ts: Array[Double])
+  private def iterateWithHAndEta(ts: Vector[Double])
                                 (fn: (Int, Double, Double, Double, Double) => Unit): Unit = {
     var prevH = omega / (1 - alpha - beta)
     var i = 1
@@ -130,7 +132,7 @@ class GARCHModel(
   /**
    * {@inheritDoc}
    */
-  def removeTimeDependentEffects(ts: Array[Double], dest: Array[Double]): Array[Double] = {
+  def removeTimeDependentEffects(ts: Vector[Double], dest: Vector[Double]): Vector[Double] = {
     var prevEta = ts(0)
     var prevVariance = omega / (1.0 - alpha - beta)
     dest(0) = prevEta / math.sqrt(prevVariance)
@@ -148,7 +150,7 @@ class GARCHModel(
   /**
    * {@inheritDoc}
    */
-  override def addTimeDependentEffects(ts: Array[Double], dest: Array[Double]): Array[Double] = {
+  override def addTimeDependentEffects(ts: Vector[Double], dest: Vector[Double]): Vector[Double] = {
     var prevVariance = omega / (1.0 - alpha - beta)
     var prevEta = ts(0) * math.sqrt(prevVariance)
     dest(0) = prevEta
@@ -208,7 +210,8 @@ class ARGARCHModel(
   /**
    * {@inheritDoc}
    */
-  override def removeTimeDependentEffects(ts: Array[Double], dest: Array[Double]): Array[Double] = {
+  override def removeTimeDependentEffects(ts: Vector[Double], dest: Vector[Double])
+    : Vector[Double] = {
     var prevEta = ts(0) - c
     var prevVariance = omega / (1.0 - alpha - beta)
     dest(0) = prevEta / math.sqrt(prevVariance)
@@ -226,7 +229,7 @@ class ARGARCHModel(
   /**
    * {@inheritDoc}
    */
-  override def addTimeDependentEffects(ts: Array[Double], dest: Array[Double]): Array[Double] = {
+  override def addTimeDependentEffects(ts: Vector[Double], dest: Vector[Double]): Vector[Double] = {
     var prevVariance = omega / (1.0 - alpha - beta)
     var prevEta = ts(0) * math.sqrt(prevVariance)
     dest(0) = c + prevEta
@@ -283,14 +286,15 @@ class EGARCHModel(
   /**
    * {@inheritDoc}
    */
-  override def removeTimeDependentEffects(ts: Array[Double], dest: Array[Double]): Array[Double] = {
+  override def removeTimeDependentEffects(ts: Vector[Double], dest: Vector[Double])
+    : Vector[Double] = {
     throw new UnsupportedOperationException()
   }
 
   /**
    * {@inheritDoc}
    */
-  override def addTimeDependentEffects(ts: Array[Double], dest: Array[Double]): Array[Double] = {
+  override def addTimeDependentEffects(ts: Vector[Double], dest: Vector[Double]): Vector[Double] = {
     throw new UnsupportedOperationException()
   }
 }

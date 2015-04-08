@@ -15,6 +15,8 @@
 
 package com.cloudera.finance.ts
 
+import breeze.linalg._
+
 /**
  * Models time dependent effects in a time series.
  */
@@ -29,7 +31,7 @@ trait TimeSeriesModel {
    * @param dest Array to put the filtered series, can be the same as ts.
    * @return The dest series, for convenience.
    */
-  def removeTimeDependentEffects(ts: Array[Double], dest: Array[Double]): Array[Double]
+  def removeTimeDependentEffects(ts: Vector[Double], dest: Vector[Double]): Vector[Double]
 
   /**
    * Takes a series of i.i.d. observations and returns a time series based on it with the
@@ -39,5 +41,5 @@ trait TimeSeriesModel {
    * @param dest Array to put the filtered series, can be the same as ts.
    * @return The dest series, for convenience.
    */
-  def addTimeDependentEffects(ts: Array[Double], dest: Array[Double]): Array[Double]
+  def addTimeDependentEffects(ts: Vector[Double], dest: Vector[Double]): Vector[Double]
 }

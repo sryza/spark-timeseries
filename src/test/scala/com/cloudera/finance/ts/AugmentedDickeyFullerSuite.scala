@@ -14,7 +14,7 @@
  */
 package com.cloudera.finance.ts
 
-import breeze.linalg.DenseVector
+import breeze.linalg._
 
 import org.apache.commons.math3.random.MersenneTwister
 
@@ -26,7 +26,7 @@ class AugmentedDickeyFullerSuite extends FunSuite {
     val arModel = new ARModel(0.0, .95)
     val sample = arModel.sample(500, rand)
 
-    val (adfStat, pValue) = TimeSeriesStatisticalTests.adftest(new DenseVector(sample), 1)
+    val (adfStat, pValue) = TimeSeriesStatisticalTests.adftest(sample, 1)
     assert(!java.lang.Double.isNaN(adfStat))
     assert(!java.lang.Double.isNaN(pValue))
     println("adfStat: " + adfStat)

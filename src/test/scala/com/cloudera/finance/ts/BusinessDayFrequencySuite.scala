@@ -19,8 +19,7 @@ import com.cloudera.finance.ts.DateTimeIndex._
 
 import com.github.nscala_time.time.Imports._
 
-import org.scalatest.FunSuite
-import org.scalatest.ShouldMatchers
+import org.scalatest.{FunSuite, ShouldMatchers}
 
 class BusinessDayFrequencySuite extends FunSuite with ShouldMatchers {
   test("business days") {

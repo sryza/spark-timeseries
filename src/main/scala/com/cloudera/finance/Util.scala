@@ -15,11 +15,11 @@
 
 package com.cloudera.finance
 
-import breeze.linalg.DenseMatrix
+import breeze.linalg._
 
 import org.apache.commons.math3.random.RandomGenerator
 
-object Util {
+private[finance] object Util {
   def sampleWithReplacement(values: Array[Double], rand: RandomGenerator, target: Array[Double])
     : Unit = {
     for (i <- 0 until target.length) {
@@ -35,16 +35,16 @@ object Util {
     mat
   }
 
-  def matToRowArrs(mat: DenseMatrix[Double]): Array[Array[Double]] = {
+  def matToRowArrs(mat: Matrix[Double]): Array[Array[Double]] = {
     val arrs = new Array[Array[Double]](mat.rows)
     for (r <- 0 until mat.rows) {
-      arrs(r) = mat(r to r, 0 to mat.cols - 1).toArray
+      arrs(r) = mat(r to r, 0 to mat.cols - 1).toDenseMatrix.toArray
     }
     arrs
   }
 
-  def arrsToMat(arrs: Array[Array[Double]]): DenseMatrix[Double] = {
-    vecArrsToMats(arrs.iterator, arrs.length).next
+  def arrsToMat(arrs: Iterator[Array[Double]]): DenseMatrix[Double] = {
+    vecArrsToMats(arrs, arrs.length).next
   }
 
   def vecArrsToMats(vecArrs: Iterator[Array[Double]], chunkSize: Int)

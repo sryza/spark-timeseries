@@ -177,7 +177,7 @@ object TimeSeriesRDD {
   def timeSeriesRDD[K](targetIndex: DateTimeIndex, seriesRDD: RDD[TimeSeries[K]])
     : TimeSeriesRDD[K] = {
     val rdd = seriesRDD.flatMap { series =>
-      series.univariateSeriesIterator().map { case (key, vec) =>
+      series.univariateKeyAndSeriesIterator().map { case (key, vec) =>
         (key, UnivariateTimeSeries.openSlice(series.index, targetIndex, vec))
       }
     }

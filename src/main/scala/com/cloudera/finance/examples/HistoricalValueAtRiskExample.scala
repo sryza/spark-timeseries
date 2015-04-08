@@ -15,16 +15,20 @@
 
 package com.cloudera.finance.examples
 
-import com.cloudera.finance.risk.{FilteredHistoricalFactorDistribution, LinearInstrumentReturnsModel, ValueAtRisk}
-import ValueAtRisk._
+import breeze.linalg.DenseVector
+
 import com.cloudera.finance.Util
-import Util._
+import com.cloudera.finance.risk.{FilteredHistoricalFactorDistribution,
+  LinearInstrumentReturnsModel, ValueAtRisk}
+import com.cloudera.finance.ts.{TimeSeriesFilter, GARCH}
 
 import org.apache.commons.math3.random.MersenneTwister
+import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression
 
 import org.apache.spark.{SparkConf, SparkContext}
-import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression
-import com.cloudera.finance.ts.{TimeSeriesFilter, GARCH}
+
+import ValueAtRisk._
+import Util._
 
 object HistoricalValueAtRiskExample {
   def main(args: Array[String]): Unit = {
@@ -47,34 +51,35 @@ object HistoricalValueAtRiskExample {
     val sc = new SparkContext(conf)
 
     // Fit factor return -> instrument return predictive models
-//    val factorObservations = factorReturns.observations()
-//    val linearModels = instrumentReturns.data.map { instrumentReturns =>
-//      val regression = new OLSMultipleLinearRegression()
-//      regression.newSampleData(instrumentReturns, factorObservations)
-//      regression.estimateRegressionParameters()
-//    }
-//    val instrumentReturnsModel = new LinearInstrumentReturnsModel(arrsToMat(linearModels))
+    val factorObservations = factorReturns.observations()
+    val linearModels = instrumentReturns.univariateSeriesIterator.map { instrumentReturns =>
+      val regression = new OLSMultipleLinearRegression()
+      regression.newSampleData(instrumentReturns.toArray, factorObservations)
+      regression.estimateRegressionParameters()
+    }
+    val instrumentReturnsModel = new LinearInstrumentReturnsModel(arrsToMat(linearModels))
 
     // Fit an AR(1) + GARCH(1, 1) model to each factor
-//    val garchModels = factorReturns.data.map(GARCH.fitModel(_)._1)
-//    val iidFactorReturns = factorReturns.data.zip(garchModels).map { case (history, model) =>
-//      model.removeTimeDependentEffects(history, new Array[Double](history.length))
-//    }
+    val garchModels = factorReturns.mapSeries(GARCH.fitModel(_)._1)
+    val iidFactorReturns = factorReturns.univariateSeriesIterator.zip(garchModels.iterator).map {
+      case (history, model) =>
+        model.removeTimeDependentEffects(history, DenseVector.zeros[Double](history.length))
+    }
 
     // Generate an RDD of simulations
-//    val rand = new MersenneTwister()
-//    val factorsDist = new FilteredHistoricalFactorDistribution(rand, iidFactorReturns,
-//      garchModels.asInstanceOf[Array[TimeSeriesFilter]])
-//    val returns = simulationReturns(0L, factorsDist, numTrials, parallelism, sc,
-//      instrumentReturnsModel)
-//    returns.cache()
+    val rand = new MersenneTwister()
+    val factorsDist = new FilteredHistoricalFactorDistribution(rand, iidFactorReturns.toArray,
+      garchModels.asInstanceOf[Array[TimeSeriesFilter]])
+    val returns = simulationReturns(0L, factorsDist, numTrials, parallelism, sc,
+      instrumentReturnsModel)
+    returns.cache()
 
     // Calculate VaR and expected shortfall
-//    val pValues = Array(.01, .03, .05)
-//    val valueAtRisks = valueAtRisk(returns, pValues)
-//    println(s"Value at risk at ${pValues.mkString(",")}: ${valueAtRisks.mkString(",")}")
+    val pValues = Array(.01, .03, .05)
+    val valueAtRisks = valueAtRisk(returns, pValues)
+    println(s"Value at risk at ${pValues.mkString(",")}: ${valueAtRisks.mkString(",")}")
 
-//    val expectedShortfalls = expectedShortfall(returns, pValues)
-//    println(s"Expected shortfall at ${pValues.mkString(",")}: ${expectedShortfalls.mkString(",")}")
+    val expectedShortfalls = expectedShortfall(returns, pValues)
+    println(s"Expected shortfall at ${pValues.mkString(",")}: ${expectedShortfalls.mkString(",")}")
   }
 }

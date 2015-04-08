@@ -168,8 +168,8 @@ object TimeSeriesStatisticalTests {
     mat
   }
 
-  def addTrend(mat: DenseMatrix[Double], trend: String = "c", prepend: Boolean = false)
-    : DenseMatrix[Double] = {
+  def addTrend(mat: Matrix[Double], trend: String = "c", prepend: Boolean = false)
+    : Matrix[Double] = {
     val trendOrder = trend.toLowerCase match {
       case "c" => 0
       case "ct" | "t" => 1
@@ -197,14 +197,15 @@ object TimeSeriesStatisticalTests {
    * @param ts The time series.
    * @return A tuple containing the test statistic and p value.
    */
-  def adftest(ts: DenseVector[Double], maxLag: Int, regression: String = "c"): (Double, Double) = {
-    val tsDiff: DenseVector[Double] = diff(ts)
+  def adftest(ts: Vector[Double], maxLag: Int, regression: String = "c"): (Double, Double) = {
+    val tsDiff: DenseVector[Double] = diff(ts.toDenseVector)
     val lagMat = Lag.lagMatTrimBoth(tsDiff, maxLag, true)
     val nObs = lagMat.rows
 
     // replace 0 tsDiff with level of ts
     // TODO: unnecessary extra copying here
-    lagMat(0 to nObs - 1, 0 to 0) := ts(ts.length - nObs - 1 to ts.length - 1).toDenseMatrix.t
+    lagMat(0 to nObs - 1, 0 to 0) :=
+      ts(ts.length - nObs - 1 to ts.length - 1).toDenseVector.toDenseMatrix.t
     // trim
     val tsdShort = tsDiff(tsDiff.length - nObs to tsDiff.length - 1)
 

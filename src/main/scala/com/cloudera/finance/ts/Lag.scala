@@ -15,7 +15,7 @@
 
 package com.cloudera.finance.ts
 
-import breeze.linalg.{DenseMatrix, Vector}
+import breeze.linalg._
 
 object Lag {
   /**
@@ -51,7 +51,7 @@ object Lag {
    * Makes a lag matrix from the given time series with the given lag, trimming both rows and
    * columns so that every element in the matrix is full.
    */
-  private[ts] def lagMatTrimBoth(x: Vector[Double], maxLag: Int): DenseMatrix[Double] = {
+  private[ts] def lagMatTrimBoth(x: Vector[Double], maxLag: Int): Matrix[Double] = {
     lagMatTrimBoth(x, maxLag, false)
   }
 
@@ -60,7 +60,7 @@ object Lag {
    * columns so that every element in the matrix is full.
    */
   private[ts] def lagMatTrimBoth(x: Vector[Double], maxLag: Int, includeOriginal: Boolean)
-    : DenseMatrix[Double] = {
+    : Matrix[Double] = {
     val numObservations = x.size
     val numRows = numObservations - maxLag
     val numCols = maxLag + (if (includeOriginal) 1 else 0)

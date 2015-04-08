@@ -15,6 +15,8 @@
 
 package com.cloudera.finance.ts
 
+import breeze.linalg._
+
 import org.apache.commons.math3.random.MersenneTwister
 
 import org.scalatest.FunSuite
@@ -25,7 +27,7 @@ class GARCHSuite extends FunSuite {
     val rand = new MersenneTwister(5L)
     val n  = 10000
 
-    val ts = model.sample(n, rand)
+    val ts = new DenseVector(model.sample(n, rand))
     val logLikelihoodWithRightModel = model.logLikelihood(ts)
 
     val logLikelihoodWithWrongModel1 = new GARCHModel(.3, .4, .5).logLikelihood(ts)
@@ -46,7 +48,7 @@ class GARCHSuite extends FunSuite {
     val rand = new MersenneTwister(5L)
     val n = 10000
 
-    val ts = genModel.sample(n, rand)
+    val ts = new DenseVector(genModel.sample(n, rand))
 
     val gradient1 = new GARCHModel(omega + .1, alpha + .05, beta + .1).gradient(ts)
     assert(gradient1.forall(_ < 0.0))
@@ -62,7 +64,7 @@ class GARCHSuite extends FunSuite {
     val rand = new MersenneTwister(5L)
     val n = 10000
 
-    val ts = genModel.sample(n, rand)
+    val ts = new DenseVector(genModel.sample(n, rand))
 
     val model = GARCH.fitModel(ts)._1
     assert(model.omega - omega < .02)
@@ -75,13 +77,13 @@ class GARCHSuite extends FunSuite {
     val rand = new MersenneTwister(5L)
     val n  = 10000
 
-    val ts = model.sample(n, rand)
+    val ts = new DenseVector(model.sample(n, rand))
 
     // de-heteroskedasticize
-    val standardized = model.removeTimeDependentEffects(ts, new Array[Double](n))
+    val standardized = model.removeTimeDependentEffects(ts, DenseVector.zeros[Double](n))
     // heteroskedasticize
-    val filtered = model.addTimeDependentEffects(standardized, new Array[Double](n))
+    val filtered = model.addTimeDependentEffects(standardized, DenseVector.zeros[Double](n))
 
-    assert(filtered.zip(ts).forall(x => math.abs(x._1 - x._2) < .001))
+    assert((filtered - ts).toArray.forall(math.abs(_) < .001))
   }
 }

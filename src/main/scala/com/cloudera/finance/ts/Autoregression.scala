@@ -15,6 +15,10 @@
 
 package com.cloudera.finance.ts
 
+import breeze.linalg._
+
+import com.cloudera.finance.Util.matToRowArrs
+
 import org.apache.commons.math3.random.RandomGenerator
 import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression
 
@@ -22,22 +26,22 @@ object Autoregression {
   /**
    * Fits an AR(1) model to the given time series
    */
-  def fitModel(ts: Array[Double]): ARModel = fitModel(ts, 1)
+  def fitModel(ts: Vector[Double]): ARModel = fitModel(ts, 1)
 
   /**
    * Fits an AR model to the given time series.
    */
-  def fitModel(ts: Array[Double], maxLag: Int): ARModel = {
+  def fitModel(ts: Vector[Double], maxLag: Int): ARModel = {
     // This is loosely based off of the implementation in statsmodels:
     // https://github.com/statsmodels/statsmodels/blob/master/statsmodels/tsa/ar_model.py
 
     // Make left hand side
-    val Y = ts.slice(maxLag, ts.length)
+    val Y = ts(maxLag until ts.length)
     // Make lagged right hand side
     val X = Lag.lagMatTrimBoth(ts, maxLag)
 
     val regression = new OLSMultipleLinearRegression()
-    regression.newSampleData(Y, X)
+    regression.newSampleData(Y.toArray, matToRowArrs(X))
     val params = regression.estimateRegressionParameters()
     new ARModel(params(0), params.slice(1, params.length))
   }
@@ -50,7 +54,7 @@ class ARModel(val c: Double, val coefficients: Array[Double]) extends TimeSeries
   /**
    * {@inheritDoc}
    */
-  def removeTimeDependentEffects(ts: Array[Double], dest: Array[Double]): Array[Double] = {
+  def removeTimeDependentEffects(ts: Vector[Double], dest: Vector[Double]): Vector[Double] = {
     var i = 0
     while (i < ts.length) {
       dest(i) = ts(i) - c
@@ -67,7 +71,7 @@ class ARModel(val c: Double, val coefficients: Array[Double]) extends TimeSeries
   /**
    * {@inheritDoc}
    */
-  def addTimeDependentEffects(ts: Array[Double], dest: Array[Double]): Array[Double] = {
+  def addTimeDependentEffects(ts: Vector[Double], dest: Vector[Double]): Vector[Double] = {
     var i = 0
     while (i < ts.length) {
       dest(i) = c + ts(i)
@@ -81,8 +85,8 @@ class ARModel(val c: Double, val coefficients: Array[Double]) extends TimeSeries
     dest
   }
 
-  def sample(n: Int, rand: RandomGenerator): Array[Double] = {
-    val arr = Array.fill[Double](n)(rand.nextGaussian())
-    addTimeDependentEffects(arr, arr)
+  def sample(n: Int, rand: RandomGenerator): Vector[Double] = {
+    val vec = new DenseVector(Array.fill[Double](n)(rand.nextGaussian()))
+    addTimeDependentEffects(vec, vec)
   }
 }
