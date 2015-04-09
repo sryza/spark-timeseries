@@ -72,6 +72,14 @@ class BusinessDayFrequency(days: Int) extends Frequency {
    * {@inheritDoc}
    */
   def difference(dt1: DateTime, dt2: DateTime): Int = {
-    throw new UnsupportedOperationException()
+    val daysBetween = Days.daysBetween(dt1, dt2).getDays
+    val dayOfWeek1 = dt1.getDayOfWeek
+    if (dayOfWeek1 > 5) {
+      throw new IllegalArgumentException(s"$dt1 is not a business day")
+    }
+    val standardWeekendDays = (daysBetween / 7) * 2
+    val remaining  = daysBetween % 7
+    val extraWeekendDays = if (dayOfWeek1 + remaining > 5) 2 else 0
+    (daysBetween - standardWeekendDays - extraWeekendDays) / days
   }
 }
