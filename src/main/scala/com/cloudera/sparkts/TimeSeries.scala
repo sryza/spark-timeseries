@@ -17,8 +17,6 @@ package com.cloudera.sparkts
 
 import breeze.linalg._
 
-import com.cloudera.finance.Util
-
 import com.github.nscala_time.time.Imports._
 
 class TimeSeries[K](val index: DateTimeIndex, val data: Matrix[Double], labels: Array[K]) {
@@ -52,7 +50,7 @@ class TimeSeries[K](val index: DateTimeIndex, val data: Matrix[Double], labels: 
 object TimeSeries {
   def timeSeriesFromSamples[K](samples: Seq[(DateTime, Array[Double])], labels: Array[K])
     : TimeSeries[K] = {
-    val mat = new DenseMatrix[Double](samples.head._2.size, samples.size)
+    val mat = new DenseMatrix[Double](samples.length, samples.head._2.length)
     val dts = new Array[Long](samples.length)
     for (i <- 0 until samples.length) {
       val (dt, values) = samples(i)
