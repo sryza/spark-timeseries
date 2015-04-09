@@ -154,44 +154,32 @@ private[ts] object UnivariateTimeSeries {
 
   /**
    * Takes an iterator over time samples not necessarily at uniform intervals and returns an
-   * iterator of values at uniform intervals, with NaNs placed where there is no data.
+   * iterator of values at uniform intervals, with NaNs (or a given default value) placed where
+   * there is no data.
    *
    * The input samples must be aligned on the given frequency.
    */
-  def iterateWithUniformFrequency(samples: Iterator[(DateTime, Double)], frequency: Frequency)
-    : Iterator[(DateTime, Double)] = {
+  def iterateWithUniformFrequency(samples: Iterator[(DateTime, Double)], frequency: Frequency,
+      defaultValue: Double = Double.NaN): Iterator[(DateTime, Double)] = {
     // TODO: throw exceptions for points with non-aligned frequencies
     new Iterator[(DateTime, Double)]() {
-      var curUniformDT: DateTime = _
-      var curSamplesDT: DateTime = _
-      var curSamplesValue: Double = _
+      var curTup = if (samples.hasNext) samples.next() else null
+      var curUniformDT = if (curTup != null) curTup._1 else null
 
-      def hasNext: Boolean = {
-        samples.hasNext || (curUniformDT != null && curUniformDT < curSamplesDT)
-      }
+      def hasNext: Boolean = curTup != null
 
       def next(): (DateTime, Double) = {
-        val value = if (curUniformDT == null) { // haven't started yet
-          val (firstDT, firstValue) = samples.next()
-          curSamplesDT = firstDT
-          curUniformDT = firstDT
-          firstValue
+        val retValue = if (curTup._1 == curUniformDT) {
+          val value = curTup._2
+          curTup = if (samples.hasNext) samples.next() else null
+          value
         } else {
-          if (curUniformDT > curSamplesDT) {
-            val next = samples.next()
-            curSamplesDT = next._1
-            curSamplesValue = next._2
-          }
-          if (curUniformDT < curSamplesDT) {
-            Double.NaN
-          } else {
-            assert(curUniformDT == curSamplesDT)
-            curSamplesValue
-          }
+          assert(curTup._1 > curUniformDT)
+          defaultValue
         }
-        val ret = (curUniformDT, value)
+        val dt = curUniformDT
         curUniformDT = frequency.advance(curUniformDT, 1)
-        ret
+        (dt, retValue)
       }
     }
   }

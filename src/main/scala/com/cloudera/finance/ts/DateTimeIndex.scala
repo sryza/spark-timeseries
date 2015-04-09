@@ -145,8 +145,8 @@ class IrregularDateTimeIndex(val instants: Array[Long]) extends DateTimeIndex {
    * {@inheritDoc}
    */
   override def locAtDateTime(dt: DateTime, round: Boolean): Int = {
-    // TODO: binary search
-    throw new UnsupportedOperationException()
+    // TODO: round
+    java.util.Arrays.binarySearch(instants, dt.getMillis)
   }
 
 }
