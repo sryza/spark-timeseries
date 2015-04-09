@@ -19,7 +19,7 @@ import breeze.linalg._
 
 import com.github.nscala_time.time.Imports._
 
-class TimeSeries[K](val index: DateTimeIndex, val data: Matrix[Double], labels: Array[K])
+class TimeSeries[K](val index: DateTimeIndex, val data: Matrix[Double], val labels: Array[K])
   extends Serializable {
 
   def observations(): Array[Array[Double]] = {
