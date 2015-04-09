@@ -15,53 +15,47 @@
 
 package com.cloudera.finance.examples
 
+import com.cloudera.finance.YahooParser
 import com.cloudera.sparkts.DateTimeIndex._
-import com.cloudera.sparkts.{TimeSeriesStatisticalTests, TimeSeriesRDD, TimeSeries}
-import TimeSeries._
-import TimeSeriesRDD._
-import TimeSeriesStatisticalTests._
+import com.cloudera.sparkts.TimeSeries
+import com.cloudera.sparkts.UnivariateTimeSeries._
+import com.cloudera.sparkts.TimeSeriesRDD._
+import com.cloudera.sparkts.TimeSeriesStatisticalTests._
 
 import com.github.nscala_time.time.Imports._
 
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.rdd.RDD
 
-class SimpleTickDataExample {
+object SimpleTickDataExample {
   def main(args: Array[String]): Unit = {
     val inputDir = args(0)
 
-    val conf = new SparkConf()
+    val conf = new SparkConf().setMaster("local")
     val sc = new SparkContext(conf)
 
     // Load and parse the data
     val seriesByFile: RDD[TimeSeries[String]] = sc.wholeTextFiles(inputDir).
-      map { case (path, text) => yahooStringToTimeSeries(text, path) }
+      map { case (path, text) => YahooParser.yahooStringToTimeSeries(text, path) }
     seriesByFile.cache()
 
     // Merge the series from individual files into a TimeSeriesRDD
-    val start = seriesByFile.map(_.index.start).reduce { case (a, b) => if (a < b) a else b }
-    val end = seriesByFile.map(_.index.end).reduce { case (a, b) => if (a > b) a else b }
+    val start = seriesByFile.map(_.index.start).takeOrdered(1).head
+    val end = seriesByFile.map(_.index.end).top(1).head
     val dtIndex = uniform(start, end, 1.businessDays)
     val tsRdd = timeSeriesRDD(dtIndex, seriesByFile)
 
     seriesByFile.unpersist()
     tsRdd.cache()
 
+    // Which symbols do we have the oldest data on?
+    val oldestData: Array[(Int, String)] = tsRdd.mapValues(trimLeading(_).length).map(_.swap).top(5)
+    println(oldestData.mkString(","))
+
     // Impute missing data
 
     // Find the series with the largest serial correlations
     val durbinWatsonStats: RDD[(String, Double)] = tsRdd.mapValues(dwtest)
-    durbinWatsonStats.top(20)(Ordering.by[(String, Double), Double](_._2))
-  }
-
-  def yahooStringToTimeSeries(text: String, keyPrefix: String): TimeSeries[String] = {
-    val lines = text.split('\n')
-    val labels = lines(0).split(',').tail.map(keyPrefix + _)
-    val samples = lines.tail.map { line =>
-      val tokens = line.split(',')
-      val dt = new DateTime(tokens.head)
-      (dt, line.tail.map(_.toDouble).toArray)
-    }
-    timeSeriesFromSamples(samples, labels)
+    durbinWatsonStats.map(_.swap).top(20)
   }
 }
