@@ -168,7 +168,7 @@ object TimeSeriesRDD {
   def timeSeriesRDD[K](targetIndex: UniformDateTimeIndex,
       seriesRDD: RDD[(K, UniformDateTimeIndex, Vector[Double])]): TimeSeriesRDD[K] = {
     val rdd = seriesRDD.map { case (key, index, vec) =>
-      val newVec = UnivariateTimeSeries.rebase(index, targetIndex, vec)
+      val newVec = TimeSeriesUtils.rebase(index, targetIndex, vec)
       (key, newVec)
     }
     new TimeSeriesRDD(targetIndex, rdd)
@@ -178,7 +178,7 @@ object TimeSeriesRDD {
     : TimeSeriesRDD[K] = {
     val rdd = seriesRDD.flatMap { series =>
       series.univariateKeyAndSeriesIterator().map { case (key, vec) =>
-        (key, UnivariateTimeSeries.rebase(series.index, targetIndex, vec))
+        (key, TimeSeriesUtils.rebase(series.index, targetIndex, vec))
       }
     }
     new TimeSeriesRDD(targetIndex, rdd)

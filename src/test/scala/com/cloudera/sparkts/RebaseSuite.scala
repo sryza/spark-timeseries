@@ -20,7 +20,7 @@ import scala.Double.NaN
 import breeze.linalg._
 
 import com.cloudera.sparkts.DateTimeIndex._
-import com.cloudera.sparkts.UnivariateTimeSeries._
+import com.cloudera.sparkts.TimeSeriesUtils._
 
 import com.github.nscala_time.time.Imports._
 
