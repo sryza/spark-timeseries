@@ -28,7 +28,7 @@ object YahooParser {
       val tokens = line.split(',')
       val dt = new DateTime(tokens.head)
       (dt, tokens.tail.map(_.toDouble).toArray)
-    }
+    }.reverse
     timeSeriesFromSamples(samples, labels)
   }
 }
