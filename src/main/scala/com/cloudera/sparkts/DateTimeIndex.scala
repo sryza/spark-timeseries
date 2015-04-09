@@ -17,6 +17,8 @@ package com.cloudera.sparkts
 
 import com.github.nscala_time.time.Imports._
 
+import DateTimeIndex._
+
 /**
  * A DateTimeIndex maintains a bi-directional mapping between integers and an ordered collection of
  * date-times. Multiple date-times may correspond to the same integer, implying multiple samples
@@ -34,12 +36,12 @@ trait DateTimeIndex extends Serializable {
   /**
    * The first date-time in the index.
    */
-  def start(): DateTime
+  def first(): DateTime
 
   /**
    * The last date-time in the index. Inclusive.
    */
-  def end(): DateTime
+  def last(): DateTime
 
   /**
    * The number of date-times in the index.
@@ -53,7 +55,7 @@ trait DateTimeIndex extends Serializable {
   def locAtDateTime(dt: DateTime, round: Boolean): Int
 }
 
-class UniformDateTimeIndex(val start: DateTime, val periods: Int, val frequency: Frequency)
+class UniformDateTimeIndex(val start: Long, val periods: Int, val frequency: Frequency)
   extends DateTimeIndex {
 
   override def sliceSeries(start: DateTime, end: DateTime, series: Vector[Double])
@@ -64,7 +66,12 @@ class UniformDateTimeIndex(val start: DateTime, val periods: Int, val frequency:
   /**
    * {@inheritDoc}
    */
-  override def end(): DateTime = frequency.advance(start, periods - 1)
+  override def first(): DateTime = new DateTime(start)
+
+  /**
+   * {@inheritDoc}
+   */
+  override def last(): DateTime = frequency.advance(new DateTime(first), periods - 1)
 
   /**
    * {@inheritDoc}
@@ -72,7 +79,7 @@ class UniformDateTimeIndex(val start: DateTime, val periods: Int, val frequency:
   override def size: Int = periods
 
   def apply(i: Int): DateTime = {
-    frequency.advance(start, i)
+    frequency.advance(new DateTime(first), i)
   }
 
   def slice(start: DateTime, end: DateTime): UniformDateTimeIndex = {
@@ -80,7 +87,7 @@ class UniformDateTimeIndex(val start: DateTime, val periods: Int, val frequency:
   }
 
   def slice(lower: Int, upper: Int): UniformDateTimeIndex = {
-    new UniformDateTimeIndex(frequency.advance(start, lower), upper - lower, frequency)
+    uniform(frequency.advance(new DateTime(first), lower), upper - lower, frequency)
   }
 
   def union(other: UniformDateTimeIndex): UniformDateTimeIndex = {
@@ -98,12 +105,14 @@ class UniformDateTimeIndex(val start: DateTime, val periods: Int, val frequency:
   /**
    * {@inheritDoc}
    */
-  override def dateTimeAtLoc(loc: Int): DateTime = frequency.advance(start, loc)
+  override def dateTimeAtLoc(loc: Int): DateTime = frequency.advance(new DateTime(first), loc)
 
   /**
    * {@inheritDoc}
    */
-  override def locAtDateTime(dt: DateTime, round: Boolean): Int = frequency.difference(start, dt)
+  override def locAtDateTime(dt: DateTime, round: Boolean): Int = {
+    frequency.difference(new DateTime(first), dt)
+  }
 }
 
 class IrregularDateTimeIndex(val instants: Array[Long]) extends DateTimeIndex {
@@ -122,12 +131,12 @@ class IrregularDateTimeIndex(val instants: Array[Long]) extends DateTimeIndex {
   /**
    * {@inheritDoc}
    */
-  override def start(): DateTime = new DateTime(instants(0))
+  override def first(): DateTime = new DateTime(instants(0))
 
   /**
    * {@inheritDoc}
    */
-  override def end(): DateTime = new DateTime(instants(instants.length - 1))
+  override def last(): DateTime = new DateTime(instants(instants.length - 1))
 
   /**
    * {@inheritDoc}
@@ -153,7 +162,7 @@ class IrregularDateTimeIndex(val instants: Array[Long]) extends DateTimeIndex {
 
 object DateTimeIndex {
   def uniform(start: DateTime, periods: Int, frequency: Frequency): UniformDateTimeIndex = {
-    new UniformDateTimeIndex(start, periods, frequency)
+    new UniformDateTimeIndex(start.getMillis, periods, frequency)
   }
 
   def uniform(start: DateTime, end: DateTime, frequency: Frequency): UniformDateTimeIndex = {

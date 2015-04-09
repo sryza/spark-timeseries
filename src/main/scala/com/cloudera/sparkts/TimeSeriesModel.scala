@@ -16,7 +16,6 @@
 package com.cloudera.sparkts
 
 import breeze.linalg._
-import com.cloudera.sparkts.TimeSeriesModel
 
 /**
  * Models time dependent effects in a time series.

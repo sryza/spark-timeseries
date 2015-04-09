@@ -86,8 +86,8 @@ private[sparkts] object TimeSeriesUtils {
       sourceIndex: UniformDateTimeIndex,
       targetIndex: UniformDateTimeIndex,
       vec: Vector[Double]): Vector[Double] = {
-    val startLoc = sourceIndex.locAtDateTime(targetIndex.start, false)
-    val endLoc = sourceIndex.locAtDateTime(targetIndex.end, false) + 1
+    val startLoc = sourceIndex.locAtDateTime(targetIndex.first, false)
+    val endLoc = sourceIndex.locAtDateTime(targetIndex.last, false) + 1
     if (startLoc >= 0 && endLoc <= vec.length) {
       vec(startLoc until endLoc)
     } else {
@@ -108,7 +108,7 @@ private[sparkts] object TimeSeriesUtils {
       sourceIndex: IrregularDateTimeIndex,
       targetIndex: UniformDateTimeIndex,
       vec: Vector[Double]): Vector[Double] = {
-    val startLoc = sourceIndex.locAtDateTime(targetIndex.start, false)
+    val startLoc = sourceIndex.locAtDateTime(targetIndex.first, false)
     val startLocInSourceVec = math.max(0, startLoc)
     val dtsRelevant = sourceIndex.instants.iterator.drop(startLocInSourceVec).map(new DateTime(_))
     val vecRelevant = vec(startLocInSourceVec until vec.length).valuesIterator
@@ -136,7 +136,7 @@ private[sparkts] object TimeSeriesUtils {
     while (iter.hasNext) {
       arr += iter.next()._2
     }
-    val index = new UniformDateTimeIndex(firstDT, arr.size, frequency)
+    val index = DateTimeIndex.uniform(firstDT, arr.size, frequency)
     (index, new DenseVector[Double](arr.toArray))
   }
 
