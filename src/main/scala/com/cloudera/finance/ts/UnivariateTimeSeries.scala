@@ -23,6 +23,9 @@ import com.github.nscala_time.time.Imports._
 
 import org.joda.time.DateTime
 
+/**
+ * Internal utilities for dealing with 1-D time series.
+ */
 private[ts] object UnivariateTimeSeries {
   def union(series: Array[Array[Double]]): Array[Double] = {
     val unioned = Array.fill(series.head.length)(Double.NaN)
@@ -51,34 +54,40 @@ private[ts] object UnivariateTimeSeries {
   }
 
   /**
-   * Accepts a series of values indexed by the given source index and slices it to conform to a
+   * Accepts a series of values indexed by the given source index and moves it to conform to a
    * target index. The target index need not fit inside the source index - non-overlapping regions
    * will be filled with NaNs.
+   *
+   * The source index must have the same frequency as the target index.
+   *
+   * Currently only uniform target indices are supported.
    */
-  def openSlice(sourceIndex: DateTimeIndex, targetIndex: DateTimeIndex, vec: Vector[Double])
+  def rebase(sourceIndex: DateTimeIndex, targetIndex: DateTimeIndex, vec: Vector[Double])
     : Vector[Double] = {
-    if (sourceIndex.isInstanceOf[UniformDateTimeIndex] &&
-        targetIndex.isInstanceOf[UniformDateTimeIndex]) {
-      openSliceUniformIndices(sourceIndex.asInstanceOf[UniformDateTimeIndex],
-        targetIndex.asInstanceOf[UniformDateTimeIndex], vec)
+    if (targetIndex.isInstanceOf[UniformDateTimeIndex]) {
+      if (sourceIndex.isInstanceOf[UniformDateTimeIndex]) {
+        rebaseWithUniformSource(sourceIndex.asInstanceOf[UniformDateTimeIndex],
+          targetIndex.asInstanceOf[UniformDateTimeIndex], vec)
+      } else if (sourceIndex.isInstanceOf[IrregularDateTimeIndex]) {
+        rebaseWithIrregularSource(sourceIndex.asInstanceOf[IrregularDateTimeIndex],
+          targetIndex.asInstanceOf[UniformDateTimeIndex], vec)
+      } else {
+        throw new UnsupportedOperationException("Unrecognized source index type")
+      }
+    } else {
+      throw new UnsupportedOperationException("Only uniform target indices are supported")
     }
-    throw new UnsupportedOperationException()
   }
 
   /**
-   * Accepts a series of values indexed by the given uniform source index and slices it to conform
-   * to a uniform target index. The target index need not fit inside the source index -
-   * non-overlapping regions will be filled with NaNs.
-   *
-   * The source and target index must have the same frequencies.
+   * Implementation for moveIndex when source index is uniform.
    */
-  private def openSliceUniformIndices(
+  private def rebaseWithUniformSource(
       sourceIndex: UniformDateTimeIndex,
       targetIndex: UniformDateTimeIndex,
       vec: Vector[Double]): Vector[Double] = {
-    val startLoc = sourceIndex.locOfDateTime(targetIndex.start, false)
-    // TODO: there could be an off-by-one here because UniformDateTimeIndex.end is inclusive
-    val endLoc = sourceIndex.locOfDateTime(targetIndex.end, false)
+    val startLoc = sourceIndex.locAtDateTime(targetIndex.start, false)
+    val endLoc = sourceIndex.locAtDateTime(targetIndex.end, false) + 1
     if (startLoc >= 0 && endLoc <= vec.length) {
       vec(startLoc until endLoc)
     } else {
@@ -88,7 +97,34 @@ private[ts] object UnivariateTimeSeries {
       val resultStartLoc = if (startLoc < 0) -startLoc else 0
       val resultEndLoc = resultStartLoc + (safeEndLoc - safeStartLoc)
       resultVec(resultStartLoc until resultEndLoc) := vec(safeStartLoc until safeEndLoc)
+      resultVec
     }
+  }
+
+  /**
+   * Implementation for moveIndex when source index is irregular.
+   */
+  private def rebaseWithIrregularSource(
+      sourceIndex: IrregularDateTimeIndex,
+      targetIndex: UniformDateTimeIndex,
+      vec: Vector[Double]): Vector[Double] = {
+    val startLoc = sourceIndex.locAtDateTime(targetIndex.start, false)
+    val startLocInSourceVec = math.max(0, startLoc)
+    val dtsRelevant = sourceIndex.instants.iterator.drop(startLocInSourceVec).map(new DateTime(_))
+    val vecRelevant = vec(startLocInSourceVec until vec.length).valuesIterator
+    val iter = iterateWithUniformFrequency(dtsRelevant.zip(vecRelevant), targetIndex.frequency)
+
+    val resultArr = new Array[Double](targetIndex.size)
+    for (i <- 0 until targetIndex.size) {
+      // Add leading or trailing NaNs if target index starts earlier than source index or ends
+      // after the source index
+      resultArr(i) = if (i < -startLoc || !iter.hasNext) {
+        Double.NaN
+      } else {
+        iter.next._2
+      }
+    }
+    new DenseVector(resultArr)
   }
 
   def samplesToTimeSeries(samples: Iterator[(DateTime, Double)], frequency: Frequency)

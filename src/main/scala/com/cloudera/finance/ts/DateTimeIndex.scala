@@ -49,25 +49,27 @@ trait DateTimeIndex {
   def splitEvenly(numPartitions: Int): Array[DateTimeIndex]
 
   def dateTimeAtLoc(loc: Int): DateTime
+
+  def locAtDateTime(dt: DateTime, round: Boolean): Int
 }
 
 class UniformDateTimeIndex(val start: DateTime, val periods: Int, val frequency: Frequency)
   extends DateTimeIndex {
 
-  def sliceSeries(start: DateTime, end: DateTime, series: Vector[Double])
+  override def sliceSeries(start: DateTime, end: DateTime, series: Vector[Double])
     : (DateTimeIndex, Vector[Double]) = {
     throw new UnsupportedOperationException()
   }
 
-  def end(): DateTime = {
-    throw new UnsupportedOperationException()
-  }
+  /**
+   * {@inheritDoc}
+   */
+  override def end(): DateTime = frequency.advance(start, periods - 1)
 
-  def size: Int = periods
-
-  def locOfDateTime(dateTime: DateTime, round: Boolean): Int = {
-    throw new UnsupportedOperationException()
-  }
+  /**
+   * {@inheritDoc}
+   */
+  override def size: Int = periods
 
   def apply(i: Int): DateTime = {
     frequency.advance(start, i)
@@ -93,7 +95,15 @@ class UniformDateTimeIndex(val start: DateTime, val periods: Int, val frequency:
 
   def splitEvenly(numPartitions: Int): Array[DateTimeIndex] = ???
 
-  def dateTimeAtLoc(loc: Int): DateTime = ???
+  /**
+   * {@inheritDoc}
+   */
+  override def dateTimeAtLoc(loc: Int): DateTime = frequency.advance(start, loc)
+
+  /**
+   * {@inheritDoc}
+   */
+  override def locAtDateTime(dt: DateTime, round: Boolean): Int = frequency.difference(start, dt)
 }
 
 class IrregularDateTimeIndex(val instants: Array[Long]) extends DateTimeIndex {
@@ -110,70 +120,56 @@ class IrregularDateTimeIndex(val instants: Array[Long]) extends DateTimeIndex {
   }
 
   /**
-   * The first date-time in the index.
+   * {@inheritDoc}
    */
   override def start(): DateTime = new DateTime(instants(0))
 
   /**
-   * The last date-time in the index. Inclusive.
+   * {@inheritDoc}
    */
   override def end(): DateTime = new DateTime(instants(instants.length - 1))
 
   /**
-   * The number of date-times in the index.
+   * {@inheritDoc}
    */
   override def size(): Int = instants.length
 
   override def splitEvenly(numPartitions: Int): Array[DateTimeIndex] = ???
 
+  /**
+   * {@inheritDoc}
+   */
   override def dateTimeAtLoc(loc: Int): DateTime = new DateTime(instants(loc))
+
+  /**
+   * {@inheritDoc}
+   */
+  override def locAtDateTime(dt: DateTime, round: Boolean): Int = {
+    // TODO: binary search
+    throw new UnsupportedOperationException()
+  }
 
 }
 
 object DateTimeIndex {
+  def uniform(start: DateTime, periods: Int, frequency: Frequency): UniformDateTimeIndex = {
+    new UniformDateTimeIndex(start, periods, frequency)
+  }
+
   def uniform(start: DateTime, end: DateTime, frequency: Frequency): UniformDateTimeIndex = {
     throw new UnsupportedOperationException()
   }
 
-  implicit def periodToFrequency(period: Period): Frequency = new PeriodFrequency(period)
+  def irregular(dts: Array[DateTime]): IrregularDateTimeIndex = {
+    new IrregularDateTimeIndex(dts.map(_.getMillis))
+  }
+
+  implicit def periodToFrequency(period: Period): Frequency = {
+    if (period.getDays != 0) {
+      return new DayFrequency(period.getDays)
+    }
+    throw new UnsupportedOperationException()
+  }
 
   implicit def intToBusinessDayRichInt(n: Int): BusinessDayRichInt = new BusinessDayRichInt(n)
-}
-
-class BusinessDayRichInt(n: Int) {
-  def businessDays(): BusinessDayFrequency = new BusinessDayFrequency(n)
-}
-
-/**
- * A frequency for a uniform index.
- */
-trait Frequency {
-  /**
-   * Advances the given DateTime by this frequency n times.
-   */
-  def advance(dt: DateTime, n: Int): DateTime
-}
-
-class PeriodFrequency(period: Period) extends Frequency {
-  /**
-   * Advances the given DateTime by the period n times.
-   */
-  def advance(dt: DateTime, n: Int): DateTime = dt + (n * period)
-}
-
-class BusinessDayFrequency(days: Int) extends Frequency {
-  /**
-   * Advances the given DateTime by n business days.
-   */
-  def advance(dt: DateTime, n: Int): DateTime = {
-    val dayOfWeek = dt.getDayOfWeek
-    if (dayOfWeek > 5) {
-      throw new IllegalArgumentException(s"$dt is not a business day")
-    }
-    val totalDays = n * days
-    val standardWeekendDays = (totalDays / 5) * 2
-    val remaining = totalDays % 5
-    val extraWeekendDays = if (dayOfWeek + remaining > 5) 2 else 0
-    dt + (totalDays + standardWeekendDays + extraWeekendDays).days
-  }
 }
