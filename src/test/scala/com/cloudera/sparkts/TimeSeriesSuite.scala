@@ -19,7 +19,8 @@ import scala.Double.NaN
 
 import com.github.nscala_time.time.Imports._
 
-import TimeSeries._
+import TimeSeries.timeSeriesFromSamples
+import UnivariateTimeSeries._
 
 import org.scalatest.{FunSuite, ShouldMatchers}
 

@@ -19,7 +19,6 @@ import breeze.linalg._
 import org.apache.commons.math3.random.MersenneTwister
 
 import org.scalatest.FunSuite
-import com.cloudera.sparkts.TimeSeriesStatisticalTests
 
 class AugmentedDickeyFullerSuite extends FunSuite {
   test("non-stationary AR model") {

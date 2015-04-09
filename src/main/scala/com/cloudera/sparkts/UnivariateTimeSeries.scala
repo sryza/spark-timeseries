@@ -53,4 +53,82 @@ object UnivariateTimeSeries {
     }
     i
   }
+
+  def fillts(ts: Vector[Double], fillMethod: String): Unit = {
+    fillMethod match {
+      case "linear" => fillLinear(ts)
+      case "nearest" => fillNearest(ts)
+    }
+  }
+
+  def fillNearest(values: Array[Double]): Unit = {
+    fillNearest(new DenseVector(values))
+  }
+
+  def fillNearest(values: Vector[Double]): Unit = {
+    var lastExisting = -1
+    var nextExisting = -1
+    var i = 1
+    while (i < values.length) {
+      if (values(i).isNaN) {
+        if (nextExisting < i) {
+          nextExisting = i + 1
+          while (nextExisting < values.length && values(nextExisting).isNaN) {
+            nextExisting += 1
+          }
+        }
+
+        if (lastExisting < 0 && nextExisting >= values.length) {
+          throw new IllegalArgumentException("Input is all NaNs!")
+        } else if (nextExisting >= values.length || // TODO: check this
+          (lastExisting >= 0 && i - lastExisting < nextExisting - i)) {
+          values(i) = values(lastExisting)
+        } else {
+          values(i) = values(nextExisting)
+        }
+      } else {
+        lastExisting = i
+      }
+      i += 1
+    }
+  }
+
+  def fillNext(values: Array[Double]): Unit = {
+    fillNext(new DenseVector(values))
+  }
+
+  def fillNext(values: Vector[Double]): Unit = {
+    throw new UnsupportedOperationException()
+  }
+
+  def fillPrevious(values: Array[Double]): Unit = {
+    fillNearest(new DenseVector(values))
+  }
+
+  def fillPrevious(values: Vector[Double]): Unit = {
+    throw new UnsupportedOperationException()
+  }
+
+  def fillLinear(values: Array[Double]): Unit = {
+    fillNearest(new DenseVector(values))
+  }
+
+  def fillLinear(values: Vector[Double]): Unit = {
+    var i = 1
+    while (i < values.length - 1) {
+      val rangeStart = i
+      while (i < values.length - 1 && values(i).isNaN) {
+        i += 1
+      }
+      val before = values(rangeStart - 1)
+      val after = values(i)
+      if (i != rangeStart && !before.isNaN && !after.isNaN) {
+        val increment = (after - before) / (i - (rangeStart - 1))
+        for (j <- rangeStart until i) {
+          values(j) = values(j - 1) + increment
+        }
+      }
+      i += 1
+    }
+  }
 }
