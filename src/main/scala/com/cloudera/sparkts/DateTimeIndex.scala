@@ -166,7 +166,7 @@ object DateTimeIndex {
   }
 
   def uniform(start: DateTime, end: DateTime, frequency: Frequency): UniformDateTimeIndex = {
-    throw new UnsupportedOperationException()
+    uniform(start, frequency.difference(start, end) + 1, frequency)
   }
 
   def irregular(dts: Array[DateTime]): IrregularDateTimeIndex = {

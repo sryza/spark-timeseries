@@ -19,7 +19,7 @@ import breeze.linalg._
 
 import com.github.nscala_time.time.Imports._
 
-class TimeSeries[K](val index: DateTimeIndex, val data: Matrix[Double], val labels: Array[K])
+class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix[Double], val labels: Array[K])
   extends Serializable {
 
   def observations(): Array[Array[Double]] = {
@@ -37,11 +37,25 @@ class TimeSeries[K](val index: DateTimeIndex, val data: Matrix[Double], val labe
   def differences(): TimeSeries[K] = differences(1)
 
   def univariateSeriesIterator(): Iterator[Vector[Double]] = {
-    throw new UnsupportedOperationException()
+    new Iterator[Vector[Double]] {
+      var i = 0
+      def hasNext: Boolean = i < data.cols
+      def next(): Vector[Double] = {
+        i += 1
+        data(::, i - 1)
+      }
+    }
   }
 
   def univariateKeyAndSeriesIterator(): Iterator[(K, Vector[Double])] = {
-    throw new UnsupportedOperationException()
+    new Iterator[(K, Vector[Double])] {
+      var i = 0
+      def hasNext: Boolean = i < data.cols
+      def next(): (K, Vector[Double]) = {
+        i += 1
+        (labels(i - 1), data(::, i - 1))
+      }
+    }
   }
 
   def mapSeries[U](f: (Vector[Double]) => U): Seq[U] = {
