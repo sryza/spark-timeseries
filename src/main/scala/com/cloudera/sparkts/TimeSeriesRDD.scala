@@ -29,6 +29,26 @@ import org.joda.time.DateTime
 class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector[Double])])
   extends RDD[(K, Vector[Double])](parent) {
 
+  override def filter(f: ((K, Vector[Double])) => Boolean): TimeSeriesRDD[K] = {
+    new TimeSeriesRDD(index, super.filter(f))
+  }
+
+  /**
+   * Keep only time series whose first observation is before or equal to the given start date.
+   */
+  def filterStartingBefore(dt: DateTime): TimeSeriesRDD[K] = {
+    val startLoc = index.locAtDateTime(dt, false)
+    filter { case (key, ts) => UnivariateTimeSeries.firstNotNaN(ts) <= startLoc }
+  }
+
+  /**
+   * Keep only time series whose last observation is after or equal to the given end date.
+   */
+  def filterEndingAfter(dt: DateTime): TimeSeriesRDD[K] = {
+    val endLoc = index.locAtDateTime(dt, false)
+    filter { case (key, ts) => UnivariateTimeSeries.lastNotNaN(ts) >= endLoc}
+  }
+
   def sliceSeries(start: DateTime, end: DateTime): TimeSeriesRDD[K] = {
     throw new UnsupportedOperationException()
   }

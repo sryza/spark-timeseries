@@ -31,4 +31,26 @@ object UnivariateTimeSeries {
   def trimTrailing(ts: Vector[Double]): Vector[Double] = {
     throw new UnsupportedOperationException()
   }
+
+  def firstNotNaN(ts: Vector[Double]): Int = {
+    var i = 0
+    while (i < ts.length) {
+      if (!java.lang.Double.isNaN(ts(i))) {
+        return i
+      }
+      i += 1
+    }
+    i
+  }
+
+  def lastNotNaN(ts: Vector[Double]): Int = {
+    var i = ts.length - 1
+    while (i >= 0) {
+      if (!java.lang.Double.isNaN(i)) {
+        return i
+      }
+      i -= 1
+    }
+    i
+  }
 }
