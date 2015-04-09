@@ -26,7 +26,7 @@ class BusinessDayRichInt(n: Int) {
 /**
  * A frequency for a uniform index.
  */
-trait Frequency {
+trait Frequency extends Serializable {
   /**
    * Advances the given DateTime by this frequency n times.
    */

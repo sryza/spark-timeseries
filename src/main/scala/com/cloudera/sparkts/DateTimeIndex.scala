@@ -22,7 +22,7 @@ import com.github.nscala_time.time.Imports._
  * date-times. Multiple date-times may correspond to the same integer, implying multiple samples
  * at the same date-time.
  */
-trait DateTimeIndex {
+trait DateTimeIndex extends Serializable {
   /**
    * Returns a sub-slice of the index, starting and ending at the given date-times.
    */
