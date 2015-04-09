@@ -82,8 +82,11 @@ class UniformDateTimeIndex(val start: Long, val periods: Int, val frequency: Fre
     frequency.advance(new DateTime(first), i)
   }
 
-  def slice(start: DateTime, end: DateTime): UniformDateTimeIndex = {
-    throw new UnsupportedOperationException()
+  /**
+   * {@inheritDoc}
+   */
+  override def slice(start: DateTime, end: DateTime): UniformDateTimeIndex = {
+    uniform(start, frequency.difference(start, end) + 1, frequency)
   }
 
   def slice(lower: Int, upper: Int): UniformDateTimeIndex = {
@@ -112,6 +115,11 @@ class UniformDateTimeIndex(val start: Long, val periods: Int, val frequency: Fre
    */
   override def locAtDateTime(dt: DateTime, round: Boolean): Int = {
     frequency.difference(new DateTime(first), dt)
+  }
+
+  override def equals(other: Any): Boolean = {
+    val otherIndex = other.asInstanceOf[UniformDateTimeIndex]
+    otherIndex.first == first && otherIndex.periods == periods && otherIndex.frequency == frequency
   }
 }
 

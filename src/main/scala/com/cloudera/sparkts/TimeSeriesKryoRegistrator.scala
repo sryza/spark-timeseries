@@ -16,11 +16,12 @@
 package com.cloudera.sparkts
 
 import com.esotericsoftware.kryo.{Serializer, Kryo}
+import com.esotericsoftware.kryo.io.{Output, Input}
 
-import org.apache.spark.serializer.KryoRegistrator
+import org.apache.spark.SparkConf
+import org.apache.spark.serializer.{KryoRegistrator, KryoSerializer}
 
 import org.joda.time.DateTime
-import com.esotericsoftware.kryo.io.{Output, Input}
 
 class TimeSeriesKryoRegistrator extends KryoRegistrator {
   def registerClasses(kryo: Kryo): Unit = {
@@ -40,5 +41,12 @@ class DateTimeSerializer extends Serializer[DateTime] {
 
   def read(kryo: Kryo, in: Input, clazz: Class[DateTime]): DateTime = {
     new DateTime(in.readLong(true))
+  }
+}
+
+object TimeSeriesKryoRegistrator {
+  def registerKryoClasses(conf: SparkConf): Unit = {
+    conf.set("spark.serializer", classOf[KryoSerializer].getName)
+    conf.set("spark.kryo.registrator", classOf[TimeSeriesKryoRegistrator].getName)
   }
 }

@@ -49,12 +49,9 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector[Double])
     filter { case (key, ts) => UnivariateTimeSeries.lastNotNaN(ts) >= endLoc}
   }
 
-  def sliceSeries(start: DateTime, end: DateTime): TimeSeriesRDD[K] = {
-    throw new UnsupportedOperationException()
-  }
-
-  def sliceSeries(start: Int, end: Int): TimeSeriesRDD[K] = {
-    throw new UnsupportedOperationException()
+  def slice(start: DateTime, end: DateTime): TimeSeriesRDD[K] = {
+    val targetIndex = index.slice(start, end)
+    new TimeSeriesRDD(targetIndex, mapSeries(TimeSeriesUtils.rebase(index, targetIndex, _)))
   }
 
   def unionSeries(other: TimeSeriesRDD[K]): TimeSeriesRDD[K] = {
@@ -67,12 +64,12 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector[Double])
     throw new UnsupportedOperationException()
   }
 
-  def mapSeries[U](f: (K, Vector[Double]) => U): RDD[(K, U)] = {
-    map(kt => (kt._1, f(kt._1, kt._2)))
+  def mapSeries[U](f: (Vector[Double]) => U): RDD[(K, U)] = {
+    map(kt => (kt._1, f(kt._2)))
   }
 
-  def foldLeftSeries[U](zero: U)(f: ((U, K, Double)) => U): RDD[(K, U)] = {
-    mapSeries((k, t) => t.valuesIterator.foldLeft(zero)((u, v) => f(u, k, v)))
+  def foldLeftSeries[U](zero: U)(f: ((U, Double)) => U): RDD[(K, U)] = {
+    mapSeries(t => t.valuesIterator.foldLeft(zero)((u, v) => f(u, v)))
   }
 
   def seriesStats(): RDD[StatCounter] = {

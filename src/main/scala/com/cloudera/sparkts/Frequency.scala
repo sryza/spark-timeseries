@@ -38,7 +38,7 @@ trait Frequency extends Serializable {
   def difference(dt1: DateTime, dt2: DateTime): Int
 }
 
-class DayFrequency(days: Int) extends Frequency {
+class DayFrequency(val days: Int) extends Frequency {
   val period = days.days
 
   /**
@@ -50,9 +50,17 @@ class DayFrequency(days: Int) extends Frequency {
    * {@inheritDoc}
    */
   def difference(dt1: DateTime, dt2: DateTime): Int = Days.daysBetween(dt1, dt2).getDays / days
+
+  override def equals(other: Any): Boolean = {
+    if (other.isInstanceOf[DayFrequency]) {
+      other.asInstanceOf[DayFrequency].days == days
+    } else {
+      false
+    }
+  }
 }
 
-class BusinessDayFrequency(days: Int) extends Frequency {
+class BusinessDayFrequency(val days: Int) extends Frequency {
   /**
    * Advances the given DateTime by n business days.
    */
@@ -81,5 +89,13 @@ class BusinessDayFrequency(days: Int) extends Frequency {
     val remaining  = daysBetween % 7
     val extraWeekendDays = if (dayOfWeek1 + remaining > 5) 2 else 0
     (daysBetween - standardWeekendDays - extraWeekendDays) / days
+  }
+
+  override def equals(other: Any): Boolean = {
+    if (other.isInstanceOf[BusinessDayFrequency]) {
+      other.asInstanceOf[BusinessDayFrequency].days == days
+    } else {
+      false
+    }
   }
 }

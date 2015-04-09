@@ -44,13 +44,19 @@ object SimpleTickDataExample {
     val end = seriesByFile.map(_.index.last).top(1).head
     val dtIndex = uniform(start, end, 1.businessDays)
     val tsRdd = timeSeriesRDD(dtIndex, seriesByFile)
-
-    seriesByFile.unpersist()
-    tsRdd.cache()
+    println(s"Num time series: ${tsRdd.count()}")
 
     // Which symbols do we have the oldest data on?
     val oldestData: Array[(Int, String)] = tsRdd.mapValues(trimLeading(_).length).map(_.swap).top(5)
     println(oldestData.mkString(","))
+
+    // Only look at open prices, and filter all symbols that don't span the 2000's
+    val year2000 = new DateTime("2000-1-1")
+    val filteredRdd = tsRdd.filter(_._1.endsWith("Open")).
+      filterStartingBefore(year2000).
+      filterEndingAfter(year2000 + 10.years)
+    filteredRdd.cache()
+    println(s"Remaining after filtration: ${filteredRdd.count()}")
 
     // Impute missing data
 
