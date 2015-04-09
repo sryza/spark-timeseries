@@ -15,11 +15,11 @@
 
 package com.cloudera.finance.examples
 
-import com.cloudera.finance.ts.TimeSeries
-import com.cloudera.finance.ts.DateTimeIndex._
-import com.cloudera.finance.ts.TimeSeries._
-import com.cloudera.finance.ts.TimeSeriesRDD._
-import com.cloudera.finance.ts.TimeSeriesStatisticalTests._
+import com.cloudera.sparkts.DateTimeIndex._
+import com.cloudera.sparkts.{TimeSeriesStatisticalTests, TimeSeriesRDD, TimeSeries}
+import TimeSeries._
+import TimeSeriesRDD._
+import TimeSeriesStatisticalTests._
 
 import com.github.nscala_time.time.Imports._
 

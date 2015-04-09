@@ -13,14 +13,14 @@
  * License.
  */
 
-package com.cloudera.finance.ts
+package com.cloudera.sparkts
 
 import scala.Double.NaN
 
 import breeze.linalg._
 
-import com.cloudera.finance.ts.DateTimeIndex._
-import com.cloudera.finance.ts.UnivariateTimeSeries._
+import com.cloudera.sparkts.DateTimeIndex._
+import com.cloudera.sparkts.UnivariateTimeSeries._
 
 import com.github.nscala_time.time.Imports._
 

@@ -13,7 +13,7 @@
  * License.
  */
 
-package com.cloudera.finance.ts
+package com.cloudera.sparkts
 
 import breeze.linalg._
 
@@ -94,7 +94,7 @@ class GARCHModel(
    * Based on http://www.unc.edu/~jbhill/Bollerslev_GARCH_1986.pdf
    * @return an 3-element array containing the gradient for the alpha, beta, and omega parameters.
    */
-  private[finance] def gradient(ts: Vector[Double]): Array[Double] = {
+  private[sparkts] def gradient(ts: Vector[Double]): Array[Double] = {
     var omegaGradient = 0.0
     var alphaGradient = 0.0
     var betaGradient = 0.0

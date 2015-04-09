@@ -17,10 +17,10 @@ package com.cloudera.finance.risk
 
 import breeze.linalg._
 
-import com.cloudera.finance.ts.TimeSeriesFilter
 
 import org.apache.commons.math3.distribution.MultivariateRealDistribution
 import org.apache.commons.math3.random.RandomGenerator
+import com.cloudera.sparkts.TimeSeriesFilter
 
 class FilteredHistoricalFactorDistribution(
     rand: RandomGenerator,

@@ -12,7 +12,7 @@
  * the specific language governing permissions and limitations under the
  * License.
  */
-package com.cloudera.finance.ts
+package com.cloudera.sparkts
 
 import breeze.linalg._
 import breeze.numerics.polyval

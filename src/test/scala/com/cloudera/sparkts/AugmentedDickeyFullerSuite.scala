@@ -12,13 +12,14 @@
  * the specific language governing permissions and limitations under the
  * License.
  */
-package com.cloudera.finance.ts
+package com.cloudera.sparkts
 
 import breeze.linalg._
 
 import org.apache.commons.math3.random.MersenneTwister
 
 import org.scalatest.FunSuite
+import com.cloudera.sparkts.TimeSeriesStatisticalTests
 
 class AugmentedDickeyFullerSuite extends FunSuite {
   test("non-stationary AR model") {

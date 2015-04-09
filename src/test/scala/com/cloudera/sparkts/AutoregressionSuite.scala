@@ -13,7 +13,7 @@
  * License.
  */
 
-package com.cloudera.finance.ts
+package com.cloudera.sparkts
 
 import java.util.Random
 
@@ -23,6 +23,7 @@ import org.apache.commons.math3.random.MersenneTwister
 
 import org.scalatest.FunSuite
 import org.scalatest.Matchers._
+import com.cloudera.sparkts.Lag
 
 class AutoregressionSuite extends FunSuite {
   test("lagMatTrimBoth") {

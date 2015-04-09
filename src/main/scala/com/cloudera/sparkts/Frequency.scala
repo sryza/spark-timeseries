@@ -13,7 +13,7 @@
  * License.
  */
 
-package com.cloudera.finance.ts
+package com.cloudera.sparkts
 
 import com.github.nscala_time.time.Imports._
 

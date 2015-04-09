@@ -13,9 +13,9 @@
  * License.
  */
 
-package com.cloudera.finance.ts
+package com.cloudera.sparkts
 
-import com.cloudera.finance.ts.DateTimeIndex._
+import com.cloudera.sparkts.DateTimeIndex._
 
 import com.github.nscala_time.time.Imports._
 

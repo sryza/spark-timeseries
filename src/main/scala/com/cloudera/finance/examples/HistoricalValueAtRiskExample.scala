@@ -20,7 +20,6 @@ import breeze.linalg.DenseVector
 import com.cloudera.finance.Util
 import com.cloudera.finance.risk.{FilteredHistoricalFactorDistribution,
   LinearInstrumentReturnsModel, ValueAtRisk}
-import com.cloudera.finance.ts.{TimeSeriesFilter, GARCH}
 
 import org.apache.commons.math3.random.MersenneTwister
 import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression
@@ -29,6 +28,7 @@ import org.apache.spark.{SparkConf, SparkContext}
 
 import ValueAtRisk._
 import Util._
+import com.cloudera.sparkts.{TimeSeriesFilter, GARCH}
 
 object HistoricalValueAtRiskExample {
   def main(args: Array[String]): Unit = {

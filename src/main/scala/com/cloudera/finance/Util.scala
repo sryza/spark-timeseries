@@ -19,7 +19,7 @@ import breeze.linalg._
 
 import org.apache.commons.math3.random.RandomGenerator
 
-private[finance] object Util {
+private[cloudera] object Util {
   def sampleWithReplacement(values: Array[Double], rand: RandomGenerator, target: Array[Double])
     : Unit = {
     for (i <- 0 until target.length) {

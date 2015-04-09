@@ -13,7 +13,7 @@
  * License.
  */
 
-package com.cloudera.finance.ts
+package com.cloudera.sparkts
 
 import com.github.nscala_time.time.Imports._
 
@@ -57,7 +57,7 @@ class UniformDateTimeIndex(val start: DateTime, val periods: Int, val frequency:
   extends DateTimeIndex {
 
   override def sliceSeries(start: DateTime, end: DateTime, series: Vector[Double])
-    : (DateTimeIndex, Vector[Double]) = {
+  : (DateTimeIndex, Vector[Double]) = {
     throw new UnsupportedOperationException()
   }
 
@@ -84,8 +84,8 @@ class UniformDateTimeIndex(val start: DateTime, val periods: Int, val frequency:
   }
 
   def union(other: UniformDateTimeIndex): UniformDateTimeIndex = {
-//    val minStart =
-//    val maxEnd =
+    //    val minStart =
+    //    val maxEnd =
     throw new UnsupportedOperationException()
   }
 
@@ -109,7 +109,7 @@ class UniformDateTimeIndex(val start: DateTime, val periods: Int, val frequency:
 class IrregularDateTimeIndex(val instants: Array[Long]) extends DateTimeIndex {
 
   override def sliceSeries(start: DateTime, end: DateTime, series: Vector[Double])
-    : (IrregularDateTimeIndex, Vector[Double]) = {
+  : (IrregularDateTimeIndex, Vector[Double]) = {
     // binary search for start
     // binary search for end
     throw new UnsupportedOperationException()

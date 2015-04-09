@@ -15,9 +15,9 @@
 
 package com.cloudera.finance.examples
 
-import com.cloudera.finance.ts.TimeSeries
 
 import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression
+import com.cloudera.sparkts.TimeSeries
 
 private[examples] object ExampleUtil {
   def readHistories(dir: String): TimeSeries[String] = {

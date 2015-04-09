@@ -13,9 +13,10 @@
  * License.
  */
 
-package com.cloudera.finance.ts
+package com.cloudera.sparkts
 
 import breeze.linalg._
+import com.cloudera.sparkts.TimeSeriesModel
 
 /**
  * Models time dependent effects in a time series.
@@ -25,7 +26,7 @@ trait TimeSeriesModel {
    * Takes a time series that is assumed to have this model's characteristics and returns a time
    * series with time-dependent effects of this model removed.
    *
-   * This is the inverse of [[com.cloudera.finance.ts.TimeSeriesModel#addTimeDependentEffects]].
+   * This is the inverse of [[TimeSeriesModel#addTimeDependentEffects]].
    *
    * @param ts Time series of observations with this model's characteristics.
    * @param dest Array to put the filtered series, can be the same as ts.

@@ -13,7 +13,7 @@
  * License.
  */
 
-package com.cloudera.finance.ts
+package com.cloudera.sparkts
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -26,7 +26,7 @@ import org.joda.time.DateTime
 /**
  * Internal utilities for dealing with 1-D time series.
  */
-private[ts] object UnivariateTimeSeries {
+private[sparkts] object UnivariateTimeSeries {
   def union(series: Array[Array[Double]]): Array[Double] = {
     val unioned = Array.fill(series.head.length)(Double.NaN)
     var i = 0
