@@ -80,6 +80,9 @@ class BusinessDayFrequency(val days: Int) extends Frequency {
    * {@inheritDoc}
    */
   def difference(dt1: DateTime, dt2: DateTime): Int = {
+    if (dt2 < dt1) {
+      return -difference(dt2, dt1)
+    }
     val daysBetween = Days.daysBetween(dt1, dt2).getDays
     val dayOfWeek1 = dt1.getDayOfWeek
     if (dayOfWeek1 > 5) {

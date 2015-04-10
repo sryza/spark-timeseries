@@ -56,7 +56,7 @@ object UnivariateTimeSeries {
   def lastNotNaN(ts: Vector[Double]): Int = {
     var i = ts.length - 1
     while (i >= 0) {
-      if (!java.lang.Double.isNaN(i)) {
+      if (!java.lang.Double.isNaN(ts(i))) {
         return i
       }
       i -= 1
@@ -68,8 +68,8 @@ object UnivariateTimeSeries {
     fillMethod match {
       case "linear" => fillLinear(ts)
       case "nearest" => fillNearest(ts)
+      case _ => throw new UnsupportedOperationException()
     }
-    throw new UnsupportedOperationException()
   }
 
   def fillNearest(values: Array[Double]): Array[Double] = {

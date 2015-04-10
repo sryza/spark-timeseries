@@ -57,7 +57,7 @@ class RebaseSuite extends FunSuite with ShouldMatchers {
     val vec = new DenseVector((0 until 10).map(_.toDouble).toArray)
     val source = uniform(new DateTime("2015-4-8"), vec.length, 1.days)
     val target = source
-    val rebased = rebase(source, target, vec)
+    val rebased = rebase(source, target, vec, NaN)
     rebased.length should be (vec.length)
     rebased should be (vec)
   }
@@ -66,7 +66,7 @@ class RebaseSuite extends FunSuite with ShouldMatchers {
     val vec = new DenseVector((0 until 10).map(_.toDouble).toArray)
     val source = uniform(new DateTime("2015-4-8"), vec.length, 1.days)
     val target = uniform(new DateTime("2015-4-9"), 5, 1.days)
-    val rebased = rebase(source, target, vec)
+    val rebased = rebase(source, target, vec, NaN)
     rebased should be (new DenseVector(Array(1.0, 2.0, 3.0, 4.0, 5.0)))
   }
 
@@ -75,8 +75,8 @@ class RebaseSuite extends FunSuite with ShouldMatchers {
     val source = uniform(new DateTime("2015-4-8"), vec.length, 1.days)
     val targetBefore = uniform(new DateTime("2015-4-4"), 8, 1.days)
     val targetAfter = uniform(new DateTime("2015-4-11"), 8, 1.days)
-    val rebasedBefore = rebase(source, targetBefore, vec)
-    val rebasedAfter = rebase(source, targetAfter, vec)
+    val rebasedBefore = rebase(source, targetBefore, vec, NaN)
+    val rebasedAfter = rebase(source, targetAfter, vec, NaN)
     assertArraysEqualWithNaN(
       rebasedBefore.valuesIterator.toArray,
       Array(NaN, NaN, NaN, NaN, 0.0, 1.0, 2.0, 3.0))
@@ -89,7 +89,7 @@ class RebaseSuite extends FunSuite with ShouldMatchers {
     val vec = new DenseVector((0 until 4).map(_.toDouble).toArray)
     val source = uniform(new DateTime("2015-4-8"), vec.length, 1.days)
     val target = uniform(new DateTime("2015-4-7"), 8, 1.days)
-    val rebased = rebase(source, target, vec)
+    val rebased = rebase(source, target, vec, NaN)
     assertArraysEqualWithNaN(
       rebased.valuesIterator.toArray,
       Array(NaN, 0.0, 1.0, 2.0, 3.0, NaN, NaN, NaN))
@@ -100,24 +100,47 @@ class RebaseSuite extends FunSuite with ShouldMatchers {
     val source = irregular((4 until 10).map(d => new DateTime(s"2015-4-$d")).toArray)
     vec.size should be (source.size)
     val target = uniform(new DateTime("2015-4-4"), vec.length, 1.days)
-    val rebased = rebase(source, target, vec)
+    val rebased = rebase(source, target, vec, NaN)
     rebased should be (vec)
   }
 
-  test("irregular source, hole gets filled with NaN") {
-
+  test("irregular source, hole gets filled default value") {
+    val dt = new DateTime("2015-4-10")
+    val source = irregular(Array(dt, dt + 1.days, dt + 3.days))
+    val target = uniform(dt, 4, 1.days)
+    val vec = new DenseVector(Array(1.0, 2.0, 3.0))
+    val rebased = rebase(source, target, vec, 47.0)
+    rebased.toArray should be (Array(1.0, 2.0, 47.0, 3.0))
   }
 
   test("irregular source, target fits in source") {
-
+    val dt = new DateTime("2015-4-10")
+    val source = irregular(Array(dt, dt + 1.days, dt + 3.days))
+    val target = uniform(dt + 1.days, 2, 1.days)
+    val vec = new DenseVector(Array(1.0, 2.0, 3.0))
+    val rebased = rebase(source, target, vec, 47.0)
+    rebased.toArray should be (Array(2.0, 47.0))
   }
 
   test("irregular source, target overlaps source ") {
-
+    val dt = new DateTime("2015-4-10")
+    val source = irregular(Array(dt, dt + 1.days, dt + 3.days))
+    val targetBefore = uniform(new DateTime("2015-4-8"), 4, 1.days)
+    val vec = new DenseVector(Array(1.0, 2.0, 3.0))
+    val rebasedBefore = rebase(source, targetBefore, vec, 47.0)
+    rebasedBefore.toArray should be (Array(47.0, 47.0, 1.0, 2.0))
+    val targetAfter = uniform(new DateTime("2015-4-11"), 5, 1.days)
+    val rebasedAfter = rebase(source, targetAfter, vec, 47.0)
+    rebasedAfter.toArray should be (Array(2.0, 47.0, 3.0, 47.0, 47.0))
   }
 
   test("irregular source, source fits in target") {
-
+    val dt = new DateTime("2015-4-10")
+    val source = irregular(Array(dt, dt + 1.days, dt + 3.days))
+    val target = uniform(dt - 2.days, 7, 1.days)
+    val vec = new DenseVector(Array(1.0, 2.0, 3.0))
+    val rebased = rebase(source, target, vec, 47.0)
+    rebased.toArray should be (Array(47.0, 47.0, 1.0, 2.0, 47.0, 3.0, 47.0))
   }
 
   test("different frequencies") {

@@ -56,21 +56,24 @@ private[sparkts] object TimeSeriesUtils {
   /**
    * Accepts a series of values indexed by the given source index and moves it to conform to a
    * target index. The target index need not fit inside the source index - non-overlapping regions
-   * will be filled with NaNs.
+   * will be filled with NaNs or the given default value.
    *
    * The source index must have the same frequency as the target index.
    *
    * Currently only uniform target indices are supported.
    */
-  def rebase(sourceIndex: DateTimeIndex, targetIndex: DateTimeIndex, vec: Vector[Double])
-    : Vector[Double] = {
+  def rebase(
+      sourceIndex: DateTimeIndex,
+      targetIndex: DateTimeIndex,
+      vec: Vector[Double],
+      defaultValue: Double): Vector[Double] = {
     if (targetIndex.isInstanceOf[UniformDateTimeIndex]) {
       if (sourceIndex.isInstanceOf[UniformDateTimeIndex]) {
         rebaseWithUniformSource(sourceIndex.asInstanceOf[UniformDateTimeIndex],
-          targetIndex.asInstanceOf[UniformDateTimeIndex], vec)
+          targetIndex.asInstanceOf[UniformDateTimeIndex], vec, defaultValue)
       } else if (sourceIndex.isInstanceOf[IrregularDateTimeIndex]) {
         rebaseWithIrregularSource(sourceIndex.asInstanceOf[IrregularDateTimeIndex],
-          targetIndex.asInstanceOf[UniformDateTimeIndex], vec)
+          targetIndex.asInstanceOf[UniformDateTimeIndex], vec, defaultValue)
       } else {
         throw new UnsupportedOperationException("Unrecognized source index type")
       }
@@ -85,13 +88,14 @@ private[sparkts] object TimeSeriesUtils {
   private def rebaseWithUniformSource(
       sourceIndex: UniformDateTimeIndex,
       targetIndex: UniformDateTimeIndex,
-      vec: Vector[Double]): Vector[Double] = {
+      vec: Vector[Double],
+      defaultValue: Double): Vector[Double] = {
     val startLoc = sourceIndex.locAtDateTime(targetIndex.first, false)
     val endLoc = sourceIndex.locAtDateTime(targetIndex.last, false) + 1
     if (startLoc >= 0 && endLoc <= vec.length) {
       vec(startLoc until endLoc)
     } else {
-      val resultVec = DenseVector.fill(endLoc - startLoc) { Double.NaN }
+      val resultVec = DenseVector.fill(endLoc - startLoc) { defaultValue }
       val safeStartLoc = math.max(startLoc, 0)
       val safeEndLoc = math.min(endLoc, vec.length)
       val resultStartLoc = if (startLoc < 0) -startLoc else 0
@@ -107,20 +111,23 @@ private[sparkts] object TimeSeriesUtils {
   private def rebaseWithIrregularSource(
       sourceIndex: IrregularDateTimeIndex,
       targetIndex: UniformDateTimeIndex,
-      vec: Vector[Double]): Vector[Double] = {
-    val startLoc = sourceIndex.locAtDateTime(targetIndex.first, false)
+      vec: Vector[Double],
+      defaultValue: Double): Vector[Double] = {
+    val startLoc = -targetIndex.locAtDateTime(sourceIndex.first, false)
     val startLocInSourceVec = math.max(0, startLoc)
     val dtsRelevant = sourceIndex.instants.iterator.drop(startLocInSourceVec).map(new DateTime(_))
     val vecRelevant = vec(startLocInSourceVec until vec.length).valuesIterator
-    val iter = iterateWithUniformFrequency(dtsRelevant.zip(vecRelevant), targetIndex.frequency)
+    val iter = iterateWithUniformFrequency(dtsRelevant.zip(vecRelevant), targetIndex.frequency,
+      defaultValue)
 
     val resultArr = new Array[Double](targetIndex.size)
     for (i <- 0 until targetIndex.size) {
       // Add leading or trailing NaNs if target index starts earlier than source index or ends
       // after the source index
       resultArr(i) = if (i < -startLoc || !iter.hasNext) {
-        Double.NaN
+        defaultValue
       } else {
+        assert(iter.hasNext)
         iter.next._2
       }
     }
@@ -174,6 +181,9 @@ private[sparkts] object TimeSeriesUtils {
           curTup = if (samples.hasNext) samples.next() else null
           value
         } else {
+          if (curTup._1 <= curUniformDT) {
+            println("")
+          }
           assert(curTup._1 > curUniformDT)
           defaultValue
         }

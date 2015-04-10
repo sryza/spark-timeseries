@@ -51,7 +51,12 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector[Double])
 
   def slice(start: DateTime, end: DateTime): TimeSeriesRDD[K] = {
     val targetIndex = index.slice(start, end)
-    new TimeSeriesRDD(targetIndex, mapSeries(TimeSeriesUtils.rebase(index, targetIndex, _)))
+    new TimeSeriesRDD(targetIndex,
+      mapSeries(TimeSeriesUtils.rebase(index, targetIndex, _, Double.NaN)))
+  }
+
+  def fill(method: String): TimeSeriesRDD[K] = {
+    new TimeSeriesRDD(index, mapSeries(UnivariateTimeSeries.fillts(_, method)))
   }
 
   def unionSeries(other: TimeSeriesRDD[K]): TimeSeriesRDD[K] = {
@@ -185,7 +190,7 @@ object TimeSeriesRDD {
   def timeSeriesRDD[K](targetIndex: UniformDateTimeIndex,
       seriesRDD: RDD[(K, UniformDateTimeIndex, Vector[Double])]): TimeSeriesRDD[K] = {
     val rdd = seriesRDD.map { case (key, index, vec) =>
-      val newVec = TimeSeriesUtils.rebase(index, targetIndex, vec)
+      val newVec = TimeSeriesUtils.rebase(index, targetIndex, vec, Double.NaN)
       (key, newVec)
     }
     new TimeSeriesRDD(targetIndex, rdd)
@@ -195,7 +200,7 @@ object TimeSeriesRDD {
     : TimeSeriesRDD[K] = {
     val rdd = seriesRDD.flatMap { series =>
       series.univariateKeyAndSeriesIterator().map { case (key, vec) =>
-        (key, TimeSeriesUtils.rebase(series.index, targetIndex, vec))
+        (key, TimeSeriesUtils.rebase(series.index, targetIndex, vec, Double.NaN))
       }
     }
     new TimeSeriesRDD(targetIndex, rdd)
