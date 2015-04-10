@@ -36,7 +36,7 @@ object SimpleTickDataExample {
 
     // Load and parse the data
     val seriesByFile: RDD[TimeSeries[String]] = sc.wholeTextFiles(inputDir).
-      map { case (path, text) => YahooParser.yahooStringToTimeSeries(text, path) }
+      map { case (path, text) => YahooParser.yahooStringToTimeSeries(text, path.split('/').last) }
     seriesByFile.cache()
 
     // Merge the series from individual files into a TimeSeriesRDD
@@ -51,17 +51,21 @@ object SimpleTickDataExample {
     println(oldestData.mkString(","))
 
     // Only look at open prices, and filter all symbols that don't span the 2000's
-    val year2000 = new DateTime("2000-1-1")
-    val filteredRdd = tsRdd.filter(_._1.endsWith("Open")).
-      filterStartingBefore(year2000).
-      filterEndingAfter(year2000 + 10.years)
+    val opensRdd = tsRdd.filter(_._1.endsWith("Open"))
+    val year2000 = nextBusinessDay(new DateTime("2000-1-1"))
+    val year2010 = nextBusinessDay(year2000 + 10.years)
+    val filteredRdd = opensRdd.filterStartingBefore(year2000).filterEndingAfter(year2010)
     filteredRdd.cache()
     println(s"Remaining after filtration: ${filteredRdd.count()}")
 
-    // Impute missing data
+    // Impute missing data with linear interpolation
+    val filledRdd = filteredRdd.fill("linear")
+
+    // Slice to the 2000's
+    val slicedRdd = filledRdd.slice(year2000, year2010)
 
     // Find the series with the largest serial correlations
-    val durbinWatsonStats: RDD[(String, Double)] = tsRdd.mapValues(dwtest)
+    val durbinWatsonStats: RDD[(String, Double)] = slicedRdd.mapValues(dwtest)
     durbinWatsonStats.map(_.swap).top(20)
   }
 }
