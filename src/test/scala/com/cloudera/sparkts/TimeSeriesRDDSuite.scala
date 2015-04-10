@@ -45,4 +45,18 @@ class TimeSeriesRDDSuite extends FunSuite with LocalSparkContext with ShouldMatc
     contents("10.0") should be (new DenseVector((11 until 17).map(_.toDouble).toArray))
     contents("20.0") should be (new DenseVector((21 until 27).map(_.toDouble).toArray))
   }
+
+  test("filterEndingAfter") {
+    val conf = new SparkConf().setMaster("local").setAppName(getClass.getName)
+    TimeSeriesKryoRegistrator.registerKryoClasses(conf)
+    sc = new SparkContext(conf)
+    val vecs = Array(0 until 10, 10 until 20, 20 until 30)
+      .map(_.map(x => x.toDouble).toArray)
+      .map(new DenseVector(_))
+      .map(x => (x(0).toString, x))
+    val start = new DateTime("2015-4-9")
+    val index = uniform(start, 10, 1.days)
+    val rdd = new TimeSeriesRDD[String](index, sc.parallelize(vecs))
+    rdd.filterEndingAfter(start).count() should be (3)
+  }
 }
