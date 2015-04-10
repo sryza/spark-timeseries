@@ -181,6 +181,16 @@ object DateTimeIndex {
     new IrregularDateTimeIndex(dts.map(_.getMillis))
   }
 
+  def nextBusinessDay(dt: DateTime): DateTime = {
+    if (dt.getDayOfWeek == 6) {
+      dt + 2.days
+    } else if (dt.getDayOfWeek == 7) {
+      dt + 1.days
+    } else {
+      dt
+    }
+  }
+
   implicit def periodToFrequency(period: Period): Frequency = {
     if (period.getDays != 0) {
       return new DayFrequency(period.getDays)
