@@ -55,7 +55,6 @@ object SimpleTickDataExample {
     val year2000 = nextBusinessDay(new DateTime("2000-1-1"))
     val year2010 = nextBusinessDay(year2000 + 10.years)
     val filteredRdd = opensRdd.filterStartingBefore(year2000).filterEndingAfter(year2010)
-    filteredRdd.cache()
     println(s"Remaining after filtration: ${filteredRdd.count()}")
 
     // Impute missing data with linear interpolation
@@ -63,9 +62,16 @@ object SimpleTickDataExample {
 
     // Slice to the 2000's
     val slicedRdd = filledRdd.slice(year2000, year2010)
+    slicedRdd.cache()
 
     // Find the series with the largest serial correlations
     val durbinWatsonStats: RDD[(String, Double)] = slicedRdd.mapValues(dwtest)
     durbinWatsonStats.map(_.swap).top(20)
+
+    // Remove serial correlations
+    val iidRdd = slicedRdd.mapSeries(series => ar(series, 1).removeTimeDependentEffects(series))
+
+    // Regress a stock against all the others
+    val samples = iidRdd.toSamples()
   }
 }
