@@ -56,7 +56,7 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector[Double])
   }
 
   def fill(method: String): TimeSeriesRDD[K] = {
-    new TimeSeriesRDD(index, mapSeries(UnivariateTimeSeries.fillts(_, method)))
+    mapSeries(UnivariateTimeSeries.fillts(_, method))
   }
 
   def unionSeries(other: TimeSeriesRDD[K]): TimeSeriesRDD[K] = {
@@ -69,12 +69,12 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector[Double])
     throw new UnsupportedOperationException()
   }
 
-  def mapSeries[U](f: (Vector[Double]) => U): RDD[(K, U)] = {
-    map(kt => (kt._1, f(kt._2)))
-  }
-
-  def foldLeftSeries[U](zero: U)(f: ((U, Double)) => U): RDD[(K, U)] = {
-    mapSeries(t => t.valuesIterator.foldLeft(zero)((u, v) => f(u, v)))
+  /**
+   * Applies a transformation to each time series that preserves the time index of this
+   * TimeSeriesRDD.
+   */
+  def mapSeries[U](f: (Vector[Double]) => Vector[Double]): TimeSeriesRDD[K] = {
+    new TimeSeriesRDD(index, map(kt => (kt._1, f(kt._2))))
   }
 
   def seriesStats(): RDD[StatCounter] = {
@@ -93,7 +93,7 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector[Double])
    * In the returned RDD, the ordering of values within each record corresponds to the ordering of
    * the time series records in the original RDD. The records are ordered by time.
    */
-  def toSamples(nPartitions: Int): RDD[(DateTime, Vector[Double])] = {
+  def toSamples(nPartitions: Int = -1): RDD[(DateTime, Vector[Double])] = {
     val maxChunkSize = 20
 
     val dividedOnMapSide = mapPartitionsWithIndex { case (partitionId, iter) =>
@@ -131,8 +131,9 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector[Double])
     // (date-time, position of snippet in full sample)
 
     val partitioner = new Partitioner() {
-      def numPartitions: Int = nPartitions
-      def getPartition(key: Any): Int = key.asInstanceOf[(Int, _, _)]._1 / nPartitions
+      val nPart = if (nPartitions == -1) parent.partitions.size else nPartitions
+      def numPartitions: Int = nPart
+      def getPartition(key: Any): Int = key.asInstanceOf[(Int, _, _)]._1 / nPart
     }
     implicit val ordering = new Ordering[(Int, Int)] {
       override def compare(a: (Int, Int), b: (Int, Int)): Int = {
