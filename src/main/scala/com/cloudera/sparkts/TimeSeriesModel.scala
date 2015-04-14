@@ -31,7 +31,7 @@ trait TimeSeriesModel {
    * @param dest Array to put the filtered series, can be the same as ts.
    * @return The dest series, for convenience.
    */
-  def removeTimeDependentEffects(ts: Vector[Double], dest: Vector[Double]): Vector[Double]
+  def removeTimeDependentEffects(ts: Vector[Double], dest: Vector[Double] = null): Vector[Double]
 
   /**
    * Takes a series of i.i.d. observations and returns a time series based on it with the
@@ -41,5 +41,5 @@ trait TimeSeriesModel {
    * @param dest Array to put the filtered series, can be the same as ts.
    * @return The dest series, for convenience.
    */
-  def addTimeDependentEffects(ts: Vector[Double], dest: Vector[Double]): Vector[Double]
+  def addTimeDependentEffects(ts: Vector[Double], dest: Vector[Double] = null): Vector[Double]
 }
