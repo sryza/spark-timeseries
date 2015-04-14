@@ -146,4 +146,6 @@ object UnivariateTimeSeries {
     }
     result
   }
+
+  def ar(values: Vector[Double], maxLag: Int): ARModel = Autoregression.fitModel(values, maxLag)
 }
