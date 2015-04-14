@@ -204,8 +204,9 @@ object TimeSeriesStatisticalTests {
 
     // replace 0 tsDiff with level of ts
     // TODO: unnecessary extra copying here
-    lagMat(0 to nObs - 1, 0 to 0) :=
-      ts(ts.length - nObs - 1 to ts.length - 1).toDenseVector.toDenseMatrix.t
+    // TODO: are indices off by one?
+    lagMat(0 until nObs, 0 to 0) :=
+      ts(ts.length - nObs - 1 until ts.length - 1).toDenseVector.toDenseMatrix.t
     // trim
     val tsdShort = tsDiff(tsDiff.length - nObs to tsDiff.length - 1)
 
