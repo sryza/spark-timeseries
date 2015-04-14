@@ -37,7 +37,7 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector[Double])
    * Keep only time series whose first observation is before or equal to the given start date.
    */
   def filterStartingBefore(dt: DateTime): TimeSeriesRDD[K] = {
-    val startLoc = index.locAtDateTime(dt, false)
+    val startLoc = index.locAtDateTime(dt)
     filter { case (key, ts) => UnivariateTimeSeries.firstNotNaN(ts) <= startLoc }
   }
 
@@ -45,7 +45,7 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector[Double])
    * Keep only time series whose last observation is after or equal to the given end date.
    */
   def filterEndingAfter(dt: DateTime): TimeSeriesRDD[K] = {
-    val endLoc = index.locAtDateTime(dt, false)
+    val endLoc = index.locAtDateTime(dt)
     filter { case (key, ts) => UnivariateTimeSeries.lastNotNaN(ts) >= endLoc}
   }
 

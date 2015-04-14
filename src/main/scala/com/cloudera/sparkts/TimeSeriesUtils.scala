@@ -90,8 +90,8 @@ private[sparkts] object TimeSeriesUtils {
       targetIndex: UniformDateTimeIndex,
       vec: Vector[Double],
       defaultValue: Double): Vector[Double] = {
-    val startLoc = sourceIndex.locAtDateTime(targetIndex.first, false)
-    val endLoc = sourceIndex.locAtDateTime(targetIndex.last, false) + 1
+    val startLoc = sourceIndex.locAtDateTime(targetIndex.first)
+    val endLoc = sourceIndex.locAtDateTime(targetIndex.last) + 1
     if (startLoc >= 0 && endLoc <= vec.length) {
       vec(startLoc until endLoc)
     } else {
@@ -113,7 +113,7 @@ private[sparkts] object TimeSeriesUtils {
       targetIndex: UniformDateTimeIndex,
       vec: Vector[Double],
       defaultValue: Double): Vector[Double] = {
-    val startLoc = -targetIndex.locAtDateTime(sourceIndex.first, false)
+    val startLoc = -targetIndex.locAtDateTime(sourceIndex.first)
     val startLocInSourceVec = math.max(0, startLoc)
     val dtsRelevant = sourceIndex.instants.iterator.drop(startLocInSourceVec).map(new DateTime(_))
     val vecRelevant = vec(startLocInSourceVec until vec.length).valuesIterator
@@ -181,9 +181,6 @@ private[sparkts] object TimeSeriesUtils {
           curTup = if (samples.hasNext) samples.next() else null
           value
         } else {
-          if (curTup._1 <= curUniformDT) {
-            println("")
-          }
           assert(curTup._1 > curUniformDT)
           defaultValue
         }
@@ -192,10 +189,6 @@ private[sparkts] object TimeSeriesUtils {
         (dt, retValue)
       }
     }
-  }
-
-  def differences(ts: Vector[Double]): Vector[Double] = {
-    throw new UnsupportedOperationException()
   }
 
   def minMaxDateTimes(index: UniformDateTimeIndex, series: Array[Double]): (DateTime, DateTime) = {
@@ -208,11 +201,11 @@ private[sparkts] object TimeSeriesUtils {
     while (i < series.length) {
       if (series(i) < min) {
         min = series(i)
-        minDt = index(i)
+        minDt = index.dateTimeAtLoc(i)
       }
       if (series(i) > max) {
         max = series(i)
-        maxDt = index(i)
+        maxDt = index.dateTimeAtLoc(i)
       }
       i += 1
     }

@@ -23,15 +23,16 @@ import DateTimeIndex._
  * A DateTimeIndex maintains a bi-directional mapping between integers and an ordered collection of
  * date-times. Multiple date-times may correspond to the same integer, implying multiple samples
  * at the same date-time.
+ *
+ * To avoid confusion between the meaning of "index" as it appears in "DateTimeIndex" and "index"
+ * as a location in an array, in the context of this class, we use "location", or "loc", to refer
+ * to the latter.
  */
 trait DateTimeIndex extends Serializable {
   /**
    * Returns a sub-slice of the index, starting and ending at the given date-times.
    */
   def slice(start: DateTime, end: DateTime): DateTimeIndex
-
-  def sliceSeries(start: DateTime, end: DateTime, series: Vector[Double])
-    : (DateTimeIndex, Vector[Double])
 
   /**
    * The first date-time in the index.
@@ -48,20 +49,24 @@ trait DateTimeIndex extends Serializable {
    */
   def size(): Int
 
-  def splitEvenly(numPartitions: Int): Array[DateTimeIndex]
+  /**
+   * The i-th date-time in the index.
+   */
+  def dateTimeAtLoc(i: Int): DateTime
 
-  def dateTimeAtLoc(loc: Int): DateTime
-
-  def locAtDateTime(dt: DateTime, round: Boolean): Int
+  /**
+   * The location of the given date-time. If the index contains the date-time more than once,
+   * returns its first appearance. If the given date-time does not appear in the index, returns -1.
+   */
+  def locAtDateTime(dt: DateTime): Int
 }
 
+/**
+ * An implementation of DateTimeIndex that contains date-times spaced at regular intervals. Allows
+ * for constant space storage and constant time operations.
+ */
 class UniformDateTimeIndex(val start: Long, val periods: Int, val frequency: Frequency)
   extends DateTimeIndex {
-
-  override def sliceSeries(start: DateTime, end: DateTime, series: Vector[Double])
-  : (DateTimeIndex, Vector[Double]) = {
-    throw new UnsupportedOperationException()
-  }
 
   /**
    * {@inheritDoc}
@@ -78,10 +83,6 @@ class UniformDateTimeIndex(val start: Long, val periods: Int, val frequency: Fre
    */
   override def size: Int = periods
 
-  def apply(i: Int): DateTime = {
-    frequency.advance(new DateTime(first), i)
-  }
-
   /**
    * {@inheritDoc}
    */
@@ -93,18 +94,6 @@ class UniformDateTimeIndex(val start: Long, val periods: Int, val frequency: Fre
     uniform(frequency.advance(new DateTime(first), lower), upper - lower, frequency)
   }
 
-  def union(other: UniformDateTimeIndex): UniformDateTimeIndex = {
-    //    val minStart =
-    //    val maxEnd =
-    throw new UnsupportedOperationException()
-  }
-
-  def union(others: Seq[UniformDateTimeIndex]): UniformDateTimeIndex = {
-    others.fold(this)(_.union(_))
-  }
-
-  def splitEvenly(numPartitions: Int): Array[DateTimeIndex] = ???
-
   /**
    * {@inheritDoc}
    */
@@ -113,8 +102,13 @@ class UniformDateTimeIndex(val start: Long, val periods: Int, val frequency: Fre
   /**
    * {@inheritDoc}
    */
-  override def locAtDateTime(dt: DateTime, round: Boolean): Int = {
-    frequency.difference(new DateTime(first), dt)
+  override def locAtDateTime(dt: DateTime): Int = {
+    val loc = frequency.difference(new DateTime(first), dt)
+    if (dateTimeAtLoc(loc) == dt) {
+      loc
+    } else {
+      -1
+    }
   }
 
   override def equals(other: Any): Boolean = {
@@ -123,15 +117,14 @@ class UniformDateTimeIndex(val start: Long, val periods: Int, val frequency: Fre
   }
 }
 
+/**
+ * An implementation of DateTimeIndex that allows date-times to be spaced at uneven intervals.
+ * Lookups or slicing by date-time are O(log n) operations..
+ */
 class IrregularDateTimeIndex(val instants: Array[Long]) extends DateTimeIndex {
-
-  override def sliceSeries(start: DateTime, end: DateTime, series: Vector[Double])
-  : (IrregularDateTimeIndex, Vector[Double]) = {
-    // binary search for start
-    // binary search for end
-    throw new UnsupportedOperationException()
-  }
-
+  /**
+   * {@inheritDoc}
+   */
   override def slice(start: DateTime, end: DateTime): IrregularDateTimeIndex = {
     throw new UnsupportedOperationException()
   }
@@ -151,8 +144,6 @@ class IrregularDateTimeIndex(val instants: Array[Long]) extends DateTimeIndex {
    */
   override def size(): Int = instants.length
 
-  override def splitEvenly(numPartitions: Int): Array[DateTimeIndex] = ???
-
   /**
    * {@inheritDoc}
    */
@@ -161,26 +152,37 @@ class IrregularDateTimeIndex(val instants: Array[Long]) extends DateTimeIndex {
   /**
    * {@inheritDoc}
    */
-  override def locAtDateTime(dt: DateTime, round: Boolean): Int = {
-    // TODO: round
+  override def locAtDateTime(dt: DateTime): Int = {
     java.util.Arrays.binarySearch(instants, dt.getMillis)
   }
 
 }
 
 object DateTimeIndex {
+  /**
+   * Create a UniformDateTimeIndex with the given start time, number of periods, and frequency.
+   */
   def uniform(start: DateTime, periods: Int, frequency: Frequency): UniformDateTimeIndex = {
     new UniformDateTimeIndex(start.getMillis, periods, frequency)
   }
 
+  /**
+   * Create a UniformDateTimeIndex with the given start time and end time (inclusive) and frequency.
+   */
   def uniform(start: DateTime, end: DateTime, frequency: Frequency): UniformDateTimeIndex = {
     uniform(start, frequency.difference(start, end) + 1, frequency)
   }
 
+  /**
+   * Create an IrregularDateTimeIndex composed of the given date-times.
+   */
   def irregular(dts: Array[DateTime]): IrregularDateTimeIndex = {
     new IrregularDateTimeIndex(dts.map(_.getMillis))
   }
 
+  /**
+   * Finds the next business day occurring at or after the given date-time.
+   */
   def nextBusinessDay(dt: DateTime): DateTime = {
     if (dt.getDayOfWeek == 6) {
       dt + 2.days
