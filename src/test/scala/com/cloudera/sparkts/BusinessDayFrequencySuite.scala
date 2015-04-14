@@ -30,7 +30,7 @@ class BusinessDayFrequencySuite extends FunSuite with ShouldMatchers {
     1.businessDays.difference(aTuesday, aTuesday + 1.days) should be (1)
     2.businessDays.advance(aTuesday, 1) should be (aTuesday + 2.days)
     1.businessDays.advance(aTuesday, 2) should be (aTuesday + 2.days)
-    2.businessDays.difference(aTuesday, aTuesday + 2.days) should be (2)
+    2.businessDays.difference(aTuesday, aTuesday + 2.days) should be (1)
     1.businessDays.difference(aTuesday, aTuesday + 2.days) should be (2)
     // go exactly a week ahead
     5.businessDays.advance(aTuesday, 1) should be (aTuesday + 7.days)
