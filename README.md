@@ -31,8 +31,27 @@ The library sits on a few other excellent Java and Scala libraries.
 * [Apache Spark](https://spark.apache.org/) for distributed computation with in-memory
   capabilities.
 
-Functionality
+Abstractions
 -------------
+
+The central abstraction of the library is the `TimeSeriesRDD`, a lazy distributed collection of univariate series with a conformed time dimension. It is lazy in the sense that it is an RDD: it encapsulates all the information needed to generate its elements, but doesn't materialize them upon instantiation. It is distributed in the sense that different univariate series within the collection can be stored and processed on different nodes.  Within each univariate series, observations are not distributed. The time dimension is conformed in the sense that a single `DateTimeIndex` applies to all the univariate series. Each univariate series within the RDD has a key to identify it. 
+
+TimeSeriesRDDs then support efficient series-wise operations like slicing, imputing missing values based on surrounding elements, and training time-series models:
+
+    val tsRdd: TimeSeriesRDD[String] = ...
+    
+    // Find a sub-slice between two dates 
+    val subslice = tsRdd.slice(new DateTime("2015-4-10"), new DateTime("2015-4-14"))
+    
+    // Fill in missing values based on linear interpolation
+    val filled = subslice.fill("linear")
+    
+    // Use an AR(1) model to remove serial correlations
+    val residuals = filled.mapSeries(series => ar(series, 1).removeTimeDependentEffects(series))
+
+
+Statistical Functionality
+--------------------------
 
 ### Time Series
 
@@ -51,11 +70,3 @@ Functionality
 Value at Risk (VaR) and Expected Shortfall (CVaR) through
 * Monte Carlo simulation
 * Bootstrapped historical simulation
-
-Future Directions
------------------
-
-### Time Series
-
-* Exponentially-weighted moving average
-* EGARCH
