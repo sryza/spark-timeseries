@@ -16,10 +16,10 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.cloudera.datascience</groupId>
-  <artifactId>sparkfinance</artifactId>
+  <artifactId>sparktimeseries</artifactId>
   <version>0.0.1</version>
   <packaging>jar</packaging>
-  <name>Spark Finance</name>
+  <name>Spark Timeseries</name>
 
   <prerequisites>
     <maven>3.1.1</maven>
