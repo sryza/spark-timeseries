@@ -22,9 +22,8 @@ import com.github.nscala_time.time.Imports._
 class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix[Double], val labels: Array[K])
   extends Serializable {
 
-  def observations(): Array[Array[Double]] = {
-//    Util.transpose(data)
-    throw new UnsupportedOperationException()
+  def observations(): DenseMatrix[Double] = {
+    data.t
   }
 
   def difference(windowSize: Int): TimeSeries[K] = {

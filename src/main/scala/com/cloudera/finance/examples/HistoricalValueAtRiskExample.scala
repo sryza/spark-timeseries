@@ -16,6 +16,7 @@
 package com.cloudera.finance.examples
 
 import breeze.linalg.DenseVector
+import breeze.plot._
 
 import com.cloudera.finance.{Util, YahooParser}
 import com.cloudera.finance.risk.{FilteredHistoricalFactorDistribution,
@@ -48,6 +49,7 @@ object HistoricalValueAtRiskExample {
     val conf = new SparkConf().setMaster("local").setAppName("Historical VaR")
     val sc = new SparkContext(conf)
 
+    // Load the data
     def loadTS(inputDir: String, lower: DateTime, upper: DateTime): TimeSeriesRDD[String] = {
       val histories = YahooParser.yahooFiles(instrumentsDir, sc)
       histories.cache()
@@ -66,8 +68,21 @@ object HistoricalValueAtRiskExample {
     val instrumentReturns = loadTS(instrumentsDir, year2000, year2010)
     val factorReturns = loadTS(factorsDir, year2000, year2010).collectAsTimeSeries()
 
+    // Get factors in a form that we can feed into Commons Math linear regression
+    val factorObservations = matToRowArrs(factorReturns.observations())
+
+    // Try a regression on one of the instruments
+    val instrument = instrumentReturns.take(1).head._2
+    val regression = new OLSMultipleLinearRegression()
+    regression.newSampleData(instrument.toArray, factorObservations)
+
+    // Plot the residuals
+    val residuals = regression.estimateResiduals().toArray
+    val f = Figure()
+    val p = f.subplot(0)
+    p += plot((0 until residuals.length).map(_.toDouble).toArray, residuals)
+
     // Fit factor return -> instrument return predictive models
-    val factorObservations = factorReturns.observations()
     val linearModels = instrumentReturns.mapValues { series =>
       val regression = new OLSMultipleLinearRegression()
       regression.newSampleData(series.toArray, factorObservations)

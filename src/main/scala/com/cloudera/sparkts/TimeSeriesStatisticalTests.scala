@@ -155,7 +155,7 @@ object TimeSeriesStatisticalTests {
     new NormalDistribution().cumulativeProbability(polyval(tauCoef.reverse, testStat))
   }
 
-  def vanderflipped(vec: Array[Double], n: Int): Matrix[Double] = {
+  private def vanderflipped(vec: Array[Double], n: Int): Matrix[Double] = {
     val numRows = vec.size
     val matArr = Array.fill[Double](numRows * n)(1.0)
     val mat = new DenseMatrix[Double](numRows, matArr, 0)
@@ -168,7 +168,7 @@ object TimeSeriesStatisticalTests {
     mat
   }
 
-  def addTrend(mat: Matrix[Double], trend: String = "c", prepend: Boolean = false)
+  private def addTrend(mat: Matrix[Double], trend: String = "c", prepend: Boolean = false)
     : Matrix[Double] = {
     val trendOrder = trend.toLowerCase match {
       case "c" => 0
