@@ -17,18 +17,24 @@ package com.cloudera.finance.examples
 
 import breeze.linalg.DenseVector
 
-import com.cloudera.finance.Util
+import com.cloudera.finance.{Util, YahooParser}
 import com.cloudera.finance.risk.{FilteredHistoricalFactorDistribution,
   LinearInstrumentReturnsModel, ValueAtRisk}
+import com.cloudera.sparkts.{GARCH, TimeSeriesFilter, TimeSeriesRDD}
+import com.cloudera.sparkts.DateTimeIndex._
+import com.cloudera.sparkts.TimeSeriesRDD._
+
+import com.github.nscala_time.time.Imports._
 
 import org.apache.commons.math3.random.MersenneTwister
 import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression
 
 import org.apache.spark.{SparkConf, SparkContext}
 
+import org.joda.time.DateTime
+
 import ValueAtRisk._
 import Util._
-import com.cloudera.sparkts.{TimeSeriesFilter, GARCH}
 
 object HistoricalValueAtRiskExample {
   def main(args: Array[String]): Unit = {
@@ -38,26 +44,36 @@ object HistoricalValueAtRiskExample {
     val factorsDir = if (args.length > 2) args(2) else "factors/"
     val instrumentsDir = if (args.length > 3) args(3) else "instruments/"
 
-    // Load factors
-    val factorHistories = ExampleUtil.readHistories(factorsDir)
-    val factorReturns = factorHistories.differences(10)
-
-    // Load instruments
-    val instrumentHistories = ExampleUtil.readHistories(instrumentsDir)
-    val instrumentReturns = instrumentHistories.differences(10)
-
     // Initialize Spark
     val conf = new SparkConf().setMaster("local").setAppName("Historical VaR")
     val sc = new SparkContext(conf)
 
+    def loadTS(inputDir: String, lower: DateTime, upper: DateTime): TimeSeriesRDD[String] = {
+      val histories = YahooParser.yahooFiles(instrumentsDir, sc)
+      histories.cache()
+      val start = histories.map(_.index.first).takeOrdered(1).head
+      val end = histories.map(_.index.last).top(1).head
+      val dtIndex = uniform(start, end, 1.businessDays)
+      val tsRdd = timeSeriesRDD(dtIndex, histories).
+        filter(_._1.endsWith("Open")).
+        filterStartingBefore(lower).filterEndingAfter(upper)
+      tsRdd.difference(10)
+    }
+
+    val year2000 = nextBusinessDay(new DateTime("2000-1-1"))
+    val year2010 = nextBusinessDay(year2000 + 10.years)
+
+    val instrumentReturns = loadTS(instrumentsDir, year2000, year2010)
+    val factorReturns = loadTS(factorsDir, year2000, year2010).collectAsTimeSeries()
+
     // Fit factor return -> instrument return predictive models
     val factorObservations = factorReturns.observations()
-    val linearModels = instrumentReturns.univariateSeriesIterator.map { instrumentReturns =>
+    val linearModels = instrumentReturns.mapValues { series =>
       val regression = new OLSMultipleLinearRegression()
-      regression.newSampleData(instrumentReturns.toArray, factorObservations)
+      regression.newSampleData(series.toArray, factorObservations)
       regression.estimateRegressionParameters()
-    }
-    val instrumentReturnsModel = new LinearInstrumentReturnsModel(arrsToMat(linearModels))
+    }.map(_._2).collect()
+    val instrumentReturnsModel = new LinearInstrumentReturnsModel(arrsToMat(linearModels.iterator))
 
     // Fit an AR(1) + GARCH(1, 1) model to each factor
     val garchModels = factorReturns.mapSeries(GARCH.fitModel(_)._1)

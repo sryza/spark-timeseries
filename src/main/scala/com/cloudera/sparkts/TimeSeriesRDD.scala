@@ -42,6 +42,21 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector[Double])
   extends RDD[(K, Vector[Double])](parent) {
 
   /**
+   * Collects the RDD as a local TimeSeries
+   */
+  def collectAsTimeSeries(): TimeSeries[K] = {
+    throw new UnsupportedOperationException()
+  }
+
+  /**
+   * Returns a TimeSeriesRDD where each time series is differenced with the given order. The new
+   * RDD will be missing the first n date-times.
+   */
+  def difference(n: Int): TimeSeriesRDD[K] = {
+    mapSeries(index.slice(n, index.size - 1), vec => diff(vec.toDenseVector, n))
+  }
+
+  /**
    * {@inheritDoc}
    */
   override def filter(f: ((K, Vector[Double])) => Boolean): TimeSeriesRDD[K] = {
@@ -90,6 +105,15 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector[Double])
    * TimeSeriesRDD.
    */
   def mapSeries[U](f: (Vector[Double]) => Vector[Double]): TimeSeriesRDD[K] = {
+    new TimeSeriesRDD(index, map(kt => (kt._1, f(kt._2))))
+  }
+
+  /**
+   * Applies a transformation to each time series and returns a TimeSeriesRDD with the given index.
+   * The caller is expected to ensure that the time series produced line up with the given index.
+   */
+  def mapSeries[U](index: DateTimeIndex, f: (Vector[Double]) => Vector[Double])
+    : TimeSeriesRDD[K] = {
     new TimeSeriesRDD(index, map(kt => (kt._1, f(kt._2))))
   }
 

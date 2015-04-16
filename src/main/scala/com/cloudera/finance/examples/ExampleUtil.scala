@@ -15,8 +15,6 @@
 
 package com.cloudera.finance.examples
 
-
-import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression
 import com.cloudera.sparkts.TimeSeries
 
 private[examples] object ExampleUtil {

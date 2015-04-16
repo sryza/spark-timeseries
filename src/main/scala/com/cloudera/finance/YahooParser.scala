@@ -18,6 +18,9 @@ package com.cloudera.finance
 import com.cloudera.sparkts.TimeSeries
 import com.cloudera.sparkts.TimeSeries._
 
+import org.apache.spark.SparkContext
+import org.apache.spark.rdd.RDD
+
 import org.joda.time.DateTime
 
 object YahooParser {
@@ -30,5 +33,11 @@ object YahooParser {
       (dt, tokens.tail.map(_.toDouble).toArray)
     }.reverse
     timeSeriesFromSamples(samples, labels)
+  }
+
+  def yahooFiles(dir: String, sc: SparkContext): RDD[TimeSeries[String]] = {
+    sc.wholeTextFiles(dir).map { case (path, text) =>
+      YahooParser.yahooStringToTimeSeries(text, path.split('/').last)
+    }
   }
 }

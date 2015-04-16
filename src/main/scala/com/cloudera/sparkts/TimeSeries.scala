@@ -27,14 +27,14 @@ class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix[Double], val
     throw new UnsupportedOperationException()
   }
 
-  def differences(windowSize: Int): TimeSeries[K] = {
+  def difference(windowSize: Int): TimeSeries[K] = {
 //    new TimeSeries(index.drop(windowSize), data.map { hist =>
 //      hist.sliding(windowSize).map(window => window.last - window.head).toArray
 //    })
     throw new UnsupportedOperationException()
   }
 
-  def differences(): TimeSeries[K] = differences(1)
+  def difference(): TimeSeries[K] = difference(1)
 
   def univariateSeriesIterator(): Iterator[Vector[Double]] = {
     new Iterator[Vector[Double]] {
