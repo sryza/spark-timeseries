@@ -18,9 +18,11 @@ package com.cloudera.finance.examples
 import breeze.linalg.DenseVector
 import breeze.plot._
 
-import com.cloudera.finance.{Util, YahooParser}
+import com.cloudera.finance.YahooParser
+import com.cloudera.finance.Util._
 import com.cloudera.finance.risk.{FilteredHistoricalFactorDistribution,
-  LinearInstrumentReturnsModel, ValueAtRisk}
+  LinearInstrumentReturnsModel}
+import com.cloudera.finance.risk.ValueAtRisk._
 import com.cloudera.sparkts.{GARCH, TimeSeriesFilter, TimeSeriesRDD}
 import com.cloudera.sparkts.DateTimeIndex._
 import com.cloudera.sparkts.TimeSeriesRDD._
@@ -31,11 +33,6 @@ import org.apache.commons.math3.random.MersenneTwister
 import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression
 
 import org.apache.spark.{SparkConf, SparkContext}
-
-import org.joda.time.DateTime
-
-import ValueAtRisk._
-import Util._
 
 object HistoricalValueAtRiskExample {
   def main(args: Array[String]): Unit = {
