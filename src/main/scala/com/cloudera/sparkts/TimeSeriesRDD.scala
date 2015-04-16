@@ -26,9 +26,24 @@ import org.apache.spark.util.StatCounter
 
 import org.joda.time.DateTime
 
+/**
+ * A lazy distributed collection of univariate series with a conformed time dimension. Lazy in the
+ * sense that it is an RDD: it encapsulates all the information needed to generate its elements,
+ * but doesn't materialize them upon instantiation. Distributed in the sense that different
+ * univariate series within the collection can be stored and processed on different nodes. Within
+ * each univariate series, observations are not distributed. The time dimension is conformed in the
+ * sense that a single DateTimeIndex applies to all the univariate series. Each univariate series
+ * within the RDD has a key to identify it.
+ *
+ * @param index The DateTimeIndex shared by all the time series.
+ * @tparam K The type of the keys used to identify time series.
+ */
 class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector[Double])])
   extends RDD[(K, Vector[Double])](parent) {
 
+  /**
+   * {@inheritDoc}
+   */
   override def filter(f: ((K, Vector[Double])) => Boolean): TimeSeriesRDD[K] = {
     new TimeSeriesRDD(index, super.filter(f))
   }
@@ -49,24 +64,25 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector[Double])
     filter { case (key, ts) => UnivariateTimeSeries.lastNotNaN(ts) >= endLoc}
   }
 
+  /**
+   * Returns a TimeSeriesRDD that's a sub-slice of the given series.
+   * @param start The start date the for slice.
+   * @param end The end date for the slice (inclusive).
+   */
   def slice(start: DateTime, end: DateTime): TimeSeriesRDD[K] = {
     val targetIndex = index.slice(start, end)
     new TimeSeriesRDD(targetIndex,
       mapSeries(TimeSeriesUtils.rebase(index, targetIndex, _, Double.NaN)))
   }
 
+  /**
+   * Fills in missing data (NaNs) in each series according to a given imputation method.
+   *
+   * @param method "linear", "nearest", "next", or "previous"
+   * @return A TimeSeriesRDD with missing observations filled in.
+   */
   def fill(method: String): TimeSeriesRDD[K] = {
     mapSeries(UnivariateTimeSeries.fillts(_, method))
-  }
-
-  def unionSeries(other: TimeSeriesRDD[K]): TimeSeriesRDD[K] = {
-    // TODO: allow unioning series with different indices
-    // they need to have the same period though
-//    val unionRdd = rdd.join(other.rdd).mapValues { tt =>
-//      UnivariateTimeSeries.union(Array(tt._1, tt._2))
-//    }
-//    new MultiTimeSeries(index, unionRdd)
-    throw new UnsupportedOperationException()
   }
 
   /**
@@ -77,13 +93,11 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector[Double])
     new TimeSeriesRDD(index, map(kt => (kt._1, f(kt._2))))
   }
 
+  /**
+   * Gets stats like min, max, mean, and standard deviation for each time series.
+   */
   def seriesStats(): RDD[StatCounter] = {
     map(kt => new StatCounter(kt._2.valuesIterator))
-  }
-
-  def seriesMinMaxDates(): RDD[(K, (DateTime, DateTime))] = {
-//    rdd.mapValues(series => UnivariateTimeSeries.minMaxDateTimes(index, series))
-    throw new UnsupportedOperationException()
   }
 
   /**
@@ -188,6 +202,12 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector[Double])
 }
 
 object TimeSeriesRDD {
+  /**
+   * Instantiates a TimeSeriesRDD.
+   *
+   * @param targetIndex DateTimeIndex to conform all the indices to.
+   * @param seriesRDD RDD of time series, each with their own DateTimeIndex.
+   */
   def timeSeriesRDD[K](targetIndex: UniformDateTimeIndex,
       seriesRDD: RDD[(K, UniformDateTimeIndex, Vector[Double])]): TimeSeriesRDD[K] = {
     val rdd = seriesRDD.map { case (key, index, vec) =>
@@ -197,6 +217,12 @@ object TimeSeriesRDD {
     new TimeSeriesRDD(targetIndex, rdd)
   }
 
+  /**
+   * Instantiates a TimeSeriesRDD.
+   *
+   * @param targetIndex DateTimeIndex to conform all the indices to.
+   * @param seriesRDD RDD of time series, each with their own DateTimeIndex.
+   */
   def timeSeriesRDD[K](targetIndex: DateTimeIndex, seriesRDD: RDD[TimeSeries[K]])
     : TimeSeriesRDD[K] = {
     val rdd = seriesRDD.flatMap { series =>
