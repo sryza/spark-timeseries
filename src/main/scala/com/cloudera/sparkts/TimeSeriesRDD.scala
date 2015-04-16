@@ -38,14 +38,27 @@ import org.joda.time.DateTime
  * @param index The DateTimeIndex shared by all the time series.
  * @tparam K The type of the keys used to identify time series.
  */
-class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector[Double])])
+class TimeSeriesRDD[K <: AnyRef](val index: DateTimeIndex, parent: RDD[(K, Vector[Double])])
   extends RDD[(K, Vector[Double])](parent) {
 
   /**
    * Collects the RDD as a local TimeSeries
    */
   def collectAsTimeSeries(): TimeSeries[K] = {
-    throw new UnsupportedOperationException()
+    val elements = collect()
+    if (elements.isEmpty) {
+      new TimeSeries[K](index, new DenseMatrix[Double](0, 0),
+        new Array[AnyRef](0).asInstanceOf[Array[K]])
+    } else {
+      val mat = new DenseMatrix[Double](elements.head._2.length, elements.length)
+      val labels = new Array[AnyRef](elements.length).asInstanceOf[Array[K]]
+      for (i <- 0 until elements.length) {
+        val (label, vec) = elements(i)
+        mat(::, i) := vec
+        labels(i) = label
+      }
+      new TimeSeries(index, mat, labels)
+    }
   }
 
   /**
@@ -232,7 +245,7 @@ object TimeSeriesRDD {
    * @param targetIndex DateTimeIndex to conform all the indices to.
    * @param seriesRDD RDD of time series, each with their own DateTimeIndex.
    */
-  def timeSeriesRDD[K](targetIndex: UniformDateTimeIndex,
+  def timeSeriesRDD[K <: AnyRef](targetIndex: UniformDateTimeIndex,
       seriesRDD: RDD[(K, UniformDateTimeIndex, Vector[Double])]): TimeSeriesRDD[K] = {
     val rdd = seriesRDD.map { case (key, index, vec) =>
       val newVec = TimeSeriesUtils.rebase(index, targetIndex, vec, Double.NaN)
@@ -247,7 +260,7 @@ object TimeSeriesRDD {
    * @param targetIndex DateTimeIndex to conform all the indices to.
    * @param seriesRDD RDD of time series, each with their own DateTimeIndex.
    */
-  def timeSeriesRDD[K](targetIndex: DateTimeIndex, seriesRDD: RDD[TimeSeries[K]])
+  def timeSeriesRDD[K <: AnyRef](targetIndex: DateTimeIndex, seriesRDD: RDD[TimeSeries[K]])
     : TimeSeriesRDD[K] = {
     val rdd = seriesRDD.flatMap { series =>
       series.univariateKeyAndSeriesIterator().map { case (key, vec) =>
