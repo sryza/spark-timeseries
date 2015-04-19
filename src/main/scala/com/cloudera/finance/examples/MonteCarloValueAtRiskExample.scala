@@ -64,7 +64,7 @@ object MonteCarloValueAtRiskExample {
     val factorReturns = loadTS(factorsDir, year2000, year2010).collectAsTimeSeries()
 
     // Fit factor return -> instrument return predictive models
-    val factorObservations = matToRowArrs(factorReturns.observations())
+    val factorObservations = matToRowArrs(factorReturns.data)
     val linearModels = instrumentReturns.mapValues { series =>
       val regression = new OLSMultipleLinearRegression()
       regression.newSampleData(series.toArray, factorObservations)

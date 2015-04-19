@@ -48,7 +48,7 @@ object HistoricalValueAtRiskExample {
 
     // Load the data
     def loadTS(inputDir: String, lower: DateTime, upper: DateTime): TimeSeriesRDD[String] = {
-      val histories = YahooParser.yahooFiles(instrumentsDir, sc)
+      val histories = YahooParser.yahooFiles(inputDir, sc)
       histories.cache()
       val start = histories.map(_.index.first).takeOrdered(1).head
       val end = histories.map(_.index.last).top(1).head
@@ -56,17 +56,17 @@ object HistoricalValueAtRiskExample {
       val tsRdd = timeSeriesRDD(dtIndex, histories).
         filter(_._1.endsWith("Open")).
         filterStartingBefore(lower).filterEndingAfter(upper)
-      tsRdd.difference(10)
+      tsRdd.fill("linear").slice(lower, upper).difference(10)
     }
 
-    val year2000 = nextBusinessDay(new DateTime("2000-1-1"))
-    val year2010 = nextBusinessDay(year2000 + 10.years)
+    val year2000 = nextBusinessDay(new DateTime("2008-1-1"))
+    val year2010 = nextBusinessDay(year2000 + 5.years)
 
     val instrumentReturns = loadTS(instrumentsDir, year2000, year2010)
     val factorReturns = loadTS(factorsDir, year2000, year2010).collectAsTimeSeries()
 
     // Get factors in a form that we can feed into Commons Math linear regression
-    val factorObservations = matToRowArrs(factorReturns.observations())
+    val factorObservations = matToRowArrs(factorReturns.data)
 
     // Try a regression on one of the instruments
     val instrument = instrumentReturns.take(1).head._2
@@ -88,7 +88,7 @@ object HistoricalValueAtRiskExample {
     val instrumentReturnsModel = new LinearInstrumentReturnsModel(arrsToMat(linearModels.iterator))
 
     // Fit an AR(1) + GARCH(1, 1) model to each factor
-    val garchModels = factorReturns.mapSeries(GARCH.fitModel(_)._1)
+    val garchModels = factorReturns.mapValues(GARCH.fitModel(_)._1)
     val iidFactorReturns = factorReturns.univariateSeriesIterator.zip(garchModels.iterator).map {
       case (history, model) =>
         model.removeTimeDependentEffects(history, DenseVector.zeros[Double](history.length))

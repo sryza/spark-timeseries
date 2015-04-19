@@ -22,15 +22,8 @@ import com.github.nscala_time.time.Imports._
 class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix[Double], val labels: Array[K])
   extends Serializable {
 
-  def observations(): DenseMatrix[Double] = {
-    data.t
-  }
-
   def difference(windowSize: Int): TimeSeries[K] = {
-//    new TimeSeries(index.drop(windowSize), data.map { hist =>
-//      hist.sliding(windowSize).map(window => window.last - window.head).toArray
-//    })
-    throw new UnsupportedOperationException()
+    mapSeries(index.slice(windowSize, index.size - 1), vec => diff(vec.toDenseVector, windowSize))
   }
 
   def difference(): TimeSeries[K] = difference(1)
@@ -57,8 +50,21 @@ class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix[Double], val
     }
   }
 
-  def mapSeries[U](f: (Vector[Double]) => U): Seq[U] = {
-    throw new UnsupportedOperationException()
+  def mapSeries(f: (Vector[Double]) => Vector[Double]): TimeSeries[K] = {
+    mapSeries(index, f)
+  }
+
+  def mapSeries(newIndex: DateTimeIndex, f: (Vector[Double]) => Vector[Double]): TimeSeries[K] = {
+    val newSize = newIndex.size
+    val newData = new DenseMatrix[Double](newSize, data.cols)
+    univariateSeriesIterator().zipWithIndex.foreach { case (vec, index) =>
+      newData(::, index) := vec
+    }
+    new TimeSeries(newIndex, newData, labels)
+  }
+
+  def mapValues[U](f: (Vector[Double]) => U): Seq[U] = {
+    univariateSeriesIterator().map(f).toSeq
   }
 }
 
