@@ -16,8 +16,43 @@
 package com.cloudera.sparkts
 
 import breeze.linalg._
+import breeze.stats._
 
 object UnivariateTimeSeries {
+  def autocorr(ts: Array[Double], numLags: Int): Array[Double] = {
+    autocorr(new DenseVector(ts), numLags).toDenseVector.data
+  }
+
+  /**
+   * Computes the sample autocorrelation of the given series.
+   */
+  def autocorr(ts: Vector[Double], numLags: Int): Vector[Double] = {
+    val corrs = new Array[Double](numLags)
+    var i = 1
+    while (i <= numLags) {
+      val slice1 = ts(i until ts.length)
+      val slice2 = ts(0 until ts.length - i)
+      val mean1 = mean(slice1)
+      val mean2 = mean(slice2)
+      var variance1 = 0.0
+      var variance2 = 0.0
+      var covariance = 0.0
+      var j = 0
+      while (j < ts.length - i) {
+        val diff1 = slice1(j) - mean1
+        val diff2 = slice2(j) - mean2
+        variance1 += diff1 * diff1
+        variance2 += diff2 * diff2
+        covariance += diff1 * diff2
+        j += 1
+      }
+
+      corrs(i - 1) = covariance / (math.sqrt(variance1) * math.sqrt(variance2))
+      i += 1
+    }
+    new DenseVector[Double](corrs)
+  }
+
   /**
    * Trim leading NaNs from a series.
    */
