@@ -16,11 +16,11 @@ The library is geared towards use cases in finance (munging tick data, building 
 intends to be general enough that other fields with continuous time series data, like meteorology,
 can make use of it.
 
-The library expects that individual univariate time series can easily fit in memory on each
+The library currently expects that individual univariate time series can easily fit in memory on each
 machine, but that collections of univariate time series may need to be distributed across many
 machines. While time series that violate this expectation pose a bunch of fun distributed
 programming problems, they don't tend to come up very often in finance, where an array holding
-value for every minute of every trading day for ten years needs less than a couple million
+a value for every minute of every trading day for ten years needs less than a couple million
 elements.
 
 The library sits on a few other excellent Java and Scala libraries.
