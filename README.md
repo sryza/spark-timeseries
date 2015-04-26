@@ -3,6 +3,8 @@ spark-timeseries
 
 A Scala / Java library for interacting with time series data on Apache Spark.
 
+Scaladoc is available at http://cloudera.github.io/spark-timeseries.
+
 The aim here is to provide
 * A set of abstractions for transforming and summarizing large time series data sets, similar to
   what's provided for smaller data sets in
