@@ -16,7 +16,6 @@
 package com.cloudera.finance.examples
 
 import breeze.linalg.DenseVector
-import breeze.plot._
 
 import com.cloudera.finance.YahooParser
 import com.cloudera.finance.Util._
@@ -25,7 +24,9 @@ import com.cloudera.finance.risk.{FilteredHistoricalFactorDistribution,
 import com.cloudera.finance.risk.ValueAtRisk._
 import com.cloudera.sparkts.{GARCH, TimeSeriesFilter, TimeSeriesRDD}
 import com.cloudera.sparkts.DateTimeIndex._
+import com.cloudera.sparkts.EasyPlot._
 import com.cloudera.sparkts.TimeSeriesRDD._
+import com.cloudera.sparkts.UnivariateTimeSeries._
 
 import com.github.nscala_time.time.Imports._
 
@@ -73,11 +74,15 @@ object HistoricalValueAtRiskExample {
     val regression = new OLSMultipleLinearRegression()
     regression.newSampleData(instrument.toArray, factorObservations)
 
+    // Plot the autocorrelation of the instrument
+    ezplot(instrument)
+
     // Plot the residuals
-    val residuals = regression.estimateResiduals().toArray
-    val f = Figure()
-    val p = f.subplot(0)
-    p += plot((0 until residuals.length).map(_.toDouble).toArray, residuals)
+    val residuals = regression.estimateResiduals()
+    ezplot(residuals)
+
+    // Plot the autocorrelation of the residuals
+    ezplot(autocorr(instrument, 40))
 
     // Fit factor return -> instrument return predictive models
     val linearModels = instrumentReturns.mapValues { series =>
