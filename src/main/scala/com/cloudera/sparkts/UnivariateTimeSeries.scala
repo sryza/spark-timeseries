@@ -23,6 +23,16 @@ object UnivariateTimeSeries {
     autocorr(new DenseVector(ts), numLags).toDenseVector.data
   }
 
+  def quotients(ts: Vector[Double], lag: Int): Vector[Double] = {
+    val ret = new Array[Double](ts.length - lag)
+    var i = 0
+    while (i < ret.length) {
+      ret(i) = ts(i + lag) / ts(i)
+      i += 1
+    }
+    new DenseVector(ret)
+  }
+
   /**
    * Computes the sample autocorrelation of the given series.
    */

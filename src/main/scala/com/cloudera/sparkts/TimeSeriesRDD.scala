@@ -65,8 +65,16 @@ class TimeSeriesRDD[K <: AnyRef](val index: DateTimeIndex, parent: RDD[(K, Vecto
    * Returns a TimeSeriesRDD where each time series is differenced with the given order. The new
    * RDD will be missing the first n date-times.
    */
-  def difference(n: Int): TimeSeriesRDD[K] = {
+  def differences(n: Int): TimeSeriesRDD[K] = {
     mapSeries(index.slice(n, index.size - 1), vec => diff(vec.toDenseVector, n))
+  }
+
+  /**
+   * Returns a TimeSeriesRDD where each time series is quotiented with the given order. The new
+   * RDD will be missing the first n date-times.
+   */
+  def quotients(n: Int): TimeSeriesRDD[K] = {
+    mapSeries(index.slice(n, index.size - 1), UnivariateTimeSeries.quotients(_, n))
   }
 
   /**

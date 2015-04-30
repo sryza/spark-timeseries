@@ -22,11 +22,33 @@ import com.github.nscala_time.time.Imports._
 class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix[Double], val labels: Array[K])
   extends Serializable {
 
-  def difference(windowSize: Int): TimeSeries[K] = {
-    mapSeries(index.slice(windowSize, index.size - 1), vec => diff(vec.toDenseVector, windowSize))
+  /**
+   * Returns a TimeSeries where each time series is differenced with the given order. The new
+   * TimeSeries will be missing the first n date-times.
+   */
+  def differences(lag: Int): TimeSeries[K] = {
+    mapSeries(index.slice(lag, index.size - 1), vec => diff(vec.toDenseVector, lag))
   }
 
-  def difference(): TimeSeries[K] = difference(1)
+  /**
+   * Returns a TimeSeries where each time series is differenced with order 1. The new TimeSeries
+   * will be missing the first date-time.
+   */
+  def differences(): TimeSeries[K] = differences(1)
+
+  /**
+   * Returns a TimeSeries where each time series is quotiented with the given order. The new
+   * TimeSeries will be missing the first n date-times.
+   */
+  def quotients(lag: Int): TimeSeries[K] = {
+    mapSeries(index.slice(lag, index.size - 1), vec => UnivariateTimeSeries.quotients(vec, lag))
+  }
+
+  /**
+   * Returns a TimeSeries where each time series is quotiented with order 1. The new TimeSeries will
+   * be missing the first date-time.
+   */
+  def quotients(): TimeSeries[K] = quotients(1)
 
   def univariateSeriesIterator(): Iterator[Vector[Double]] = {
     new Iterator[Vector[Double]] {
@@ -50,10 +72,17 @@ class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix[Double], val
     }
   }
 
+  /**
+   * Applies a transformation to each series that preserves the time index.
+   */
   def mapSeries(f: (Vector[Double]) => Vector[Double]): TimeSeries[K] = {
     mapSeries(index, f)
   }
 
+  /**
+   * Applies a transformation to each series such that the resulting series align with the given
+   * time index.
+   */
   def mapSeries(newIndex: DateTimeIndex, f: (Vector[Double]) => Vector[Double]): TimeSeries[K] = {
     val newSize = newIndex.size
     val newData = new DenseMatrix[Double](newSize, data.cols)

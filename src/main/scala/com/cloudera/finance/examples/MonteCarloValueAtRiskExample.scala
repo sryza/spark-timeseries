@@ -54,7 +54,7 @@ object MonteCarloValueAtRiskExample {
       val tsRdd = timeSeriesRDD(dtIndex, histories).
         filter(_._1.endsWith("Open")).
         filterStartingBefore(lower).filterEndingAfter(upper)
-      tsRdd.difference(10)
+      tsRdd.differences(10)
     }
 
     val year2000 = nextBusinessDay(new DateTime("2000-1-1"))

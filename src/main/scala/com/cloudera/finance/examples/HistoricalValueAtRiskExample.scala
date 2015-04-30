@@ -57,7 +57,7 @@ object HistoricalValueAtRiskExample {
       val tsRdd = timeSeriesRDD(dtIndex, histories).
         filter(_._1.endsWith("Open")).
         filterStartingBefore(lower).filterEndingAfter(upper)
-      tsRdd.fill("linear").slice(lower, upper).difference(10)
+      tsRdd.fill("linear").slice(lower, upper).differences(10)
     }
 
     val year2000 = nextBusinessDay(new DateTime("2008-1-1"))
