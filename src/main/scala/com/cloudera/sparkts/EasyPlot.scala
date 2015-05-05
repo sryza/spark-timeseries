@@ -19,19 +19,23 @@ import breeze.linalg._
 import breeze.plot._
 
 object EasyPlot {
-  def ezplot(vec: Vector[Double], style: Char = '-'): Unit = {
+  def ezplot(vec: Vector[Double], style: Char): Unit = {
     val f = Figure()
     val p = f.subplot(0)
     p += plot((0 until vec.length).map(_.toDouble).toArray, vec, style = style)
   }
 
-  def ezplot(arr: Array[Double], style: Char = '-'): Unit = {
+  def ezplot(vec: Vector[Double]): Unit = ezplot(vec, '-')
+
+  def ezplot(arr: Array[Double], style: Char): Unit = {
     val f = Figure()
     val p = f.subplot(0)
     p += plot((0 until arr.length).map(_.toDouble).toArray, arr, style = style)
   }
 
-  def ezplot(vecs: Seq[Vector[Double]], style: Char = '-'): Unit = {
+  def ezplot(arr: Array[Double]): Unit = ezplot(arr, '-')
+
+  def ezplot(vecs: Seq[Vector[Double]], style: Char): Unit = {
     val f = Figure()
     val p = f.subplot(0)
     val first = vecs.head
@@ -40,8 +44,5 @@ object EasyPlot {
     }
   }
 
-  def ezplot(arrs: Seq[Array[Double]], style: Char = '-') = {
-
-  }
-
+  def ezplot(vecs: Seq[Vector[Double]]): Unit = ezplot(vecs, '-')
 }
