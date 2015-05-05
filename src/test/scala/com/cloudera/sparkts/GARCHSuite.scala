@@ -66,7 +66,7 @@ class GARCHSuite extends FunSuite {
 
     val ts = new DenseVector(genModel.sample(n, rand))
 
-    val model = GARCH.fitModel(ts)._1
+    val model = GARCH.fitModel(ts)
     assert(model.omega - omega < .1) // TODO: we should be able to be more accurate
     assert(model.alpha - alpha < .02)
     assert(model.beta - beta < .02)

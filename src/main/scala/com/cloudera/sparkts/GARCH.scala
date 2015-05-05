@@ -29,9 +29,9 @@ object GARCH {
    * Fits a GARCH(1, 1) model to the given time series.
    *
    * @param ts The time series to fit the model to.
-   * @return The model and its log likelihood on the input data.
+   * @return The model.
    */
-  def fitModel(ts: Vector[Double]): (GARCHModel, Double) = {
+  def fitModel(ts: Vector[Double]): GARCHModel = {
     val optimizer = new NonLinearConjugateGradientOptimizer(
       NonLinearConjugateGradientOptimizer.Formula.FLETCHER_REEVES,
       new SimpleValueChecker(1e-6, 1e-6))
@@ -59,12 +59,12 @@ object ARGARCH {
    * Fits an AR(1) + GARCH(1, 1) model to the given time series.
    *
    * @param ts The time series to fit the model to.
-   * @return The model and its log likelihood on the input data.
+   * @return The model.
    */
   def fitModel(ts: Vector[Double]): ARGARCHModel = {
     val arModel = Autoregression.fitModel(ts)
     val residuals = arModel.removeTimeDependentEffects(ts, DenseVector.zeros[Double](ts.length))
-    val garchModel = GARCH.fitModel(residuals)._1
+    val garchModel = GARCH.fitModel(residuals)
     new ARGARCHModel(arModel.c, arModel.coefficients(1), garchModel.omega, garchModel.alpha,
       garchModel.beta)
   }

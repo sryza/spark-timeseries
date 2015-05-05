@@ -22,7 +22,7 @@ import com.cloudera.finance.Util._
 import com.cloudera.finance.risk.{FilteredHistoricalFactorDistribution,
   LinearInstrumentReturnsModel}
 import com.cloudera.finance.risk.ValueAtRisk._
-import com.cloudera.sparkts.{GARCH, TimeSeriesFilter, TimeSeriesRDD}
+import com.cloudera.sparkts.{ARGARCH, TimeSeriesFilter, TimeSeriesRDD}
 import com.cloudera.sparkts.DateTimeIndex._
 import com.cloudera.sparkts.EasyPlot._
 import com.cloudera.sparkts.TimeSeriesRDD._
@@ -47,7 +47,7 @@ object HistoricalValueAtRiskExample {
     val conf = new SparkConf().setMaster("local").setAppName("Historical VaR")
     val sc = new SparkContext(conf)
 
-    // Load the data
+    // Load the data into a TimeSeriesRDD where each series holds 1-day log returns
     def loadTS(inputDir: String, lower: DateTime, upper: DateTime): TimeSeriesRDD[String] = {
       val histories = YahooParser.yahooFiles(inputDir, sc)
       histories.cache()
@@ -55,9 +55,10 @@ object HistoricalValueAtRiskExample {
       val end = histories.map(_.index.last).top(1).head
       val dtIndex = uniform(start, end, 1.businessDays)
       val tsRdd = timeSeriesRDD(dtIndex, histories).
-        filter(_._1.endsWith("Open")).
+        filter(_._1.endsWith("csvClose")).
         filterStartingBefore(lower).filterEndingAfter(upper)
-      tsRdd.fill("linear").slice(lower, upper).differences(10)
+      tsRdd.fill("linear").slice(lower, upper).price2ret().
+        mapSeries(_.map(x => math.log(1 + x)))
     }
 
     val year2000 = nextBusinessDay(new DateTime("2008-1-1"))
@@ -93,7 +94,7 @@ object HistoricalValueAtRiskExample {
     val instrumentReturnsModel = new LinearInstrumentReturnsModel(arrsToMat(linearModels.iterator))
 
     // Fit an AR(1) + GARCH(1, 1) model to each factor
-    val garchModels = factorReturns.mapValues(GARCH.fitModel(_)._1)
+    val garchModels = factorReturns.mapValues(ARGARCH.fitModel(_))
     val iidFactorReturns = factorReturns.univariateSeriesIterator.zip(garchModels.iterator).map {
       case (history, model) =>
         model.removeTimeDependentEffects(history, DenseVector.zeros[Double](history.length))
