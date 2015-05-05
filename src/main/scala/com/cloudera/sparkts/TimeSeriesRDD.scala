@@ -78,6 +78,14 @@ class TimeSeriesRDD[K <: AnyRef](val index: DateTimeIndex, parent: RDD[(K, Vecto
   }
 
   /**
+   * Returns a return series for each time series. Assumes periodic (as opposed to continuously
+   * compounded) returns.
+   */
+  def price2ret(): TimeSeriesRDD[K] = {
+    mapSeries(index.slice(1, index.size - 1), vec => UnivariateTimeSeries.price2ret(vec, 1))
+  }
+
+  /**
    * {@inheritDoc}
    */
   override def filter(f: ((K, Vector[Double])) => Boolean): TimeSeriesRDD[K] = {

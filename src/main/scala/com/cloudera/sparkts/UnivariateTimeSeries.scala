@@ -33,6 +33,16 @@ object UnivariateTimeSeries {
     new DenseVector(ret)
   }
 
+  def price2ret(ts: Vector[Double], lag: Int): Vector[Double] = {
+    val ret = new Array[Double](ts.length - lag)
+    var i = 0
+    while (i < ret.length) {
+      ret(i) = ts(i + lag) / ts(i) - 1.0
+      i += 1
+    }
+    new DenseVector(ret)
+  }
+
   /**
    * Computes the sample autocorrelation of the given series.
    */

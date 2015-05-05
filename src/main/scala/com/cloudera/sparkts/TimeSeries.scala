@@ -50,6 +50,14 @@ class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix[Double], val
    */
   def quotients(): TimeSeries[K] = quotients(1)
 
+  /**
+   * Returns a return series for each time series. Assumes periodic (as opposed to continuously
+   * compounded) returns.
+   */
+  def price2ret(): TimeSeries[K] = {
+    mapSeries(index.slice(1, index.size - 1), vec => UnivariateTimeSeries.price2ret(vec, 1))
+  }
+
   def univariateSeriesIterator(): Iterator[Vector[Double]] = {
     new Iterator[Vector[Double]] {
       var i = 0
@@ -95,6 +103,11 @@ class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix[Double], val
   def mapValues[U](f: (Vector[Double]) => U): Seq[U] = {
     univariateSeriesIterator().map(f).toSeq
   }
+
+  /**
+   * Gets the first univariate series and its label.
+   */
+  def head(): (K, Vector[Double]) = univariateKeyAndSeriesIterator().next
 }
 
 object TimeSeries {
