@@ -50,7 +50,7 @@ object GARCH {
     val maxEval = new MaxEval(10000)
     val optimal = optimizer.optimize(objectiveFunction, gradient, initialGuess, maxIter, maxEval)
     val params = optimal.getPoint
-    (new GARCHModel(params(0), params(1), params(2)), optimal.getValue)
+    new GARCHModel(params(0), params(1), params(2))
   }
 }
 
