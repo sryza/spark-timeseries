@@ -166,14 +166,14 @@ class TimeSeriesRDD[K <: AnyRef](val index: DateTimeIndex, parent: RDD[(K, Vecto
     val dividedOnMapSide = mapPartitionsWithIndex { case (partitionId, iter) =>
       new Iterator[((Int, Int), Vector[Double])] {
         // Each chunk is a buffer of time series
-        var chunk: ArrayBuffer[Vector[Double]] = _
+        var chunk = new ArrayBuffer[Vector[Double]]()
         // Current date time.  Gets reset for every chunk.
         var dtLoc: Int = _
         var chunkId: Int = -1
 
-        def hasNext: Boolean = iter.hasNext || dtLoc < index.size
-        def next(): ((Int, Int), Vector[Double]) = {
-          if (chunk == null || dtLoc == index.size) {
+        override def hasNext: Boolean = iter.hasNext || dtLoc < index.size
+        override def next(): ((Int, Int), Vector[Double]) = {
+          if (chunkId == -1 || dtLoc == index.size) {
             chunk.clear()
             while (chunk.size < maxChunkSize && iter.hasNext) {
               chunk += iter.next._2
@@ -188,7 +188,8 @@ class TimeSeriesRDD[K <: AnyRef](val index: DateTimeIndex, parent: RDD[(K, Vecto
             arr(i) = chunk(i)(dtLoc)
             i += 1
           }
-          ((dtLoc, partitionId * maxChunkSize + chunkId), new DenseVector(arr))
+          dtLoc += 1
+          ((dtLoc - 1, partitionId * maxChunkSize + chunkId), new DenseVector(arr))
         }
       }
     }
@@ -199,8 +200,8 @@ class TimeSeriesRDD[K <: AnyRef](val index: DateTimeIndex, parent: RDD[(K, Vecto
 
     val partitioner = new Partitioner() {
       val nPart = if (nPartitions == -1) parent.partitions.size else nPartitions
-      def numPartitions: Int = nPart
-      def getPartition(key: Any): Int = key.asInstanceOf[(Int, _, _)]._1 / nPart
+      override def numPartitions: Int = nPart
+      override def getPartition(key: Any): Int = key.asInstanceOf[(Int, _)]._1 / nPart
     }
     implicit val ordering = new Ordering[(Int, Int)] {
       override def compare(a: (Int, Int), b: (Int, Int)): Int = {
@@ -213,35 +214,58 @@ class TimeSeriesRDD[K <: AnyRef](val index: DateTimeIndex, parent: RDD[(K, Vecto
       }
     }
     val repartitioned = dividedOnMapSide.repartitionAndSortWithinPartitions(partitioner)
-    repartitioned.mapPartitions { iter: Iterator[((Int, Int), Vector[Double])] =>
+    repartitioned.mapPartitions { iter0: Iterator[((Int, Int), Vector[Double])] =>
       new Iterator[(DateTime, Vector[Double])] {
-        var cur = if (iter.hasNext) iter.next() else null
-        def hasNext: Boolean = next != null
+        var snipsPerSample = -1
+        var elementsPerSample = -1
+        var iter: Iterator[((Int, Int), Vector[Double])] = _
 
-        def next(): (DateTime, Vector[Double]) = {
-          val snippets = new ArrayBuffer[Vector[Double]]()
-          var vecSize = 0
-          val dtLoc = cur._1._1
-          while (cur != null && cur._1._1 == dtLoc) {
-            snippets += cur._2
-            vecSize += cur._2.size
-            if (iter.hasNext) {
-              cur = iter.next()
-            }
+        // Read the first sample specially so that we know the number of elements and snippets
+        // for succeeding samples.
+        def firstSample(): ArrayBuffer[((Int, Int), Vector[Double])] = {
+          var snip = iter0.next()
+          val snippets = new ArrayBuffer[((Int, Int), Vector[Double])]()
+          val firstDtLoc = snip._1._1
+
+          while (snip != null && snip._1._1 == firstDtLoc) {
+            snippets += snip
+            snip = if (iter0.hasNext) iter0.next() else null
           }
-          val dt = index.dateTimeAtLoc(dtLoc)
-          val vec = if (snippets.size == 1) {
-            snippets(0)
+          iter = if (snip == null) iter0 else Iterator(snip) ++ iter0
+          snippets
+        }
+
+        def assembleSnips(snips: Iterator[((Int, Int), Vector[Double])])
+          : (DateTime, Vector[Double]) = {
+          val resVec = DenseVector.zeros[Double](elementsPerSample)
+          var dtLoc = -1
+          var i = 0
+          for (j <- 0 until snipsPerSample) {
+            val ((loc, _), snipVec) = snips.next()
+            dtLoc = loc
+            resVec(i until i + snipVec.length) := snipVec
+            i += snipVec.length
+          }
+          (index.dateTimeAtLoc(dtLoc), resVec)
+        }
+
+        override def hasNext: Boolean = {
+          if (iter == null) {
+            iter0.hasNext
           } else {
-            val resVec = DenseVector.zeros[Double](vecSize)
-            var i = 0
-            snippets.foreach { snip =>
-              resVec(i until snip.length) := snip
-              i += snip.length
-            }
-            resVec
+            iter.hasNext
           }
-          (dt, vec)
+        }
+
+        override def next(): (DateTime, Vector[Double]) = {
+          if (snipsPerSample == -1) {
+            val firstSnips = firstSample()
+            snipsPerSample = firstSnips.length
+            elementsPerSample = firstSnips.map(_._2.length).sum
+            assembleSnips(firstSnips.toIterator)
+          } else {
+            assembleSnips(iter)
+          }
         }
       }
     }
