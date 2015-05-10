@@ -65,7 +65,7 @@ object ARGARCH {
     val arModel = Autoregression.fitModel(ts)
     val residuals = arModel.removeTimeDependentEffects(ts, DenseVector.zeros[Double](ts.length))
     val garchModel = GARCH.fitModel(residuals)
-    new ARGARCHModel(arModel.c, arModel.coefficients(1), garchModel.omega, garchModel.alpha,
+    new ARGARCHModel(arModel.c, arModel.coefficients(0), garchModel.omega, garchModel.alpha,
       garchModel.beta)
   }
 }
