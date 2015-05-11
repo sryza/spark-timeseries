@@ -33,25 +33,23 @@ import org.joda.time.DateTime
  * univariate series within the collection can be stored and processed on different nodes. Within
  * each univariate series, observations are not distributed. The time dimension is conformed in the
  * sense that a single DateTimeIndex applies to all the univariate series. Each univariate series
- * within the RDD has a key to identify it.
+ * within the RDD has a String key to identify it.
  *
  * @param index The DateTimeIndex shared by all the time series.
- * @tparam K The type of the keys used to identify time series.
  */
-class TimeSeriesRDD[K <: AnyRef](val index: DateTimeIndex, parent: RDD[(K, Vector[Double])])
-  extends RDD[(K, Vector[Double])](parent) {
+class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double])])
+  extends RDD[(String, Vector[Double])](parent) {
 
   /**
    * Collects the RDD as a local TimeSeries
    */
-  def collectAsTimeSeries(): TimeSeries[K] = {
+  def collectAsTimeSeries(): TimeSeries = {
     val elements = collect()
     if (elements.isEmpty) {
-      new TimeSeries[K](index, new DenseMatrix[Double](0, 0),
-        new Array[AnyRef](0).asInstanceOf[Array[K]])
+      new TimeSeries(index, new DenseMatrix[Double](0, 0), new Array[String](0))
     } else {
       val mat = new DenseMatrix[Double](elements.head._2.length, elements.length)
-      val labels = new Array[AnyRef](elements.length).asInstanceOf[Array[K]]
+      val labels = new Array[String](elements.length)
       for (i <- 0 until elements.length) {
         val (label, vec) = elements(i)
         mat(::, i) := vec
@@ -65,7 +63,7 @@ class TimeSeriesRDD[K <: AnyRef](val index: DateTimeIndex, parent: RDD[(K, Vecto
    * Returns a TimeSeriesRDD where each time series is differenced with the given order. The new
    * RDD will be missing the first n date-times.
    */
-  def differences(n: Int): TimeSeriesRDD[K] = {
+  def differences(n: Int): TimeSeriesRDD = {
     mapSeries(index.slice(n, index.size - 1), vec => diff(vec.toDenseVector, n))
   }
 
@@ -73,7 +71,7 @@ class TimeSeriesRDD[K <: AnyRef](val index: DateTimeIndex, parent: RDD[(K, Vecto
    * Returns a TimeSeriesRDD where each time series is quotiented with the given order. The new
    * RDD will be missing the first n date-times.
    */
-  def quotients(n: Int): TimeSeriesRDD[K] = {
+  def quotients(n: Int): TimeSeriesRDD = {
     mapSeries(index.slice(n, index.size - 1), UnivariateTimeSeries.quotients(_, n))
   }
 
@@ -81,21 +79,21 @@ class TimeSeriesRDD[K <: AnyRef](val index: DateTimeIndex, parent: RDD[(K, Vecto
    * Returns a return series for each time series. Assumes periodic (as opposed to continuously
    * compounded) returns.
    */
-  def price2ret(): TimeSeriesRDD[K] = {
+  def price2ret(): TimeSeriesRDD = {
     mapSeries(index.slice(1, index.size - 1), vec => UnivariateTimeSeries.price2ret(vec, 1))
   }
 
   /**
    * {@inheritDoc}
    */
-  override def filter(f: ((K, Vector[Double])) => Boolean): TimeSeriesRDD[K] = {
+  override def filter(f: ((String, Vector[Double])) => Boolean): TimeSeriesRDD = {
     new TimeSeriesRDD(index, super.filter(f))
   }
 
   /**
    * Keep only time series whose first observation is before or equal to the given start date.
    */
-  def filterStartingBefore(dt: DateTime): TimeSeriesRDD[K] = {
+  def filterStartingBefore(dt: DateTime): TimeSeriesRDD = {
     val startLoc = index.locAtDateTime(dt)
     filter { case (key, ts) => UnivariateTimeSeries.firstNotNaN(ts) <= startLoc }
   }
@@ -103,7 +101,7 @@ class TimeSeriesRDD[K <: AnyRef](val index: DateTimeIndex, parent: RDD[(K, Vecto
   /**
    * Keep only time series whose last observation is after or equal to the given end date.
    */
-  def filterEndingAfter(dt: DateTime): TimeSeriesRDD[K] = {
+  def filterEndingAfter(dt: DateTime): TimeSeriesRDD = {
     val endLoc = index.locAtDateTime(dt)
     filter { case (key, ts) => UnivariateTimeSeries.lastNotNaN(ts) >= endLoc}
   }
@@ -113,7 +111,7 @@ class TimeSeriesRDD[K <: AnyRef](val index: DateTimeIndex, parent: RDD[(K, Vecto
    * @param start The start date the for slice.
    * @param end The end date for the slice (inclusive).
    */
-  def slice(start: DateTime, end: DateTime): TimeSeriesRDD[K] = {
+  def slice(start: DateTime, end: DateTime): TimeSeriesRDD = {
     val targetIndex = index.slice(start, end)
     new TimeSeriesRDD(targetIndex,
       mapSeries(TimeSeriesUtils.rebase(index, targetIndex, _, Double.NaN)))
@@ -125,7 +123,7 @@ class TimeSeriesRDD[K <: AnyRef](val index: DateTimeIndex, parent: RDD[(K, Vecto
    * @param method "linear", "nearest", "next", or "previous"
    * @return A TimeSeriesRDD with missing observations filled in.
    */
-  def fill(method: String): TimeSeriesRDD[K] = {
+  def fill(method: String): TimeSeriesRDD = {
     mapSeries(UnivariateTimeSeries.fillts(_, method))
   }
 
@@ -133,7 +131,7 @@ class TimeSeriesRDD[K <: AnyRef](val index: DateTimeIndex, parent: RDD[(K, Vecto
    * Applies a transformation to each time series that preserves the time index of this
    * TimeSeriesRDD.
    */
-  def mapSeries[U](f: (Vector[Double]) => Vector[Double]): TimeSeriesRDD[K] = {
+  def mapSeries[U](f: (Vector[Double]) => Vector[Double]): TimeSeriesRDD = {
     new TimeSeriesRDD(index, map(kt => (kt._1, f(kt._2))))
   }
 
@@ -142,7 +140,7 @@ class TimeSeriesRDD[K <: AnyRef](val index: DateTimeIndex, parent: RDD[(K, Vecto
    * The caller is expected to ensure that the time series produced line up with the given index.
    */
   def mapSeries[U](index: DateTimeIndex, f: (Vector[Double]) => Vector[Double])
-    : TimeSeriesRDD[K] = {
+    : TimeSeriesRDD = {
     new TimeSeriesRDD(index, map(kt => (kt._1, f(kt._2))))
   }
 
@@ -271,7 +269,7 @@ class TimeSeriesRDD[K <: AnyRef](val index: DateTimeIndex, parent: RDD[(K, Vecto
     }
   }
 
-  def compute(split: Partition, context: TaskContext): Iterator[(K, Vector[Double])] = {
+  def compute(split: Partition, context: TaskContext): Iterator[(String, Vector[Double])] = {
     parent.iterator(split, context)
   }
 
@@ -285,8 +283,8 @@ object TimeSeriesRDD {
    * @param targetIndex DateTimeIndex to conform all the indices to.
    * @param seriesRDD RDD of time series, each with their own DateTimeIndex.
    */
-  def timeSeriesRDD[K <: AnyRef](targetIndex: UniformDateTimeIndex,
-      seriesRDD: RDD[(K, UniformDateTimeIndex, Vector[Double])]): TimeSeriesRDD[K] = {
+  def timeSeriesRDD(targetIndex: UniformDateTimeIndex,
+      seriesRDD: RDD[(String, UniformDateTimeIndex, Vector[Double])]): TimeSeriesRDD = {
     val rdd = seriesRDD.map { case (key, index, vec) =>
       val newVec = TimeSeriesUtils.rebase(index, targetIndex, vec, Double.NaN)
       (key, newVec)
@@ -300,8 +298,7 @@ object TimeSeriesRDD {
    * @param targetIndex DateTimeIndex to conform all the indices to.
    * @param seriesRDD RDD of time series, each with their own DateTimeIndex.
    */
-  def timeSeriesRDD[K <: AnyRef](targetIndex: DateTimeIndex, seriesRDD: RDD[TimeSeries[K]])
-    : TimeSeriesRDD[K] = {
+  def timeSeriesRDD(targetIndex: DateTimeIndex, seriesRDD: RDD[TimeSeries]): TimeSeriesRDD = {
     val rdd = seriesRDD.flatMap { series =>
       series.univariateKeyAndSeriesIterator().map { case (key, vec) =>
         (key, TimeSeriesUtils.rebase(series.index, targetIndex, vec, Double.NaN))

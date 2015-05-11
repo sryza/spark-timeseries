@@ -40,7 +40,7 @@ The central abstraction of the library is the `TimeSeriesRDD`, a lazy distribute
 
 TimeSeriesRDDs then support efficient series-wise operations like slicing, imputing missing values based on surrounding elements, and training time-series models:
 
-    val tsRdd: TimeSeriesRDD[String] = ...
+    val tsRdd: TimeSeriesRDD = ...
     
     // Find a sub-slice between two dates 
     val subslice = tsRdd.slice(new DateTime("2015-4-10"), new DateTime("2015-4-14"))

@@ -45,7 +45,7 @@ object MonteCarloValueAtRiskExample {
     val sc = new SparkContext(conf)
 
 
-    def loadTS(inputDir: String, lower: DateTime, upper: DateTime): TimeSeriesRDD[String] = {
+    def loadTS(inputDir: String, lower: DateTime, upper: DateTime): TimeSeriesRDD = {
       val histories = YahooParser.yahooFiles(instrumentsDir, sc)
       histories.cache()
       val start = histories.map(_.index.first).takeOrdered(1).head

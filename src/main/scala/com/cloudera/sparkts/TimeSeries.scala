@@ -19,14 +19,25 @@ import breeze.linalg._
 
 import com.github.nscala_time.time.Imports._
 
-class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix[Double], val labels: Array[K])
-  extends Serializable {
+class TimeSeries(val index: DateTimeIndex, val data: DenseMatrix[Double],
+    val labels: Array[String]) extends Serializable {
+
+  def slice(range: Range): TimeSeries = {
+    new TimeSeries(index.slice(range), data(range, ::), labels)
+  }
+
+  def union(vec: Vector[Double], key: String): TimeSeries = {
+    val mat = DenseMatrix.zeros[Double](data.rows, data.cols + 1)
+    (0 until data.cols).foreach(c => mat(::, c to c) := data(::, c to c))
+    mat(::, -1 to -1) := vec
+    new TimeSeries(index, mat, labels :+ key)
+  }
 
   /**
    * Returns a TimeSeries where each time series is differenced with the given order. The new
    * TimeSeries will be missing the first n date-times.
    */
-  def differences(lag: Int): TimeSeries[K] = {
+  def differences(lag: Int): TimeSeries = {
     mapSeries(index.slice(lag, index.size - 1), vec => diff(vec.toDenseVector, lag))
   }
 
@@ -34,13 +45,13 @@ class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix[Double], val
    * Returns a TimeSeries where each time series is differenced with order 1. The new TimeSeries
    * will be missing the first date-time.
    */
-  def differences(): TimeSeries[K] = differences(1)
+  def differences(): TimeSeries = differences(1)
 
   /**
    * Returns a TimeSeries where each time series is quotiented with the given order. The new
    * TimeSeries will be missing the first n date-times.
    */
-  def quotients(lag: Int): TimeSeries[K] = {
+  def quotients(lag: Int): TimeSeries = {
     mapSeries(index.slice(lag, index.size - 1), vec => UnivariateTimeSeries.quotients(vec, lag))
   }
 
@@ -48,13 +59,13 @@ class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix[Double], val
    * Returns a TimeSeries where each time series is quotiented with order 1. The new TimeSeries will
    * be missing the first date-time.
    */
-  def quotients(): TimeSeries[K] = quotients(1)
+  def quotients(): TimeSeries = quotients(1)
 
   /**
    * Returns a return series for each time series. Assumes periodic (as opposed to continuously
    * compounded) returns.
    */
-  def price2ret(): TimeSeries[K] = {
+  def price2ret(): TimeSeries = {
     mapSeries(index.slice(1, index.size - 1), vec => UnivariateTimeSeries.price2ret(vec, 1))
   }
 
@@ -69,11 +80,11 @@ class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix[Double], val
     }
   }
 
-  def univariateKeyAndSeriesIterator(): Iterator[(K, Vector[Double])] = {
-    new Iterator[(K, Vector[Double])] {
+  def univariateKeyAndSeriesIterator(): Iterator[(String, Vector[Double])] = {
+    new Iterator[(String, Vector[Double])] {
       var i = 0
       def hasNext: Boolean = i < data.cols
-      def next(): (K, Vector[Double]) = {
+      def next(): (String, Vector[Double]) = {
         i += 1
         (labels(i - 1), data(::, i - 1))
       }
@@ -83,7 +94,7 @@ class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix[Double], val
   /**
    * Applies a transformation to each series that preserves the time index.
    */
-  def mapSeries(f: (Vector[Double]) => Vector[Double]): TimeSeries[K] = {
+  def mapSeries(f: (Vector[Double]) => Vector[Double]): TimeSeries = {
     mapSeries(index, f)
   }
 
@@ -91,7 +102,7 @@ class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix[Double], val
    * Applies a transformation to each series such that the resulting series align with the given
    * time index.
    */
-  def mapSeries(newIndex: DateTimeIndex, f: (Vector[Double]) => Vector[Double]): TimeSeries[K] = {
+  def mapSeries(newIndex: DateTimeIndex, f: (Vector[Double]) => Vector[Double]): TimeSeries = {
     val newSize = newIndex.size
     val newData = new DenseMatrix[Double](newSize, data.cols)
     univariateSeriesIterator().zipWithIndex.foreach { case (vec, index) =>
@@ -107,12 +118,12 @@ class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix[Double], val
   /**
    * Gets the first univariate series and its label.
    */
-  def head(): (K, Vector[Double]) = univariateKeyAndSeriesIterator().next
+  def head(): (String, Vector[Double]) = univariateKeyAndSeriesIterator().next
 }
 
 object TimeSeries {
-  def timeSeriesFromSamples[K](samples: Seq[(DateTime, Array[Double])], labels: Array[K])
-    : TimeSeries[K] = {
+  def timeSeriesFromSamples(samples: Seq[(DateTime, Array[Double])], labels: Array[String])
+    : TimeSeries = {
     val mat = new DenseMatrix[Double](samples.length, samples.head._2.length)
     val dts = new Array[Long](samples.length)
     for (i <- 0 until samples.length) {
@@ -120,7 +131,7 @@ object TimeSeries {
       dts(i) = dt.getMillis
       mat(i to i, ::) := new DenseVector[Double](values)
     }
-    new TimeSeries[K](new IrregularDateTimeIndex(dts), mat, labels)
+    new TimeSeries(new IrregularDateTimeIndex(dts), mat, labels)
   }
 }
 

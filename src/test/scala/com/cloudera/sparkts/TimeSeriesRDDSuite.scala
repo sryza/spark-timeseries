@@ -36,7 +36,7 @@ class TimeSeriesRDDSuite extends FunSuite with LocalSparkContext with ShouldMatc
       .map(x => (x(0).toString, x))
     val start = new DateTime("2015-4-9")
     val index = uniform(start, 10, 1.days)
-    val rdd = new TimeSeriesRDD[String](index, sc.parallelize(vecs))
+    val rdd = new TimeSeriesRDD(index, sc.parallelize(vecs))
     val slice = rdd.slice(start + 1.days, start + 6.days)
     slice.index should be (uniform(start + 1.days, 6, 1.days))
     val contents = slice.collectAsMap()
@@ -56,7 +56,7 @@ class TimeSeriesRDDSuite extends FunSuite with LocalSparkContext with ShouldMatc
       .map(x => (x(0).toString, x))
     val start = new DateTime("2015-4-9")
     val index = uniform(start, 10, 1.days)
-    val rdd = new TimeSeriesRDD[String](index, sc.parallelize(vecs))
+    val rdd = new TimeSeriesRDD(index, sc.parallelize(vecs))
     rdd.filterEndingAfter(start).count() should be (3)
   }
 

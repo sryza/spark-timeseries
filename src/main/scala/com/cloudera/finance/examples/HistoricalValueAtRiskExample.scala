@@ -48,7 +48,7 @@ object HistoricalValueAtRiskExample {
     val sc = new SparkContext(conf)
 
     // Load the data into a TimeSeriesRDD where each series holds 1-day log returns
-    def loadTS(inputDir: String, lower: DateTime, upper: DateTime): TimeSeriesRDD[String] = {
+    def loadTS(inputDir: String, lower: DateTime, upper: DateTime): TimeSeriesRDD = {
       val histories = YahooParser.yahooFiles(inputDir, sc)
       histories.cache()
       val start = histories.map(_.index.first).takeOrdered(1).head
@@ -67,11 +67,16 @@ object HistoricalValueAtRiskExample {
     val instrumentReturns = loadTS(instrumentsDir, year2000, year2010)
     val factorReturns = loadTS(factorsDir, year2000, year2010).collectAsTimeSeries()
 
-    // Get factors in a form that we can feed into Commons Math linear regression
-    val factorObservations = matToRowArrs(factorReturns.data)
-
     // Try a regression on one of the instruments
     val instrument = instrumentReturns.take(1).head._2
+
+    // Add in instrument lags
+    val withLag = factorReturns.slice(1 to -1).union(instrument(0 to -2), "instrlag")
+
+    // Get factors in a form that we can feed into Commons Math linear regression
+    val factorObservations = matToRowArrs(withLag.data)
+
+    // Try a regression on one of the instruments
     val regression = new OLSMultipleLinearRegression()
     regression.newSampleData(instrument.toArray, factorObservations)
 

@@ -35,6 +35,11 @@ trait DateTimeIndex extends Serializable {
   def slice(start: DateTime, end: DateTime): DateTimeIndex
 
   /**
+   * Returns a sub-slice of the index with the given range of indices.
+   */
+  def slice(range: Range): DateTimeIndex
+
+  /**
    * Returns a sub-slice of the index, starting and ending at the given indices (inclusive).
    */
   def slice(start: Int, end: Int): DateTimeIndex
@@ -98,6 +103,13 @@ class UniformDateTimeIndex(val start: Long, val periods: Int, val frequency: Fre
   /**
    * {@inheritDoc}
    */
+  override def slice(range: Range): UniformDateTimeIndex = {
+    slice(range.head, range.last)
+  }
+
+  /**
+   * {@inheritDoc}
+   */
   override def slice(lower: Int, upper: Int): UniformDateTimeIndex = {
     uniform(frequency.advance(new DateTime(first), lower), upper - lower, frequency)
   }
@@ -134,6 +146,13 @@ class IrregularDateTimeIndex(val instants: Array[Long]) extends DateTimeIndex {
    * {@inheritDoc}
    */
   override def slice(start: DateTime, end: DateTime): IrregularDateTimeIndex = {
+    throw new UnsupportedOperationException()
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  override def slice(range: Range): IrregularDateTimeIndex = {
     throw new UnsupportedOperationException()
   }
 

@@ -25,7 +25,7 @@ import org.joda.time.DateTime
 
 class TimeSeriesKryoRegistrator extends KryoRegistrator {
   def registerClasses(kryo: Kryo): Unit = {
-    kryo.register(classOf[TimeSeries[_]])
+    kryo.register(classOf[TimeSeries])
     kryo.register(classOf[UniformDateTimeIndex])
     kryo.register(classOf[IrregularDateTimeIndex])
     kryo.register(classOf[BusinessDayFrequency])
