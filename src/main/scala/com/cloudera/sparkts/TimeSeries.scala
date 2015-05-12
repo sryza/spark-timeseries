@@ -99,6 +99,18 @@ class TimeSeries(val index: DateTimeIndex, val data: DenseMatrix[Double],
   }
 
   /**
+   * Applies a transformation to each series that preserves the time index. Passes the label along
+   * with each series.
+   */
+  def mapSeriesWithLabel(f: (String, Vector[Double]) => Vector[Double]): TimeSeries = {
+    val newData = new DenseMatrix[Double](index.size, data.cols)
+    univariateKeyAndSeriesIterator().zipWithIndex.foreach { case ((key, series), index) =>
+      newData(::, index) := f(key, series)
+    }
+    new TimeSeries(index, newData, labels)
+  }
+
+  /**
    * Applies a transformation to each series such that the resulting series align with the given
    * time index.
    */
@@ -106,13 +118,13 @@ class TimeSeries(val index: DateTimeIndex, val data: DenseMatrix[Double],
     val newSize = newIndex.size
     val newData = new DenseMatrix[Double](newSize, data.cols)
     univariateSeriesIterator().zipWithIndex.foreach { case (vec, index) =>
-      newData(::, index) := vec
+      newData(::, index) := f(vec)
     }
     new TimeSeries(newIndex, newData, labels)
   }
 
-  def mapValues[U](f: (Vector[Double]) => U): Seq[U] = {
-    univariateSeriesIterator().map(f).toSeq
+  def mapValues[U](f: (Vector[Double]) => U): Seq[(String, U)] = {
+    univariateKeyAndSeriesIterator().map(ks => (ks._1, f(ks._2))).toSeq
   }
 
   /**
