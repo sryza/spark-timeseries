@@ -15,22 +15,17 @@
 
 package com.cloudera.finance.examples
 
-import breeze.linalg.DenseVector
+import breeze.linalg._
 
 import com.cloudera.finance.YahooParser
 import com.cloudera.finance.Util._
-import com.cloudera.finance.risk.{FilteredHistoricalFactorDistribution,
-  LinearInstrumentReturnsModel}
-import com.cloudera.finance.risk.ValueAtRisk._
-import com.cloudera.sparkts.{ARGARCH, TimeSeriesFilter, TimeSeriesRDD}
+import com.cloudera.sparkts._
 import com.cloudera.sparkts.DateTimeIndex._
-import com.cloudera.sparkts.EasyPlot._
 import com.cloudera.sparkts.TimeSeriesRDD._
-import com.cloudera.sparkts.UnivariateTimeSeries._
 
 import com.github.nscala_time.time.Imports._
 
-import org.apache.commons.math3.random.MersenneTwister
+import org.apache.commons.math3.random.RandomGenerator
 import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression
 
 import org.apache.spark.{SparkConf, SparkContext}
@@ -57,7 +52,9 @@ object HistoricalValueAtRiskExample {
       val tsRdd = timeSeriesRDD(dtIndex, histories).
         filter(_._1.endsWith("csvClose")).
         filterStartingBefore(lower).filterEndingAfter(upper)
-      tsRdd.fill("linear").slice(lower, upper).price2ret().
+      tsRdd.fill("linear").
+        slice(lower, upper).
+        price2ret().
         mapSeries(_.map(x => math.log(1 + x)))
     }
 
@@ -67,58 +64,65 @@ object HistoricalValueAtRiskExample {
     val instrumentReturns = loadTS(instrumentsDir, year2000, year2010)
     val factorReturns = loadTS(factorsDir, year2000, year2010).collectAsTimeSeries()
 
-    // Try a regression on one of the instruments
-    val instrument = instrumentReturns.take(1).head._2
+    // Fit an AR(1) + GARCH(1, 1) model to each factor
+    val garchModels = factorReturns.mapValues(ARGARCH.fitModel(_)).toMap
+    val iidFactorReturns = factorReturns.mapSeriesWithLabel { case (symbol, series) =>
+      val model = garchModels(symbol)
+      model.removeTimeDependentEffects(series, DenseVector.zeros[Double](series.length))
+    }
 
-    // Add in instrument lags
-    val withLag = factorReturns.slice(1 to -1).union(instrument(0 to -2), "instrlag")
+    // Generate an RDD of simulations
+//    val rand = new MersenneTwister()
+//    val factorsDist = new FilteredHistoricalFactorDistribution(rand, iidFactorReturns.toArray,
+//      garchModels.asInstanceOf[Array[TimeSeriesFilter]])
+//    val returns = simulationReturns(0L, factorsDist, numTrials, parallelism, sc,
+//      instrumentReturnsModel)
+//    returns.cache()
+//
+//    // Calculate VaR and expected shortfall
+//    val pValues = Array(.01, .03, .05)
+//    val valueAtRisks = valueAtRisk(returns, pValues)
+//    println(s"Value at risk at ${pValues.mkString(",")}: ${valueAtRisks.mkString(",")}")
+//
+//    val expectedShortfalls = expectedShortfall(returns, pValues)
+//    println(s"Expected shortfall at ${pValues.mkString(",")}: ${expectedShortfalls.mkString(",")}")
+  }
 
-    // Get factors in a form that we can feed into Commons Math linear regression
-    val factorObservations = matToRowArrs(withLag.data)
+  /**
+   * Generates paths of factor returns each with the given number of days.
+   */
+  def simulatedFactorReturns(
+      nDays: Int,
+      rand: RandomGenerator,
+      iidSeries: TimeSeries,
+      models: Map[String, TimeSeriesModel]): Matrix[Double] = {
+    val mat = DenseMatrix.zeros[Double](nDays, iidSeries.data.cols)
+    (0 until nDays).foreach { i =>
+      mat(i, ::) := iidSeries.data(rand.nextInt(iidSeries.data.rows), ::)
+    }
+    (0 until models.size).foreach { i =>
+      models(iidSeries.labels(i)).addTimeDependentEffects(mat(::, i), mat(::, i))
+    }
+    mat
+  }
 
-    // Try a regression on one of the instruments
-    val regression = new OLSMultipleLinearRegression()
-    regression.newSampleData(instrument.toArray, factorObservations)
-
-    // Plot the autocorrelation of the instrument
-    ezplot(instrument)
-
-    // Plot the residuals
-    val residuals = regression.estimateResiduals()
-    ezplot(residuals)
-
-    // Plot the autocorrelation of the residuals
-    ezplot(autocorr(instrument, 40))
-
+  /**
+   * Fits a model for each instrument that predicts its returns based on the returns of the factors.
+   */
+  def fitInstrumentReturnsModels(instrumentReturns: TimeSeriesRDD, factorReturns: TimeSeries) {
     // Fit factor return -> instrument return predictive models
     val linearModels = instrumentReturns.mapValues { series =>
+      val withLag = factorReturns.slice(2 until series.length).
+        union(series(1 until series.length - 1), "instrlag1").
+        union(series(0 until series.length - 2), "instrlag2")
+
+      // Get factors in a form that we can feed into Commons Math linear regression
+      val factorObservations = matToRowArrs(withLag.data)
+      // Run the regression
       val regression = new OLSMultipleLinearRegression()
       regression.newSampleData(series.toArray, factorObservations)
       regression.estimateRegressionParameters()
     }.map(_._2).collect()
-    val instrumentReturnsModel = new LinearInstrumentReturnsModel(arrsToMat(linearModels.iterator))
-
-    // Fit an AR(1) + GARCH(1, 1) model to each factor
-    val garchModels = factorReturns.mapValues(ARGARCH.fitModel(_))
-    val iidFactorReturns = factorReturns.univariateSeriesIterator.zip(garchModels.iterator).map {
-      case (history, model) =>
-        model.removeTimeDependentEffects(history, DenseVector.zeros[Double](history.length))
-    }
-
-    // Generate an RDD of simulations
-    val rand = new MersenneTwister()
-    val factorsDist = new FilteredHistoricalFactorDistribution(rand, iidFactorReturns.toArray,
-      garchModels.asInstanceOf[Array[TimeSeriesFilter]])
-    val returns = simulationReturns(0L, factorsDist, numTrials, parallelism, sc,
-      instrumentReturnsModel)
-    returns.cache()
-
-    // Calculate VaR and expected shortfall
-    val pValues = Array(.01, .03, .05)
-    val valueAtRisks = valueAtRisk(returns, pValues)
-    println(s"Value at risk at ${pValues.mkString(",")}: ${valueAtRisks.mkString(",")}")
-
-    val expectedShortfalls = expectedShortfall(returns, pValues)
-    println(s"Expected shortfall at ${pValues.mkString(",")}: ${expectedShortfalls.mkString(",")}")
+    arrsToMat(linearModels.iterator)
   }
 }

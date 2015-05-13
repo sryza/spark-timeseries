@@ -15,8 +15,6 @@
 
 package com.cloudera.finance.examples
 
-import com.cloudera.finance.risk.LinearInstrumentReturnsModel
-import com.cloudera.finance.risk.ValueAtRisk._
 import com.cloudera.finance.Util._
 
 import com.cloudera.finance.{SerializableMultivariateNormalDistribution, YahooParser}
@@ -70,24 +68,24 @@ object MonteCarloValueAtRiskExample {
       regression.newSampleData(series.toArray, factorObservations)
       regression.estimateRegressionParameters()
     }.map(_._2).collect()
-    val instrumentReturnsModel = new LinearInstrumentReturnsModel(arrsToMat(linearModels.iterator))
-
-
-    // Generate an RDD of simulations
-    val factorCov = new Covariance(factorObservations).getCovarianceMatrix().getData()
-    val factorMeans = factorReturns.univariateSeriesIterator.
-      map(factor => factor.sum / factor.size).toArray
-    val factorsDist = new SerializableMultivariateNormalDistribution(factorMeans, factorCov)
-    val returns = simulationReturns(0L, factorsDist, numTrials, parallelism, sc,
-      instrumentReturnsModel)
-    returns.cache()
-
-    // Calculate VaR and expected shortfall
-    val pValues = Array(.01, .03, .05)
-    val valueAtRisks = valueAtRisk(returns, pValues)
-    println(s"Value at risk at ${pValues.mkString(",")}: ${valueAtRisks.mkString(",")}")
-
-    val expectedShortfalls = expectedShortfall(returns, pValues)
-    println(s"Expected shortfall at ${pValues.mkString(",")}: ${expectedShortfalls.mkString(",")}")
+//    val instrumentReturnsModel = new LinearInstrumentReturnsModel(arrsToMat(linearModels.iterator))
+//
+//
+//    // Generate an RDD of simulations
+//    val factorCov = new Covariance(factorObservations).getCovarianceMatrix().getData()
+//    val factorMeans = factorReturns.univariateSeriesIterator.
+//      map(factor => factor.sum / factor.size).toArray
+//    val factorsDist = new SerializableMultivariateNormalDistribution(factorMeans, factorCov)
+//    val returns = simulationReturns(0L, factorsDist, numTrials, parallelism, sc,
+//      instrumentReturnsModel)
+//    returns.cache()
+//
+//    // Calculate VaR and expected shortfall
+//    val pValues = Array(.01, .03, .05)
+//    val valueAtRisks = valueAtRisk(returns, pValues)
+//    println(s"Value at risk at ${pValues.mkString(",")}: ${valueAtRisks.mkString(",")}")
+//
+//    val expectedShortfalls = expectedShortfall(returns, pValues)
+//    println(s"Expected shortfall at ${pValues.mkString(",")}: ${expectedShortfalls.mkString(",")}")
   }
 }
