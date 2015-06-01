@@ -163,14 +163,14 @@ object UnivariateTimeSeries {
     result
   }
 
-  def fillNext(values: Array[Double]): Array[Double] = {
-    fillNext(new DenseVector(values)).data
+  def fillPrevious(values: Array[Double]): Array[Double] = {
+    fillPrevious(new DenseVector(values)).data
   }
 
-  /* fills in NaN with the most recently available not NaN, scanning from left to right.
+  /* fills in NaN with the previously available not NaN, scanning from left to right.
   1 NaN NaN 2 Nan -> 1 1 1 2 2
   */
-  def fillNext(values: Vector[Double]): DenseVector[Double] = {
+  def fillPrevious(values: Vector[Double]): DenseVector[Double] = {
     val result = new DenseVector(values.toArray)
     var filler = Double.NaN //initial value, maintains invariant
     var i = 0
@@ -182,14 +182,14 @@ object UnivariateTimeSeries {
     result
   }
 
-  def fillPrevious(values: Array[Double]): Array[Double] = {
-    fillPrevious(new DenseVector(values)).data
+  def fillNext(values: Array[Double]): Array[Double] = {
+    fillNext(new DenseVector(values)).data
   }
 
-  /* fills in NaN with the most recently available not NaN, scanning from right to left.
+  /* fills in NaN with the next available not NaN, scanning from right to left.
   1 NaN NaN 2 Nan -> 1 2 2 2 NaN
   */
-  def fillPrevious(values: Vector[Double]): DenseVector[Double] = {
+  def fillNext(values: Vector[Double]): DenseVector[Double] = {
     val result = new DenseVector(values.toArray)
     var filler = Double.NaN //initial value, maintains invariant
     var i = result.length - 1

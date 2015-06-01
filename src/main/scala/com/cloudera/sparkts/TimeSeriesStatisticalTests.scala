@@ -255,6 +255,7 @@ object TimeSeriesStatisticalTests {
    * of lack of serial correlation up to degree maxLag. We implement in the form of the
    * Lagrange Multiplier test
    * See http://en.wikipedia.org/wiki/Breusch%E2%80%93Godfrey_test for more information
+   * BG test is robust to various situations in which DWtest and durbin h statistic assumptions are broken
    */
   
   def bgtest(ts: Vector[Double], factors: Matrix[Double], maxLag: Int): (Double, Double) = {
@@ -267,7 +268,7 @@ object TimeSeriesStatisticalTests {
       val lagResids = Lag.lagMatTrimBoth(resids, maxLag, false) /* u_hat lagged */
       val n_obs = lagResids.length
       val drop_len = ts.size - n_obs /* drop x # of elements to run new regression */
-      val aux_ols = new OLSMultipleLinearRegression() /* auxiliary OLS: basis for bg test */
+      val aux_ols = new OLSMultipleLinearRegression() /* auxiliary OLS for bg test */
       val aux_factors = factor_arrays.drop(drop_len).zip(lagResids).map {case (x, u_t) => x ++ u_t } 
       aux_ols.newSampleData(resids.drop(drop_len), aux_factors)    /* u_hat = f(X, u_hat lagged) */  
       val bgstat = n_obs * aux_ols.calculateRSquared()
