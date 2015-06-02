@@ -27,20 +27,21 @@ import org.scalatest.{FunSuite, ShouldMatchers}
 
 class TimeSeriesStatisticalTestsSuite extends FunSuite with ShouldMatchers {
   test("breusch-godfrey") {
-    //Replicating the example provided by R package lmtest for bgtest 
+    // Replicating the example provided by R package lmtest for bgtest 
     val rand = new MersenneTwister(5L) 
     val n = 100
-    val coef = 0.5 //coefficient for lagged series
+    val coef = 0.5 // coefficient for lagged series
     val x = Array.fill(n / 2)(Array(1.0, -1.0)).flatten
-    val y1 = x.map(_ + 1 + rand.nextDouble)  //stationary 
-    val y2 = y1.scanLeft(0.0){
-        case(prior, curr) => prior * coef + curr
-        }.tail //AR(1), recursive filter with 0.5 coef
+    val y1 = x.map(_ + 1 + rand.nextDouble) // stationary 
+    // AR(1), recursive filter with 0.5 coef
+    val y2 = y1.scanLeft(0.0) { case (prior, curr) => prior * coef + curr }.tail 
     val pthreshold = 0.05
     
-    bgtest(new DenseVector(y1), new DenseMatrix(x.length, 1, x), 1)._2 should be > pthreshold //there should be no evidence of serial correlation
+    // there should be no evidence of serial correlation
+    bgtest(new DenseVector(y1), new DenseMatrix(x.length, 1, x), 1)._2 should be > pthreshold 
     bgtest(new DenseVector(y1), new DenseMatrix(x.length, 1, x), 4)._2 should be > pthreshold 
-    bgtest(new DenseVector(y2), new DenseMatrix(x.length, 1, x), 1)._2 should be < pthreshold //there should be evidence of serial correlation
+    // there should be evidence of serial correlation
+    bgtest(new DenseVector(y2), new DenseMatrix(x.length, 1, x), 1)._2 should be < pthreshold
     bgtest(new DenseVector(y2), new DenseMatrix(x.length, 1, x), 4)._2 should be < pthreshold
   }
 

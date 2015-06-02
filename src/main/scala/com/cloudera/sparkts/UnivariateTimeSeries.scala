@@ -167,17 +167,18 @@ object UnivariateTimeSeries {
     fillPrevious(new DenseVector(values)).data
   }
 
-  /* fills in NaN with the previously available not NaN, scanning from left to right.
-  1 NaN NaN 2 Nan -> 1 1 1 2 2
+  /**
+  * fills in NaN with the previously available not NaN, scanning from left to right.
+  * 1 NaN NaN 2 Nan -> 1 1 1 2 2
   */
   def fillPrevious(values: Vector[Double]): DenseVector[Double] = {
     val result = new DenseVector(values.toArray)
-    var filler = Double.NaN //initial value, maintains invariant
+    var filler = Double.NaN // initial value, maintains invariant
     var i = 0
-    while(i < result.length) {
-        filler = if(result(i).isNaN) filler else result(i)
-        result(i) = filler
-        i += 1
+    while (i < result.length) {
+      filler = if (result(i).isNaN) filler else result(i)
+      result(i) = filler
+      i += 1
     }
     result
   }
@@ -186,35 +187,38 @@ object UnivariateTimeSeries {
     fillNext(new DenseVector(values)).data
   }
 
-  /* fills in NaN with the next available not NaN, scanning from right to left.
-  1 NaN NaN 2 Nan -> 1 2 2 2 NaN
+  /**
+  * fills in NaN with the next available not NaN, scanning from right to left.
+  * 1 NaN NaN 2 Nan -> 1 2 2 2 NaN
   */
   def fillNext(values: Vector[Double]): DenseVector[Double] = {
     val result = new DenseVector(values.toArray)
-    var filler = Double.NaN //initial value, maintains invariant
+    var filler = Double.NaN // initial value, maintains invariant
     var i = result.length - 1
-    while(i >= 0) {
-        filler = if(result(i).isNaN) filler else result(i)
-        result(i) = filler
-        i -= 1
+    while (i >= 0) {
+      filler = if (result(i).isNaN) filler else result(i)
+      result(i) = filler
+      i -= 1
     }
     result
   }
   
   
   def fillWithDefault(values: Array[Double], filler: Double): Array[Double] = {
-      fillWithDefault(new DenseVector(values), filler).data
+    fillWithDefault(new DenseVector(values), filler).data
   } 
 
-  /* fills in NaN with a default value */
+  /**
+  * fills in NaN with a default value 
+  */
   def fillWithDefault(values: Vector[Double], filler: Double): DenseVector[Double] = {
-      val result = new DenseVector(values.toArray)
-      var i = 0
-      while(i < result.length) {
-          result(i) = if(result(i).isNaN) filler else result(i)
-          i += 1
-      }
-      result
+    val result = new DenseVector(values.toArray)
+    var i = 0
+    while (i < result.length) {
+      result(i) = if (result(i).isNaN) filler else result(i)
+      i += 1
+    }
+    result
   }
 
   def fillLinear(values: Array[Double]): Array[Double] = {

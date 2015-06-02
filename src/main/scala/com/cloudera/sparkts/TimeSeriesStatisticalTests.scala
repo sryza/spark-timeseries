@@ -19,7 +19,7 @@ import breeze.numerics.polyval
 
 import com.cloudera.finance.Util
 
-import org.apache.commons.math3.distribution.{NormalDistribution, ChiSquaredDistribution}
+import org.apache.commons.math3.distribution.{ChiSquaredDistribution, NormalDistribution}
 import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression
 
 /**
@@ -248,31 +248,32 @@ object TimeSeriesStatisticalTests {
   }
   
   /**
-   * Breusch-Godfrey test for serial correlation in a model
-   *
-   * @return The Breusch-Godfrey statistic and p value. The statistic asymptotically 
-   * follows an X^2 distribution with maxLag degrees of freedom, and provides a test for the null hypothesis
-   * of lack of serial correlation up to degree maxLag. We implement in the form of the
-   * Lagrange Multiplier test
-   * See http://en.wikipedia.org/wiki/Breusch%E2%80%93Godfrey_test for more information
-   * BG test is robust to various situations in which DWtest and durbin h statistic assumptions are broken
-   */
-  
+  * Breusch-Godfrey test for serial correlation in a model
+  * The statistic asymptotically follows an X^2 distribution with maxLag degrees of freedom, 
+  * and provides a test for the null hypothesis of lack of serial correlation up to degree maxLag
+  * From http://en.wikipedia.org/wiki/Breusch%E2%80%93Godfrey_test:
+  * Given an OLS model of the form y_t = a0 + a1 * x1_t + a2 * x2_t +  ... + u_t
+  * We estimate vector u_hat by obtaining residuals from the model fit
+  * We then calculate an auxiliary regression of the form:
+  * u_hat_t = a0 + a1 * x1_t + a2 * x2_t + ... + p1 * u_hat_t-1 + p2 * u_hat_t-2 ... 
+  * Our test statistic is then (R^2 of the auxiliary regression) * (# of obs - maxLag) 
+  * @return The Breusch-Godfrey statistic and p value
+  */
   def bgtest(ts: Vector[Double], factors: Matrix[Double], maxLag: Int): (Double, Double) = {
-      /* original regression model */
-      val orig_ols = new OLSMultipleLinearRegression()
-      val factor_arrays = Util.matToRowArrs(factors) /* X */
-      orig_ols.newSampleData(ts.toArray, factor_arrays) 
-      val resids =  orig_ols.estimateResiduals() /* u_hat */
-      /* auxiliary regression  model */
-      val lagResids = Lag.lagMatTrimBoth(resids, maxLag, false) /* u_hat lagged */
-      val n_obs = lagResids.length
-      val drop_len = ts.size - n_obs /* drop x # of elements to run new regression */
-      val aux_ols = new OLSMultipleLinearRegression() /* auxiliary OLS for bg test */
-      val aux_factors = factor_arrays.drop(drop_len).zip(lagResids).map {case (x, u_t) => x ++ u_t } 
-      aux_ols.newSampleData(resids.drop(drop_len), aux_factors)    /* u_hat = f(X, u_hat lagged) */  
-      val bgstat = n_obs * aux_ols.calculateRSquared()
-      (bgstat, 1 - new ChiSquaredDistribution(maxLag).cumulativeProbability(bgstat))
+    // original regression model
+    val origOLS = new OLSMultipleLinearRegression()
+    val origFactors = Util.matToRowArrs(factors) // X (wiki)
+    origOLS.newSampleData(ts.toArray, origFactors) // Y = A * X + u (wiki)
+    val resids =  origOLS.estimateResiduals() // u_hat (wiki)
+    // auxiliary regression  model
+    val lagResids = Lag.lagMatTrimBoth(resids, maxLag, false) // u_hat_lagged (wiki)
+    val nObs = lagResids.length
+    val dropLen = ts.size - nObs // drop x # of elements to run new regression
+    val auxOLS = new OLSMultipleLinearRegression() // auxiliary OLS for bg test
+    val auxFactors = origFactors.drop(dropLen).zip(lagResids).map {case (x, u_t) => x ++ u_t }
+    auxOLS.newSampleData(resids.drop(dropLen), auxFactors) // u_hat= A*X + P*u_hat_lagged + e (wiki)
+    val bgstat = nObs * auxOLS.calculateRSquared()
+    (bgstat, 1 - new ChiSquaredDistribution(maxLag).cumulativeProbability(bgstat))
   }
   
   
