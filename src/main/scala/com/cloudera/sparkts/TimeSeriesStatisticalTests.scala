@@ -252,29 +252,45 @@ object TimeSeriesStatisticalTests {
   * The statistic asymptotically follows an X^2 distribution with maxLag degrees of freedom, 
   * and provides a test for the null hypothesis of lack of serial correlation up to degree maxLag
   * From http://en.wikipedia.org/wiki/Breusch%E2%80%93Godfrey_test:
-  * Given an OLS model of the form y_t = a0 + a1 * x1_t + a2 * x2_t +  ... + u_t
-  * We estimate vector u_hat by obtaining residuals from the model fit
-  * We then calculate an auxiliary regression of the form:
+  * Given residuals from an OLS model of the form y_t = a0 + a1 * x1_t + a2 * x2_t +  ... + u_t
+  * We calculate an auxiliary regression of the form:
   * u_hat_t = a0 + a1 * x1_t + a2 * x2_t + ... + p1 * u_hat_t-1 + p2 * u_hat_t-2 ... 
-  * Our test statistic is then (R^2 of the auxiliary regression) * (# of obs - maxLag) 
+  * Our test statistic is then (# of obs - maxLag) * (R^2 of the auxiliary regression)
   * @return The Breusch-Godfrey statistic and p value
   */
-  def bgtest(ts: Vector[Double], factors: Matrix[Double], maxLag: Int): (Double, Double) = {
+  def bgtest(residuals: Vector[Double], factors: Matrix[Double], maxLag: Int): (Double, Double) = {
     // original regression model
-    val origOLS = new OLSMultipleLinearRegression()
+    val origResiduals = residuals.toArray
     val origFactors = Util.matToRowArrs(factors) // X (wiki)
-    origOLS.newSampleData(ts.toArray, origFactors) // Y = A * X + u (wiki)
-    val resids =  origOLS.estimateResiduals() // u_hat (wiki)
     // auxiliary regression  model
-    val lagResids = Lag.lagMatTrimBoth(resids, maxLag, false) // u_hat_lagged (wiki)
+    val lagResids = Lag.lagMatTrimBoth(origResiduals, maxLag, false) // u_hat_lagged (wiki)
     val nObs = lagResids.length
-    val dropLen = ts.size - nObs // drop x # of elements to run new regression
+    val dropLen = residuals.size - nObs // drop x # of elements to run new regression
     val auxOLS = new OLSMultipleLinearRegression() // auxiliary OLS for bg test
     val auxFactors = origFactors.drop(dropLen).zip(lagResids).map {case (x, u_t) => x ++ u_t }
-    auxOLS.newSampleData(resids.drop(dropLen), auxFactors) // u_hat= A*X + P*u_hat_lagged + e (wiki)
+    auxOLS.newSampleData(origResiduals.drop(dropLen), auxFactors) // u_hat= A*X + P*u_hat_lagged + e
     val bgstat = nObs * auxOLS.calculateRSquared()
     (bgstat, 1 - new ChiSquaredDistribution(maxLag).cumulativeProbability(bgstat))
   }
   
-  
+  /**
+  * Breusch-Pagan test for heteroskedasticity in a model
+  * The statistic follows a X^2 distribution with (# of regressors - 1) degrees of freedom
+  * and provides a test for a null hypothesis of homoscedasticity
+  * From http://en.wikipedia.org/wiki/Breusch%E2%80%93Pagan_test
+  * Given a vector of estimated residuals (u) from an OLS model, we create a an auxiliary regression
+  * that models the squared residuals (u^2) as a function of the original regressors (X)
+  * u^2 = beta * X
+  * We construct our test statistic as (# of observations) * R^2 of our auxiliary regression
+  * @return The Breusch-Pagan statistic and p value
+  */
+  def bptest(residuals: Vector[Double], factors: Matrix[Double]): (Double, Double) = {
+    val residualsSquared = residuals.toArray.map(x => x * x) // u^2
+    val origFactors = Util.matToRowArrs(factors) // X
+    val auxOLS = new OLSMultipleLinearRegression() // auxiliary OLS for bp test
+    auxOLS.newSampleData(residualsSquared, origFactors) // u^2 = beta * X
+    val bpstat = residuals.length * auxOLS.calculateRSquared()
+    val df = factors.cols // auxOLS uses intercept term, so (# of regressors - 1) = # factors cols
+    (bpstat, 1 - new ChiSquaredDistribution(df).cumulativeProbability(bpstat))
+  }   
 }
