@@ -38,39 +38,61 @@ object EWMA {
       new SimpleValueChecker(1e-6, 1e-6)) //taken from GARCH
     val gradient = new ObjectiveFunctionGradient(new MultivariateVectorFunction() {
       def value(params: Array[Double]): Array[Double] = {
-        new EWMAModel(params(0), params(1), params(2)).gradient(ts).toArray
+        new EWMAModel(params(0)).gradient(ts)
       }
     })
     val objectiveFunction = new ObjectiveFunction(new MultivariateFunction() {
       def value(params: Array[Double]): Double = {
-        new EWMAModel(param).mse(ts)
+        new EWMAModel(params(0)).mse(ts)
       }
     })
-    val initialGuess = new InitialGuess(Array(.2, .2, .2)) // TODO: same as in GARCH, change
+    val initialGuess = new InitialGuess(Array(0.94)) // TODO: based off of JPM RiskMetrics, source!
     val maxIter = new MaxIter(10000)
     val maxEval = new MaxEval(10000)
     val optimal = optimizer.optimize(objectiveFunction, gradient, initialGuess, maxIter, maxEval)
     val params = optimal.getPoint
-    new EWMAModel(params)
-  }
-
-  /**
-   * Creates an EWMA model with arbitrary smoothing parameter (rather than fitted)
-   */
-  def createModel(smoothing: Double): EWMAModel = {
-    new EWMAModel(smoothing)
+    new EWMAModel(params(0))
   }
 }
 
 class EWMAModel (val smoothing: Double) extends TimeSeriesModel {
+
+  /**
+   * Calculates the MSE for a given timeseries ts given the smoothing parameter of the current model
+   * @param ts
+   * @return Mean Squared Error
+   */
   private[sparkts] def mse(ts: Vector[Double]): Double = {
     val arrTs = ts.toArray
-    val smoothed = addTimeDependentEffects(ts, ts)
-    //calculate MSE and return
+    val smoothed = new DenseVector(arrTs)
+    addTimeDependentEffects(ts, smoothed)
+    val n = smoothed.length
+    // we divide by 2 * n for convenience of derivative
+    sum(smoothed.toArray.zip(arrTs).map { case (yhat, y) => (yhat - y) * (yhat - y) }) / (2 * n)
   }
+
+  /**
+   * Calculates gradient for MSE for model fitting
+   *
+   * @return gradient
+   */
+  private[sparkts] def gradient(ts: Vector[Double]): Array[Double] = {
+    // gradient calculation for MSE
+    val arrTs = ts.toArray
+    val smoothed = new DenseVector(arrTs)
+    addTimeDependentEffects(ts, smoothed)
+    val n = smoothed.length
+    val arrSmoothed = smoothed.toArray
+    val errors = arrSmoothed.zip(arrTs).map { case (yhat, y) => yhat - y }
+    // note we exclude Yhat0 and Y0, since derivative is not defined there (ie.. Y_-1 and Yhat_-1
+    // are unknown. If your data is large, this shouldn't make much of a difference...
+    val g = sum(errors.tail.zip(errors).map { case (error, dx) => error * dx }) / n
+    Array(g)
+  }
+
   override def removeTimeDependentEffects(ts: Vector[Double], dest: Vector[Double] = null)
     : Vector[Double] = {
-    throw new UnsupportedOperationException()
+    throw new UnsupportedOperationException() //TODO: work on this
   }
 
   override def addTimeDependentEffects(ts: Vector[Double], dest: Vector[Double])
