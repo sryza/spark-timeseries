@@ -68,7 +68,7 @@ class TimeSeriesStatisticalTestsSuite extends FunSuite with ShouldMatchers {
     // homoscedastic residuals with variance 1 throughout
     val err1 = Array.fill(n)(rand.nextGaussian)
     // heteroskedastic residuals with alternating variance of 1 and 4
-    val varFactor = 2
+    val varFactor = 4
     val err2 = err1.zipWithIndex.map { case (x, i) =>  if(i % 2 == 0) x * varFactor else x }
     
     // generate dependent variables
