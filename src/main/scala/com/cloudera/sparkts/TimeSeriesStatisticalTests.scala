@@ -248,19 +248,18 @@ object TimeSeriesStatisticalTests {
   }
   
   /**
-  * Breusch-Godfrey test for serial correlation in a model
-  * The statistic asymptotically follows an X^2 distribution with maxLag degrees of freedom, 
-  * and provides a test for the null hypothesis of lack of serial correlation up to degree maxLag
-  * From http://en.wikipedia.org/wiki/Breusch%E2%80%93Godfrey_test:
-  * Given estimated residuals u_hat_t from an OLS model of the form
-  * y_t = a0 + a1 * x1_t + a2 * x2_t +  ... + u_t
-  * We calculate an auxiliary regression of the form:
-  * u_hat_t = a0 + a1 * x1_t + a2 * x2_t + ... + p1 * u_hat_t-1 + p2 * u_hat_t-2 ... 
-  * Our test statistic is then (# of obs - maxLag) * (R^2 of the auxiliary regression)
-  * @return The Breusch-Godfrey statistic and p value
-  */
+   * Breusch-Godfrey test for serial correlation in a model
+   * The statistic asymptotically follows an X^2 distribution with maxLag degrees of freedom,
+   * and provides a test for the null hypothesis of lack of serial correlation up to degree maxLag
+   * From http://en.wikipedia.org/wiki/Breusch%E2%80%93Godfrey_test:
+   * Given estimated residuals u_hat_t from an OLS model of the form
+   * y_t = a0 + a1 * x1_t + a2 * x2_t +  ... + u_t
+   * We calculate an auxiliary regression of the form:
+   * u_hat_t = a0 + a1 * x1_t + a2 * x2_t + ... + p1 * u_hat_t-1 + p2 * u_hat_t-2 ...
+   * Our test statistic is then (# of obs - maxLag) * (R^2 of the auxiliary regression)
+   * @return The Breusch-Godfrey statistic and p value
+   */
   def bgtest(residuals: Vector[Double], factors: Matrix[Double], maxLag: Int): (Double, Double) = {
-    // original regression model
     val origResiduals = residuals.toArray
     val origFactors = Util.matToRowArrs(factors) // X (wiki)
     // auxiliary regression model
@@ -275,16 +274,16 @@ object TimeSeriesStatisticalTests {
   }
   
   /**
-  * Breusch-Pagan test for heteroskedasticity in a model
-  * The statistic follows a X^2 distribution with (# of regressors - 1) degrees of freedom
-  * and provides a test for a null hypothesis of homoscedasticity
-  * From http://en.wikipedia.org/wiki/Breusch%E2%80%93Pagan_test
-  * Given a vector of estimated residuals (u) from an OLS model, we create an auxiliary regression
-  * that models the squared residuals (u^2) as a function of the original regressors (X)
-  * u^2 = beta * X
-  * We construct our test statistic as (# of observations) * R^2 of our auxiliary regression
-  * @return The Breusch-Pagan statistic and p value
-  */
+   * Breusch-Pagan test for heteroskedasticity in a model
+   * The statistic follows a X^2 distribution with (# of regressors - 1) degrees of freedom
+   * and provides a test for a null hypothesis of homoscedasticity
+   * From http://en.wikipedia.org/wiki/Breusch%E2%80%93Pagan_test
+   * Given a vector of estimated residuals (u) from an OLS model, we create an auxiliary regression
+   * that models the squared residuals (u^2) as a function of the original regressors (X)
+   * u^2 = beta * X
+   * We construct our test statistic as (# of observations) * R^2 of our auxiliary regression
+   * @return The Breusch-Pagan statistic and p value
+   */
   def bptest(residuals: Vector[Double], factors: Matrix[Double]): (Double, Double) = {
     val residualsSquared = residuals.toArray.map(x => x * x) // u^2
     val origFactors = Util.matToRowArrs(factors) // X

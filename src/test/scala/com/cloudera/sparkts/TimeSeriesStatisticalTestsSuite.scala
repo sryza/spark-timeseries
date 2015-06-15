@@ -16,25 +16,21 @@
 
 package com.cloudera.sparkts
 
-import org.apache.commons.math.stat.regression.OLSMultipleLinearRegression
-
-import scala.Double.NaN
-
 import breeze.linalg._
 
 import com.cloudera.sparkts.TimeSeriesStatisticalTests._
 
+import org.apache.commons.math.stat.regression.OLSMultipleLinearRegression
 import org.apache.commons.math3.random.MersenneTwister
 
 import org.scalatest.{FunSuite, ShouldMatchers}
 
 class TimeSeriesStatisticalTestsSuite extends FunSuite with ShouldMatchers {
   test("breusch-godfrey") {
-    // Replicating the example provided by R package lmtest for bgtest 
-    val rand = new MersenneTwister(5L) 
+    // Replicating the example provided by R package lmtest for bgtest
+    val rand = new MersenneTwister(5L)
     val n = 100
     val coef = 0.5 // coefficient for lagged series
-
     val x = Array.fill(n / 2)(Array(1.0, -1.0)).flatten
     // stationary series
     val y1 = x.map(_ + 1 + rand.nextGaussian())
@@ -64,17 +60,17 @@ class TimeSeriesStatisticalTestsSuite extends FunSuite with ShouldMatchers {
     val rand = new MersenneTwister(5L)
     val n = 100
     val x = Array.fill(n / 2)(Array(-1.0, 1.0)).flatten
-    
-    // homoscedastic residuals with variance 1 throughout
+
+    // homoskedastic residuals with variance 1 throughout
     val err1 = Array.fill(n)(rand.nextGaussian)
     // heteroskedastic residuals with alternating variance of 1 and 4
-    val varFactor = 4
+    val varFactor = 2
     val err2 = err1.zipWithIndex.map { case (x, i) =>  if(i % 2 == 0) x * varFactor else x }
-    
+
     // generate dependent variables
     val y1 = x.zip(err1).map { case (xi, ei) => xi + ei + 1 }
     val y2 = x.zip(err2).map { case (xi, ei) => xi + ei + 1 }
-    
+
     // create models and calculate residuals
     val OLS1 = new OLSMultipleLinearRegression()
     OLS1.newSampleData(y1, x.map(Array(_)))
@@ -83,13 +79,11 @@ class TimeSeriesStatisticalTestsSuite extends FunSuite with ShouldMatchers {
     val OLS2 = new OLSMultipleLinearRegression()
     OLS2.newSampleData(y2, x.map(Array(_)))
     val resids2 = OLS2.estimateResiduals()
-    
+
     val pthreshold = 0.05
     // there should be no evidence of heteroskedasticity
     bptest(new DenseVector(resids1), new DenseMatrix(x.length, 1, x))._2 should be > pthreshold
     // there should be evidence of heteroskedasticity
     bptest(new DenseVector(resids2), new DenseMatrix(x.length, 1, x))._2 should be < pthreshold
-	
-	}
-
+  }
 }
