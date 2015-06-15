@@ -17,100 +17,70 @@ package com.cloudera.sparkts
 
 import breeze.linalg._
 
-import org.apache.commons.math3.analysis.{MultivariateFunction, MultivariateVectorFunction}
-import org.apache.commons.math3.optim.{MaxEval, MaxIter, InitialGuess, SimpleValueChecker}
-import org.apache.commons.math3.optim.nonlinear.scalar.{ObjectiveFunction,
-ObjectiveFunctionGradient}
-import org.apache.commons.math3.optim.nonlinear.scalar.gradient.NonLinearConjugateGradientOptimizer
-import org.apache.commons.math3.random.RandomGenerator
+import org.apache.commons.math3.analysis.UnivariateFunction
+import org.apache.commons.math3.optim.{InitialGuess, MaxEval, MaxIter, SimpleBounds}
+import org.apache.commons.math3.optim.nonlinear.scalar.GoalType
+import org.apache.commons.math3.optim.univariate.{BrentOptimizer, UnivariateObjectiveFunction, SearchInterval}
 
 object EWMA {
   /**
    * Fits an EWMA model to a time series. Uses the first point in the time series as a starting
-   * value. Uses mean squared error as an object function to optimize to find smoothing paramter
-   * The model for EWMA is recursively defined as Z_t = (1 - s) * X_t-1 + s * Z_{t-1}, where
+   * value. Uses sum squared error as an objective function to optimize to find smoothing parameter
+   * The model for EWMA is recursively defined as Z_t = (1 - s) * X_t + s * Z_{t-1}, where
    * s is the smoothing parameter, X is the original series, and Z is the smoothed series
-   * //TODO: add reference for this notation
+   * https://en.wikipedia.org/wiki/Exponential_smoothing
    */
   def fitModel(ts: Vector[Double]): EWMAModel = {
-    val optimizer = new NonLinearConjugateGradientOptimizer(
-      NonLinearConjugateGradientOptimizer.Formula.FLETCHER_REEVES,
-      new SimpleValueChecker(1e-6, 1e-6)) //taken from GARCH
-    val gradient = new ObjectiveFunctionGradient(new MultivariateVectorFunction() {
-      def value(params: Array[Double]): Array[Double] = {
-        new EWMAModel(params(0)).gradient(ts)
+    val objectiveFunction = new UnivariateObjectiveFunction(new UnivariateFunction() {
+      def value(param: Double): Double = {
+        new EWMAModel(param).sse(ts)
       }
     })
-    val objectiveFunction = new ObjectiveFunction(new MultivariateFunction() {
-      def value(params: Array[Double]): Double = {
-        new EWMAModel(params(0)).mse(ts)
-      }
-    })
-    val initialGuess = new InitialGuess(Array(0.94)) // TODO: based off of JPM RiskMetrics, source!
-    val maxIter = new MaxIter(10000)
+
     val maxEval = new MaxEval(10000)
-    val optimal = optimizer.optimize(objectiveFunction, gradient, initialGuess, maxIter, maxEval)
-    val params = optimal.getPoint
-    new EWMAModel(params(0))
+    val paramBounds = new SearchInterval(0.0, 1.0)
+    val optimizer = new BrentOptimizer(1e-6, 1e-6) // what tolerance should we use?
+    val optimal = optimizer.optimize(maxEval, objectiveFunction, GoalType.MINIMIZE, paramBounds)
+    val param = optimal.getPoint
+    new EWMAModel(param)
   }
 }
 
 class EWMAModel (val smoothing: Double) extends TimeSeriesModel {
 
   /**
-   * Calculates the MSE for a given timeseries ts given the smoothing parameter of the current model
+   * Calculates the SSE for a given timeseries ts given the smoothing parameter of the current model
+   * The forecast for the observation at period t + 1 is the smoothed value at time t
+   * Source: http://people.duke.edu/~rnau/411avg.htm
    * @param ts
-   * @return Mean Squared Error
+   * @return Sum Squared Error
    */
-  private[sparkts] def mse(ts: Vector[Double]): Double = {
-    val arrTs = ts.toArray
-    val smoothed = new DenseVector(arrTs)
+  private[sparkts] def sse(ts: Vector[Double]): Double = {
+    val n = ts.length
+    val smoothed = new DenseVector(Array.fill(n)(0.0))
     addTimeDependentEffects(ts, smoothed)
-    val n = smoothed.length
-    // we divide by 2 * n for convenience of derivative
-    sum(smoothed.toArray.zip(arrTs).map { case (yhat, y) => (yhat - y) * (yhat - y) }) / (2 * n)
-  }
-
-  /**
-   * Calculates gradient for MSE for model fitting
-   *
-   * @return gradient
-   */
-  private[sparkts] def gradient(ts: Vector[Double]): Array[Double] = {
-    // gradient calculation for MSE
-    val arrTs = ts.toArray
-    val smoothed = new DenseVector(arrTs)
-    addTimeDependentEffects(ts, smoothed)
-    val n = smoothed.length
-    val arrSmoothed = smoothed.toArray
-    val errors = arrSmoothed.zip(arrTs).map { case (yhat, y) => yhat - y }
-    // note we exclude Yhat0 and Y0, since derivative is not defined there (ie.. Y_-1 and Yhat_-1
-    // are unknown. If your data is large, this shouldn't make much of a difference...
-    val g = sum(errors.tail.zip(errors).map { case (error, dx) => error * dx }) / n
-    Array(g)
+    val sqrErrors = smoothed.toArray.zip(ts.toArray.tail).map { case (yhat, y) => (yhat - y) * (yhat - y) }
+    sum(sqrErrors)
   }
 
   override def removeTimeDependentEffects(ts: Vector[Double], dest: Vector[Double] = null)
     : Vector[Double] = {
-    throw new UnsupportedOperationException() //TODO: work on this
+    dest(0) = ts(0) // by definition in our model Z_0 = X_0
+
+    for (i <- 1 until ts.length) {
+      dest(i) = (ts(i) - (1 - smoothing) * ts(i - 1)) / smoothing
+    }
+    dest
   }
 
   override def addTimeDependentEffects(ts: Vector[Double], dest: Vector[Double])
     : Vector[Double] = {
-    // should i keep this more functional style, or stick with below?
-    // val arrTs = ts.toArray
-    // val start = arrTs.head // Z_0 = X_0 by definition in our implementation
-    // val smoothed = arrTs.scanLeft(start) { (z, x) => (1 - smoothing) * x + smoothing * z }
-
-    var prevZ = ts(0)
-    var prevX = ts(0)
-    dest(0) = prevX // by definition in our model
+    // TODO: should we add an option to select a specific start up value?
+    // by definition in our model Z_0 = X_0
+    dest(0) = ts(0)
 
     for (i <- 1 until ts.length) {
-      val smoothed = (1 - smoothing) * prevX + smoothing * prevZ
-      dest(i) = (1 - smoothing) * prevX + smoothing * prevZ
-      prevZ = smoothed
-      prevX = ts(i)
+      dest(i) = smoothing * ts(i) + (1 - smoothing) * dest(i - 1)
     }
     dest
   }
