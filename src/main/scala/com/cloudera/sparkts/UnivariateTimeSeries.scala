@@ -168,9 +168,9 @@ object UnivariateTimeSeries {
   }
 
   /**
-  * fills in NaN with the previously available not NaN, scanning from left to right.
-  * 1 NaN NaN 2 Nan -> 1 1 1 2 2
-  */
+   * fills in NaN with the previously available not NaN, scanning from left to right.
+   * 1 NaN NaN 2 Nan -> 1 1 1 2 2
+   */
   def fillPrevious(values: Vector[Double]): DenseVector[Double] = {
     val result = new DenseVector(values.toArray)
     var filler = Double.NaN // initial value, maintains invariant
@@ -188,9 +188,9 @@ object UnivariateTimeSeries {
   }
 
   /**
-  * fills in NaN with the next available not NaN, scanning from right to left.
-  * 1 NaN NaN 2 Nan -> 1 2 2 2 NaN
-  */
+   * fills in NaN with the next available not NaN, scanning from right to left.
+   * 1 NaN NaN 2 Nan -> 1 2 2 2 NaN
+   */
   def fillNext(values: Vector[Double]): DenseVector[Double] = {
     val result = new DenseVector(values.toArray)
     var filler = Double.NaN // initial value, maintains invariant
@@ -203,14 +203,13 @@ object UnivariateTimeSeries {
     result
   }
   
-  
   def fillWithDefault(values: Array[Double], filler: Double): Array[Double] = {
     fillWithDefault(new DenseVector(values), filler).data
   } 
 
   /**
-  * fills in NaN with a default value 
-  */
+   * fills in NaN with a default value
+   */
   def fillWithDefault(values: Vector[Double], filler: Double): DenseVector[Double] = {
     val result = new DenseVector(values.toArray)
     var i = 0
