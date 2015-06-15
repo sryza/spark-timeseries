@@ -46,7 +46,7 @@ object EWMA {
   }
 }
 
-class EWMAModel (val smoothing: Double) extends TimeSeriesModel {
+class EWMAModel(val smoothing: Double) extends TimeSeriesModel {
 
   /**
    * Calculates the SSE for a given timeseries ts given the smoothing parameter of the current model
@@ -59,7 +59,9 @@ class EWMAModel (val smoothing: Double) extends TimeSeriesModel {
     val n = ts.length
     val smoothed = new DenseVector(Array.fill(n)(0.0))
     addTimeDependentEffects(ts, smoothed)
-    val sqrErrors = smoothed.toArray.zip(ts.toArray.tail).map { case (yhat, y) => (yhat - y) * (yhat - y) }
+    val tsArr = ts.toArray
+    val smoothedArr = smoothed.toArray
+    val sqrErrors = smoothedArr.zip(tsArr.tail).map { case (yhat, y) => (yhat - y) * (yhat - y) }
     sum(sqrErrors)
   }
 
@@ -73,8 +75,7 @@ class EWMAModel (val smoothing: Double) extends TimeSeriesModel {
     dest
   }
 
-  override def addTimeDependentEffects(ts: Vector[Double], dest: Vector[Double])
-    : Vector[Double] = {
+  override def addTimeDependentEffects(ts: Vector[Double], dest: Vector[Double]): Vector[Double] = {
     // TODO: should we add an option to select a specific start up value?
     // by definition in our model Z_0 = X_0
     dest(0) = ts(0)
