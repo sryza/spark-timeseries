@@ -32,7 +32,7 @@ class FillSuite extends FunSuite with ShouldMatchers {
     fillNearest(Array(1.0, NaN, 3.0, NaN, 2.0)) should be (Array(1.0, 1.0, 3.0, 3.0, 2.0))
   }
 
-  ignore("previous") {
+  test("previous") {
     fillPrevious(Array(1.0)) should be (Array(1.0))
     fillPrevious(Array(1.0, 1.0, 2.0)) should be (Array(1.0, 1.0, 2.0))
     fillPrevious(Array(1.0, NaN, 2.0)) should be (Array(1.0, 1.0, 2.0))
@@ -41,7 +41,7 @@ class FillSuite extends FunSuite with ShouldMatchers {
     fillPrevious(Array(1.0, NaN, 3.0, NaN, 2.0)) should be (Array(1.0, 1.0, 3.0, 3.0, 2.0))
   }
 
-  ignore("next") {
+  test("next") {
     fillNext(Array(1.0)) should be (Array(1.0))
     fillNext(Array(1.0, 1.0, 2.0)) should be (Array(1.0, 1.0, 2.0))
     fillNext(Array(1.0, NaN, 2.0)) should be (Array(1.0, 2.0, 2.0))
