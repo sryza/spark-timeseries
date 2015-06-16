@@ -85,5 +85,5 @@ class TimeSeriesStatisticalTestsSuite extends FunSuite with ShouldMatchers {
     bptest(new DenseVector(resids1), new DenseMatrix(x.length, 1, x))._2 should be > pthreshold
     // there should be evidence of heteroskedasticity
     bptest(new DenseVector(resids2), new DenseMatrix(x.length, 1, x))._2 should be < pthreshold
-	}
+  }
 }
