@@ -25,7 +25,7 @@ import com.cloudera.sparkts.TimeSeriesRDD._
 
 import com.github.nscala_time.time.Imports._
 
-import org.apache.commons.math3.random.RandomGenerator
+import org.apache.commons.math3.random.{MersenneTwister, RandomGenerator}
 import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression
 
 import org.apache.spark.{SparkConf, SparkContext}
@@ -33,10 +33,11 @@ import org.apache.spark.{SparkConf, SparkContext}
 object HistoricalValueAtRiskExample {
   def main(args: Array[String]): Unit = {
     // Read parameters
-    val numTrials = if (args.length > 0) args(0).toInt else 10000
-    val parallelism = if (args.length > 1) args(1).toInt else 10
-    val factorsDir = if (args.length > 2) args(2) else "factors/"
-    val instrumentsDir = if (args.length > 3) args(3) else "instruments/"
+    val factorsDir = if (args.length > 0) args(0) else "factors/"
+    val instrumentsDir = if (args.length > 1) args(1) else "instruments/"
+    val numTrials = if (args.length > 2) args(2).toInt else 10000
+    val parallelism = if (args.length > 3) args(3).toInt else 10
+    val horizon = if (args.length > 4) args(4).toInt else 1
 
     // Initialize Spark
     val conf = new SparkConf().setMaster("local").setAppName("Historical VaR")
@@ -72,7 +73,12 @@ object HistoricalValueAtRiskExample {
     }
 
     // Generate an RDD of simulations
-//    val rand = new MersenneTwister()
+    val seeds = sc.parallelize(0 until numTrials, parallelism)
+    seeds.map { seed =>
+      val rand = new MersenneTwister(seed)
+      val factorPaths = simulatedFactorReturns(horizon, rand, iidFactorReturns, garchModels)
+    }
+
 //    val factorsDist = new FilteredHistoricalFactorDistribution(rand, iidFactorReturns.toArray,
 //      garchModels.asInstanceOf[Array[TimeSeriesFilter]])
 //    val returns = simulationReturns(0L, factorsDist, numTrials, parallelism, sc,
