@@ -19,7 +19,6 @@ import breeze.linalg._
 
 import org.scalatest.{FunSuite, ShouldMatchers}
 
-
 class EWMASuite extends FunSuite with ShouldMatchers {
   test("adding time dependent effects") {
     val orig = new DenseVector((1 to 10).toArray.map(_.toDouble))
