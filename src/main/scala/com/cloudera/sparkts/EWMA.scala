@@ -18,14 +18,17 @@ package com.cloudera.sparkts
 import breeze.linalg._
 
 import org.apache.commons.math3.analysis.{MultivariateFunction, MultivariateVectorFunction}
-import org.apache.commons.math3.optim.{MaxIter, InitialGuess, SimpleValueChecker, MaxEval}
-import org.apache.commons.math3.optim.nonlinear.scalar.GoalType
-
-
-import org.apache.commons.math3.optim.nonlinear.scalar.{ObjectiveFunction,
+import org.apache.commons.math3.optim.{InitialGuess, MaxEval, MaxIter, SimpleValueChecker}
+import org.apache.commons.math3.optim.nonlinear.scalar.{GoalType, ObjectiveFunction,
 ObjectiveFunctionGradient}
 import org.apache.commons.math3.optim.nonlinear.scalar.gradient.NonLinearConjugateGradientOptimizer
 
+/**
+ * Fits an Exponentially Weight Moving Average model (EWMA) (aka. Simple Exponential Smoothing) to
+ * a time series. The model is defined as S_t = (1 - a) * X_t + a * S_{t - 1}, where a is the
+ * smoothing parameter, X is the original series, and S is the smoothed series. For more
+ * information, please see https://en.wikipedia.org/wiki/Exponential_smoothing.
+ */
 object EWMA {
   /**
    * Fits an EWMA model to a time series. Uses the first point in the time series as a starting
@@ -34,7 +37,7 @@ object EWMA {
    * a is the smoothing parameter, X is the original series, and S is the smoothed series
    * https://en.wikipedia.org/wiki/Exponential_smoothing
    * @param ts the time series to which we want to fit a EWMA model
-   * @return EWMAmodel
+   * @return EWMA model
    */
   def fitModel(ts: Vector[Double]): EWMAModel = {
     val optimizer = new NonLinearConjugateGradientOptimizer(
