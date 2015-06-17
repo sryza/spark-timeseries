@@ -17,10 +17,14 @@ package com.cloudera.sparkts
 
 import breeze.linalg._
 
-import org.apache.commons.math3.analysis.UnivariateFunction
-import org.apache.commons.math3.optim.MaxEval
+import org.apache.commons.math3.analysis.{MultivariateFunction, MultivariateVectorFunction}
+import org.apache.commons.math3.optim.{MaxIter, InitialGuess, SimpleValueChecker, MaxEval}
 import org.apache.commons.math3.optim.nonlinear.scalar.GoalType
-import org.apache.commons.math3.optim.univariate.{BrentOptimizer, UnivariateObjectiveFunction, SearchInterval}
+
+
+import org.apache.commons.math3.optim.nonlinear.scalar.{ObjectiveFunction,
+ObjectiveFunctionGradient}
+import org.apache.commons.math3.optim.nonlinear.scalar.gradient.NonLinearConjugateGradientOptimizer
 
 object EWMA {
   /**
@@ -33,18 +37,29 @@ object EWMA {
    * @return EWMAmodel
    */
   def fitModel(ts: Vector[Double]): EWMAModel = {
-    val objectiveFunction = new UnivariateObjectiveFunction(new UnivariateFunction() {
-      def value(param: Double): Double = {
-        new EWMAModel(param).sse(ts)
+    val optimizer = new NonLinearConjugateGradientOptimizer(
+      NonLinearConjugateGradientOptimizer.Formula.FLETCHER_REEVES,
+      new SimpleValueChecker(1e-6, 1e-6))
+    val gradient = new ObjectiveFunctionGradient(new MultivariateVectorFunction() {
+      def value(params: Array[Double]): Array[Double] = {
+        val g = new EWMAModel(params(0)).gradient(ts)
+        Array(g)
       }
     })
-
+    val objectiveFunction = new ObjectiveFunction(new MultivariateFunction() {
+      def value(params: Array[Double]): Double = {
+        new EWMAModel(params(0)).sse(ts)
+      }
+    })
+    // optimization parameters
+    val initGuess = new InitialGuess(Array(.94))
+    val maxIter = new MaxIter(10000)
     val maxEval = new MaxEval(10000)
-    val paramBounds = new SearchInterval(0.0, 1.0)
-    val optimizer = new BrentOptimizer(1e-6, 1e-6)
-    val optimal = optimizer.optimize(maxEval, objectiveFunction, GoalType.MINIMIZE, paramBounds)
-    val param = optimal.getPoint
-    new EWMAModel(param)
+    val goal = GoalType.MINIMIZE
+    // optimization step
+    val optimal = optimizer.optimize(objectiveFunction, goal, gradient, initGuess, maxIter, maxEval)
+    val params = optimal.getPoint
+    new EWMAModel(params(0))
   }
 }
 
@@ -72,6 +87,34 @@ class EWMAModel(val smoothing: Double) extends TimeSeriesModel {
     }
 
     sqrErrors
+  }
+
+  /**
+   * Calculates the gradient of the SSE cost function for our EWMA model
+   * @param ts
+   * @return gradient
+   */
+  private[sparkts] def gradient(ts: Vector[Double]): Double = {
+    val n = ts.length
+    val smoothed = new DenseVector(Array.fill(n)(0.0))
+    addTimeDependentEffects(ts, smoothed)
+
+    var error = 0.0
+    var prevSmoothed = ts(0)
+    var prevDSda = 0.0 // derivative of the EWMA function at time t - 1: (d S(t - 1)/ d smoothing)
+    var dSda = 0.0 // derivative of the EWMA function at time t: (d S(t) / d smoothing)
+    var dJda = 0.0 // derivative of our SSE cost function
+    var i = 0
+
+    while (i < n - 1) {
+      error = ts(i + 1) - smoothed(i)
+      dSda = ts(i) - prevSmoothed + (1 - smoothing) * prevDSda
+      dJda += error * dSda
+      prevDSda = dSda
+      prevSmoothed = smoothed(i)
+      i += 1
+    }
+    2 * dJda
   }
 
   override def removeTimeDependentEffects(ts: Vector[Double], dest: Vector[Double] = null)
