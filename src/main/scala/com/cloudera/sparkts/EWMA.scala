@@ -20,7 +20,7 @@ import breeze.linalg._
 import org.apache.commons.math3.analysis.{MultivariateFunction, MultivariateVectorFunction}
 import org.apache.commons.math3.optim.{InitialGuess, MaxEval, MaxIter, SimpleValueChecker}
 import org.apache.commons.math3.optim.nonlinear.scalar.{GoalType, ObjectiveFunction,
-ObjectiveFunctionGradient}
+  ObjectiveFunctionGradient}
 import org.apache.commons.math3.optim.nonlinear.scalar.gradient.NonLinearConjugateGradientOptimizer
 
 /**
@@ -35,8 +35,11 @@ object EWMA {
    * value. Uses sum squared error as an objective function to optimize to find smoothing parameter
    * The model for EWMA is recursively defined as S_t = (1 - a) * X_t + a * S_{t-1}, where
    * a is the smoothing parameter, X is the original series, and S is the smoothed series
+   * Note that the optimization is performed as unbounded optimization, although in its formal
+   * definition the smoothing parameter is <= 1, which corresponds to an inequality bounded
+   * optimization. Given this, the resulting smoothing parameter should always be sanity checked
    * https://en.wikipedia.org/wiki/Exponential_smoothing
-   * @param ts the time series to which we want to fit a EWMA model
+   * @param ts the time series to which we want to fit an EWMA model
    * @return EWMA model
    */
   def fitModel(ts: Vector[Double]): EWMAModel = {
