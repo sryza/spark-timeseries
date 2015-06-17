@@ -61,10 +61,17 @@ class EWMAModel(val smoothing: Double) extends TimeSeriesModel {
     val n = ts.length
     val smoothed = new DenseVector(Array.fill(n)(0.0))
     addTimeDependentEffects(ts, smoothed)
-    val tsArr = ts.toArray
-    val smoothedArr = smoothed.toArray
-    val sqrErrors = smoothedArr.zip(tsArr.tail).map { case (yhat, y) => (yhat - y) * (yhat - y) }
-    sum(sqrErrors)
+
+    var i = 0
+    var error = 0.0
+    var sqrErrors = 0.0
+    while (i < n - 1) {
+      error = ts(i + 1) - smoothed(i)
+      sqrErrors += error * error
+      i += 1
+    }
+
+    sqrErrors
   }
 
   override def removeTimeDependentEffects(ts: Vector[Double], dest: Vector[Double] = null)
