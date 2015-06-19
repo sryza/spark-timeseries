@@ -52,16 +52,24 @@ TimeSeriesRDDs then support efficient series-wise operations like slicing, imput
     val residuals = filled.mapSeries(series => ar(series, 1).removeTimeDependentEffects(series))
 
 
-Statistical Functionality
+Functionality
 --------------------------
 
-### Time Series
+### Time Series Manipulation
+* Aligning
+* Slicing by date-time
+* Missing value imputation
 
+### Time Series Math and Stats
+
+* Exponentially weighted moving average
 * Autoregressive models
 * GARCH models
 * Missing data imputation
 * Augmented Dickey-Fuller test
 * Durbin-Watson test
+* Breusch-Godfrey test
+* Breusch-Pagan test
 
 ### General Prob / Stats
 
