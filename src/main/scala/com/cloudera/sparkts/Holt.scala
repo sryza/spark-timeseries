@@ -21,7 +21,6 @@ import org.apache.commons.math3.analysis.{MultivariateFunction, MultivariateVect
 import org.apache.commons.math3.optim.nonlinear.scalar.gradient.NonLinearConjugateGradientOptimizer
 import org.apache.commons.math3.optim._
 import org.apache.commons.math3.optim.nonlinear.scalar.{ObjectiveFunction, ObjectiveFunctionGradient, GoalType}
-import org.apache.commons.math3.optim.univariate.{BrentOptimizer, UnivariateObjectiveFunction, SearchInterval}
 
 object Holt {
   /**
@@ -33,30 +32,25 @@ object Holt {
     new SimpleValueChecker(1e-6, 1e-6))
     val gradient = new ObjectiveFunctionGradient(new MultivariateVectorFunction() {
       def value(params: Array[Double]): Array[Double] = {
-        new HoltModel(params(0), params(1)).gradient(ts).toArray
+        new HoltModel(params(0), params(1)).gradient(ts)
       }
     })
     val objectiveFunction = new ObjectiveFunction(new MultivariateFunction() {
       def value(params: Array[Double]): Double = {
-        new GARCHModel(params(0), params(1), params(2)).logLikelihood(ts)
+        new HoltModel(params(0), params(1)).sse(ts)
       }
     })
-    val initialGuess = new InitialGuess(Array(.2, .2, .2)) // TODO: make this smarter
+    val initGuess = new InitialGuess(Array(.2, .2)) // TODO: make this smarter
     val maxIter = new MaxIter(10000)
     val maxEval = new MaxEval(10000)
-    val optimal = optimizer.optimize(objectiveFunction, gradient, initialGuess, maxIter, maxEval)
+    val goal = GoalType.MINIMIZE
+    val optimal = optimizer.optimize(objectiveFunction, goal, gradient, initGuess, maxIter, maxEval)
     val params = optimal.getPoint
-    new GARCHModel(params(0), params(1), params(2))
+    new HoltModel(params(0), params(1))
   }
 }
 
 class HoltModel(val alpha: Double, val beta: Double) extends TimeSeriesModel {
-
-  /**
-   * TODO: add doc
-   * @param ts
-   * @return Sum Squared Error
-   */
   private[sparkts] def sse(ts: Vector[Double]): Double = {
     val n = ts.length
     val smoothed = new DenseVector(Array.fill(n)(0.0))
@@ -74,8 +68,55 @@ class HoltModel(val alpha: Double, val beta: Double) extends TimeSeriesModel {
     sqrErrors
   }
 
-  // TODO: ADD GRADIENT
 
+  private[sparkts] def gradient(ts: Vector[Double]): Array[Double] = {
+    // partial derivatives of cost function
+    var (dJda, dJdb) = (0.0, 0.0)
+    // partial derivatives for forecast function
+    var (dZda, dZdb) = (0.0, 0.0)
+    // partial derivatives for level
+    var (dLda, prevDLda)  = (0.0, 0.0)
+    var (dLdb, prevDLdb) = (0.0, 0.0)
+    // partial derivatives for trend
+    var (dTda, prevDTda) = (0.0, 0.0)
+    var (dTdb, prevDTdb) = (0.0, 0.0)
+
+    var error = 0.0
+
+    val n = ts.length
+    val (fitted, level, trend) = getHoltComponents(ts, new DenseVector(Array.fill(n)(0.0)))
+
+    var i = 0
+    while(i < n) {
+      error = ts(i) - fitted(i)
+      dZda = prevDLda + prevDTda
+      dZdb = prevDLdb + prevDTdb
+      dJda += error * dZda
+      dJdb += error * dZdb
+
+      // calculate new derivatives
+      // partial derivatives in terms of alpha
+      dLda = ts(i) + (1 - alpha) * dZda - fitted(i)
+      dTda = beta * dLda + prevDTda - beta * dZda
+
+      // partial derivatives in terms of beta
+      dLdb = (1 - alpha) * dZdb
+      dTdb =  beta * dLdb + level(i) + prevDTdb - beta * dZdb - fitted(i)
+
+      // update derivatives
+      prevDLda = dLda
+      prevDLdb = dLdb
+      prevDTda = dTda
+      prevDTdb = dTdb
+      i += 1
+    }
+
+    Array(2 * dJda, 2 * dJdb)
+  }
+
+  /**
+   * {@inheritDoc}
+   */
   override def removeTimeDependentEffects(ts: Vector[Double], dest: Vector[Double] = null)
   : Vector[Double] = {
     if(ts.length < 2) {
@@ -108,51 +149,69 @@ class HoltModel(val alpha: Double, val beta: Double) extends TimeSeriesModel {
     dest
   }
 
+  /**
+   * {@inheritDoc}
+   */
   override def addTimeDependentEffects(ts: Vector[Double], dest: Vector[Double]): Vector[Double] = {
-    applyHolt(ts, dest)._1
+    getHoltComponents(ts, dest)._1
   }
 
   /**
-   * Applies a Holt model to a time series and forecasts periods beyond the observed data.
+   * Applies a Holt model to a time series and forecast periods beyond the observed data.
    * @param ts A vector of the original time series to which to apply a Holt model
    * @param dest A vector into which to store the fitted values, and forecasted values
-   * @return A vector containing the fitted values (up to length ts.length - 1), and the forecasted
-   *         values (all values after and including ts.length)
+   * @return A vector where values at indices [0, ts.length - 1] correspond to fitted values, and
+   *         values at indices [ts.length, dest.length - 1] correspond to forecasted values
    */
   def forecast(ts: Vector[Double], dest: Vector[Double]) = {
-    val (fitted, prevLevel, prevTrend) = applyHolt(ts, dest)
+    val (fitted, level, trend) = getHoltComponents(ts, dest)
     val n = ts.length
     val forecastPeriods = dest.length - ts.length
+    val levelVal = level(n - 1)
+    val trendVal = trend(n - 1)
 
     for(i <- 0 until forecastPeriods) {
-      dest(n + i) = prevLevel + i * prevTrend
+      dest(n + i) = levelVal + i * trendVal
     }
+
     dest
   }
 
-  private def applyHolt(ts: Vector[Double], dest: Vector[Double])
-    : (Vector[Double], Double, Double) = {
+  /**
+   * Apply a Holt linear model to a time series and obtain the fitted values, along with the
+   * level and trend components (ie. the components of the fitted values).
+   * @param ts A time series on which we want to apply the Holt model
+   * @param dest A vector to place the fitted values
+   * @return A triple of vectors of fitted values, level values, and trend values
+   */
+  def getHoltComponents(ts: Vector[Double], dest: Vector[Double])
+    : (Vector[Double], Vector[Double], Vector[Double]) = {
     if(ts.length < 2) {
       throw new Exception()
     }
-    var level = ts(0) // by definition in our model initial level is the first point
-    var trend = ts(1) - ts(0) // by definition in our model initial trend is the first change
-    var prevLevel = level
-    var prevTrend = trend
-    dest(0) = level + trend
+    val n = ts.length
+    val level = new DenseVector(Array.fill(n)(0.0))
+    val trend = new DenseVector(Array.fill(n)(0.0))
+
+    level(0) = ts(0) // by definition in our model initial level is the first point
+    trend(0) = ts(1) - ts(0) // by definition in our model initial trend is the first change
+    dest(0) = level(0) + trend(0)
+
+    var prevTrend = trend(0)
+    var prevLevel = level(0)
 
     for (i <- 0 until ts.length) {
-      level = alpha * ts(i) + (1 - alpha) * (prevLevel + prevTrend)
-      trend =  beta * (level - prevLevel) + (1 - beta) * prevTrend
+      level(i) = alpha * ts(i) + (1 - alpha) * (prevLevel + prevTrend)
+      trend(i) =  beta * (level(i) - prevLevel) + (1 - beta) * prevTrend
+      prevLevel = level(i)
+      prevTrend = trend(i)
 
       if (i < ts.length - 1) {
-        dest(i + 1) = level + trend
+        dest(i + 1) = level(i) + trend(i)
       }
-      prevLevel = level
-      prevTrend = trend
     }
 
-    (dest, prevLevel, prevTrend)
+    (dest, level, trend)
   }
 
 }
