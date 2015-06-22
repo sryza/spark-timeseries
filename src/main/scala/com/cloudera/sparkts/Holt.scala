@@ -22,9 +22,25 @@ import org.apache.commons.math3.optim.nonlinear.scalar.gradient.NonLinearConjuga
 import org.apache.commons.math3.optim._
 import org.apache.commons.math3.optim.nonlinear.scalar.{ObjectiveFunction, ObjectiveFunctionGradient, GoalType}
 
+/**
+ * Implementation of Holt linear model (aka double exponential smoothing), which allows for
+ * a trend. We implement an additive variant, which follows the equations
+ * fitted_t = level_{t-1} + trend_{t-1}
+ * level_t = alpha * y_t + (1 - alpha) * fitted_t
+ * trend_t = beta * (level_t - level_{t-1}) + (1 - beta) * trend_{t-1}
+ * where  alpha and beta are smoothing parameters and y is the original time series.
+ * We define the initial level as the first value in the original time series and the
+ * initial trend as the change in value between the second and first values in the original series
+ * For more information please see
+ * //TODO ADD REFERENCE
+ */
+
 object Holt {
   /**
-   * TODO: ADD explanation
+   * Fits a Holt linear model to a time series, by minimizing the SSE of the original time series
+   * versus the forecasts produced by the model. Note that though formally alpha and beta are both
+   *  <= 1.0, the optimization here is performed as unbounded. Thus each model should check
+   *  their parameters for sanity.
    */
   def fitModel(ts: Vector[Double]): HoltModel = {
     val optimizer = new NonLinearConjugateGradientOptimizer(
@@ -51,7 +67,7 @@ object Holt {
 }
 
 class HoltModel(val alpha: Double, val beta: Double) extends TimeSeriesModel {
-  private[sparkts] def sse(ts: Vector[Double]): Double = {
+  def sse(ts: Vector[Double]): Double = {
     val n = ts.length
     val smoothed = new DenseVector(Array.fill(n)(0.0))
     addTimeDependentEffects(ts, smoothed)
@@ -111,7 +127,7 @@ class HoltModel(val alpha: Double, val beta: Double) extends TimeSeriesModel {
       i += 1
     }
 
-    Array(2 * dJda, 2 * dJdb)
+    Array(-2 * dJda, -2 * dJdb)
   }
 
   /**
