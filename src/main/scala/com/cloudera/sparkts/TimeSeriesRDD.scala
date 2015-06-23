@@ -158,7 +158,7 @@ class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double
    * In the returned RDD, the ordering of values within each record corresponds to the ordering of
    * the time series records in the original RDD. The records are ordered by time.
    */
-  def toSamples(nPartitions: Int = -1): RDD[(DateTime, Vector[Double])] = {
+  def toInstants(nPartitions: Int = -1): RDD[(DateTime, Vector[Double])] = {
     val maxChunkSize = 20
 
     val dividedOnMapSide = mapPartitionsWithIndex { case (partitionId, iter) =>

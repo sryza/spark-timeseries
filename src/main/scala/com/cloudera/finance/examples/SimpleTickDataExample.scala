@@ -71,6 +71,6 @@ object SimpleTickDataExample {
     val iidRdd = slicedRdd.mapSeries(series => ar(series, 1).removeTimeDependentEffects(series))
 
     // Regress a stock against all the others
-    val samples = iidRdd.toSamples()
+    val samples = iidRdd.toInstants()
   }
 }
