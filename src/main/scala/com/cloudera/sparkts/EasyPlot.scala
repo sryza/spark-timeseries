@@ -18,6 +18,9 @@ package com.cloudera.sparkts
 import breeze.linalg._
 import breeze.plot._
 
+import org.apache.commons.math3.distribution.NormalDistribution
+
+
 object EasyPlot {
   def ezplot(vec: Vector[Double], style: Char): Unit = {
     val f = Figure()
@@ -45,4 +48,35 @@ object EasyPlot {
   }
 
   def ezplot(vecs: Seq[Vector[Double]]): Unit = ezplot(vecs, '-')
+
+  def acfPlot(data: Array[Double], maxLag: Int, conf: Double = 0.95): Unit = {
+    val autoCorrs = UnivariateTimeSeries.autocorr(data, maxLag)
+    val nCorrs = autoCorrs.length
+    val nSample = data.length
+    val stdNormDist = new NormalDistribution(0, 1)
+
+    val pVal = (1 - conf) / 2.0
+    val confVal = stdNormDist.inverseCumulativeProbability(1 - pVal) / Math.sqrt(nSample)
+    val f = Figure()
+    val p = f.subplot(0)
+
+    // Basic information
+    p.title = "Auto correlation function"
+    p.xlabel = "Lag"
+    p.ylabel = "Correlation"
+
+    // plot correlations as vertical lines
+    val verticalLines = autoCorrs.zipWithIndex.map { case (corr, ix) =>
+      (Array(ix.toDouble, ix.toDouble), Array(0, corr))
+      }
+
+    verticalLines.foreach { case (xs, ys) => p += plot(xs, ys) }
+
+    // plot confidence intervals
+    Array(confVal, -1 * confVal).foreach { conf =>
+      val xs = (1 to nCorrs).toArray.map(_.toDouble)
+      val ys = Array.fill(nCorrs)(conf)
+       p += plot(xs, ys, '-', colorcode = "red")
+      }
+  }
 }
