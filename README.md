@@ -6,10 +6,12 @@ A Scala / Java library for interacting with time series data on Apache Spark.
 Scaladoc is available at http://cloudera.github.io/spark-timeseries.
 
 The aim here is to provide
-* A set of abstractions for transforming and summarizing large time series data sets, similar to
+* A set of abstractions for manipulating large time series data sets, similar to
   what's provided for smaller data sets in
-  [Pandas](http://pandas.pydata.org/pandas-docs/dev/timeseries.html) and
-  [Matlab](http://www.mathworks.com/help/matlab/time-series.html).
+  [Pandas](http://pandas.pydata.org/pandas-docs/dev/timeseries.html),
+  [Matlab](http://www.mathworks.com/help/matlab/time-series.html), and R's
+  [zoo](http://cran.r-project.org/web/packages/zoo/index.html) and 
+  [xts](http://cran.r-project.org/web/packages/xts/index.html) packages.
 * Models, tests, and functions that enable dealing with time series from a statistical perspective,
   similar to what's provided in [StatsModels](http://statsmodels.sourceforge.net/devel/tsa.html)
   and a variety of Matlab and R packages.
