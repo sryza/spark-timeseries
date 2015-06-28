@@ -65,17 +65,19 @@ object EasyPlot {
     p.xlabel = "Lag"
     p.ylabel = "Correlation"
 
+    // make decimal ticks visible
+    p.setYAxisDecimalTickUnits()
+
     // plot correlations as vertical lines
     val verticalLines = autoCorrs.zipWithIndex.map { case (corr, ix) =>
-      (Array(ix.toDouble, ix.toDouble), Array(0, corr))
+      (Array(ix.toDouble + 1, ix.toDouble + 1), Array(0, corr))
       }
-
     verticalLines.foreach { case (xs, ys) => p += plot(xs, ys) }
 
-    // plot confidence intervals
+    // plot confidence intervals as horizontal lines
     Array(confVal, -1 * confVal).foreach { conf =>
-      val xs = (1 to nCorrs).toArray.map(_.toDouble)
-      val ys = Array.fill(nCorrs)(conf)
+      val xs = (0 to nCorrs).toArray.map(_.toDouble)
+      val ys = Array.fill(nCorrs + 1)(conf)
        p += plot(xs, ys, '-', colorcode = "red")
       }
   }
