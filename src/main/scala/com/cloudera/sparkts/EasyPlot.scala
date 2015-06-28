@@ -49,6 +49,12 @@ object EasyPlot {
 
   def ezplot(vecs: Seq[Vector[Double]]): Unit = ezplot(vecs, '-')
 
+  /**
+   * Autocorrelation function plot
+   * @param data array of data to analyze
+   * @param maxLag maximum lag for autocorrelation
+   * @param conf confidence bounds to display
+   */
   def acfPlot(data: Array[Double], maxLag: Int, conf: Double = 0.95): Unit = {
     // calculate correlations and confidence bound
     val autoCorrs = UnivariateTimeSeries.autocorr(data, maxLag)
@@ -63,6 +69,12 @@ object EasyPlot {
     drawCorrPlot(autoCorrs, confVal, p)
   }
 
+  /**
+   * Partial autocorrelation function plot
+   * @param data array of data to analyze
+   * @param maxLag maximum lag for partial autocorrelation function
+   * @param conf confidence bounds to display
+   */
   def pacfPlot(data: Array[Double], maxLag: Int, conf: Double = 0.95): Unit = {
     // create AR(maxLag) model, retrieve coefficients and calculate confidence bound
     val model = Autoregression.fitModel(new DenseVector(data), maxLag)
