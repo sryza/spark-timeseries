@@ -1,0 +1,34 @@
+Autoregression.scala
+1 - factor out code for removeTimeDependentEffects and addTimeDependentEffects
+    - time comparison
+	- can we replace while wiht fold?
+	
+Garch.scala
+2 - Robust standard error calculations
+3 - smart initialization of GARCH models
+4 - EGARCH implementation....(ambitious)
+
+TimeSeries.scala
+1 - seems to me that in union we don't need to have c to c, can simplify? check implications
+2 - timeseries filter ?
+3 - apply with row as date, y as only those labels?
+4 - should differences(0) return a vector of 0.0 of the same length (this seems because of breeze.linalg._)? and shouldn't it be index.size, for the slice, not index.size - 1
+
+
+UnivariateTimeSeries.scala
+added fillNext (as fill forward)
+added fillPrev (as fill backward)
+added fillWithDefault
+
+TimeSeriesStatisticalTests.scala
+added breusch godfrey test
+-->need to add RSE (using huber white sandwich)
+
+add tests
+
+issues:
+
+
+val src = Source.fromFile("/Users/josecambronero/r_data_ar.csv")
+val data = src.getLines().map(_.split(",")).drop(1).map(x => x.map(_.toDouble)).toArray
+val Array(x, y, y2) = data.transpose //x, y(stationary), y2(AR(1))
