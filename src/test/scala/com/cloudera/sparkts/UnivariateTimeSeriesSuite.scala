@@ -51,10 +51,10 @@ class UnivariateTimeSeriesSuite extends FunSuite with ShouldMatchers {
     // replicating upsampling examples
     // from http://www.mathworks.com/help/signal/ref/upsample.html?searchHighlight=upsample
     val y = new DenseVector(Array(1.0, 2.0, 3.0, 4.0))
-    val yUp1 = upSample(y, 3, useZero = true).toArray
+    val yUp1 = upsample(y, 3, useZero = true).toArray
     yUp1 should be (Array(1.0, 0.0, 0.0, 2.0, 0.0, 0.0, 3.0, 0.0, 0.0, 4.0, 0.0, 0.0))
 
-    val yUp2 = upSample(y, 3, useZero = true, phase = 2).toArray
+    val yUp2 = upsample(y, 3, useZero = true, phase = 2).toArray
     yUp2 should be (Array(0.0, 0.0, 1.0, 0.0, 0.0, 2.0, 0.0, 0.0, 3.0, 0.0, 0.0, 4.0))
   }
 
@@ -62,10 +62,10 @@ class UnivariateTimeSeriesSuite extends FunSuite with ShouldMatchers {
     // replicating downsampling examples
     // from http://www.mathworks.com/help/signal/ref/downsample.html?searchHighlight=downsample
     val y = new DenseVector((1 to 10).toArray.map(_.toDouble))
-    val yDown1 = downSample(y, 3).toArray
+    val yDown1 = downsample(y, 3).toArray
     yDown1 should be (Array(1.0, 4.0, 7.0, 10.0))
 
-    val yDown2 = downSample(y, 3, phase = 2).toArray
+    val yDown2 = downsample(y, 3, phase = 2).toArray
     yDown2 should be (Array(3.0, 6.0, 9.0))
 
   }
@@ -78,8 +78,8 @@ class UnivariateTimeSeriesSuite extends FunSuite with ShouldMatchers {
 
     val y = (1 to 1000).toArray.map(_.toDouble / 100.0).map(Math.sin(_))
     val vy = new DenseVector(y)
-    val lessFreq = downSample(vy, 100)
-    val moreFreq = upSample(lessFreq, 100)
+    val lessFreq = downsample(vy, 100)
+    val moreFreq = upsample(lessFreq, 100)
 
     // work on copies
     val splineY = fillSpline(new DenseVector(moreFreq.toArray)).toArray
