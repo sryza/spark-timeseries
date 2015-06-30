@@ -20,7 +20,6 @@ import breeze.plot._
 
 import org.apache.commons.math3.distribution.NormalDistribution
 
-
 object EasyPlot {
   def ezplot(vec: Vector[Double], style: Char): Unit = {
     val f = Figure()
@@ -90,13 +89,13 @@ object EasyPlot {
     drawCorrPlot(pCorrs, confVal, p)
   }
 
-  private[sparkts] def calcConfVal(conf:Double, n: Int) = {
+  private[sparkts] def calcConfVal(conf:Double, n: Int): Double = {
     val stdNormDist = new NormalDistribution(0, 1)
     val pVal = (1 - conf) / 2.0
     stdNormDist.inverseCumulativeProbability(1 - pVal) / Math.sqrt(n)
   }
 
-  private[sparkts] def drawCorrPlot(corrs: Array[Double], confVal: Double, p: Plot) = {
+  private[sparkts] def drawCorrPlot(corrs: Array[Double], confVal: Double, p: Plot): Unit = {
     // make decimal ticks visible
     p.setYAxisDecimalTickUnits()
     // plot correlations as vertical lines

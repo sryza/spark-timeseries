@@ -288,7 +288,7 @@ object UnivariateTimeSeries {
    * @param phase
    * @return
    */
-  def downSample(values: Vector[Double], n: Int, phase: Int = 0) = {
+  def downsample(values: Vector[Double], n: Int, phase: Int = 0) = {
     val origLen = values.length
     val newLen = Math.ceil((values.length - phase) / n.toDouble).toInt
     val sampledValues = new DenseVector(Array.fill(newLen)(0.0))
@@ -311,7 +311,7 @@ object UnivariateTimeSeries {
    * @param useZero
    * @return
    */
-  def upSample(values: Vector[Double], n: Int, phase: Int = 0, useZero: Boolean = false) = {
+  def upsample(values: Vector[Double], n: Int, phase: Int = 0, useZero: Boolean = false) = {
     val filler = if (useZero) 0 else Double.NaN
     val origLen = values.length
     val newLen = origLen * n
