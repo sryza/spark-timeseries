@@ -18,6 +18,8 @@ package com.cloudera.sparkts
 import breeze.linalg._
 import breeze.stats._
 
+import org.apache.commons.math3.analysis.interpolation.SplineInterpolator
+
 object UnivariateTimeSeries {
   def autocorr(ts: Array[Double], numLags: Int): Array[Double] = {
     autocorr(new DenseVector(ts), numLags).toDenseVector.data
@@ -125,6 +127,7 @@ object UnivariateTimeSeries {
       case "nearest" => fillNearest(ts)
       case "next" => fillNext(ts)
       case "previous" => fillPrevious(ts)
+      case "spline" => fillSpline(ts)
       case _ => throw new UnsupportedOperationException()
     }
   }
@@ -245,5 +248,83 @@ object UnivariateTimeSeries {
     result
   }
 
+  def fillSpline(values: Array[Double]): Array[Double] = {
+    fillSpline(new DenseVector(values)).data
+  }
+
+  /**
+   * Fill in NA values using a natural cubic spline.
+   * @param values Vector to interpolate
+   * @return Interpolated vector
+   */
+  def fillSpline(values: Vector[Double]): DenseVector[Double]= {
+    val result = new DenseVector(values.toArray)
+    val interp = new SplineInterpolator()
+    val knotsAndValues = values.toArray.zipWithIndex.filter(!_._1.isNaN)
+    // Note that the type of unzip is missed up in scala 10.4 as per
+    // https://issues.scala-lang.org/browse/SI-8081
+    // given that this project is using scala 10.4, we cannot use unzip, so unpack manually
+    val knotsX = knotsAndValues.map(_._2.toDouble)
+    val knotsY = knotsAndValues.map(_._1)
+    val filler = interp.interpolate(knotsX, knotsY)
+
+    // values that we can interpolate between, others need to be filled w/ other function
+    var i = knotsX(0).toInt
+    val end = knotsX.last.toInt
+
+    while (i < end) {
+      result(i) = filler.value(i.toDouble)
+      i += 1
+    }
+    result
+  }
+
   def ar(values: Vector[Double], maxLag: Int): ARModel = Autoregression.fitModel(values, maxLag)
+
+  /**
+   * Down sample by taking every nth element starting from offset phase
+   * @param values
+   * @param n
+   * @param phase
+   * @return
+   */
+  def downsample(values: Vector[Double], n: Int, phase: Int = 0) = {
+    val origLen = values.length
+    val newLen = Math.ceil((values.length - phase) / n.toDouble).toInt
+    val sampledValues = new DenseVector(Array.fill(newLen)(0.0))
+    var i = phase
+    var j = 0
+
+    while (j < newLen) {
+      sampledValues(j) = values(i)
+      i += n
+      j += 1
+    }
+    sampledValues
+  }
+
+  /**
+   * Up sample by inserting n - 1 elements into the original values vector, starting at index phase
+   * @param values the original data vector
+   * @param n the number of insertions between elements
+   * @param phase the offset to begin
+   * @param useZero
+   * @return
+   */
+  def upsample(values: Vector[Double], n: Int, phase: Int = 0, useZero: Boolean = false) = {
+    val filler = if (useZero) 0 else Double.NaN
+    val origLen = values.length
+    val newLen = origLen * n
+    val sampledValues = new DenseVector(Array.fill(newLen)(filler))
+    var i = phase
+    var j = 0
+
+    while (j < origLen) {
+      sampledValues(i) = values(j)
+      i += n
+      j += 1
+    }
+    sampledValues
+  }
 }
+
