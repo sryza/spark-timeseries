@@ -46,4 +46,55 @@ class UnivariateTimeSeriesSuite extends FunSuite with ShouldMatchers {
     arAutocorr(1) should be > 0.0
     arAutocorr(2) should be > 0.0
   }
+
+  test("upsampling") {
+    // replicating upsampling examples
+    // from http://www.mathworks.com/help/signal/ref/upsample.html?searchHighlight=upsample
+    val y = new DenseVector(Array(1.0, 2.0, 3.0, 4.0))
+    val yUp1 = upsample(y, 3, useZero = true).toArray
+    yUp1 should be (Array(1.0, 0.0, 0.0, 2.0, 0.0, 0.0, 3.0, 0.0, 0.0, 4.0, 0.0, 0.0))
+
+    val yUp2 = upsample(y, 3, useZero = true, phase = 2).toArray
+    yUp2 should be (Array(0.0, 0.0, 1.0, 0.0, 0.0, 2.0, 0.0, 0.0, 3.0, 0.0, 0.0, 4.0))
+  }
+
+  test("downsampling") {
+    // replicating downsampling examples
+    // from http://www.mathworks.com/help/signal/ref/downsample.html?searchHighlight=downsample
+    val y = new DenseVector((1 to 10).toArray.map(_.toDouble))
+    val yDown1 = downsample(y, 3).toArray
+    yDown1 should be (Array(1.0, 4.0, 7.0, 10.0))
+
+    val yDown2 = downsample(y, 3, phase = 2).toArray
+    yDown2 should be (Array(3.0, 6.0, 9.0))
+
+  }
+
+  test("signal reconstruction with spline") {
+    // If we have a frequent signal, downsample it (at a rate that doesn't cause aliasing)
+    // and we upsample, and apply a filter (interpolation), then the result should be fairly
+    // close to the original signal. In our case, we drop NAs that are not filled by interpolation
+    // (i.e no extrapolation)
+
+    val y = (1 to 1000).toArray.map(_.toDouble / 100.0).map(Math.sin(_))
+    val vy = new DenseVector(y)
+    val lessFreq = downsample(vy, 100)
+    val moreFreq = upsample(lessFreq, 100)
+
+    // work on copies
+    val splineY = fillSpline(new DenseVector(moreFreq.toArray)).toArray
+    val lineY = fillLinear(new DenseVector(moreFreq.toArray)).toArray
+
+    val MSE = (est: Array[Double], obs: Array[Double]) => {
+      val errs = est.zip(obs).filter(!_._1.isNaN).map { case (yhat, y) => (yhat - y) * (yhat - y) }
+      errs.sum / errs.length
+    }
+
+    val sE = MSE(splineY, y)
+    val lE = MSE(lineY, y)
+
+    // a cubic spline should be better than linear interpolation
+    sE should be < lE
+  }
 }
+
