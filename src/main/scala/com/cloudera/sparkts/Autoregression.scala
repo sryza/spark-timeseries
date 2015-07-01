@@ -31,7 +31,7 @@ object Autoregression {
   /**
    * Fits an AR model to the given time series.
    */
-  def fitModel(ts: Vector[Double], maxLag: Int): ARModel = {
+  def fitModel(ts: Vector[Double], maxLag: Int, noIntercept: Boolean = false): ARModel = {
     // This is loosely based off of the implementation in statsmodels:
     // https://github.com/statsmodels/statsmodels/blob/master/statsmodels/tsa/ar_model.py
 
@@ -41,9 +41,11 @@ object Autoregression {
     val X = Lag.lagMatTrimBoth(ts, maxLag)
 
     val regression = new OLSMultipleLinearRegression()
+    regression.setNoIntercept(noIntercept) // drop intercept in regression
     regression.newSampleData(Y.toArray, matToRowArrs(X))
     val params = regression.estimateRegressionParameters()
-    new ARModel(params(0), params.slice(1, params.length))
+    val (c, coeffs) = if (noIntercept) (0.0, params) else  (params.head, params.tail)
+    new ARModel(c, coeffs)
   }
 }
 
