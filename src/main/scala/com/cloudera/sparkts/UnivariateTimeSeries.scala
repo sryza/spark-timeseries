@@ -253,7 +253,7 @@ object UnivariateTimeSeries {
   }
 
   /**
-   * Fill in NA values using a natural cubic spline.
+   * Fill in NaN values using a natural cubic spline.
    * @param values Vector to interpolate
    * @return Interpolated vector
    */
@@ -283,10 +283,10 @@ object UnivariateTimeSeries {
 
   /**
    * Down sample by taking every nth element starting from offset phase
-   * @param values
-   * @param n
-   * @param phase
-   * @return
+   * @param values Vector to down sample
+   * @param n take every nth element
+   * @param phase offset from starting index
+   * @return downsampled vector with appropriate length
    */
   def downsample(values: Vector[Double], n: Int, phase: Int = 0) = {
     val origLen = values.length
@@ -308,8 +308,8 @@ object UnivariateTimeSeries {
    * @param values the original data vector
    * @param n the number of insertions between elements
    * @param phase the offset to begin
-   * @param useZero
-   * @return
+   * @param useZero fill with zeros rather than NaN
+   * @return upsampled vector filled with zeros or NaN, as specified by user
    */
   def upsample(values: Vector[Double], n: Int, phase: Int = 0, useZero: Boolean = false) = {
     val filler = if (useZero) 0 else Double.NaN
