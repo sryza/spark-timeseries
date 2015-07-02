@@ -29,7 +29,12 @@ object Autoregression {
   def fitModel(ts: Vector[Double]): ARModel = fitModel(ts, 1)
 
   /**
-   * Fits an AR model to the given time series.
+   * Fits an AR(n) model to a given time series
+   * @param ts Data to fit
+   * @param maxLag The autoregressive factor, terms t - 1 through t - maxLag are included
+   * @param noIntercept A boolean to indicate if the regression should be run without an intercept,
+   *                    the default is set to false, so that the OLS includes an intercept term
+   * @return AR(n) model
    */
   def fitModel(ts: Vector[Double], maxLag: Int, noIntercept: Boolean = false): ARModel = {
     // This is loosely based off of the implementation in statsmodels:
@@ -44,7 +49,7 @@ object Autoregression {
     regression.setNoIntercept(noIntercept) // drop intercept in regression
     regression.newSampleData(Y.toArray, matToRowArrs(X))
     val params = regression.estimateRegressionParameters()
-    val (c, coeffs) = if (noIntercept) (0.0, params) else  (params.head, params.tail)
+    val (c, coeffs) = if (noIntercept) (0.0, params) else (params.head, params.tail)
     new ARModel(c, coeffs)
   }
 }
