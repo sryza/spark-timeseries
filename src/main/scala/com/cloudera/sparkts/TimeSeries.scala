@@ -20,17 +20,17 @@ import breeze.linalg._
 import com.github.nscala_time.time.Imports._
 
 class TimeSeries(val index: DateTimeIndex, val data: DenseMatrix[Double],
-    val labels: Array[String]) extends Serializable {
+    val keys: Array[String]) extends Serializable {
 
   def slice(range: Range): TimeSeries = {
-    new TimeSeries(index.slice(range), data(range, ::), labels)
+    new TimeSeries(index.slice(range), data(range, ::), keys)
   }
 
   def union(vec: Vector[Double], key: String): TimeSeries = {
     val mat = DenseMatrix.zeros[Double](data.rows, data.cols + 1)
     (0 until data.cols).foreach(c => mat(::, c to c) := data(::, c to c))
     mat(::, -1 to -1) := vec
-    new TimeSeries(index, mat, labels :+ key)
+    new TimeSeries(index, mat, keys :+ key)
   }
 
   /**
@@ -86,7 +86,7 @@ class TimeSeries(val index: DateTimeIndex, val data: DenseMatrix[Double],
       def hasNext: Boolean = i < data.cols
       def next(): (String, Vector[Double]) = {
         i += 1
-        (labels(i - 1), data(::, i - 1))
+        (keys(i - 1), data(::, i - 1))
       }
     }
   }
@@ -99,15 +99,15 @@ class TimeSeries(val index: DateTimeIndex, val data: DenseMatrix[Double],
   }
 
   /**
-   * Applies a transformation to each series that preserves the time index. Passes the label along
+   * Applies a transformation to each series that preserves the time index. Passes the key along
    * with each series.
    */
-  def mapSeriesWithLabel(f: (String, Vector[Double]) => Vector[Double]): TimeSeries = {
+  def mapSeriesWithKey(f: (String, Vector[Double]) => Vector[Double]): TimeSeries = {
     val newData = new DenseMatrix[Double](index.size, data.cols)
     univariateKeyAndSeriesIterator().zipWithIndex.foreach { case ((key, series), index) =>
       newData(::, index) := f(key, series)
     }
-    new TimeSeries(index, newData, labels)
+    new TimeSeries(index, newData, keys)
   }
 
   /**
@@ -120,7 +120,7 @@ class TimeSeries(val index: DateTimeIndex, val data: DenseMatrix[Double],
     univariateSeriesIterator().zipWithIndex.foreach { case (vec, index) =>
       newData(::, index) := f(vec)
     }
-    new TimeSeries(newIndex, newData, labels)
+    new TimeSeries(newIndex, newData, keys)
   }
 
   def mapValues[U](f: (Vector[Double]) => U): Seq[(String, U)] = {
@@ -128,13 +128,13 @@ class TimeSeries(val index: DateTimeIndex, val data: DenseMatrix[Double],
   }
 
   /**
-   * Gets the first univariate series and its label.
+   * Gets the first univariate series and its key.
    */
   def head(): (String, Vector[Double]) = univariateKeyAndSeriesIterator().next
 }
 
 object TimeSeries {
-  def timeSeriesFromSamples(samples: Seq[(DateTime, Array[Double])], labels: Array[String])
+  def timeSeriesFromSamples(samples: Seq[(DateTime, Array[Double])], keys: Array[String])
     : TimeSeries = {
     val mat = new DenseMatrix[Double](samples.length, samples.head._2.length)
     val dts = new Array[Long](samples.length)
@@ -143,7 +143,7 @@ object TimeSeries {
       dts(i) = dt.getMillis
       mat(i to i, ::) := new DenseVector[Double](values)
     }
-    new TimeSeries(new IrregularDateTimeIndex(dts), mat, labels)
+    new TimeSeries(new IrregularDateTimeIndex(dts), mat, keys)
   }
 }
 
