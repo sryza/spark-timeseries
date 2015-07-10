@@ -15,6 +15,8 @@
 
 package com.cloudera.sparkts
 
+import org.apache.spark.sql.DataFrame
+
 import scala.collection.mutable.ArrayBuffer
 
 import breeze.linalg._
@@ -267,6 +269,11 @@ class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double
         }
       }
     }
+  }
+
+  
+  def toInstantsDataFrame(nPartitions: Int = -1): DataFrame = {
+    // TODO: placeholder reminder function. THIS WILL NOT COMPILE!
   }
 
   def compute(split: Partition, context: TaskContext): Iterator[(String, Vector[Double])] = {
