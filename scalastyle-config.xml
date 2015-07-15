@@ -5,6 +5,14 @@
 <!-- // naughty stuff -->
 <!-- ... -->
 <!-- // scalastyle:on -->
+
+<!-- You can also switch off checking for a specific rule by specifying the id of the rule to ignore
+     IDs and such can be found here: http://www.scalastyle.org/rules-0.7.0.html -->
+<!--
+// scalastyle:off magic.number
+val notAtAllAMagicNumber = 1234
+// scalastyle:on magic.number
+-->
 <scalastyle commentFilter="enabled">
     <name>Scalastyle standard configuration</name>
     <check level="warning" class="org.scalastyle.file.FileTabChecker" enabled="true"></check>
