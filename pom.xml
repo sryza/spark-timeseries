@@ -82,6 +82,32 @@
           <skipTests>true</skipTests>
         </configuration>
       </plugin>
+
+      <!-- enable scalastyle -->
+      <plugin>
+        <groupId>org.scalastyle</groupId>
+        <artifactId>scalastyle-maven-plugin</artifactId>
+        <version>0.7.0</version>
+        <configuration>
+          <verbose>false</verbose>
+          <failOnWarning>false</failOnWarning>
+          <failOnViolation>true</failOnViolation>
+          <includeTestSourceDirectory>true</includeTestSourceDirectory>
+          <sourceDirectory>${basedir}/src/main/scala</sourceDirectory>
+          <testSourceDirectory>${basedir}/src/test/scala</testSourceDirectory>
+          <configLocation>${basedir}/lib/scalastyle_config.xml</configLocation>
+          <outputFile>${project.basedir}/scalastyle-output.xml</outputFile>
+          <outputEncoding>UTF-8</outputEncoding>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
       <!-- enable scalatest -->
       <plugin>
         <groupId>org.scalatest</groupId>
