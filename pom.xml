@@ -97,12 +97,13 @@
           <includeTestSourceDirectory>true</includeTestSourceDirectory>
           <sourceDirectory>${basedir}/src/main/scala</sourceDirectory>
           <testSourceDirectory>${basedir}/src/test/scala</testSourceDirectory>
-          <configLocation>${basedir}/lib/scalastyle_config.xml</configLocation>
+          <configLocation>${basedir}/scalastyle-config.xml</configLocation>
           <outputFile>${project.basedir}/scalastyle-output.xml</outputFile>
           <outputEncoding>UTF-8</outputEncoding>
         </configuration>
         <executions>
           <execution>
+            <phase>compile</phase>
             <goals>
               <goal>check</goal>
             </goals>
