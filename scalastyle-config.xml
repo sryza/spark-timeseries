@@ -10,7 +10,7 @@
      IDs and such can be found here: http://www.scalastyle.org/rules-0.7.0.html -->
 <!--
 // scalastyle:off magic.number
-val notAtAllAMagicNumber = 1234
+var notAtAllAMagicNumber = 1234
 // scalastyle:on magic.number
 -->
 <scalastyle commentFilter="enabled">
