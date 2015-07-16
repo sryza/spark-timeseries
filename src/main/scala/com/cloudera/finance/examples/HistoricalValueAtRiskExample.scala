@@ -67,7 +67,7 @@ object HistoricalValueAtRiskExample {
 
     // Fit an AR(1) + GARCH(1, 1) model to each factor
     val garchModels = factorReturns.mapValues(ARGARCH.fitModel(_)).toMap
-    val iidFactorReturns = factorReturns.mapSeriesWithLabel { case (symbol, series) =>
+    val iidFactorReturns = factorReturns.mapSeriesWithKey { case (symbol, series) =>
       val model = garchModels(symbol)
       model.removeTimeDependentEffects(series, DenseVector.zeros[Double](series.length))
     }
@@ -107,7 +107,7 @@ object HistoricalValueAtRiskExample {
       mat(i, ::) := iidSeries.data(rand.nextInt(iidSeries.data.rows), ::)
     }
     (0 until models.size).foreach { i =>
-      models(iidSeries.labels(i)).addTimeDependentEffects(mat(::, i), mat(::, i))
+      models(iidSeries.keys(i)).addTimeDependentEffects(mat(::, i), mat(::, i))
     }
     mat
   }
