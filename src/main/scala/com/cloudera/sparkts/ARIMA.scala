@@ -16,6 +16,7 @@
 package com.cloudera.sparkts
 
 import breeze.linalg._
+import com.cloudera.finance.Util.matToRowArrs
 
 import org.apache.commons.math3.analysis.MultivariateFunction
 import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression
@@ -23,6 +24,8 @@ import org.apache.commons.math3.optim.{SimpleBounds, MaxEval, MaxIter, InitialGu
 import org.apache.commons.math3.optim.nonlinear.scalar.{GoalType, ObjectiveFunction}
 import org.apache.commons.math3.optim.nonlinear.scalar.noderiv.BOBYQAOptimizer
 import org.apache.commons.math3.random.RandomGenerator
+
+import com.cloudera.finance.Util.matToRowArrs
 
 object ARIMA {
   /**
@@ -36,14 +39,20 @@ object ARIMA {
       method: String = "css")
     : ARIMAModel = {
     val (p, d, q) = order
+
+    val y =  ts.toArray
+    val diffedY = differences(y, d)
+
+    if (p > 0 && q == 0) {
+      val arModel = Autoregression.fitModel(new DenseVector(diffedY), p)
+      return new ARIMAModel(order, includeIntercept, Array(arModel.c) ++ arModel.coefficients)
+    }
+
     val maxLag = math.max(p, q)
     // Y-related terms
-    val y =  ts.toArray
-    val terms = makeTerms(y, p, d, includeIntercept)
-    val truncY = y.drop(maxLag + d) // drop as necessary
 
-    val initParams = HannanRisannenInit(ts, p, q)
-    val initCoeffs = fitWithCSS(truncY, terms, q, initParams)
+    val initParams = HannanRisannenInit(diffedY, p, q, includeIntercept)
+    val initCoeffs = fitWithCSS(diffedY, p, q, includeIntercept, initParams)
 
     method match {
       case "css" => {
@@ -56,19 +65,20 @@ object ARIMA {
     }
   }
 
-
   /**
    * Fit an ARIMA model using conditional sum of squares, currently fit using unbounded
    * BOBYQA.
    * @param y time series we wish to fit to
-   * @param iARTerms an array of arrays containing intercept, autoregressive y, and any exogenous terms
-   *              (original and lagged)
-   * @param nMATerms number of moving average error terms
-   * @return optimal parameters
+   * @param p order of autoregression
+   * @param q order of moving average
+   * @param includeIntercept does the model include an intercept
+   * @param initParams initial parameter guesses
+   * @return
    */
   def fitWithCSS(y: Array[Double],
-      iARTerms: Array[Array[Double]],
-      nMATerms: Int,
+      p: Int,
+      q: Int,
+      includeIntercept: Boolean,
       initParams: Array[Double]
       )
     : Array[Double]= {
@@ -79,15 +89,14 @@ object ARIMA {
     // Source: http://www.damtp.cam.ac.uk/user/na/NA_papers/NA2009_06.pdf
     val radiusStart = math.min(0.96, 0.2 * initParams.map(math.abs).max)
     val radiusEnd = radiusStart * 1e-6
-    val dimension = iARTerms(0).length + nMATerms
+    val dimension = p + q + (if (includeIntercept) 1 else 0)
     val interpPoints = dimension * 2 + 1
 
     val optimizer = new BOBYQAOptimizer(interpPoints, radiusStart, radiusEnd)
     val objFunction = new ObjectiveFunction(new MultivariateFunction() {
       def value(params: Array[Double]): Double = {
         val dummyOrder = (0, 0, 0)
-        val maTerms = Array.fill(nMATerms)(0.0) // Moving average of errors, initialized to 0
-        new ARIMAModel(dummyOrder, true, params).logLikelihoodCSS(y, iARTerms, maTerms)
+        new ARIMAModel(dummyOrder, true, params).logLikelihoodCSS(y, p, q, includeIntercept)
       }
     })
 
@@ -133,30 +142,18 @@ object ARIMA {
     }
   }
 
-
-  def makeTerms(ts: Array[Double], p: Int, d: Int, includeIntercept: Boolean)
-    : Array[Array[Double]] = {
-    // differencing
-    val tsDiffed = differences(ts, d)
-    // Auto regressive terms
-    val arTerms = Lag.lagMatTrimBoth(tsDiffed, p, includeOriginal = false)
-    // adding intercept
-    val withIntercept = if (includeIntercept) arTerms.map(Array(1.0) ++ _) else arTerms
-    withIntercept
-  }
-
   /**
    * initialize ARMA estimates using the Hannan Risannen algorithm
    * Source: http://personal-homepages.mis.mpg.de/olbrich/script_chapter2.pdf
    */
-  def HannanRisannenInit(ts: Vector[Double], p: Int, q: Int): Array[Double] = {
+  def HannanRisannenInit(y: Array[Double], p: Int, q: Int, includeIntercept: Boolean)
+    : Array[Double] = {
     val addToLag = 1
     val m = math.max(p, q) + addToLag // m > max(p, q)
     // higher order AR(m) model
-    val yArr = ts.toArray
-    val arModel = Autoregression.fitModel(ts, m)
-    val arTerms1 = Lag.lagMatTrimBoth(yArr, m, false)
-    val yTrunc = yArr.drop(m)
+    val arModel = Autoregression.fitModel(new DenseVector(y), m)
+    val arTerms1 = Lag.lagMatTrimBoth(y, m, false)
+    val yTrunc = y.drop(m)
     val estimated = arTerms1.zip(
       Array.fill(yTrunc.length)(arModel.coefficients)
       ).map { case (v, b) => v.zip(b).map { case (yi, bi) => yi * bi}.sum + arModel.c }
@@ -167,6 +164,7 @@ object ARIMA {
     val errorTerms = Lag.lagMatTrimBoth(errors, q, false).drop(math.max(p - q, 0))
     val allTerms = arTerms2.zip(errorTerms).map { case (ar, ma) => ar ++ ma }
     val regression = new OLSMultipleLinearRegression()
+    regression.setNoIntercept(!includeIntercept)
     regression.newSampleData(yTrunc.drop(m - addToLag), allTerms)
     val params = regression.estimateRegressionParameters()
     params
@@ -175,26 +173,35 @@ object ARIMA {
 }
 
 class ARIMAModel(
-    val order:(Int, Int, Int), // order of autoregression, differencing , and moving average
+    val order:(Int, Int, Int), // order of autoregression, differencing, and moving average
     val hasIntercept: Boolean = true,
-    val coeffs: Array[Double] //coefficients: intercept, AR coeffs, exogenous coeffs, ma coeffs
+    val coefficients: Array[Double] //coefficients: intercept, AR coeffs, ma coeffs
     ) extends TimeSeriesModel {
-
-
-  // Source: http://www.nuffield.ox.ac.uk/economics/papers/1997/w6/ma.pdf
-  // TODO: double check this...currently wrong!
+  /**
+   * loglikelihood based on conditional sum of squares
+   * Source: http://www.nuffield.ox.ac.uk/economics/papers/1997/w6/ma.pdf
+   * @param y time series
+   * @param p order of autoregression
+   * @param q order of moving average
+   * @param includeIntercept does the model include an intercept term
+   * @return loglikehood
+   */
   def logLikelihoodCSS(
       y: Array[Double],
-      iARTerms:Array[Array[Double]],
-      maTerms: Array[Double])
+      p: Int,
+      q: Int,
+      includeIntercept: Boolean)
     : Double = {
     val n = y.length.toDouble
     // total dimension
-    val dims = coeffs.length
-    // dimension of intercept + ar terms
-    val dar = if (iARTerms.head.isEmpty) 0 else iARTerms.head.length
+    val dims = coefficients.length
+    // keep track of moving average terms
+    val maTerms = Array.fill(q)(0.0)
+    // intercept term
+    val intercept = if (includeIntercept) 1 else 0
     // loop counters
-    var i = 0
+    val maxLag = math.max(p, q)
+    var i = maxLag
     var j = 0
     // estimates and accumulators
     var yhat = 0.0
@@ -202,22 +209,25 @@ class ARIMAModel(
     var css = 0.0
 
     while (i < n) {
-      while (j < dims) {
-        if (j < dar) {
-          // still processing intercept/AR terms
-          yhat += iARTerms(i)(j) * coeffs(j)
-        } else {
-          // moved on to MA terms
-          yhat += maTerms(j - dar) * coeffs(j)
-        }
+      j = 0
+      // intercept
+      yhat = intercept * coefficients(j)
+      // autoregressive terms
+      while (j < p && i - j - 1 >= 0) {
+        yhat += y(i - j - 1) * coefficients(intercept + j)
         j += 1
       }
-      resid = y(i) - yhat // residual (aka innovation)
-      css += resid * resid
-      updateMAErrors(maTerms, resid) // shift back errors to include latest
-      yhat = 0 // restart y hat for next iteration
-      i += 1 // advance counters
+      // moving average terms
       j = 0
+      while (j < q) {
+        yhat += maTerms(j) * coefficients(intercept + p + j)
+        j += 1
+      }
+      resid = y(i) - yhat
+      css += resid * resid
+      updateMAErrors(maTerms, resid)
+      yhat = 0.0
+      i += 1
    }
     //log likelihood CSS
     val sigma2 = css / n
