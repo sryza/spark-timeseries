@@ -236,7 +236,7 @@ class ARIMAModel(
 
   /**
    * Updates the error vector in place for a new (more recent) error
-   * For example, if we had errors at time [0, 1, 2], this returns errors at time [1, 2, 3]
+   * The newest error is placed in position 0, while older errors "fall off the end"
    * @param errs array of errors of length q in ARIMA(p, d, q), holds errors for t-1 through t-q
    * @param newError the error at time t
    * @return
@@ -245,11 +245,11 @@ class ARIMAModel(
     val n = errs.length
     var i = 0
     while (i < n - 1) {
-      errs(i) = errs(i + 1)
+      errs(i + 1) = errs(i)
       i += 1
     }
     if (n > 0) {
-      errs(i) = newError
+      errs(0) = newError
     }
   }
 
