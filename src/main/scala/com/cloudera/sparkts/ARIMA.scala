@@ -17,13 +17,15 @@ package com.cloudera.sparkts
 
 import breeze.linalg._
 import com.cloudera.finance.Util.matToRowArrs
+import org.apache.commons.math.random.MersenneTwister
 
 import org.apache.commons.math3.analysis.MultivariateFunction
 import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression
 import org.apache.commons.math3.optim.{SimpleBounds, MaxEval, MaxIter, InitialGuess}
 import org.apache.commons.math3.optim.nonlinear.scalar.{GoalType, ObjectiveFunction}
 import org.apache.commons.math3.optim.nonlinear.scalar.noderiv.BOBYQAOptimizer
-import org.apache.commons.math3.random.RandomGenerator
+import org.apache.commons.math.random.{MersenneTwister, RandomGenerator}
+
 
 import com.cloudera.finance.Util.matToRowArrs
 
@@ -39,18 +41,16 @@ object ARIMA {
       method: String = "css")
     : ARIMAModel = {
     val (p, d, q) = order
-
     val y =  ts.toArray
     val diffedY = differences(y, d)
 
+    // TODO: pass along includeIntercept value once added to AR implementation
     if (p > 0 && q == 0) {
       val arModel = Autoregression.fitModel(new DenseVector(diffedY), p)
       return new ARIMAModel(order, includeIntercept, Array(arModel.c) ++ arModel.coefficients)
     }
 
     val maxLag = math.max(p, q)
-    // Y-related terms
-
     val initParams = HannanRisannenInit(diffedY, p, q, includeIntercept)
     val initCoeffs = fitWithCSS(diffedY, p, q, includeIntercept, initParams)
 
@@ -121,28 +121,6 @@ object ARIMA {
   }
 
   /**
-   * Calculate a differenced array of a given order
-   * @param ts Array of doubles to difference
-   * @param order The difference order (e.g. x means y(0) = ts(x) - ts(0), etc)
-   * @return A differenced array of appropriate length
-   */
-  def differences(ts: Array[Double], order: Int): Array[Double] = {
-    if (order == 0) {
-      ts
-    } else {
-      val lenTs = ts.length
-      val diffedTs = Array.fill(lenTs - order)(0.0)
-      var i = order
-
-      while (i < lenTs) {
-        diffedTs(i - order) = ts(i) - ts(i - order)
-        i += 1
-      }
-      diffedTs
-    }
-  }
-
-  /**
    * initialize ARMA estimates using the Hannan Risannen algorithm
    * Source: http://personal-homepages.mis.mpg.de/olbrich/script_chapter2.pdf
    */
@@ -170,6 +148,27 @@ object ARIMA {
     params
   }
 
+  /**
+   * Calculate a differenced array of a given order
+   * @param ts Array of doubles to difference
+   * @param order The difference order (e.g. x means y(0) = ts(x) - ts(0), etc)
+   * @return A differenced array of appropriate length
+   */
+  def differences(ts: Array[Double], order: Int): Array[Double] = {
+    if (order == 0) {
+      ts
+    } else {
+      val lenTs = ts.length
+      val diffedTs = Array.fill(lenTs - order)(0.0)
+      var i = order
+
+      while (i < lenTs) {
+        diffedTs(i - order) = ts(i) - ts(i - order)
+        i += 1
+      }
+      diffedTs
+    }
+  }
 }
 
 class ARIMAModel(
@@ -256,16 +255,73 @@ class ARIMAModel(
   /**
    * {@inheritDoc}
    */
-  def removeTimeDependentEffects(ts: Vector[Double], destTs: Vector[Double] = null): Vector[Double] = {
-    throw new UnsupportedOperationException()
+  def removeTimeDependentEffects(ts: Vector[Double], destTs: Vector[Double]): Vector[Double] = {
+    val rand = new MersenneTwister()
+    val (p, d, q) = order
+    val maTerms = Array.fill(q)(0.0)
+    val intercept = if (hasIntercept) 1 else 0
+    var i = math.max(p, q)
+    var j = 0
+    val n = ts.length
+
+    while (i < n) {
+      j = 0
+      destTs(i) = ts(i)
+      // intercept
+      destTs(i) = destTs(i) - intercept * coefficients(j)
+      // autoregressive terms
+      while (j < p && i - j - 1 >= 0) {
+        destTs(i) = destTs(i) - ts(i - j - 1) * coefficients(intercept + j)
+        j += 1
+      }
+      // moving average terms
+      j = 0
+      while (j < q) {
+        destTs(i) = destTs(i) - maTerms(j) * coefficients(intercept + p + j)
+        j += 1
+      }
+      updateMAErrors(maTerms, rand.nextGaussian) // errors are gaussian
+      i += 1
+    }
+    destTs
   }
+
 
   /**
    * {@inheritDoc}
    */
   def addTimeDependentEffects(ts: Vector[Double], destTs: Vector[Double]): Vector[Double] = {
-    throw new UnsupportedOperationException()
+    val rand = new MersenneTwister()
+    val (p, d, q) = order
+    val maTerms = Array.fill(q)(0.0)
+    val intercept = if (hasIntercept) 1 else 0
+    var i = math.max(p, q)
+    var j = 0
+    val n = ts.length
+
+    while (i < n) {
+      j = 0
+      // intercept
+      destTs(i) = intercept * coefficients(j)
+      // autoregressive terms
+      while (j < p && i - j - 1 >= 0) {
+        destTs(i) = destTs(i) +  ts(i - j - 1) * coefficients(intercept + j)
+        j += 1
+      }
+      // moving average terms
+      j = 0
+      while (j < q) {
+        destTs(i) = destTs(i) + maTerms(j) * coefficients(intercept + p + j)
+        j += 1
+      }
+      updateMAErrors(maTerms, rand.nextGaussian) // errors are gaussian
+      i += 1
+    }
+    destTs
   }
+
+
+
 
   def sample(n: Int, rand: RandomGenerator): Vector[Double] = {
     throw new UnsupportedOperationException()
