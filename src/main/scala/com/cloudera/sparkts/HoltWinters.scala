@@ -156,15 +156,17 @@ class HoltWintersModel(
   def forecast(ts: Vector[Double], dest: Vector[Double]) = {
     val (fitted, level, trend, season) = getHoltWintersComponents(ts)
     val n = ts.length
+    var si = 0
     val levelVal = level(n - 1)
     val trendVal = trend(n - 1)
 
     for (i <- 0 until dest.length) {
       // if in sample, fitted, else forecasted
-      dest(i) = if (i > n - 1) {
-          levelVal + (i - n + 1) * trendVal + season(if (i % n == 0) n else (n - m) + (i % n))
+      if (i > n - 1) {
+          si = if ((i - n) % m == 0) n else (n - m) + ((i - n) % m)
+          dest(i) = levelVal + (i - n + 1) * trendVal + season(si - 1)
         } else {
-          fitted(i)
+          dest(i) = fitted(i)
         }
     }
     dest
