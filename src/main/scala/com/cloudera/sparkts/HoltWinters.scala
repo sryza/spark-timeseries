@@ -57,40 +57,7 @@ object HoltWinters {
     val params = optimal.getPoint
     new HoltWintersModel(m, params(0), params(1), params(2))
   }
-
-  /*
-  /**
-   * Fits a Holt linear model to a time series by minimizing the SSE of the original time series
-   * versus the estimates produced by the model. Performs unbounded optimization using
-   * Conjugate Gradient Descent.
-   * @param ts time series to fit model to
-   * @return HoltModel with estimated alpha and beta parameters
-   */
-  def fitModelWithCG(ts: Vector[Double]): HoltModel = {
-    val optimizer = new NonLinearConjugateGradientOptimizer(
-      NonLinearConjugateGradientOptimizer.Formula.FLETCHER_REEVES,
-      new SimpleValueChecker(1e-6, 1e-6))
-    val gradient = new ObjectiveFunctionGradient(new MultivariateVectorFunction() {
-      def value(params: Array[Double]): Array[Double] = {
-        new HoltModel(params(0), params(1)).gradient(ts)
-      }
-    })
-    val objectiveFunction = new ObjectiveFunction(new MultivariateFunction() {
-      def value(params: Array[Double]): Double = {
-        new HoltModel(params(0), params(1)).sse(ts)
-      }
-    })
-    val initGuess = new InitialGuess(Array(.2, .2)) // TODO: make this smarter
-    val maxIter = new MaxIter(10000)
-    val maxEval = new MaxEval(10000)
-    val goal = GoalType.MINIMIZE
-    val optimal = optimizer.optimize(objectiveFunction, goal, gradient, initGuess, maxIter, maxEval)
-    val params = optimal.getPoint
-    new HoltModel(params(0), params(1))
-  }
-  */
 }
-
 
 class HoltWintersModel(
   val m: Int,
@@ -118,15 +85,6 @@ class HoltWintersModel(
     }
     sqrErrors
   }
-
-  /**
-   * Calculate gradient of SSE, partial derivative in terms of alpha and beta
-   * @param ts time series that we are trying to optimize parameters for
-   * @return gradient of SSE at current parameters
-   */
-  //private[sparkts] def gradient(ts: Vector[Double]): Array[Double] = {
-    //not yet implemented
-  //}
 
   /**
    * {@inheritDoc}
@@ -168,6 +126,7 @@ class HoltWintersModel(
         } else {
           dest(i) = fitted(i)
         }
+      si += 1
     }
     dest
   }
@@ -192,20 +151,21 @@ class HoltWintersModel(
 
     var prevTrend = initLevel
     var prevLevel = initTrend
-    var si = m // seasonal index...used so that below reads as stated in source
+    var si = 0
+    dest(0) = initLevel + initTrend + season(0)
 
-    for (i <- 0 until ts.length) {
-      level(i) = alpha * (ts(i) - season(si - m)) + (1 - alpha) * (prevLevel + prevTrend)
+    for (i <- 0 until ts.length - 1) {
+      si = if (i >= m) i - m else i
+      level(i) = alpha * (ts(i) - season(si)) + (1 - alpha) * (prevLevel + prevTrend)
       trend(i) =  beta * (level(i) - prevLevel) + (1 - beta) * prevTrend
       // We'll stick to this variant, so that we can impose constraints on parameters
       // easily with BOBYQA
-      season(si) = gamma * (ts(i) - level(i)) + (1 - gamma) * season(si - m)
+      if (i >= m ) { // only update seasonality after the first m periods
+        season(i) = gamma * (ts(i) - level(i)) + (1 - gamma) * season(si)
+      }
       prevLevel = level(i)
       prevTrend = trend(i)
-
-      if (i < ts.length - 1) {
-        dest(i + 1) = level(i) + trend(i) + season(si - m)
-      }
+      dest(i + 1) = level(i) + trend(i) + season(si + 1)
     }
 
     (dest, level, trend, season)
@@ -217,13 +177,13 @@ class HoltWintersModel(
     val arrTs = ts.toArray
     val lm = arrTs.take(m).sum / m //average value for first m obs
     val bm = arrTs.take(m * 2).splitAt(m).zipped.map { case (prevx, x) =>
-          x - prevx
+        x - prevx
       }.sum / (m * m)
-    val siPrelim = arrTs.map(_ - lm)
-    val si = siPrelim.take(m) ++ siPrelim // add m at the start for ease of indexing
+    val siPrelim = arrTs.take(m).map(_ - lm)
+    //first m periods initialized to seasonal values, rest zeroed out
+    val si = siPrelim ++ Array.fill(arrTs.length - m)(0.0)
     (lm, bm, new DenseVector(si))
   }
-
 }
 
 
