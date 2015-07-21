@@ -15,14 +15,14 @@
 
 package com.cloudera.sparkts
 
-import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.{SQLContext, DataFrame}
 
 import scala.collection.mutable.ArrayBuffer
 
 import breeze.linalg._
 
 import org.apache.spark.SparkContext._
-import org.apache.spark.{Partition, Partitioner, TaskContext}
+import org.apache.spark.{SparkContext, Partition, Partitioner, TaskContext}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.util.StatCounter
 
@@ -197,15 +197,17 @@ class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double
     // At this point, dividedOnMapSide is an RDD of snippets of full samples that will be
     // assembled on the reduce side.  Each key is a tuple of
     // (date-time, position of snippet in full sample)
-
     val partitioner = new Partitioner() {
       val nPart = if (nPartitions == -1) parent.partitions.size else nPartitions
+
       override def numPartitions: Int = nPart
       override def getPartition(key: Any): Int = key.asInstanceOf[(Int, _)]._1 / nPart
     }
+
     implicit val ordering = new Ordering[(Int, Int)] {
       override def compare(a: (Int, Int), b: (Int, Int)): Int = {
         val dtDiff = a._1 - b._1
+
         if (dtDiff != 0){
           dtDiff
         } else {
@@ -213,6 +215,7 @@ class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double
         }
       }
     }
+
     val repartitioned = dividedOnMapSide.repartitionAndSortWithinPartitions(partitioner)
     repartitioned.mapPartitions { iter0: Iterator[((Int, Int), Vector[Double])] =>
       new Iterator[(DateTime, Vector[Double])] {
@@ -231,6 +234,7 @@ class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double
             snippets += snip
             snip = if (iter0.hasNext) iter0.next() else null
           }
+
           iter = if (snip == null) iter0 else Iterator(snip) ++ iter0
           snippets
         }
@@ -271,9 +275,19 @@ class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double
     }
   }
 
-  
-  def toInstantsDataFrame(nPartitions: Int = -1): DataFrame = {
-    // TODO: placeholder reminder function. THIS WILL NOT COMPILE!
+  def toInstantsDataFrame(sqlContext: SQLContext, nPartitions: Int = -1): DataFrame = {
+    val instantsRDD = this.toInstants(nPartitions)
+
+    import sqlContext.implicits._
+
+    /**
+     * TODO: This is going to blow up because SparkSQL and JodaTime don't play nicely together as of Spark 1.3
+     *
+     * So, the answer is going to be to either:
+     *   - Create a UDT
+     *   - Transform the DateTime aspect of the RDD to something else that is supported (via DateTime.getMillis)
+     */
+    instantsRDD.toDF()
   }
 
   def compute(split: Partition, context: TaskContext): Iterator[(String, Vector[Double])] = {

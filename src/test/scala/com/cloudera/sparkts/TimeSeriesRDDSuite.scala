@@ -20,6 +20,7 @@ import breeze.linalg._
 import com.cloudera.sparkts.DateTimeIndex._
 
 import com.github.nscala_time.time.Imports._
+import org.apache.spark.sql.{SQLContext, DataFrame}
 
 import org.apache.spark.{SparkConf, SparkContext}
 
@@ -87,6 +88,8 @@ class TimeSeriesRDDSuite extends FunSuite with LocalSparkContext with ShouldMatc
 
     sc = new SparkContext(conf)
 
+    val sqlContext = new SQLContext(sc)
+
     val seriesVectors = (0 until 20 by 4).map(x => new DenseVector((x until x + 4).map(_.toDouble).toArray))
     val labels = Array("a", "b", "c", "d", "e")
     val start = new DateTime("2015-4-9")
@@ -95,14 +98,18 @@ class TimeSeriesRDDSuite extends FunSuite with LocalSparkContext with ShouldMatc
     val rdd = sc.parallelize(labels.zip(seriesVectors.map(_.asInstanceOf[Vector[Double]])), 3)
     val tsRdd = new TimeSeriesRDD(index, rdd)
 
-    // TODO: actually call the function we're going to develop! :D
-    val samples = tsRdd.toInstants().collect()
+    //val exRDD = tsRdd.toInstants()
+    //val samples = tsRdd.toInstants().collect()
 
-    samples should be (Array(
-      (start, new DenseVector((0.0 until 20.0 by 4.0).toArray)),
-      (start + 1.days, new DenseVector((1.0 until 20.0 by 4.0).toArray)),
-      (start + 2.days, new DenseVector((2.0 until 20.0 by 4.0).toArray)),
-      (start + 3.days, new DenseVector((3.0 until 20.0 by 4.0).toArray)))
-    )
+    val samplesDF: DataFrame = tsRdd.toInstantsDataFrame(sqlContext)
+
+    samplesDF.collect()
+
+//    samples should be (Array(
+//      (start, new DenseVector((0.0 until 20.0 by 4.0).toArray)),
+//      (start + 1.days, new DenseVector((1.0 until 20.0 by 4.0).toArray)),
+//      (start + 2.days, new DenseVector((2.0 until 20.0 by 4.0).toArray)),
+//      (start + 3.days, new DenseVector((3.0 until 20.0 by 4.0).toArray)))
+//    )
   }
 }
