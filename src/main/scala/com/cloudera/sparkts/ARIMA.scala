@@ -16,18 +16,15 @@
 package com.cloudera.sparkts
 
 import breeze.linalg._
-import com.cloudera.finance.Util.matToRowArrs
-import org.apache.commons.math.random.MersenneTwister
 
 import org.apache.commons.math3.analysis.MultivariateFunction
 import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression
 import org.apache.commons.math3.optim.{SimpleBounds, MaxEval, MaxIter, InitialGuess}
 import org.apache.commons.math3.optim.nonlinear.scalar.{GoalType, ObjectiveFunction}
 import org.apache.commons.math3.optim.nonlinear.scalar.noderiv.BOBYQAOptimizer
-import org.apache.commons.math.random.{MersenneTwister, RandomGenerator}
+import org.apache.commons.math.random.MersenneTwister
 
 
-import com.cloudera.finance.Util.matToRowArrs
 
 object ARIMA {
   /**
@@ -41,43 +38,33 @@ object ARIMA {
       method: String = "css")
     : ARIMAModel = {
     val (p, d, q) = order
-    val y =  ts.toArray
-    val diffedY = differences(y, d)
+    val diffedTs = differences(ts, d).toArray.drop(d)
 
-    // TODO: pass along includeIntercept value once added to AR implementation
     if (p > 0 && q == 0) {
-      val arModel = Autoregression.fitModel(new DenseVector(diffedY), p)
+      val arModel = Autoregression.fitModel(new DenseVector(diffedTs), p)
       return new ARIMAModel(order, includeIntercept, Array(arModel.c) ++ arModel.coefficients)
     }
 
-    val maxLag = math.max(p, q)
-    val initParams = HannanRisannenInit(diffedY, p, q, includeIntercept)
-    val initCoeffs = fitWithCSS(diffedY, p, q, includeIntercept, initParams)
+    val initParams = HannanRisannenInit(diffedTs, order, includeIntercept)
+    val initCoeffs = fitWithCSS(diffedTs, order, includeIntercept, initParams)
 
     method match {
-      case "css" => {
-        new ARIMAModel(order, includeIntercept, initCoeffs)
-      }
-      case "ml" => {
-        //new ARIMAModel(order, 0.0, Array(1.0, 2.0))
-        throw new UnsupportedOperationException()
-      }
+      case "css" => new ARIMAModel(order, includeIntercept, initCoeffs)
+      case "ml" => throw new UnsupportedOperationException()
     }
   }
 
   /**
-   * Fit an ARIMA model using conditional sum of squares, currently fit using unbounded
+   * Fit an ARIMA model using conditional sum of squares, currently optimizes using unbounded
    * BOBYQA.
-   * @param y time series we wish to fit to
-   * @param p order of autoregression
-   * @param q order of moving average
+   * @param diffedY time series we wish to fit to, already differenced if necessary
    * @param includeIntercept does the model include an intercept
    * @param initParams initial parameter guesses
    * @return
    */
-  def fitWithCSS(y: Array[Double],
-      p: Int,
-      q: Int,
+  private def fitWithCSS(
+      diffedY: Array[Double],
+      order: (Int, Int, Int),
       includeIntercept: Boolean,
       initParams: Array[Double]
       )
@@ -87,6 +74,7 @@ object ARIMA {
     // http://cran.r-project.org/web/packages/minqa/minqa.pdf
     // While # of interpolation points as mentioned common in
     // Source: http://www.damtp.cam.ac.uk/user/na/NA_papers/NA2009_06.pdf
+    val (p, d, q) = order
     val radiusStart = math.min(0.96, 0.2 * initParams.map(math.abs).max)
     val radiusEnd = radiusStart * 1e-6
     val dimension = p + q + (if (includeIntercept) 1 else 0)
@@ -95,15 +83,14 @@ object ARIMA {
     val optimizer = new BOBYQAOptimizer(interpPoints, radiusStart, radiusEnd)
     val objFunction = new ObjectiveFunction(new MultivariateFunction() {
       def value(params: Array[Double]): Double = {
-        val dummyOrder = (0, 0, 0)
-        new ARIMAModel(dummyOrder, true, params).logLikelihoodCSS(y, p, q, includeIntercept)
+        new ARIMAModel(order, includeIntercept, params).logLikelihoodCSSARMA(diffedY)
       }
     })
 
     val initialGuess = new InitialGuess(initParams)
     val maxIter = new MaxIter(10000)
     val maxEval = new MaxEval(10000)
-    // TODO: Enforce stationarity and invertibility for AR and MA terms, respectively?
+    // TODO: Enforce stationarity and invertibility for AR and MA terms
     val bounds = SimpleBounds.unbounded(dimension)
     val goal = GoalType.MAXIMIZE
     val optimal = optimizer.optimize(objFunction, goal, bounds, maxIter, maxEval,
@@ -112,7 +99,7 @@ object ARIMA {
   }
 
   // TODO: implement MLE parameter estimates with Kalman filter.
-  def fitWithML(y: Array[Double],
+  private def fitWithML(diffedY: Array[Double],
       arTerms: Array[Array[Double]],
       maTerms: Array[Double],
       initCoeffs: Array[Double])
@@ -124,14 +111,18 @@ object ARIMA {
    * initialize ARMA estimates using the Hannan Risannen algorithm
    * Source: http://personal-homepages.mis.mpg.de/olbrich/script_chapter2.pdf
    */
-  def HannanRisannenInit(y: Array[Double], p: Int, q: Int, includeIntercept: Boolean)
+  private def HannanRisannenInit(
+      diffedY: Array[Double],
+      order:(Int, Int, Int),
+      includeIntercept: Boolean)
     : Array[Double] = {
+    val (p, d, q) = order
     val addToLag = 1
     val m = math.max(p, q) + addToLag // m > max(p, q)
     // higher order AR(m) model
-    val arModel = Autoregression.fitModel(new DenseVector(y), m)
-    val arTerms1 = Lag.lagMatTrimBoth(y, m, false)
-    val yTrunc = y.drop(m)
+    val arModel = Autoregression.fitModel(new DenseVector(diffedY), m)
+    val arTerms1 = Lag.lagMatTrimBoth(diffedY, m, false)
+    val yTrunc = diffedY.drop(m)
     val estimated = arTerms1.zip(
       Array.fill(yTrunc.length)(arModel.coefficients)
       ).map { case (v, b) => v.zip(b).map { case (yi, bi) => yi * bi}.sum + arModel.c }
@@ -152,18 +143,28 @@ object ARIMA {
    * Calculate a differenced array of a given order
    * @param ts Array of doubles to difference
    * @param order The difference order (e.g. x means y(0) = ts(x) - ts(0), etc)
-   * @return A differenced array of appropriate length
+   * @return A differenced array, where the first `order` elements are differenced with 0 (and
+   *         thus are just their original values)
    */
-  def differences(ts: Array[Double], order: Int): Array[Double] = {
+  def differences(ts: Vector[Double], order: Int): Vector[Double] = {
+    diffOps(ts, order, _ - _)
+  }
+
+  def invDifferences(ts: Vector[Double], order: Int): Vector[Double] = {
+    diffOps(ts, order, _ + _)
+  }
+
+  def diffOps(ts: Vector[Double], order: Int, op: (Double, Double) => Double): Vector[Double] = {
     if (order == 0) {
       ts
     } else {
-      val lenTs = ts.length
-      val diffedTs = Array.fill(lenTs - order)(0.0)
-      var i = order
+      val n = ts.length
+      val diffedTs = new DenseVector(Array.fill(n)(0.0))
+      var i = 0
 
-      while (i < lenTs) {
-        diffedTs(i - order) = ts(i) - ts(i - order)
+      while (i < n) {
+        // elements prior to `order` are copied over without modification
+        diffedTs(i) = if (i < order) ts(i) else op(ts(i), ts(i - order))
         i += 1
       }
       diffedTs
@@ -174,64 +175,39 @@ object ARIMA {
 class ARIMAModel(
     val order:(Int, Int, Int), // order of autoregression, differencing, and moving average
     val hasIntercept: Boolean = true,
-    val coefficients: Array[Double] //coefficients: intercept, AR coeffs, ma coeffs
+    val coefficients: Array[Double], // coefficients: intercept, AR coeffs, ma coeffs
+    val seed: Long = 10L // seed for random number generation
     ) extends TimeSeriesModel {
+
+  val rand = new MersenneTwister(seed)
   /**
    * loglikelihood based on conditional sum of squares
    * Source: http://www.nuffield.ox.ac.uk/economics/papers/1997/w6/ma.pdf
    * @param y time series
-   * @param p order of autoregression
-   * @param q order of moving average
-   * @param includeIntercept does the model include an intercept term
    * @return loglikehood
    */
-  def logLikelihoodCSS(
-      y: Array[Double],
-      p: Int,
-      q: Int,
-      includeIntercept: Boolean)
-    : Double = {
-    val n = y.length.toDouble
-    // total dimension
-    val dims = coefficients.length
-    // keep track of moving average terms
-    val maTerms = Array.fill(q)(0.0)
-    // intercept term
-    val intercept = if (includeIntercept) 1 else 0
-    // loop counters
-    val maxLag = math.max(p, q)
-    var i = maxLag
-    var j = 0
-    // estimates and accumulators
-    var yhat = 0.0
-    var resid = 0.0
-    var css = 0.0
+  def logLikelihoodCSS(y: Vector[Double]): Double = {
+    val d = order._2
+    val diffedY = ARIMA.differences(y, d).toArray.drop(d)
+    logLikelihoodCSSARMA(diffedY)
+  }
 
-    while (i < n) {
-      j = 0
-      // intercept
-      yhat = intercept * coefficients(j)
-      // autoregressive terms
-      while (j < p && i - j - 1 >= 0) {
-        yhat += y(i - j - 1) * coefficients(intercept + j)
-        j += 1
-      }
-      // moving average terms
-      j = 0
-      while (j < q) {
-        yhat += maTerms(j) * coefficients(intercept + p + j)
-        j += 1
-      }
-      resid = y(i) - yhat
-      css += resid * resid
-      updateMAErrors(maTerms, resid)
-      yhat = 0.0
-      i += 1
-   }
-    //log likelihood CSS
+  def logLikelihoodCSSARMA(diffedY: Array[Double]): Double = {
+    val n = diffedY.length
+    val yHat = new DenseVector(Array.fill(n)(0.0))
+    val yVect = new DenseVector(diffedY)
+    iterateARMA(yVect,  yHat, _ + _, goldStandard = yVect, initErrors = null)
+
+    val (p, d, q) = order
+    val maxLag = math.max(p, q)
+    // drop first maxLag terms, since we can't estimate residuals there, since no
+    // AR(n) terms available
+    val css = diffedY.zip(yHat.toArray).drop(maxLag).map { case (obs, pred) =>
+      math.pow(obs - pred, 2)
+    }.sum
     val sigma2 = css / n
-    (-n/2) * math.log(2 * math.Pi * sigma2) - css / (2 * sigma2)
-   }
+    (-n / 2) * math.log(2 * math.Pi * sigma2) - css / (2 * sigma2)
+  }
 
   /**
    * Updates the error vector in place for a new (more recent) error
@@ -256,74 +232,140 @@ class ARIMAModel(
    * {@inheritDoc}
    */
   def removeTimeDependentEffects(ts: Vector[Double], destTs: Vector[Double]): Vector[Double] = {
-    val rand = new MersenneTwister()
     val (p, d, q) = order
-    val maTerms = Array.fill(q)(0.0)
-    val intercept = if (hasIntercept) 1 else 0
-    var i = math.max(p, q)
-    var j = 0
-    val n = ts.length
-
-    while (i < n) {
-      j = 0
-      destTs(i) = ts(i)
-      // intercept
-      destTs(i) = destTs(i) - intercept * coefficients(j)
-      // autoregressive terms
-      while (j < p && i - j - 1 >= 0) {
-        destTs(i) = destTs(i) - ts(i - j - 1) * coefficients(intercept + j)
-        j += 1
-      }
-      // moving average terms
-      j = 0
-      while (j < q) {
-        destTs(i) = destTs(i) - maTerms(j) * coefficients(intercept + p + j)
-        j += 1
-      }
-      updateMAErrors(maTerms, rand.nextGaussian) // errors are gaussian
-      i += 1
-    }
-    destTs
+    val maxLag = math.max(p, q)
+    val diffedTs = new DenseVector(ARIMA.differences(ts, d).toArray.drop(d))
+    val changes =  new DenseVector(Array.fill(diffedTs.length)(0.0))
+    //copy values in ts into destTs first
+    changes := diffedTs
+    // Subtract AR terms taken from diffedTs. Errors drawn from gaussian
+    iterateARMA(diffedTs, changes, _ - _, goldStandard = null, initErrors = null)
+    //copy first d elements into destTs directly
+    destTs(0 until d) := ts(0 until d)
+    //copy remainder changes
+    destTs(d until destTs.length) := changes
+    destTs := ARIMA.differences(destTs, d)
   }
-
 
   /**
    * {@inheritDoc}
    */
   def addTimeDependentEffects(ts: Vector[Double], destTs: Vector[Double]): Vector[Double] = {
-    val rand = new MersenneTwister()
     val (p, d, q) = order
-    val maTerms = Array.fill(q)(0.0)
+    val maxLag = math.max(p, q)
+    val diffedTs = new DenseVector(ARIMA.differences(ts, d).toArray.drop(d)) // difference
+    // copy values
+    destTs(0 to -1) := diffedTs(0 to -1)
+    // Note that destTs goes in both ts and dest in call below, so that AR recursion is done
+    // correctly. Errors drawn from gaussian distribution
+    iterateARMA(destTs, destTs, _ + _, goldStandard = null, initErrors = null)
+    val result = new DenseVector(Array.fill(ts.length)(0.0))
+    result(0 until d) := ts(0 until d) // take first d terms
+    result(d to -1) := destTs
+    destTs :=  ARIMA.invDifferences(destTs, d) // add up as necessary
+  }
+
+  /**
+   * Perform operations with the AR and MA terms, based on the time series `ts` and the errors
+   * based off of `goldStandard`, combined with elements from the series  `dest`. Weights for terms
+   * are taken from the current model configuration.
+   * So for example: iterateARMA(series1, series_of_zeros,  _ + _ , goldStandard = series1,
+   * initErrors = null)
+   * calculates the 1-step ahead forecasts for series1 assuming current coefficients, and initial
+   * MA errors of 0.
+   * @param ts Time series to use for AR terms
+   * @param dest Time series holding initial values at each index
+   * @param op Operation to perform between values in dest, and various combinations of ts, errors
+   *           and intercept terms
+   * @param goldStandard The time series to which to compare 1-step ahead forecasts to obtain
+   *                     moving average errors. Default set to null, in which case errors are
+   *                     drawn from a gaussian distribution.
+   * @param initErrors Initialization for first q errors. If none provided (i.e. remains null, as
+   *                   per default), then initializes to all zeros
+   *
+   * @return dest series
+   */
+
+  def iterateARMA(
+      ts: Vector[Double],
+      dest: Vector[Double],
+      op: (Double, Double) => Double,
+      goldStandard: Vector[Double] = null,
+      initErrors: Array[Double] = null
+      )
+    : Vector[Double] = {
+    val (p, d, q) = order
+    val maTerms = if (initErrors == null) Array.fill(q)(0.0) else initErrors
     val intercept = if (hasIntercept) 1 else 0
-    var i = math.max(p, q)
+    var i = math.max(p, q) // maximum lag
     var j = 0
     val n = ts.length
+    var error = 0.0
 
     while (i < n) {
       j = 0
       // intercept
-      destTs(i) = intercept * coefficients(j)
+      dest(i) = op(dest(i), intercept * coefficients(j))
       // autoregressive terms
       while (j < p && i - j - 1 >= 0) {
-        destTs(i) = destTs(i) +  ts(i - j - 1) * coefficients(intercept + j)
+        dest(i) = op(dest(i), ts(i - j - 1) * coefficients(intercept + j))
         j += 1
       }
       // moving average terms
       j = 0
       while (j < q) {
-        destTs(i) = destTs(i) + maTerms(j) * coefficients(intercept + p + j)
+        dest(i) = op(dest(i), maTerms(j) * coefficients(intercept + p + j))
         j += 1
       }
-      updateMAErrors(maTerms, rand.nextGaussian) // errors are gaussian
+
+      error = if (goldStandard == null) rand.nextGaussian() else goldStandard(i) - dest(i)
+      updateMAErrors(maTerms, error)
       i += 1
     }
-    destTs
+    dest
   }
 
 
+  def sample(n: Int): Vector[Double] = {
+    val vec = new DenseVector(Array.fill[Double](n)(rand.nextGaussian()))
+    addTimeDependentEffects(vec, vec)
+  }
 
 
-  def sample(n: Int, rand: RandomGenerator): Vector[Double] = {
-    throw new UnsupportedOperationException()
+  def forecast(ts: Vector[Double], nFuture: Int): Vector[Double] = {
+    val (p, d, q) = order
+    val maxLag = math.max(p, q)
+    // difference timeseries as necessary for model
+    val diffedTs = new DenseVector(ARIMA.differences(ts, d).toArray.drop(d))
+    val nDiffed = diffedTs.length
+
+    val hist = new DenseVector(Array.fill(nDiffed)(0.0))
+
+    // fit historical values
+    iterateARMA(diffedTs, hist, _ + _,  goldStandard = diffedTs, initErrors = null)
+
+    // Last set of errors, to be used in forecast if MA terms included
+    val maTerms = (for (i <- nDiffed - maxLag until nDiffed) yield diffedTs(i) - hist(i)).toArray
+
+    // include maxLag to copy over last maxLag values, to use in iterateARMA
+    val forward = new DenseVector(Array.fill(nFuture + maxLag)(0.0))
+    forward(0 until maxLag) := hist(nDiffed- maxLag until nDiffed)
+    // use self as ts to take AR from same series, use self as goldStandard to induce future errors
+    // of zero
+    iterateARMA(forward, forward, _ + _, goldStandard = forward, initErrors = maTerms)
+
+    //results
+    val results = new DenseVector(Array.fill(ts.length + nFuture)(0.0))
+    //copy first d elements prior to differencing
+    results(0 until d) := ts(0 until d)
+    // copy max of p/q element posts differencing, those values in hist are 0'ed out
+    results(d until d + maxLag) := diffedTs(0 until maxLag)
+    // copy historical values, after first p/q
+    results(d + maxLag until nDiffed) := hist(maxLag until nDiffed)
+    // copy forward, after dropping first maxLag terms, since these were just repeated
+    // for convenience in iterateARMA
+    results(nDiffed to -1) := forward(maxLag to -1)
+    // add up if there was any differencing
+    ARIMA.invDifferences(results, d)
   }
 }
