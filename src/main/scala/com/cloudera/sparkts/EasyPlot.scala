@@ -50,7 +50,7 @@ object EasyPlot {
 
   /**
    * Plot multiple series of varying lengths, fills in shorter series with NaNs for plotting.
-   * Useful for plotting historicals vs fitted + forecasted
+   * Useful for plotting historicals vs fitted + forecasted.
    * @param vecs Sequence of vectors of potentially varying lengths, which are extended and
    *             filled with NaNs, as necessary, and then plotted
    */
@@ -61,8 +61,7 @@ object EasyPlot {
     }
     ezplot(extended)
   }
-
-
+  
   /**
    * Autocorrelation function plot
    * @param data array of data to analyze
