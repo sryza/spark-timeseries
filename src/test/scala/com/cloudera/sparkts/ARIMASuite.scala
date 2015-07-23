@@ -24,7 +24,7 @@ import org.apache.commons.math3.random.MersenneTwister
 import org.scalatest.FunSuite
 import org.scalatest.Matchers._
 
-class AutoregressionSuite extends FunSuite {
+class ARIMASuite extends FunSuite {
   test("compare with R") {
     // > R.Version()$version.string
     // [1] "R version 3.2.0 (2015-04-16)"
@@ -41,19 +41,20 @@ class AutoregressionSuite extends FunSuite {
     ma should be (0.7 +- 0.05)
   }
 
-  test("Data sampled should be fit with similar parameters") {
+  test("Data sampled from a given model should result in similar model if fit") {
     val model = new ARIMAModel((2, 1, 2), Array(8.2, 0.2, 0.5, 0.3, 0.1))
     val sampled = model.sample(1000)
     val newModel = ARIMA.fitModel((2, 1, 2), sampled)
     val Array(c, ar1, ar2, ma1, ma2) = model.coefficients
     val Array(cTest, ar1Test, ar2Test, ma1Test, ma2Test) = newModel.coefficients
+    c should be (cTest +- 0.1)
     ar1Test should be (ar1 +- 0.1)
     ma1Test should be (ma1 +- 0.1)
     ar2Test should be (ar2 +- 0.1)
     ma2Test should be (ma2 +- 0.1)
   }
 
-  test("Fitting ARIMA(p, d, q) should be the same as fitting a d-order differed ARMA(p, q)") {
+  test("Fitting ARIMA(p, d, q) should be the same as fitting a d-order differenced ARMA(p, q)") {
     val model = new ARIMAModel((1, 1, 2), Array(0.3, 0.7, 0.1), hasIntercept = false)
     val sampled = model.sample(1000)
     val arimaModel = ARIMA.fitModel((1, 1, 2), sampled, includeIntercept = false)
@@ -75,7 +76,7 @@ class AutoregressionSuite extends FunSuite {
     ma2 should be (iMA2)
   }
 
-  test("Adding ARIMA effects to whitenoise, and removing should make series close to white noise") {
+  ignore("Adding ARIMA effects to whitenoise, and removing should make series close to white noise") {
     val rand = new MersenneTwister(20L)
     val model = new ARIMAModel((1, 1, 2), Array(8.3, 0.1, 0.2, 0.3), hasIntercept = true)
     val whiteNoise = new DenseVector(Array.fill(100)(rand.nextGaussian))
