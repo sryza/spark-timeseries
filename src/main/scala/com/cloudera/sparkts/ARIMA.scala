@@ -114,7 +114,7 @@ object ARIMA {
   }
 
   /**
-   * Initializes ARMA paramter estimates using the Hannan-Risannen algorithm. The process is:
+   * Initializes ARMA paramater estimates using the Hannan-Risannen algorithm. The process is:
    * fit an AR(m) model of a higher order (i.e. m > max(p, q)), use this to estimate errors,
    * then fit an OLS model of AR(p) terms and MA(q) terms. The coefficients estimated by
    * the OLS model are returned as initial parameter estimates
@@ -279,14 +279,13 @@ class ARIMAModel(
    *
    * @return dest series
    */
-  def iterateARMA(
+  private def iterateARMA(
       ts: Vector[Double],
       dest: Vector[Double],
       op: (Double, Double) => Double,
       goldStandard: Vector[Double] = null,
       errors: Vector[Double] = null,
-      initErrors: Array[Double] = null
-      )
+      initErrors: Array[Double] = null)
     : Vector[Double] = {
     require(goldStandard != null || errors != null, "goldStandard or errors must be passed in")
     val (p, d, q) = order
@@ -324,13 +323,16 @@ class ARIMAModel(
    * Given a timeseries, assume that is the result of an ARIMA(p, d, q) process, and apply
    * inverse operations to obtain the original series. Meaning:
    * 1 - difference if necessary
-   * 2 - For each term subtract out AR and MA values, remainder
+   * 2 - For each term subtract out AR and MA values
    * First d elements are taken directly from ts
    * @param ts Time series of observations with this model's characteristics.
    * @param destTs
    * @return The dest series, for convenience.
    */
   def removeTimeDependentEffects(ts: Vector[Double], destTs: Vector[Double]): Vector[Double] = {
+    /*
+    // jose: I don't quite think this is right... but not sure exactly what the operation should
+    // look like. I've left it here for your reference
     val (p, d, q) = order
     val maxLag = math.max(p, q)
     val diffedTs = new DenseVector(ARIMA.differences(ts, d).toArray.drop(d))
@@ -338,21 +340,23 @@ class ARIMAModel(
     //copy values in ts into destTs first
     changes := diffedTs
     val errs = new DenseVector(Array.fill(diffedTs.length)(rand.nextGaussian))
-    // changes :-= errs.map(x => x * (if (q > 0) 1.0 else 0.0)) // subtract errors if appropriate
     // diffedTs corresponds to the ARMA process, changes corresponds to error at period i
     // diffedTs(i) - AR_terms - MA_terms = error_i = changes(i)
+    // Note that for the first term diffedTs(0), there are 0 AR terms, and 0
     iterateARMA(diffedTs, changes, _ - _ , errors = changes)
     //copy first d elements into destTs directly from time series
     destTs(0 until d) := ts(0 until d)
     //copy remainder changes
     destTs(d until destTs.length) := changes
     destTs
+    */
+    throw new UnsupportedOperationException()
   }
 
   /**
    * Given a timeseries, apply an ARIMA(p, d, q) to it. Steps are:
    * 1 - add gaussian distributed errors if model has q term
-   * 2 - For each term add in AR and MA values, where MA values are taken from (1)
+   * 2 - For each term add in AR and MA values, where MA values are taken from (1) if needed
    * 3 - Sum values (i.e. inverse difference) to get final series, as appropriate
    * @param ts Time series of i.i.d. observations.
    * @param destTs
@@ -367,7 +371,7 @@ class ARIMAModel(
     val errs = new DenseVector(Array.fill(ts.length)(rand.nextGaussian))
     changes :+= errs.map(x => x * (if (q > 0) 1.0 else 0.0)) // add in gaussian errors if needed
     // Note that changes goes in both ts and dest in call below, so that AR recursion is done
-    // correctly. And we provide the errors, in case needed
+    // correctly. And we provide the errors, in case needed for MA terms
     iterateARMA(changes, changes, _ + _ , errors = errs)
     destTs :=  ARIMA.invDifferences(changes, d) // add up as necessary
   }
@@ -379,11 +383,6 @@ class ARIMAModel(
    * @return series reflecting ARIMA(p, d, q) process
    */
   def sample(n: Int): Vector[Double] = {
-    //val (p, d, q) = order
-    //val vec = new DenseVector(Array.fill[Double](n)(rand.nextGaussian))
-    // self as AR, copy of self as error terms
-    //val changes = iterateARMA(vec, vec, _ + _ , errors = vec.copy)
-    //ARIMA.invDifferences(changes, d)
     val zeros = new DenseVector(Array.fill(n + 1)(0.0))
     val result = addTimeDependentEffects(zeros, zeros)
     new DenseVector(result.toArray.drop(1))
