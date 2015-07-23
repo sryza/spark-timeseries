@@ -48,14 +48,14 @@ object ARIMA {
 
     if (p > 0 && q == 0) {
       val arModel = Autoregression.fitModel(new DenseVector(diffedTs), p)
-      return new ARIMAModel(order, includeIntercept, Array(arModel.c) ++ arModel.coefficients)
+      return new ARIMAModel(order, Array(arModel.c) ++ arModel.coefficients, includeIntercept)
     }
 
     val initParams = HannanRisannenInit(diffedTs, order, includeIntercept)
     val initCoeffs = fitWithCSS(diffedTs, order, includeIntercept, initParams)
 
     method match {
-      case "css" => new ARIMAModel(order, includeIntercept, initCoeffs)
+      case "css" => new ARIMAModel(order,initCoeffs, includeIntercept)
       case "ml" => throw new UnsupportedOperationException()
     }
   }
@@ -89,7 +89,7 @@ object ARIMA {
     val optimizer = new BOBYQAOptimizer(interpPoints, radiusStart, radiusEnd)
     val objFunction = new ObjectiveFunction(new MultivariateFunction() {
       def value(params: Array[Double]): Double = {
-        new ARIMAModel(order, includeIntercept, params).logLikelihoodCSSARMA(diffedY)
+        new ARIMAModel(order, params, includeIntercept).logLikelihoodCSSARMA(diffedY)
       }
     })
 
@@ -204,8 +204,8 @@ object ARIMA {
 
 class ARIMAModel(
     val order:(Int, Int, Int), // order of autoregression, differencing, and moving average
-    val hasIntercept: Boolean = true,
     val coefficients: Array[Double], // coefficients: intercept, AR coeffs, ma coeffs
+    val hasIntercept: Boolean = true,
     val seed: Long = 10L // seed for random number generation
     ) extends TimeSeriesModel {
 
@@ -279,7 +279,7 @@ class ARIMAModel(
    *
    * @return dest series
    */
-  private def iterateARMA(
+  def iterateARMA(
       ts: Vector[Double],
       dest: Vector[Double],
       op: (Double, Double) => Double,
@@ -324,9 +324,8 @@ class ARIMAModel(
    * Given a timeseries, assume that is the result of an ARIMA(p, d, q) process, and apply
    * inverse operations to obtain the original series. Meaning:
    * 1 - difference if necessary
-   * 2 - Subtract gaussian distributed errors if model has q term
-   * 3 - For each term subtract out AR and MA values, where MA values are taken from (1)
-   * First d + max(p, q) elements are taken directly from ts
+   * 2 - For each term subtract out AR and MA values, remainder
+   * First d elements are taken directly from ts
    * @param ts Time series of observations with this model's characteristics.
    * @param destTs
    * @return The dest series, for convenience.
@@ -339,10 +338,11 @@ class ARIMAModel(
     //copy values in ts into destTs first
     changes := diffedTs
     val errs = new DenseVector(Array.fill(diffedTs.length)(rand.nextGaussian))
-    changes :-= errs.map(x => x * (if (q > 0) 1.0 else 0.0)) // subtract errors if appropriate
-    // Subtract AR terms taken from diffedTs. pass along errors
-    iterateARMA(diffedTs, changes, _ - _ , errors = errs)
-    //copy first d elements into destTs directly
+    // changes :-= errs.map(x => x * (if (q > 0) 1.0 else 0.0)) // subtract errors if appropriate
+    // diffedTs corresponds to the ARMA process, changes corresponds to error at period i
+    // diffedTs(i) - AR_terms - MA_terms = error_i = changes(i)
+    iterateARMA(diffedTs, changes, _ - _ , errors = changes)
+    //copy first d elements into destTs directly from time series
     destTs(0 until d) := ts(0 until d)
     //copy remainder changes
     destTs(d until destTs.length) := changes
@@ -353,9 +353,7 @@ class ARIMAModel(
    * Given a timeseries, apply an ARIMA(p, d, q) to it. Steps are:
    * 1 - add gaussian distributed errors if model has q term
    * 2 - For each term add in AR and MA values, where MA values are taken from (1)
-   * 3 - Sum values (i.e. inverse difference) to get final series
-   * First d + max(p, q) elements are taken directly from ts before applying
-   * any inverse-differencing, as appropriate
+   * 3 - Sum values (i.e. inverse difference) to get final series, as appropriate
    * @param ts Time series of i.i.d. observations.
    * @param destTs
    * @return The dest series, for convenience.
@@ -367,15 +365,11 @@ class ARIMAModel(
     // copy values
     changes := ts
     val errs = new DenseVector(Array.fill(ts.length)(rand.nextGaussian))
-    changes :+= errs.map(x => x * (if (q > 0) 1.0 else 0.0)) // add in gaussian errors if
-    // appropriate
+    changes :+= errs.map(x => x * (if (q > 0) 1.0 else 0.0)) // add in gaussian errors if needed
     // Note that changes goes in both ts and dest in call below, so that AR recursion is done
     // correctly. And we provide the errors, in case needed
-    iterateARMA(changes, changes, _ + _ , errors = errs.copy)
-    val result = new DenseVector(Array.fill(ts.length)(0.0))
-    result(0 until d) := ts(0 until d) // take first d terms
-    result(d to -1) := changes
-    destTs :=  ARIMA.invDifferences(result, d) // add up as necessary
+    iterateARMA(changes, changes, _ + _ , errors = errs)
+    destTs :=  ARIMA.invDifferences(changes, d) // add up as necessary
   }
 
   /**
@@ -390,8 +384,9 @@ class ARIMAModel(
     // self as AR, copy of self as error terms
     //val changes = iterateARMA(vec, vec, _ + _ , errors = vec.copy)
     //ARIMA.invDifferences(changes, d)
-    val zeros = new DenseVector(Array.fill(n)(0.0))
-    addTimeDependentEffects(zeros, zeros)
+    val zeros = new DenseVector(Array.fill(n + 1)(0.0))
+    val result = addTimeDependentEffects(zeros, zeros)
+    new DenseVector(result.toArray.drop(1))
   }
 
   /**
@@ -403,8 +398,7 @@ class ARIMAModel(
    * @param nFuture Periods in the future to forecast
    * @return a series consisting of fitted 1-step ahead forecasts for historicals and then
    *         `nFuture` periods of forecasts. Note that in the future values error terms become
-   *         zero and prior predictions are used for any AR terms. If stationary, an ARMA process
-   *         should converge to a horizontal line (MA -> 0, and AR -> mean).
+   *         zero and prior predictions are used for any AR terms.
    */
   def forecast(ts: Vector[Double], nFuture: Int): Vector[Double] = {
     val (p, d, q) = order
@@ -431,7 +425,8 @@ class ARIMAModel(
     val results = new DenseVector(Array.fill(ts.length + nFuture)(0.0))
     //copy first d elements prior to differencing
     results(0 until d) := ts(0 until d)
-    // copy max of p/q element posts differencing, those values in hist are 0'ed out
+    // copy max of p/q element posts differencing, those values in hist are 0'ed out to correctly
+    // calculate 1-step ahead forecasts
     results(d until d + maxLag) := diffedTs(0 until maxLag)
     // copy historical values, after first p/q
     results(d + maxLag until nDiffed + d) := hist(maxLag until nDiffed)
