@@ -15,8 +15,6 @@
 
 package com.cloudera.sparkts
 
-import java.util.Random
-
 import breeze.linalg._
 
 import org.apache.commons.math3.random.MersenneTwister
@@ -42,12 +40,14 @@ class ARIMASuite extends FunSuite {
   }
 
   test("Data sampled from a given model should result in similar model if fit") {
+    val rand = new MersenneTwister(10L)
     val model = new ARIMAModel((2, 1, 2), Array(8.2, 0.2, 0.5, 0.3, 0.1))
-    val sampled = model.sample(1000)
+    val sampled = model.sample(1000, rand)
     val newModel = ARIMA.fitModel((2, 1, 2), sampled)
     val Array(c, ar1, ar2, ma1, ma2) = model.coefficients
     val Array(cTest, ar1Test, ar2Test, ma1Test, ma2Test) = newModel.coefficients
-    c should be (cTest +- 0.1)
+    // intercept is given more leeway
+    c should be (cTest +- 1)
     ar1Test should be (ar1 +- 0.1)
     ma1Test should be (ma1 +- 0.1)
     ar2Test should be (ar2 +- 0.1)
@@ -55,8 +55,9 @@ class ARIMASuite extends FunSuite {
   }
 
   test("Fitting ARIMA(p, d, q) should be the same as fitting a d-order differenced ARMA(p, q)") {
+    val rand = new MersenneTwister(10L)
     val model = new ARIMAModel((1, 1, 2), Array(0.3, 0.7, 0.1), hasIntercept = false)
-    val sampled = model.sample(1000)
+    val sampled = model.sample(1000, rand)
     val arimaModel = ARIMA.fitModel((1, 1, 2), sampled, includeIntercept = false)
     val differencedSample = new DenseVector(ARIMA.differences(sampled, 1).toArray.drop(1))
     val armaModel = ARIMA.fitModel((1, 0, 2), differencedSample, includeIntercept = false)
@@ -76,7 +77,7 @@ class ARIMASuite extends FunSuite {
     ma2 should be (iMA2)
   }
 
-  ignore("Adding ARIMA effects to whitenoise, and removing should make series close to white noise") {
+  test("Adding ARIMA effects to series, and removing should return the same series") {
     val rand = new MersenneTwister(20L)
     val model = new ARIMAModel((1, 1, 2), Array(8.3, 0.1, 0.2, 0.3), hasIntercept = true)
     val whiteNoise = new DenseVector(Array.fill(100)(rand.nextGaussian))
@@ -84,6 +85,10 @@ class ARIMASuite extends FunSuite {
     model.addTimeDependentEffects(whiteNoise, arimaProcess)
     val closeToWhiteNoise = new DenseVector(Array.fill(100)(0.0))
     model.removeTimeDependentEffects(arimaProcess, closeToWhiteNoise)
-    closeToWhiteNoise.toArray.sum / closeToWhiteNoise.length should be < 1.0
+
+    for (i <- 0 until whiteNoise.length) {
+      val diff = whiteNoise(i) - closeToWhiteNoise(i)
+      math.abs(diff) should be < 1e-4
+    }
   }
 }
