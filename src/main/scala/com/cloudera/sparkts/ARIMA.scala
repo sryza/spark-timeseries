@@ -17,9 +17,10 @@ package com.cloudera.sparkts
 
 import breeze.linalg._
 
-import org.apache.commons.math3.analysis.MultivariateFunction
-import org.apache.commons.math3.optim.{SimpleBounds, MaxEval, MaxIter, InitialGuess}
-import org.apache.commons.math3.optim.nonlinear.scalar.{GoalType, ObjectiveFunction}
+import org.apache.commons.math3.analysis.{MultivariateVectorFunction, MultivariateFunction}
+import org.apache.commons.math3.optim.nonlinear.scalar.gradient.NonLinearConjugateGradientOptimizer
+import org.apache.commons.math3.optim._
+import org.apache.commons.math3.optim.nonlinear.scalar.{ObjectiveFunctionGradient, GoalType, ObjectiveFunction}
 import org.apache.commons.math3.optim.nonlinear.scalar.noderiv.BOBYQAOptimizer
 import org.apache.commons.math3.random.RandomGenerator
 import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression
@@ -36,12 +37,14 @@ object ARIMA {
    * does not verify if the parameters fitted are stationary/invertible. Given this, it is suggested
    * that users inspect the resulting model. However, if parameters are not sane, it is likely
    * that the order of the model fit is inappropriate.
+   * We follow the specfication outlined in
+   * https://www.otexts.org/fpp/8/5
    */
   def fitModel(
       order:(Int, Int, Int),
       ts: Vector[Double],
       includeIntercept: Boolean = true,
-      method: String = "css"): ARIMAModel = {
+      method: String = "css-BOBYQA"): ARIMAModel = {
     val (p, d, q) = order
     val diffedTs = differences(ts, d).toArray.drop(d)
 
@@ -50,24 +53,33 @@ object ARIMA {
       return new ARIMAModel(order, Array(arModel.c) ++ arModel.coefficients, includeIntercept)
     }
 
+    // Initial parameter guesses
     val initParams = HannanRisannenInit(diffedTs, order, includeIntercept)
-    val initCoeffs = fitWithCSS(diffedTs, order, includeIntercept, initParams)
 
+    // TODO: Enforce stationarity and invertibility for AR and MA terms
     method match {
-      case "css" => new ARIMAModel(order,initCoeffs, includeIntercept)
+      case "css-BOBYQA" => {
+        val params = fitWithCSSBOBYQA(diffedTs, order, includeIntercept, initParams)
+        new ARIMAModel(order, params, includeIntercept)
+      }
+      case "css-CGD" => {
+        val params = fitWithCSSCGD(diffedTs, order, includeIntercept, initParams)
+        new ARIMAModel(order, params, includeIntercept)
+      }
       case "ml" => throw new UnsupportedOperationException()
     }
   }
 
   /**
-   * Fit an ARIMA model using conditional sum of squares, currently optimized using unbounded
+   * Fit an ARIMA model using conditional sum of squares, optimized using unbounded
    * BOBYQA.
    * @param diffedY time series we wish to fit to, already differenced if necessary
+   * @param order The order of the model
    * @param includeIntercept does the model include an intercept
    * @param initParams initial parameter guesses
    * @return
    */
-  private def fitWithCSS(
+   private def fitWithCSSBOBYQA(
       diffedY: Array[Double],
       order: (Int, Int, Int),
       includeIntercept: Boolean,
@@ -92,12 +104,47 @@ object ARIMA {
     val initialGuess = new InitialGuess(initParams)
     val maxIter = new MaxIter(10000)
     val maxEval = new MaxEval(10000)
-    // TODO: Enforce stationarity and invertibility for AR and MA terms
     val bounds = SimpleBounds.unbounded(dimension)
     val goal = GoalType.MAXIMIZE
     val optimal = optimizer.optimize(objFunction, goal, bounds, maxIter, maxEval, initialGuess)
     optimal.getPoint
   }
+
+  /**
+   * Fit an ARIMA model using conditional sum of squares, optimized using conjugate
+   * gradient descent
+   * @param diffedY time series we wish to fit to, already differenced if necessary
+   * @param order order of the model
+   * @param includeIntercept does the model include an intercept
+   * @param initParams initial parameter guess
+   * @return
+   */
+  private def fitWithCSSCGD(
+    diffedY: Array[Double],
+    order: (Int, Int, Int),
+    includeIntercept: Boolean,
+    initParams: Array[Double]): Array[Double]= {
+    val optimizer = new NonLinearConjugateGradientOptimizer(
+      NonLinearConjugateGradientOptimizer.Formula.FLETCHER_REEVES,
+      new SimpleValueChecker(1e-7, 1e-7))
+    val objFunction = new ObjectiveFunction(new MultivariateFunction() {
+      def value(params: Array[Double]): Double = {
+        new ARIMAModel(order, params, includeIntercept).logLikelihoodCSSARMA(diffedY)
+      }
+    })
+    val gradient = new ObjectiveFunctionGradient(new MultivariateVectorFunction() {
+      def value(params: Array[Double]): Array[Double] = {
+        new ARIMAModel(order, params, includeIntercept).gradientlogLikelihoodCSSARMA(diffedY)
+      }
+    })
+    val initialGuess = new InitialGuess(initParams)
+    val maxIter = new MaxIter(10000)
+    val maxEval = new MaxEval(10000)
+    val goal = GoalType.MAXIMIZE
+    val optimal = optimizer.optimize(objFunction, gradient, goal, initialGuess, maxIter, maxEval)
+    optimal.getPoint
+  }
+
 
   // TODO: implement MLE parameter estimates with Kalman filter.
   private def fitWithML(
@@ -226,6 +273,7 @@ class ARIMAModel(
     val n = diffedY.length
     val yHat = new DenseVector(Array.fill(n)(0.0))
     val yVec = new DenseVector(diffedY)
+
     iterateARMA(yVec,  yHat, _ + _, goldStandard = yVec)
 
     val (p, d, q) = order
@@ -238,6 +286,94 @@ class ARIMAModel(
     val sigma2 = css / n
     (-n / 2) * math.log(2 * math.Pi * sigma2) - css / (2 * sigma2)
   }
+
+  /**
+   * Calculates the gradient for the loglikelihood function using CSS
+   * Derivation:
+   * L(y | \theta) = -\frac{n}{2}log(2\pi\sigma^2) - \frac{1}{2\pi}\sum_{i=1}^n \epsilon_t^2 \\
+   * \sigma^2 = \frac{\sum_{i = 1}^n \epsilon_t^2}{n} \\
+   * \frac{\partial L}{\partial \theta} = -\frac{1}{\sigma^2}
+   * \sum_{i = 1}^n \epsilon_t \frac{\partial \epsilon_t}{\partial \theta} \\
+   * \frac{\partial \epsilon_t}{\partial \theta} = -\frac{\partial \hat{y}}{\partial \theta} \\
+   * \frac{\partial\hat{y}}{\partial c} = 1 +
+   * \phi_{t-q}^{t-1}*\frac{\partial \epsilon_{t-q}^{t-1}}{\partial c} \\
+   * \frac{\partial\hat{y}}{\partial \theta_{ar_i}} =  y_{t - i} +
+   * \phi_{t-q}^{t-1}*\frac{\partial \epsilon_{t-q}^{t-1}}{\partial \theta_{ar_i}} \\
+   * \frac{\partial\hat{y}}{\partial \theta_{ma_i}} =  \epsilon_{t - i} +
+   * \phi_{t-q}^{t-1}*\frac{\partial \epsilon_{t-q}^{t-1}}{\partial \theta_{ma_i}} \\
+   * @param diffedY array of differenced values
+   * @return
+   */
+  def gradientlogLikelihoodCSSARMA(diffedY: Array[Double]): Array[Double] = {
+    val n = diffedY.length
+    val (p, d, q) = order
+    val yHat = new DenseVector(Array.fill(n)(0.0))
+    val yVec = new DenseVector(diffedY)
+    val maxLag = math.max(order._1, order._3)
+    val intercept = if (hasIntercept) 1 else 0
+    val maTerms = Array.fill(q)(0.0)
+
+    // gradient-related
+    val dEdTheta = new DenseMatrix[Double](q + 1, coefficients.length)
+    val gradient = new DenseVector(Array.fill(coefficients.length)(0.0))
+
+    // error-related
+    var error = 0.0
+    var sigma2 = 0.0
+
+    // iteration-related
+    var i = maxLag
+    var j = 0
+    var k = 0
+
+    while (i < n) {
+      j = 0
+      // initialize gradient values in each iteration to weighted average of
+      // prior error derivatives, using moving average coefficients
+      while (j < coefficients.length) {
+        k = 0
+        while (k < q) {
+          dEdTheta(0, j) -= coefficients(intercept + p + k) * dEdTheta(k + 1, j)
+          k += 1
+        }
+        j += 1
+      }
+      // intercept
+      j = 0
+      yHat(i) = yHat(i) + intercept * coefficients(j)
+      dEdTheta(0, 0) -= intercept
+
+      // autoregressive terms
+      while (j < p && i - j - 1 >= 0) {
+        yHat(i) = yHat(i) + yVec(i - j - 1) * coefficients(intercept + j)
+        dEdTheta(0, intercept + j) -= yVec(i - j - 1)
+        j += 1
+      }
+
+      // moving average terms
+      j = 0
+      while (j < q) {
+        yHat(i) = yHat(i) + maTerms(j) * coefficients(intercept + p + j)
+        dEdTheta(0, intercept + p + j) -= maTerms(j)
+        j += 1
+      }
+
+      error =  yVec(i) - yHat(i)
+      sigma2 += math.pow(error, 2) / n
+      updateMAErrors(maTerms, error)
+      // update gradient
+      gradient :+= (dEdTheta(0, ::) * error).t
+      // shift back error derivatives to make room for next period
+      dEdTheta(1 to -1, ::) := dEdTheta(0 to -2, ::)
+      // reset latest derivatives to 0
+      dEdTheta(0, ::) := 0.0
+      i += 1
+    }
+
+    gradient := gradient :/ -sigma2
+    gradient.toArray
+  }
+
 
   /**
    * Updates the error vector in place with a new (more recent) error

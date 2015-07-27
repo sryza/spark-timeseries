@@ -54,6 +54,24 @@ class ARIMASuite extends FunSuite {
     ma2Test should be (ma2 +- 0.1)
   }
 
+  test("Fitting CSS with BOBYQA and conjugate gradient descent should be fairly similar") {
+    val rand = new MersenneTwister(10L)
+    val model = new ARIMAModel((2, 1, 2), Array(8.2, 0.2, 0.5, 0.3, 0.1))
+    val sampled = model.sample(1000, rand)
+    val fitWithBOBYQA = ARIMA.fitModel((2, 1, 2), sampled, method = "css-BOBYQA")
+    val fitWithCGD = ARIMA.fitModel((2, 1, 2), sampled, method = "css-CGD")
+
+    val Array(c, ar1, ar2, ma1, ma2) = fitWithBOBYQA.coefficients
+    val Array(cCGD, ar1CGD, ar2CGD, ma1CGD, ma2CGD) = fitWithCGD.coefficients
+
+    // give more leeway for intercept
+    cCGD should be (c +- 1)
+    ar1CGD should be (ar1 +- 0.1)
+    ar2CGD should be (ar2 +- 0.1)
+    ma1CGD should be (ma1 +- 0.1)
+    ma2CGD should be (ma2 +- 0.1)
+  }
+
   test("Fitting ARIMA(p, d, q) should be the same as fitting a d-order differenced ARMA(p, q)") {
     val rand = new MersenneTwister(10L)
     val model = new ARIMAModel((1, 1, 2), Array(0.3, 0.7, 0.1), hasIntercept = false)
