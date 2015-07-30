@@ -14,6 +14,7 @@
  */
 package com.cloudera.finance
 
+import com.cloudera.finance.parsers.YahooParser
 import org.scalatest.{FunSuite, ShouldMatchers}
 
 class YahooParserSuite extends FunSuite with ShouldMatchers {

@@ -17,7 +17,8 @@ package com.cloudera.finance.examples
 
 import com.cloudera.finance.Util._
 
-import com.cloudera.finance.{SerializableMultivariateNormalDistribution, YahooParser}
+import com.cloudera.finance.SerializableMultivariateNormalDistribution
+import com.cloudera.finance.parsers.YahooParser
 import com.cloudera.sparkts.TimeSeriesRDD
 import com.cloudera.sparkts.DateTimeIndex._
 import com.cloudera.sparkts.TimeSeriesRDD._

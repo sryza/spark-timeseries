@@ -13,14 +13,12 @@
  * License.
  */
 
-package com.cloudera.finance
+package com.cloudera.finance.parsers
 
 import com.cloudera.sparkts.TimeSeries
 import com.cloudera.sparkts.TimeSeries._
-
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
-
 import org.joda.time.DateTime
 
 object YahooParser {

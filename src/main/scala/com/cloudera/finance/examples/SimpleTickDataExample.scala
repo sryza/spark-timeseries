@@ -15,7 +15,7 @@
 
 package com.cloudera.finance.examples
 
-import com.cloudera.finance.YahooParser
+import com.cloudera.finance.parsers.YahooParser
 import com.cloudera.sparkts.DateTimeIndex._
 import com.cloudera.sparkts.TimeSeries
 import com.cloudera.sparkts.UnivariateTimeSeries._
