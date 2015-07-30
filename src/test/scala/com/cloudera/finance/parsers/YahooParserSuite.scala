@@ -12,9 +12,8 @@
  * the specific language governing permissions and limitations under the
  * License.
  */
-package com.cloudera.finance
+package com.cloudera.finance.parsers
 
-import com.cloudera.finance.parsers.YahooParser
 import org.scalatest.{FunSuite, ShouldMatchers}
 
 class YahooParserSuite extends FunSuite with ShouldMatchers {
