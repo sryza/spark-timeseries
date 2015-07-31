@@ -17,6 +17,8 @@ package com.cloudera.sparkts
 
 import breeze.linalg._
 
+import com.cloudera.sparkts.UnivariateTimeSeries.differences
+
 import org.apache.commons.math3.random.MersenneTwister
 
 import org.scalatest.FunSuite
@@ -41,7 +43,7 @@ class ARIMASuite extends FunSuite {
 
   test("Data sampled from a given model should result in similar model if fit") {
     val rand = new MersenneTwister(10L)
-    val model = new ARIMAModel((2, 1, 2), Array(8.2, 0.2, 0.5, 0.3, 0.1))
+    val model = new ARIMAModel(2, 1, 2, Array(8.2, 0.2, 0.5, 0.3, 0.1))
     val sampled = model.sample(1000, rand)
     val newModel = ARIMA.fitModel((2, 1, 2), sampled)
     val Array(c, ar1, ar2, ma1, ma2) = model.coefficients
@@ -56,10 +58,10 @@ class ARIMASuite extends FunSuite {
 
   test("Fitting CSS with BOBYQA and conjugate gradient descent should be fairly similar") {
     val rand = new MersenneTwister(10L)
-    val model = new ARIMAModel((2, 1, 2), Array(8.2, 0.2, 0.5, 0.3, 0.1))
+    val model = new ARIMAModel(2, 1, 2, Array(8.2, 0.2, 0.5, 0.3, 0.1))
     val sampled = model.sample(1000, rand)
-    val fitWithBOBYQA = ARIMA.fitModel((2, 1, 2), sampled, method = "css-BOBYQA")
-    val fitWithCGD = ARIMA.fitModel((2, 1, 2), sampled, method = "css-CGD")
+    val fitWithBOBYQA = ARIMA.fitModel((2, 1, 2), sampled, method = "css-bobyqa")
+    val fitWithCGD = ARIMA.fitModel((2, 1, 2), sampled, method = "css-cgd")
 
     val Array(c, ar1, ar2, ma1, ma2) = fitWithBOBYQA.coefficients
     val Array(cCGD, ar1CGD, ar2CGD, ma1CGD, ma2CGD) = fitWithCGD.coefficients
@@ -74,10 +76,10 @@ class ARIMASuite extends FunSuite {
 
   test("Fitting ARIMA(p, d, q) should be the same as fitting a d-order differenced ARMA(p, q)") {
     val rand = new MersenneTwister(10L)
-    val model = new ARIMAModel((1, 1, 2), Array(0.3, 0.7, 0.1), hasIntercept = false)
+    val model = new ARIMAModel(1, 1, 2, Array(0.3, 0.7, 0.1), hasIntercept = false)
     val sampled = model.sample(1000, rand)
     val arimaModel = ARIMA.fitModel((1, 1, 2), sampled, includeIntercept = false)
-    val differencedSample = new DenseVector(ARIMA.differences(sampled, 1).toArray.drop(1))
+    val differencedSample = new DenseVector(differences(sampled, 1).toArray.drop(1))
     val armaModel = ARIMA.fitModel((1, 0, 2), differencedSample, includeIntercept = false)
 
     val Array(refAR, refMA1, refMA2) = model.coefficients
@@ -97,7 +99,7 @@ class ARIMASuite extends FunSuite {
 
   test("Adding ARIMA effects to series, and removing should return the same series") {
     val rand = new MersenneTwister(20L)
-    val model = new ARIMAModel((1, 1, 2), Array(8.3, 0.1, 0.2, 0.3), hasIntercept = true)
+    val model = new ARIMAModel(1, 1, 2, Array(8.3, 0.1, 0.2, 0.3), hasIntercept = true)
     val whiteNoise = new DenseVector(Array.fill(100)(rand.nextGaussian))
     val arimaProcess = new DenseVector(Array.fill(100)(0.0))
     model.addTimeDependentEffects(whiteNoise, arimaProcess)
