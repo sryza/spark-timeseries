@@ -326,5 +326,56 @@ object UnivariateTimeSeries {
     }
     sampledValues
   }
+
+  /**
+   * Calculate a differenced vector of a given order. Size-preserving by leaving first `order`
+   * elements intact. This is the inverse of the `inverseDifferences` function.
+   * @param ts Series to difference
+   * @param order The difference order (e.g. x means y(i) = ts(i) - ts(i - x), etc)
+   * @return a new differenced vector
+   */
+  def differences(ts: Vector[Double], order: Int): Vector[Double] = {
+    if (order == 0) {
+      // for consistency, since we create a new vector in else-branch
+      ts.copy
+    } else {
+      val n = ts.length
+      val diffedTs = new DenseVector(Array.fill(n)(0.0))
+      var i = 0
+
+      while (i < n) {
+        // elements prior to `order` are copied over without modification
+        diffedTs(i) = if (i < order) ts(i) else ts(i) - ts(i - order)
+        i += 1
+      }
+      diffedTs
+    }
+  }
+
+  /**
+   * Calculate an "inverse-differenced" vector of a given order. Size-preserving by leaving first
+   * `order` elements intact. This is the inverse of the `differences` function.
+   * @param ts Series to add up
+   * @param order The difference order to add (e.g. x means y(i) = ts(i) + y(i -
+   *              x), etc)
+   * @return a new vector where the difference operation as been inverted
+   */
+  def inverseDifferences(ts: Vector[Double], order: Int): Vector[Double] = {
+    if (order == 0) {
+      // for consistency, since we create a new vector in else-branch
+      ts.copy
+    } else {
+      val n = ts.length
+      val addedTs = new DenseVector(Array.fill(n)(0.0))
+      var i = 0
+
+      while (i < n) {
+        // elements prior to `order` are copied over without modification
+        addedTs(i) = if (i < order) ts(i) else ts(i) + addedTs(i - order)
+        i += 1
+      }
+      addedTs
+    }
+  }
 }
 

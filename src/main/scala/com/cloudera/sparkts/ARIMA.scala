@@ -17,40 +17,60 @@ package com.cloudera.sparkts
 
 import breeze.linalg._
 
+import com.cloudera.sparkts.UnivariateTimeSeries.{differences, inverseDifferences}
+
 import org.apache.commons.math3.analysis.{MultivariateVectorFunction, MultivariateFunction}
 import org.apache.commons.math3.optim.nonlinear.scalar.gradient.NonLinearConjugateGradientOptimizer
-import org.apache.commons.math3.optim._
-import org.apache.commons.math3.optim.nonlinear.scalar.{ObjectiveFunctionGradient, GoalType, ObjectiveFunction}
+import org.apache.commons.math3.optim.{InitialGuess, MaxEval, MaxIter,
+  SimpleBounds, SimpleValueChecker}
+import org.apache.commons.math3.optim.nonlinear.scalar.{GoalType, ObjectiveFunction,
+  ObjectiveFunctionGradient}
 import org.apache.commons.math3.optim.nonlinear.scalar.noderiv.BOBYQAOptimizer
 import org.apache.commons.math3.random.RandomGenerator
 import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression
 
-
+/**
+ * ARIMA models allow modeling timeseries as a function of prior values of the series
+ * (i.e. autoregressive terms) and a moving average of prior error terms. ARIMA models
+ * are traditionally specified as ARIMA(p, d, q), where p is the autoregressive order,
+ * d is the differencing order, and q is the moving average order. Using the backshift (aka
+ * lag operator) B, which when applied to a Y returns the prior value, the
+ * ARIMA model can be specified as
+ * Y_t = c + \sum_{i=1}^p \phi_1*B^i*Y_t + \sum_{i=1}^q \theta_i*B^i*\epsilon_t + \epsilon_t
+ * where Y_i has been differenced as appropriate according to `d`
+ * See [[https://en.wikipedia.org/wiki/Autoregressive_integrated_moving_average]] for more
+ * information
+ */
 object ARIMA {
   /**
    * Given a time series, fit a non-seasonal ARIMA model of order (p, d, q), where p represents
    * the autoregression terms, d represents the order of differencing, and q moving average error
-   * terms. If includeIntercept is true, the model is fitted with a mean. The user can specify
-   * the method used to fit the parameters. The current implementation only supports "css",
-   * meaning conditional sum of squares. In order to select the appropriate order of the model,
-   * users are advised to visualize inspect ACF and PACF plots. Finally, current implementation
-   * does not verify if the parameters fitted are stationary/invertible. Given this, it is suggested
-   * that users inspect the resulting model. However, if parameters are not sane, it is likely
-   * that the order of the model fit is inappropriate.
-   * We follow the specfication outlined in
-   * https://www.otexts.org/fpp/8/5
+   * terms. If includeIntercept is true, the model is fitted with a mean. In order to select the
+   * appropriate order of the model, users are advised to inspect ACF and PACF plots, or compare
+   * the values of the objective function. Finally, the current implementation does not verify if
+   * the parameters fitted are stationary/invertible. Given this, it is suggested that users
+   * inspect the resulting model.
+   * @param order ARIMA order specification, a triple of the form (p, d, q) where p is the
+   *              AR order, d the differencing order, and q the MA order.
+   * @param ts time series to which to fit an ARIMA(p, d, q) model
+   * @param includeIntercept if true the model is fit with an intercept term
+   * @param method objective function and optimization method, current options are 'css-bobyqa',
+   *               and 'css-cgd'. Both optimize the loglikelihood in terms of the
+   *               conditional sum of squares. The first uses BOBYQA for optimization, while
+   *               the second uses conjugate gradient descent. Default is BOBYQA
+   * @return
    */
   def fitModel(
-      order:(Int, Int, Int),
-      ts: Vector[Double],
-      includeIntercept: Boolean = true,
-      method: String = "css-BOBYQA"): ARIMAModel = {
+    order: (Int, Int, Int),
+    ts: Vector[Double],
+    includeIntercept: Boolean = true,
+    method: String = "css-bobyqa"): ARIMAModel = {
     val (p, d, q) = order
     val diffedTs = differences(ts, d).toArray.drop(d)
 
     if (p > 0 && q == 0) {
       val arModel = Autoregression.fitModel(new DenseVector(diffedTs), p)
-      return new ARIMAModel(order, Array(arModel.c) ++ arModel.coefficients, includeIntercept)
+      return new ARIMAModel(p, d, q, Array(arModel.c) ++ arModel.coefficients, includeIntercept)
     }
 
     // Initial parameter guesses
@@ -58,15 +78,15 @@ object ARIMA {
 
     // TODO: Enforce stationarity and invertibility for AR and MA terms
     method match {
-      case "css-BOBYQA" => {
+      case "css-bobyqa" => {
         val params = fitWithCSSBOBYQA(diffedTs, order, includeIntercept, initParams)
-        new ARIMAModel(order, params, includeIntercept)
+        new ARIMAModel(p, d, q, params, includeIntercept)
       }
-      case "css-CGD" => {
+      case "css-cgd" => {
         val params = fitWithCSSCGD(diffedTs, order, includeIntercept, initParams)
-        new ARIMAModel(order, params, includeIntercept)
+        new ARIMAModel(p, d, q, params, includeIntercept)
       }
-      case "ml" => throw new UnsupportedOperationException()
+      case _ => throw new UnsupportedOperationException()
     }
   }
 
@@ -77,13 +97,13 @@ object ARIMA {
    * @param order The order of the model
    * @param includeIntercept does the model include an intercept
    * @param initParams initial parameter guesses
-   * @return
+   * @return returns parameters fit with CSS and optimized using BOBYQA
    */
-   private def fitWithCSSBOBYQA(
-      diffedY: Array[Double],
-      order: (Int, Int, Int),
-      includeIntercept: Boolean,
-      initParams: Array[Double]): Array[Double]= {
+  private def fitWithCSSBOBYQA(
+    diffedY: Array[Double],
+    order: (Int, Int, Int),
+    includeIntercept: Boolean,
+    initParams: Array[Double]): Array[Double] = {
     // We set up starting/ending trust radius using default suggested in
     // http://cran.r-project.org/web/packages/minqa/minqa.pdf
     // While # of interpolation points as mentioned common in
@@ -97,7 +117,7 @@ object ARIMA {
     val optimizer = new BOBYQAOptimizer(interpPoints, radiusStart, radiusEnd)
     val objFunction = new ObjectiveFunction(new MultivariateFunction() {
       def value(params: Array[Double]): Double = {
-        new ARIMAModel(order, params, includeIntercept).logLikelihoodCSSARMA(diffedY)
+        new ARIMAModel(p, d, q, params, includeIntercept).logLikelihoodCSSARMA(diffedY)
       }
     })
 
@@ -123,18 +143,19 @@ object ARIMA {
     diffedY: Array[Double],
     order: (Int, Int, Int),
     includeIntercept: Boolean,
-    initParams: Array[Double]): Array[Double]= {
+    initParams: Array[Double]): Array[Double] = {
+    val (p, d, q) = order
     val optimizer = new NonLinearConjugateGradientOptimizer(
       NonLinearConjugateGradientOptimizer.Formula.FLETCHER_REEVES,
       new SimpleValueChecker(1e-7, 1e-7))
     val objFunction = new ObjectiveFunction(new MultivariateFunction() {
       def value(params: Array[Double]): Double = {
-        new ARIMAModel(order, params, includeIntercept).logLikelihoodCSSARMA(diffedY)
+        new ARIMAModel(p, d, q, params, includeIntercept).logLikelihoodCSSARMA(diffedY)
       }
     })
     val gradient = new ObjectiveFunctionGradient(new MultivariateVectorFunction() {
       def value(params: Array[Double]): Array[Double] = {
-        new ARIMAModel(order, params, includeIntercept).gradientlogLikelihoodCSSARMA(diffedY)
+        new ARIMAModel(p, d, q, params, includeIntercept).gradientlogLikelihoodCSSARMA(diffedY)
       }
     })
     val initialGuess = new InitialGuess(initParams)
@@ -145,30 +166,22 @@ object ARIMA {
     optimal.getPoint
   }
 
-
-  // TODO: implement MLE parameter estimates with Kalman filter.
-  private def fitWithML(
-      diffedY: Array[Double],
-      arTerms: Array[Array[Double]],
-      maTerms: Array[Double],
-      initCoeffs: Array[Double]): Array[Double] = {
-    throw new UnsupportedOperationException()
-  }
-
   /**
    * Initializes ARMA parameter estimates using the Hannan-Risannen algorithm. The process is:
    * fit an AR(m) model of a higher order (i.e. m > max(p, q)), use this to estimate errors,
    * then fit an OLS model of AR(p) terms and MA(q) terms. The coefficients estimated by
-   * the OLS model are returned as initial parameter estimates
+   * the OLS model are returned as initial parameter estimates.
+   * See [[http://halweb.uc3m.es/esp/Personal/personas/amalonso/esp/TSAtema9.pdf]] for more
+   * information.
    * @param diffedY differenced time series, as appropriate
    * @param order model order (p, d, q)
    * @param includeIntercept boolean indicating if an intercept should be fit as well
    * @return initial ARMA(p, d, q) parameter estimates
    */
   private def HannanRisannenInit(
-      diffedY: Array[Double],
-      order:(Int, Int, Int),
-      includeIntercept: Boolean): Array[Double] = {
+    diffedY: Array[Double],
+    order: (Int, Int, Int),
+    includeIntercept: Boolean): Array[Double] = {
     val (p, d, q) = order
     val addToLag = 1
     val m = math.max(p, q) + addToLag // m > max(p, q)
@@ -178,7 +191,7 @@ object ARIMA {
     val yTrunc = diffedY.drop(m)
     val estimated = arTerms1.zip(
       Array.fill(yTrunc.length)(arModel.coefficients)
-      ).map { case (v, b) => v.zip(b).map { case (yi, bi) => yi * bi}.sum + arModel.c }
+    ).map { case (v, b) => v.zip(b).map { case (yi, bi) => yi * bi }.sum + arModel.c }
     // errors estimated from AR(m)
     val errors = yTrunc.zip(estimated).map { case (y, yhat) => y - yhat }
     // secondary regression, regresses X_t on AR and MA terms
@@ -191,62 +204,13 @@ object ARIMA {
     val params = regression.estimateRegressionParameters()
     params
   }
-
-  /**
-   * Calculate a differenced vector of a given order. Size-preserving by leaving first `order`
-   * elements intact
-   * @param ts Series to difference
-   * @param order The difference order (e.g. x means y(i) = ts(i) - ts(i - x), etc)
-   * @return a new differenced vector
-   */
-  def differences(ts: Vector[Double], order: Int): Vector[Double] = {
-    if (order == 0) {
-      // for consistency, since we create a new vector in else-branch
-      ts.copy
-    } else {
-      val n = ts.length
-      val diffedTs = new DenseVector(Array.fill(n)(0.0))
-      var i = 0
-
-      while (i < n) {
-        // elements prior to `order` are copied over without modification
-        diffedTs(i) = if (i < order) ts(i) else ts(i) - ts(i - order)
-        i += 1
-      }
-      diffedTs
-    }
-  }
-
-  /**
-   * Calculate a "inverse-differenced" vector of a given order. Size-preserving by leaving first
-   * `order` elements intact
-   * @param ts Series to add up
-   * @param order The difference order to add (e.g. x means y(i) = ts(i) + y(i -
-   *              x), etc)
-   * @return a new vector where the difference operation as been inverted
-   */
-  def invDifferences(ts: Vector[Double], order: Int): Vector[Double] = {
-
-    if (order == 0) {
-      // for consistency, since we create a new vector in else-branch
-      ts.copy
-    } else {
-      val n = ts.length
-      val addedTs = new DenseVector(Array.fill(n)(0.0))
-      var i = 0
-
-      while (i < n) {
-        // elements prior to `order` are copied over without modification
-        addedTs(i) = if (i < order) ts(i) else ts(i) + addedTs(i - order)
-        i += 1
-      }
-      addedTs
-    }
-  }
 }
 
+
 class ARIMAModel(
-    val order:(Int, Int, Int), // AR(p), differencing(d), MA(q)
+    val p: Int, // AR order
+    val d: Int, // differencing order
+    val q: Int, // MA order
     val coefficients: Array[Double], // coefficients: intercept, AR, MA, with increasing degrees
     val hasIntercept: Boolean = true) extends TimeSeriesModel {
   /**
@@ -256,16 +220,14 @@ class ARIMAModel(
    * @return loglikehood
    */
   def logLikelihoodCSS(y: Vector[Double]): Double = {
-    val d = order._2
-    val diffedY = ARIMA.differences(y, d).toArray.drop(d)
+    val diffedY = differences(y, d).toArray.drop(d)
     logLikelihoodCSSARMA(diffedY)
   }
 
   /**
-   * loglikelihood based on conditional sum of squares. In contrast to
-   * [[com.cloudera.sparkts.ARIMAModel.logLikelihoodCSS]] the array provided should correspond
-   * to an already differenced array, so that the function below corresponds to the loglikelihood
-   * for the ARMA rather than the ARIMA process
+   * loglikelihood based on conditional sum of squares. In contrast to logLikelihoodCSS the array
+   * provided should correspond to an already differenced array, so that the function below
+   * corresponds to the loglikelihood for the ARMA rather than the ARIMA process
    * @param diffedY differenced array
    * @return loglikelihood of ARMA
    */
@@ -276,7 +238,6 @@ class ARIMAModel(
 
     iterateARMA(yVec,  yHat, _ + _, goldStandard = yVec)
 
-    val (p, d, q) = order
     val maxLag = math.max(p, q)
     // drop first maxLag terms, since we can't estimate residuals there, since no
     // AR(n) terms available
@@ -306,10 +267,9 @@ class ARIMAModel(
    */
   def gradientlogLikelihoodCSSARMA(diffedY: Array[Double]): Array[Double] = {
     val n = diffedY.length
-    val (p, d, q) = order
     val yHat = new DenseVector(Array.fill(n)(0.0))
     val yVec = new DenseVector(diffedY)
-    val maxLag = math.max(order._1, order._3)
+    val maxLag = math.max(p, q)
     val intercept = if (hasIntercept) 1 else 0
     val maTerms = Array.fill(q)(0.0)
 
@@ -374,7 +334,6 @@ class ARIMAModel(
     gradient.toArray
   }
 
-
   /**
    * Updates the error vector in place with a new (more recent) error
    * The newest error is placed in position 0, while older errors "fall off the end"
@@ -426,7 +385,6 @@ class ARIMAModel(
       errors: Vector[Double] = null,
       initMATerms: Array[Double] = null): Vector[Double] = {
     require(goldStandard != null || errors != null, "goldStandard or errors must be passed in")
-    val (p, d, q) = order
     val maTerms = if (initMATerms == null) Array.fill(q)(0.0) else initMATerms
     val intercept = if (hasIntercept) 1 else 0
     var i = math.max(p, q) // maximum lag
@@ -466,9 +424,8 @@ class ARIMAModel(
    * @return The dest series, representing remaining errors, for convenience.
    */
   def removeTimeDependentEffects(ts: Vector[Double], destTs: Vector[Double]): Vector[Double] = {
-    val (p, d, q) = order
     // difference as necessary
-    val diffed = ARIMA.differences(ts, d)
+    val diffed = differences(ts, d)
     val maxLag = math.max(p, q)
     val interceptAmt = if (hasIntercept) coefficients(0) else 0.0
     // extend vector so that initial AR(maxLag) are equal to intercept value
@@ -490,7 +447,6 @@ class ARIMAModel(
    *         terms, for convenience.
    */
   def addTimeDependentEffects(ts: Vector[Double], destTs: Vector[Double]): Vector[Double] = {
-    val (p, d, q) = order
     val maxLag = math.max(p, q)
     val interceptAmt = if (hasIntercept) coefficients(0) else 0.0
     // extend vector so that initial AR(maxLag) are equal to intercept value
@@ -500,7 +456,7 @@ class ARIMAModel(
     val errorsProvided = changes.copy
     iterateARMA(changes, changes, _ + _, errors = errorsProvided)
     // perform any inverse differencing required
-    destTs := ARIMA.invDifferences(changes(maxLag to -1), d)
+    destTs := inverseDifferences(changes(maxLag to -1), d)
     destTs
   }
 
@@ -529,10 +485,9 @@ class ARIMAModel(
    *         zero and prior predictions are used for any AR terms.
    */
   def forecast(ts: Vector[Double], nFuture: Int): Vector[Double] = {
-    val (p, d, q) = order
     val maxLag = math.max(p, q)
     // difference timeseries as necessary for model
-    val diffedTs = new DenseVector(ARIMA.differences(ts, d).toArray.drop(d))
+    val diffedTs = new DenseVector(differences(ts, d).toArray.drop(d))
 
     // Assumes prior AR terms are equal to model intercept
     val interceptAmt =  if (hasIntercept) coefficients(0) else 0.0
@@ -561,6 +516,6 @@ class ARIMAModel(
     // drop first maxLag terms from forward curve, these are part of hist already
     results(ts.length to -1) :=  forward(maxLag to -1)
     // add up if there was any differencing required
-    ARIMA.invDifferences(results, d)
+    inverseDifferences(results, d)
   }
 }
