@@ -50,22 +50,31 @@ object ARIMA {
    * the values of the objective function. Finally, the current implementation does not verify if
    * the parameters fitted are stationary/invertible. Given this, it is suggested that users
    * inspect the resulting model.
-   * @param order ARIMA order specification, a triple of the form (p, d, q) where p is the
-   *              AR order, d the differencing order, and q the MA order.
+   * @param p autoregressive order
+   * @param d differencing order
+   * @param q moving average order
    * @param ts time series to which to fit an ARIMA(p, d, q) model
-   * @param includeIntercept if true the model is fit with an intercept term
+   * @param includeIntercept if true the model is fit with an intercept term, default is true
    * @param method objective function and optimization method, current options are 'css-bobyqa',
    *               and 'css-cgd'. Both optimize the loglikelihood in terms of the
    *               conditional sum of squares. The first uses BOBYQA for optimization, while
-   *               the second uses conjugate gradient descent. Default is BOBYQA
+   *               the second uses conjugate gradient descent. Default is 'css-cgd'
+   * @param userInitParams A set of user provided initial parameters for optimization. If null
+   *                       (default), initialized using Hannan-Rissanen algorithm. If provided,
+   *                       order of parameter should be: intercept term, AR parameters (in
+   *                       increasing order), MA parameters (in increasing order)
+   *
+   *
    * @return
    */
   def fitModel(
-    order: (Int, Int, Int),
+    p: Int,
+    d: Int,
+    q: Int,
     ts: Vector[Double],
     includeIntercept: Boolean = true,
-    method: String = "css-bobyqa"): ARIMAModel = {
-    val (p, d, q) = order
+    method: String = "css-cgd",
+    userInitParams: Array[Double] = null): ARIMAModel = {
     val diffedTs = differences(ts, d).toArray.drop(d)
 
     if (p > 0 && q == 0) {
@@ -73,17 +82,21 @@ object ARIMA {
       return new ARIMAModel(p, d, q, Array(arModel.c) ++ arModel.coefficients, includeIntercept)
     }
 
-    // Initial parameter guesses
-    val initParams = HannanRisannenInit(diffedTs, order, includeIntercept)
+    // Initial parameter guesses if none provided by user
+    val initParams = if (userInitParams == null) {
+      HannanRissanenInit(p, d, q, diffedTs, includeIntercept)
+    } else {
+      userInitParams
+    }
 
     // TODO: Enforce stationarity and invertibility for AR and MA terms
     method match {
       case "css-bobyqa" => {
-        val params = fitWithCSSBOBYQA(diffedTs, order, includeIntercept, initParams)
+        val params = fitWithCSSBOBYQA(p, d, q, diffedTs, includeIntercept, initParams)
         new ARIMAModel(p, d, q, params, includeIntercept)
       }
       case "css-cgd" => {
-        val params = fitWithCSSCGD(diffedTs, order, includeIntercept, initParams)
+        val params = fitWithCSSCGD( p, d, q, diffedTs, includeIntercept, initParams)
         new ARIMAModel(p, d, q, params, includeIntercept)
       }
       case _ => throw new UnsupportedOperationException()
@@ -91,24 +104,27 @@ object ARIMA {
   }
 
   /**
-   * Fit an ARIMA model using conditional sum of squares, optimized using unbounded
+   * Fit an ARIMA model using conditional sum of squares estimator, optimized using unbounded
    * BOBYQA.
-   * @param diffedY time series we wish to fit to, already differenced if necessary
-   * @param order The order of the model
-   * @param includeIntercept does the model include an intercept
-   * @param initParams initial parameter guesses
-   * @return returns parameters fit with CSS and optimized using BOBYQA
+   * @param p autoregressive order
+   * @param d differencing order
+   * @param q moving average order
+   * @param diffedY differenced time series, as appropriate
+   * @param includeIntercept flag to include intercept
+   * @param initParams initial parameter guess for optimization
+   * @return parameters optimized using CSS estimator, with method BOBYQA
    */
   private def fitWithCSSBOBYQA(
+    p: Int,
+    d: Int,
+    q: Int,
     diffedY: Array[Double],
-    order: (Int, Int, Int),
     includeIntercept: Boolean,
     initParams: Array[Double]): Array[Double] = {
     // We set up starting/ending trust radius using default suggested in
     // http://cran.r-project.org/web/packages/minqa/minqa.pdf
     // While # of interpolation points as mentioned common in
     // Source: http://www.damtp.cam.ac.uk/user/na/NA_papers/NA2009_06.pdf
-    val (p, d, q) = order
     val radiusStart = math.min(0.96, 0.2 * initParams.map(math.abs).max)
     val radiusEnd = radiusStart * 1e-6
     val dimension = p + q + (if (includeIntercept) 1 else 0)
@@ -131,20 +147,23 @@ object ARIMA {
   }
 
   /**
-   * Fit an ARIMA model using conditional sum of squares, optimized using conjugate
+   * Fit an ARIMA model using conditional sum of squares estimator, optimized using conjugate
    * gradient descent
-   * @param diffedY time series we wish to fit to, already differenced if necessary
-   * @param order order of the model
-   * @param includeIntercept does the model include an intercept
-   * @param initParams initial parameter guess
-   * @return
+   * @param p autoregressive order
+   * @param d differencing order
+   * @param q moving average order
+   * @param diffedY differenced time series, as appropriate
+   * @param includeIntercept flag to include intercept
+   * @param initParams initial parameter guess for optimization
+   * @return parameters optimized using CSS estimator, with method conjugate gradient descent
    */
   private def fitWithCSSCGD(
+    p: Int,
+    d: Int,
+    q: Int,
     diffedY: Array[Double],
-    order: (Int, Int, Int),
     includeIntercept: Boolean,
     initParams: Array[Double]): Array[Double] = {
-    val (p, d, q) = order
     val optimizer = new NonLinearConjugateGradientOptimizer(
       NonLinearConjugateGradientOptimizer.Formula.FLETCHER_REEVES,
       new SimpleValueChecker(1e-7, 1e-7))
@@ -167,22 +186,25 @@ object ARIMA {
   }
 
   /**
-   * Initializes ARMA parameter estimates using the Hannan-Risannen algorithm. The process is:
+   * Initializes ARMA parameter estimates using the Hannan-Rissanen algorithm. The process is:
    * fit an AR(m) model of a higher order (i.e. m > max(p, q)), use this to estimate errors,
    * then fit an OLS model of AR(p) terms and MA(q) terms. The coefficients estimated by
    * the OLS model are returned as initial parameter estimates.
    * See [[http://halweb.uc3m.es/esp/Personal/personas/amalonso/esp/TSAtema9.pdf]] for more
    * information.
+   * @param p autoregressive order
+   * @param d differencing order
+   * @param q moving average order
    * @param diffedY differenced time series, as appropriate
-   * @param order model order (p, d, q)
-   * @param includeIntercept boolean indicating if an intercept should be fit as well
+   * @param includeIntercept flag to include intercept
    * @return initial ARMA(p, d, q) parameter estimates
    */
-  private def HannanRisannenInit(
+  private def HannanRissanenInit(
+    p: Int,
+    d: Int,
+    q: Int,
     diffedY: Array[Double],
-    order: (Int, Int, Int),
     includeIntercept: Boolean): Array[Double] = {
-    val (p, d, q) = order
     val addToLag = 1
     val m = math.max(p, q) + addToLag // m > max(p, q)
     // higher order AR(m) model

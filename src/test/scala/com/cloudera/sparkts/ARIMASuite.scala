@@ -35,7 +35,7 @@ class ARIMASuite extends FunSuite {
     val rawData = scala.io.Source.fromInputStream(dataFile).getLines().toArray.map(_.toDouble)
     val data = new DenseVector(rawData)
 
-    val model = ARIMA.fitModel((1, 0, 1), data)
+    val model = ARIMA.fitModel(1, 0, 1, data)
     val Array(c, ar, ma) = model.coefficients
     ar should be (0.3 +- 0.05)
     ma should be (0.7 +- 0.05)
@@ -45,7 +45,7 @@ class ARIMASuite extends FunSuite {
     val rand = new MersenneTwister(10L)
     val model = new ARIMAModel(2, 1, 2, Array(8.2, 0.2, 0.5, 0.3, 0.1))
     val sampled = model.sample(1000, rand)
-    val newModel = ARIMA.fitModel((2, 1, 2), sampled)
+    val newModel = ARIMA.fitModel(2, 1, 2, sampled)
     val Array(c, ar1, ar2, ma1, ma2) = model.coefficients
     val Array(cTest, ar1Test, ar2Test, ma1Test, ma2Test) = newModel.coefficients
     // intercept is given more leeway
@@ -60,8 +60,8 @@ class ARIMASuite extends FunSuite {
     val rand = new MersenneTwister(10L)
     val model = new ARIMAModel(2, 1, 2, Array(8.2, 0.2, 0.5, 0.3, 0.1))
     val sampled = model.sample(1000, rand)
-    val fitWithBOBYQA = ARIMA.fitModel((2, 1, 2), sampled, method = "css-bobyqa")
-    val fitWithCGD = ARIMA.fitModel((2, 1, 2), sampled, method = "css-cgd")
+    val fitWithBOBYQA = ARIMA.fitModel(2, 1, 2, sampled, method = "css-bobyqa")
+    val fitWithCGD = ARIMA.fitModel(2, 1, 2, sampled, method = "css-cgd")
 
     val Array(c, ar1, ar2, ma1, ma2) = fitWithBOBYQA.coefficients
     val Array(cCGD, ar1CGD, ar2CGD, ma1CGD, ma2CGD) = fitWithCGD.coefficients
@@ -78,9 +78,9 @@ class ARIMASuite extends FunSuite {
     val rand = new MersenneTwister(10L)
     val model = new ARIMAModel(1, 1, 2, Array(0.3, 0.7, 0.1), hasIntercept = false)
     val sampled = model.sample(1000, rand)
-    val arimaModel = ARIMA.fitModel((1, 1, 2), sampled, includeIntercept = false)
+    val arimaModel = ARIMA.fitModel(1, 1, 2, sampled, includeIntercept = false)
     val differencedSample = new DenseVector(differences(sampled, 1).toArray.drop(1))
-    val armaModel = ARIMA.fitModel((1, 0, 2), differencedSample, includeIntercept = false)
+    val armaModel = ARIMA.fitModel(1, 0, 2, differencedSample, includeIntercept = false)
 
     val Array(refAR, refMA1, refMA2) = model.coefficients
     val Array(iAR, iMA1, iMA2) = arimaModel.coefficients
@@ -110,5 +110,13 @@ class ARIMASuite extends FunSuite {
       val diff = whiteNoise(i) - closeToWhiteNoise(i)
       math.abs(diff) should be < 1e-4
     }
+  }
+
+  test("Fitting ARIMA(0, 0, 0) with intercept term results in model with average as parameter") {
+    val rand = new MersenneTwister(10L)
+    val sampled = new DenseVector(Array.fill(100)(rand.nextGaussian))
+    val model = ARIMA.fitModel(0, 0, 0, sampled)
+    val mean = sampled.sum / sampled.length
+    model.coefficients(0) should be (mean +- 1e-4)
   }
 }
