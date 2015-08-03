@@ -86,4 +86,20 @@ class TimeSeriesStatisticalTestsSuite extends FunSuite with ShouldMatchers {
     // there should be evidence of heteroskedasticity
     bptest(new DenseVector(resids2), new DenseMatrix(x.length, 1, x))._2 should be < pthreshold
   }
+
+  test("ljung-box test") {
+    val rand = new MersenneTwister(5L)
+    val n = 100
+    val indep = Array.fill(n)(rand.nextGaussian)
+    val vecIndep = new DenseVector(indep)
+    val (stat1, pval1) = lbtest(vecIndep, 1)
+    pval1 > 0.05
+
+    // serially correlated
+    val coef = 0.3
+    val dep = indep.scanLeft(0.0) { case (prior, curr) => prior * coef + curr }.tail
+    val vecDep = new DenseVector(dep)
+    val (stat2, pval2) = lbtest(vecDep, 2)
+    pval2 < 0.05
+  }
 }

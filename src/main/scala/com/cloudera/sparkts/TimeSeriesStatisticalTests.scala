@@ -272,7 +272,27 @@ object TimeSeriesStatisticalTests {
     val bgstat = nObs * auxOLS.calculateRSquared()
     (bgstat, 1 - new ChiSquaredDistribution(maxLag).cumulativeProbability(bgstat))
   }
-  
+
+  /**
+   * Ljung-Box test for serial correlation in residuals up to lag `maxLag`. The null hypothesis
+   * is that values are independently distributed up to the given lag. The alternate hypothesis
+   * is that serial correlation is present. The test statistic follows a Chi-Squared distribution
+   * with `maxLag` degrees of freedom. See [[https://en.wikipedia.org/wiki/Ljung%E2%80%93Box_test]]
+   * for more information.
+   * @param residuals
+   * @return the test statistic and the p-value associated with it.
+   */
+  def lbtest(residuals: Vector[Double], maxLag: Int): (Double, Double) = {
+    val autoCorrs = UnivariateTimeSeries.autocorr(residuals, maxLag)
+    val n = residuals.length
+    val adjAutoCorrs = autoCorrs.toArray.zipWithIndex.map { case (p, k) =>
+      (p * p) / (n - k - 1)
+    }
+    val testStatistic = n * (n + 2) * adjAutoCorrs.sum
+    val pValue = 1 - new ChiSquaredDistribution(maxLag).cumulativeProbability(testStatistic)
+    (testStatistic, pValue)
+  }
+
   /**
    * Breusch-Pagan test for heteroskedasticity in a model
    * The statistic follows a X^2 distribution with (# of regressors - 1) degrees of freedom
