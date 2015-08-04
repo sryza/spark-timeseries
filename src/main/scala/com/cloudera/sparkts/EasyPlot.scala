@@ -21,32 +21,35 @@ import breeze.plot._
 import org.apache.commons.math3.distribution.NormalDistribution
 
 object EasyPlot {
-  def ezplot(vec: Vector[Double], style: Char): Unit = {
+  def ezplot(vec: Vector[Double], style: Char): Figure = {
     val f = Figure()
     val p = f.subplot(0)
     p += plot((0 until vec.length).map(_.toDouble).toArray, vec, style = style)
+    f
   }
 
-  def ezplot(vec: Vector[Double]): Unit = ezplot(vec, '-')
+  def ezplot(vec: Vector[Double]): Figure = ezplot(vec, '-')
 
-  def ezplot(arr: Array[Double], style: Char): Unit = {
+  def ezplot(arr: Array[Double], style: Char): Figure = {
     val f = Figure()
     val p = f.subplot(0)
     p += plot(arr.indices.map(_.toDouble).toArray, arr, style = style)
+    f
   }
 
-  def ezplot(arr: Array[Double]): Unit = ezplot(arr, '-')
+    def ezplot(arr: Array[Double]): Figure = ezplot(arr, '-')
 
-  def ezplot(vecs: Seq[Vector[Double]], style: Char): Unit = {
+  def ezplot(vecs: Seq[Vector[Double]], style: Char): Figure = {
     val f = Figure()
     val p = f.subplot(0)
     val first = vecs.head
     vecs.foreach { vec =>
       p += plot((0 until first.length).map(_.toDouble).toArray, vec, style)
     }
+    f
   }
 
-  def ezplot(vecs: Seq[Vector[Double]]): Unit = ezplot(vecs, '-')
+  def ezplot(vecs: Seq[Vector[Double]]): Figure = ezplot(vecs, '-')
 
   /**
    * Autocorrelation function plot
@@ -54,7 +57,7 @@ object EasyPlot {
    * @param maxLag maximum lag for autocorrelation
    * @param conf confidence bounds to display
    */
-  def acfPlot(data: Array[Double], maxLag: Int, conf: Double = 0.95): Unit = {
+  def acfPlot(data: Array[Double], maxLag: Int, conf: Double = 0.95): Figure = {
     // calculate correlations and confidence bound
     val autoCorrs = UnivariateTimeSeries.autocorr(data, maxLag)
     val confVal = calcConfVal(conf, data.length)
@@ -66,6 +69,7 @@ object EasyPlot {
     p.xlabel = "Lag"
     p.ylabel = "Autocorrelation"
     drawCorrPlot(autoCorrs, confVal, p)
+    f
   }
 
   /**
@@ -74,7 +78,7 @@ object EasyPlot {
    * @param maxLag maximum lag for partial autocorrelation function
    * @param conf confidence bounds to display
    */
-  def pacfPlot(data: Array[Double], maxLag: Int, conf: Double = 0.95): Unit = {
+  def pacfPlot(data: Array[Double], maxLag: Int, conf: Double = 0.95): Figure = {
     // create AR(maxLag) model, retrieve coefficients and calculate confidence bound
     val model = Autoregression.fitModel(new DenseVector(data), maxLag)
     val pCorrs = model.coefficients // partial autocorrelations are the coefficients in AR(n) model
@@ -87,6 +91,7 @@ object EasyPlot {
     p.xlabel = "Lag"
     p.ylabel = "Partial Autocorrelation"
     drawCorrPlot(pCorrs, confVal, p)
+    f
   }
 
   private[sparkts] def calcConfVal(conf:Double, n: Int): Double = {
