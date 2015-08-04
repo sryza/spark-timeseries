@@ -17,7 +17,7 @@ package com.cloudera.sparkts
 
 import breeze.linalg._
 
-import com.cloudera.sparkts.UnivariateTimeSeries.{differences, inverseDifferences}
+import com.cloudera.sparkts.UnivariateTimeSeries.{differencesOfOrderD, inverseDifferencesOfOrderD}
 
 import org.apache.commons.math3.analysis.{MultivariateVectorFunction, MultivariateFunction}
 import org.apache.commons.math3.optim.nonlinear.scalar.gradient.NonLinearConjugateGradientOptimizer
@@ -37,9 +37,11 @@ import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression
  * lag operator) B, which when applied to a Y returns the prior value, the
  * ARIMA model can be specified as
  * Y_t = c + \sum_{i=1}^p \phi_1*B^i*Y_t + \sum_{i=1}^q \theta_i*B^i*\epsilon_t + \epsilon_t
- * where Y_i has been differenced as appropriate according to `d`
+ * where Y_i has been differenced as appropriate according to order `d`
  * See [[https://en.wikipedia.org/wiki/Autoregressive_integrated_moving_average]] for more
- * information
+ * information on ARIMA.
+ * See [[https://en.wikipedia.org/wiki/Order_of_integration]] for more information on differencing
+ * integrated time series.
  */
 object ARIMA {
   /**
@@ -75,7 +77,8 @@ object ARIMA {
     includeIntercept: Boolean = true,
     method: String = "css-cgd",
     userInitParams: Array[Double] = null): ARIMAModel = {
-    val diffedTs = differences(ts, d).toArray.drop(d)
+    // Drop first d terms, can't use those to fit
+    val diffedTs = differencesOfOrderD(ts, d).toArray.drop(d)
 
     if (p > 0 && q == 0) {
       val arModel = Autoregression.fitModel(new DenseVector(diffedTs), p)
@@ -242,7 +245,7 @@ class ARIMAModel(
    * @return loglikehood
    */
   def logLikelihoodCSS(y: Vector[Double]): Double = {
-    val diffedY = differences(y, d).toArray.drop(d)
+    val diffedY = differencesOfOrderD(y, d).toArray.drop(d)
     logLikelihoodCSSARMA(diffedY)
   }
 
@@ -399,7 +402,8 @@ class ARIMAModel(
    * @return the time series resulting from the interaction of the parameters with the model's
    *         coefficients.
    */
-  private def iterateARMA(
+  //private
+  def iterateARMA(
       ts: Vector[Double],
       dest: Vector[Double],
       op: (Double, Double) => Double,
@@ -447,7 +451,7 @@ class ARIMAModel(
    */
   def removeTimeDependentEffects(ts: Vector[Double], destTs: Vector[Double]): Vector[Double] = {
     // difference as necessary
-    val diffed = differences(ts, d)
+    val diffed = differencesOfOrderD(ts, d)
     val maxLag = math.max(p, q)
     val interceptAmt = if (hasIntercept) coefficients(0) else 0.0
     // extend vector so that initial AR(maxLag) are equal to intercept value
@@ -478,7 +482,7 @@ class ARIMAModel(
     val errorsProvided = changes.copy
     iterateARMA(changes, changes, _ + _, errors = errorsProvided)
     // perform any inverse differencing required
-    destTs := inverseDifferences(changes(maxLag to -1), d)
+    destTs := inverseDifferencesOfOrderD(changes(maxLag to -1), d)
     destTs
   }
 
@@ -496,11 +500,12 @@ class ARIMAModel(
    * Provided fitted values for timeseries ts as 1-step ahead forecasts, based on current
    * model parameters, and then provide `nFuture` periods of forecast. We assume AR terms
    * prior to the start of the series are equal to the model's intercept term. Meanwhile, MA
-   * terms prior to the start are assumed to be 0.0
+   * terms prior to the start are assumed to be 0.0. If there is differencing,
+   * the first d terms come from the original series.
    * @param ts Timeseries to use as gold-standard. Each value (i) in the returning series
    *           is a 1-step ahead forecast of ts(i). We use the difference between ts(i) -
    *           estimated(i) to calculate the error at time i, which is used for the moving
-   *           average terms
+   *           average terms.
    * @param nFuture Periods in the future to forecast (beyond length of ts)
    * @return a series consisting of fitted 1-step ahead forecasts for historicals and then
    *         `nFuture` periods of forecasts. Note that in the future values error terms become
@@ -509,7 +514,7 @@ class ARIMAModel(
   def forecast(ts: Vector[Double], nFuture: Int): Vector[Double] = {
     val maxLag = math.max(p, q)
     // difference timeseries as necessary for model
-    val diffedTs = new DenseVector(differences(ts, d).toArray.drop(d))
+    val diffedTs = new DenseVector(differencesOfOrderD(ts, d).toArray.drop(d))
 
     // Assumes prior AR terms are equal to model intercept
     val interceptAmt =  if (hasIntercept) coefficients(0) else 0.0
@@ -517,7 +522,7 @@ class ARIMAModel(
     val histLen = diffedTsExtended.length
     val hist = new DenseVector(Array.fill(histLen)(0.0))
 
-    // fit historical values
+    // fit historical values (really differences in case of d > 0)
     iterateARMA(diffedTsExtended, hist, _ + _,  goldStandard = diffedTsExtended)
 
     // Last set of errors, to be used in forecast if MA terms included
@@ -533,11 +538,49 @@ class ARIMAModel(
     iterateARMA(forward, forward, _ + _, goldStandard = forward, initMATerms = maTerms)
 
     val results = new DenseVector(Array.fill(ts.length + nFuture)(0.0))
-    // drop first maxLag terms from historicals, since these are our assumed AR terms
-    results(0 until ts.length) := hist(maxLag to -1)
-    // drop first maxLag terms from forward curve, these are part of hist already
+    // copy over first d terms
+    results(0 until d) := ts(0 until d)
+    // copy over historicals, drop first maxLag terms (our assumed AR terms)
+    results(d until d + histLen - maxLag) := hist(maxLag to -1)
+    // drop first maxLag terms from forward curve before copying, these are part of hist already
     results(ts.length to -1) :=  forward(maxLag to -1)
-    // add up if there was any differencing required
-    inverseDifferences(results, d)
+
+    // Now, if there was no differencing, things are as they should be. We're good to go
+    if (d == 0) {
+      results
+    } else {
+      // we need to create 1-step ahead forecasts for the integrated series for fitted values
+      // by backing through the d-order differences
+      // create and fill a matrix of the changes of order i = 0 through d
+      val diffMatrix = new DenseMatrix[Double](1 + d, ts.length)
+      diffMatrix(0, ::) := ts.t
+
+      for (i <- 1 to d) {
+        // create incremental differences of each order
+        // recall that differencesOfOrderD skips first `order` terms, so make sure
+        // to advance start as appropriate
+        diffMatrix(i, i to -1) := differencesOfOrderD(diffMatrix(i - 1, i to -1).t, 1).t
+      }
+
+      // historical values are done as 1 step ahead forecasts
+      for (i <- d until histLen - maxLag) {
+        // Add the fitted change value to elements at time i - 1 and of difference order < d
+        // e.g. if d = 2, then we modeled value at i = 3 as (y_3 - y_2) - (y_2 - y_1), so we add
+        // y_2 - y_1 (which is at diffMatrix(1, 2)) and y_2 (which is at diffMatrix(0, 2) to get
+        // y_3
+        results(i) = sum(diffMatrix(0 until d, i - 1)) + hist(maxLag + i)
+      }
+      // for forecasts, drop first maxLag terms, which are repeated
+      // Then take diagonal of last d terms, of order < d,
+      // so that we can inverse differencing appropriately
+      val prevTermsForForwardInverse = diag(diffMatrix(0 until d, -d to -1))
+      val forwardIntegrated = inverseDifferencesOfOrderD(
+        DenseVector.vertcat(prevTermsForForwardInverse, forward(maxLag to -1)),
+        d
+      )
+      // copy into results
+      results(-(d + nFuture) to -1) := forwardIntegrated
+    }
+    results
   }
 }

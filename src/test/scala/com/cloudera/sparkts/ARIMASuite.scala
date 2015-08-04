@@ -17,7 +17,7 @@ package com.cloudera.sparkts
 
 import breeze.linalg._
 
-import com.cloudera.sparkts.UnivariateTimeSeries.differences
+import com.cloudera.sparkts.UnivariateTimeSeries.differencesOfOrderD
 
 import org.apache.commons.math3.random.MersenneTwister
 
@@ -30,8 +30,8 @@ class ARIMASuite extends FunSuite {
     // [1] "R version 3.2.0 (2015-04-16)"
     // > set.seed(456)
     // y <- arima.sim(n=250,list(ar=0.3,ma=0.7),mean = 5)
-    // write.table(y, file = "resources/R_ARIMA_Data.csv", row.names = FALSE, col.names = FALSE)
-    val dataFile = getClass.getClassLoader.getResourceAsStream("R_ARIMA_Data.csv")
+    // write.table(y, file = "resources/R_ARIMA_DataSet1.csv", row.names = FALSE, col.names = FALSE)
+    val dataFile = getClass.getClassLoader.getResourceAsStream("R_ARIMA_DataSet1.csv")
     val rawData = scala.io.Source.fromInputStream(dataFile).getLines().toArray.map(_.toDouble)
     val data = new DenseVector(rawData)
 
@@ -79,7 +79,7 @@ class ARIMASuite extends FunSuite {
     val model = new ARIMAModel(1, 1, 2, Array(0.3, 0.7, 0.1), hasIntercept = false)
     val sampled = model.sample(1000, rand)
     val arimaModel = ARIMA.fitModel(1, 1, 2, sampled, includeIntercept = false)
-    val differencedSample = new DenseVector(differences(sampled, 1).toArray.drop(1))
+    val differencedSample = new DenseVector(differencesOfOrderD(sampled, 1).toArray.drop(1))
     val armaModel = ARIMA.fitModel(1, 0, 2, differencedSample, includeIntercept = false)
 
     val Array(refAR, refMA1, refMA2) = model.coefficients
@@ -118,5 +118,29 @@ class ARIMASuite extends FunSuite {
     val model = ARIMA.fitModel(0, 0, 0, sampled)
     val mean = sampled.sum / sampled.length
     model.coefficients(0) should be (mean +- 1e-4)
+  }
+
+  test("Fitting an integrated time series of order 3") {
+    // > set.seed(10)
+    // > vals <- arima.sim(list(ma = c(0.2), order = c(0, 3, 1)), 200)
+    // > arima(order = c(0, 3, 1), vals, method = "CSS")
+    //
+    // Call:
+    //  arima(x = vals, order = c(0, 3, 1), method = "CSS")
+    //
+    //  Coefficients:
+    //   ma1
+    //  0.2523
+    //  s.e.  0.0623
+    //
+    //  sigma^2 estimated as 0.9218:  part log likelihood = -275.65
+    // > write.table(y, file = "resources/R_ARIMA_DataSet2.csv", row.names = FALSE, col.names =
+    // FALSE)
+    val dataFile = getClass.getClassLoader.getResourceAsStream("R_ARIMA_DataSet2.csv")
+    val rawData = scala.io.Source.fromInputStream(dataFile).getLines().toArray.map(_.toDouble)
+    val data = new DenseVector(rawData)
+    val model = ARIMA.fitModel(0, 3, 1, data)
+    val Array(c, ma) = model.coefficients
+    ma should be (0.2 +- 0.05)
   }
 }

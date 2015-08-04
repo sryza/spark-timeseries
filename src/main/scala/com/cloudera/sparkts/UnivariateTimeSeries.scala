@@ -328,14 +328,14 @@ object UnivariateTimeSeries {
   }
 
   /**
-   * Calculate a differenced vector of a given order. Size-preserving by leaving first `order`
-   * elements intact. This is the inverse of the `inverseDifferences` function.
+   * Difference a vector with respect to the m-th prior element. Size-preserving by leaving first
+   * `m` elements intact. This is the inverse of the `inverseDifferences` function.
    * @param ts Series to difference
-   * @param order The difference order (e.g. x means y(i) = ts(i) - ts(i - x), etc)
+   * @param lag The difference lag (e.g. x means y(i) = ts(i) - ts(i - x), etc)
    * @return a new differenced vector
    */
-  def differences(ts: Vector[Double], order: Int): Vector[Double] = {
-    if (order == 0) {
+  def differencesAtLag(ts: Vector[Double], lag: Int): Vector[Double] = {
+    if (lag == 0) {
       // for consistency, since we create a new vector in else-branch
       ts.copy
     } else {
@@ -344,8 +344,8 @@ object UnivariateTimeSeries {
       var i = 0
 
       while (i < n) {
-        // elements prior to `order` are copied over without modification
-        diffedTs(i) = if (i < order) ts(i) else ts(i) - ts(i - order)
+        // elements prior to `lag` are copied over without modification
+        diffedTs(i) = if (i < lag) ts(i) else ts(i) - ts(i - lag)
         i += 1
       }
       diffedTs
@@ -353,15 +353,15 @@ object UnivariateTimeSeries {
   }
 
   /**
-   * Calculate an "inverse-differenced" vector of a given order. Size-preserving by leaving first
-   * `order` elements intact. This is the inverse of the `differences` function.
+   * Calculate an "inverse-differenced" vector of a given lag. Size-preserving by leaving first
+   * `lag` elements intact. This is the inverse of the `differences` function.
    * @param ts Series to add up
-   * @param order The difference order to add (e.g. x means y(i) = ts(i) + y(i -
+   * @param lag The difference lag to add (e.g. x means y(i) = ts(i) + y(i -
    *              x), etc)
    * @return a new vector where the difference operation as been inverted
    */
-  def inverseDifferences(ts: Vector[Double], order: Int): Vector[Double] = {
-    if (order == 0) {
+  def inverseDifferencesAtLag(ts: Vector[Double], lag: Int): Vector[Double] = {
+    if (lag == 0) {
       // for consistency, since we create a new vector in else-branch
       ts.copy
     } else {
@@ -371,11 +371,63 @@ object UnivariateTimeSeries {
 
       while (i < n) {
         // elements prior to `order` are copied over without modification
-        addedTs(i) = if (i < order) ts(i) else ts(i) + addedTs(i - order)
+        addedTs(i) = if (i < lag) ts(i) else ts(i) + addedTs(i - lag)
         i += 1
       }
       addedTs
     }
+  }
+
+  /**
+   * Performs differencing of order `d`. This means we recursively difference a vector a total of
+   * d-times. So that d = 2 is a vector of the differences of differences. Note that for each
+   * difference level, d_i, the element at ts(d_i - 1) corresponds to the value in the prior
+   * iteration.
+   * @param ts time series to difference
+   * @param d order of differencing
+   * @return a vector of the same length differenced to order d
+   */
+  def differencesOfOrderD(ts: Vector[Double], d: Int): Vector[Double] = {
+    def differencesOfOrderD0(ts: Vector[Double], d: Int, ix: Int): Vector[Double] = {
+      val diffedTs = ts.copy
+      if (d == 0) {
+        diffedTs
+      } else {
+        val n = ts.length
+        var i = ix
+        while (i < n) {
+          diffedTs(i) = ts(i) - ts(i - 1)
+          i += 1
+        }
+        differencesOfOrderD0(diffedTs, d - 1, ix + 1)
+      }
+    }
+    differencesOfOrderD0(ts, d, 1)
+  }
+
+  /**
+   * Inverses differencing of order `d`.
+   * @param diffedTs time series to reverse differencing process
+   * @param d order of differencing
+   * @return a vector of the same length, whcih when differenced to order ts, yields the original
+   *         vector provided
+   */
+  def inverseDifferencesOfOrderD(diffedTs: Vector[Double], d: Int): Vector[Double] = {
+    def inverseDifferencesOfOrderD0(diffedTs: Vector[Double], d: Int, ix: Int): Vector[Double] = {
+      val ts = diffedTs.copy
+      if (d == 0) {
+        diffedTs
+      } else {
+        val n = diffedTs.length
+        var i = ix
+        while (i < n) {
+          ts(i) = diffedTs(i) + ts(i - 1)
+          i += 1
+        }
+        inverseDifferencesOfOrderD0(ts, d - 1, ix - 1)
+      }
+    }
+    inverseDifferencesOfOrderD0(diffedTs, d, d)
   }
 }
 
