@@ -76,7 +76,7 @@ class UnivariateTimeSeriesSuite extends FunSuite with ShouldMatchers {
     // close to the original signal. In our case, we drop NAs that are not filled by interpolation
     // (i.e no extrapolation)
 
-    val y = (1 to 1000).toArray.map(_.toDouble / 100.0).map(Math.sin(_))
+    val y = (1 to 1000).toArray.map(_.toDouble / 100.0).map(Math.sin)
     val vy = new DenseVector(y)
     val lessFreq = downsample(vy, 100)
     val moreFreq = upsample(lessFreq, 100)
@@ -95,6 +95,52 @@ class UnivariateTimeSeriesSuite extends FunSuite with ShouldMatchers {
 
     // a cubic spline should be better than linear interpolation
     sE should be < lE
+  }
+
+  test("differencing at lag") {
+    val rand = new MersenneTwister(10L)
+    val n = 100
+    val sampled = new DenseVector(Array.fill(n)(rand.nextGaussian))
+    val lag = 5
+    val diffed = differencesAtLag(sampled, lag)
+    val invDiffed = inverseDifferencesAtLag(diffed, lag)
+
+    for (i <- 0 until n) {
+      sampled(i) should be (invDiffed(i) +- 1e-6)
+    }
+
+    diffed(10) should be (sampled(10) - sampled(5))
+    diffed(99) should be (sampled(99) - sampled(94))
+  }
+
+  test("differencing of order d") {
+    val rand = new MersenneTwister(10L)
+    val n = 100
+    val sampled = new DenseVector(Array.fill(n)(rand.nextGaussian))
+    // differencing at order 1 and lag 1 should be the same
+    val diffedOfOrder1 = differencesOfOrderD(sampled, 1)
+    val diffedAtLag1 = differencesAtLag(sampled, 1)
+
+    for (i <- 0 until n) {
+      diffedAtLag1(i) should be (diffedOfOrder1(i) +- 1e-6)
+    }
+
+    // differencing at order and inversing should return the original series
+    val diffedOfOrder5 = differencesOfOrderD(sampled, 5)
+    val invDiffedOfOrder5 = inverseDifferencesOfOrderD(diffedOfOrder5, 5)
+
+    for (i <- 0 until n) {
+      invDiffedOfOrder5(i) should be (sampled(i) +- 1e-6)
+    }
+
+    // Differencing of order n + 1 should be the same as differencing one time a
+    // vector that has already been differenced to order n
+    val diffedOfOrder6 = differencesOfOrderD(sampled, 6)
+    val diffedOneMore = differencesOfOrderD(diffedOfOrder5, 1)
+    // compare start at index = 6
+    for (i <- 6 until n) {
+      diffedOfOrder6(i) should be (diffedOneMore(i) +- 1e-6)
+    }
   }
 }
 
