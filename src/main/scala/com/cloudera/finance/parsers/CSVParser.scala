@@ -20,16 +20,17 @@ import com.cloudera.sparkts.TimeSeries._
 import org.joda.time.DateTime
 
 object CSVParser {
-   def stringToTimeSeries(text: String, keyPrefix: String = ""): TimeSeries = {
-     val lines = text.split('\n')
-     val labels = lines(0).split(',').tail.map(keyPrefix + _)
+  def stringToTimeSeries(text: String, keyPrefix: String = ""): TimeSeries = {
+    val lines = text.split('\n')
+    val labels = lines(0).split(',').tail.map(keyPrefix + _)
 
-     val samples = lines.tail.map { line =>
-       val tokens = line.split(',')
-       val dt = new DateTime(tokens.head)
-       (dt, tokens.tail.map(_.toDouble).toArray)
-     }.reverse
+    val samples = lines.tail.map { line =>
+      val tokens = line.split(',')
+      val dt = new DateTime(tokens.head)
 
-     timeSeriesFromSamples(samples, labels)
-   }
- }
+      (dt, tokens.tail.map(_.toDouble))
+    }.reverse
+
+    timeSeriesFromSamples(samples, labels)
+  }
+}
