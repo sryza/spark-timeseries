@@ -16,16 +16,7 @@
 package com.cloudera.finance.parsers
 
 import com.cloudera.sparkts.TimeSeries
-import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
-import org.json4s._
-import org.json4s.JsonDSL._
-import org.json4s.jackson.JsonMethods._
 
-object QuandlParser extends CSVParser with JSONParser {
-  override protected val dateTimeFormatter: DateTimeFormatter =
-    DateTimeFormat.forPattern("yyyy-MM-dd")
-
-  override def jsonStringToTimeSeries(s: String): TimeSeries = {
-    val json = parse(s)
-  }
+trait JSONParser extends Parser {
+  def jsonStringToTimeSeries(json: String): TimeSeries
 }
