@@ -70,13 +70,13 @@ object ARIMA {
    * @return
    */
   def fitModel(
-    p: Int,
-    d: Int,
-    q: Int,
-    ts: Vector[Double],
-    includeIntercept: Boolean = true,
-    method: String = "css-cgd",
-    userInitParams: Array[Double] = null): ARIMAModel = {
+      p: Int,
+      d: Int,
+      q: Int,
+      ts: Vector[Double],
+      includeIntercept: Boolean = true,
+      method: String = "css-cgd",
+      userInitParams: Array[Double] = null): ARIMAModel = {
     // Drop first d terms, can't use those to fit
     val diffedTs = differencesOfOrderD(ts, d).toArray.drop(d)
 
@@ -118,12 +118,12 @@ object ARIMA {
    * @return parameters optimized using CSS estimator, with method BOBYQA
    */
   private def fitWithCSSBOBYQA(
-    p: Int,
-    d: Int,
-    q: Int,
-    diffedY: Array[Double],
-    includeIntercept: Boolean,
-    initParams: Array[Double]): Array[Double] = {
+      p: Int,
+      d: Int,
+      q: Int,
+      diffedY: Array[Double],
+      includeIntercept: Boolean,
+      initParams: Array[Double]): Array[Double] = {
     // We set up starting/ending trust radius using default suggested in
     // http://cran.r-project.org/web/packages/minqa/minqa.pdf
     // While # of interpolation points as mentioned common in
@@ -161,12 +161,12 @@ object ARIMA {
    * @return parameters optimized using CSS estimator, with method conjugate gradient descent
    */
   private def fitWithCSSCGD(
-    p: Int,
-    d: Int,
-    q: Int,
-    diffedY: Array[Double],
-    includeIntercept: Boolean,
-    initParams: Array[Double]): Array[Double] = {
+      p: Int,
+      d: Int,
+      q: Int,
+      diffedY: Array[Double],
+      includeIntercept: Boolean,
+      initParams: Array[Double]): Array[Double] = {
     val optimizer = new NonLinearConjugateGradientOptimizer(
       NonLinearConjugateGradientOptimizer.Formula.FLETCHER_REEVES,
       new SimpleValueChecker(1e-7, 1e-7))
@@ -203,11 +203,11 @@ object ARIMA {
    * @return initial ARMA(p, d, q) parameter estimates
    */
   private def HannanRissanenInit(
-    p: Int,
-    d: Int,
-    q: Int,
-    diffedY: Array[Double],
-    includeIntercept: Boolean): Array[Double] = {
+      p: Int,
+      d: Int,
+      q: Int,
+      diffedY: Array[Double],
+      includeIntercept: Boolean): Array[Double] = {
     val addToLag = 1
     val m = math.max(p, q) + addToLag // m > max(p, q)
     // higher order AR(m) model
@@ -366,7 +366,7 @@ class ARIMAModel(
    * @param newError the error at time t
    * @return a modified array with the latest error placed into index 0
    */
-  def updateMAErrors(errs: Array[Double], newError: Double): Unit= {
+  def updateMAErrors(errs: Array[Double], newError: Double): Unit = {
     val n = errs.length
     var i = 0
     while (i < n - 1) {
@@ -402,8 +402,7 @@ class ARIMAModel(
    * @return the time series resulting from the interaction of the parameters with the model's
    *         coefficients.
    */
-  //private
-  def iterateARMA(
+  private def iterateARMA(
       ts: Vector[Double],
       dest: Vector[Double],
       op: (Double, Double) => Double,
