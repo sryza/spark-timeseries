@@ -12,6 +12,7 @@
  * the specific language governing permissions and limitations under the
  * License.
  */
+
 package com.cloudera.finance.parsers
 
 import org.scalatest.{FunSuite, ShouldMatchers}
@@ -21,7 +22,7 @@ class CSVParserSuite extends FunSuite with ShouldMatchers {
     val is = getClass.getClassLoader.getResourceAsStream("GOOG.csv")
     val lines = scala.io.Source.fromInputStream(is).getLines().toArray
     val text = lines.mkString("\n")
-    val ts = CSVParser.stringToTimeSeries(text)
+    val ts = GoogleParser.stringToTimeSeries(text)
 
     ts.data.rows should be (lines.length - 1)
   }
@@ -30,7 +31,7 @@ class CSVParserSuite extends FunSuite with ShouldMatchers {
     val is = getClass.getClassLoader.getResourceAsStream("YHOO.csv")
     val lines = scala.io.Source.fromInputStream(is).getLines().toArray
     val text = lines.mkString("\n")
-    val ts = CSVParser.stringToTimeSeries(text)
+    val ts = YahooParser.stringToTimeSeries(text)
 
     ts.data.rows should be (lines.length - 1)
   }

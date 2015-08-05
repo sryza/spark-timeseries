@@ -12,16 +12,12 @@
  * the specific language governing permissions and limitations under the
  * License.
  */
+
 package com.cloudera.finance.parsers
 
-import org.scalatest.{FunSuite, ShouldMatchers}
+import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 
-class YahooParserSuite extends FunSuite with ShouldMatchers {
-  test("yahoo parser") {
-    val is = getClass.getClassLoader.getResourceAsStream("GOOG.csv")
-    val lines = scala.io.Source.fromInputStream(is).getLines().toArray
-    val text = lines.mkString("\n")
-    val ts = YahooParser.yahooStringToTimeSeries(text)
-    ts.data.rows should be (lines.length - 1)
-  }
+object GoogleParser extends CSVParser {
+  override protected val dateTimeFormatter: DateTimeFormatter =
+    DateTimeFormat.forPattern("d-MMM-yy")
 }
