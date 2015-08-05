@@ -17,7 +17,16 @@ package com.cloudera.finance.parsers
 import org.scalatest.{FunSuite, ShouldMatchers}
 
 class CSVParserSuite extends FunSuite with ShouldMatchers {
-  test("CSV Parser - Yahoo") {
+  test("CSV Parser - Google Finance") {
+    val is = getClass.getClassLoader.getResourceAsStream("GOOG.csv")
+    val lines = scala.io.Source.fromInputStream(is).getLines().toArray
+    val text = lines.mkString("\n")
+    val ts = CSVParser.stringToTimeSeries(text)
+
+    ts.data.rows should be (lines.length - 1)
+  }
+
+  test("CSV Parser - Yahoo Finance") {
     val is = getClass.getClassLoader.getResourceAsStream("YHOO.csv")
     val lines = scala.io.Source.fromInputStream(is).getLines().toArray
     val text = lines.mkString("\n")
