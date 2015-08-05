@@ -22,15 +22,8 @@ import org.joda.time.format.DateTimeFormatter
 
 import scala.util.control.NonFatal
 
-abstract class CSVParser {
-  protected val dateTimeFormatter: DateTimeFormatter
-
-  private val UTF8_BOM: String = "\uFEFF"
-
-  // if we're missing or have bad data, use Double.NaN
-  private def parseDouble(s: String): Double = try { s.toDouble } catch { case NonFatal(_) => Double.NaN }
-
-  def stringToTimeSeries(text: String, keyPrefix: String = ""): TimeSeries = {
+trait CSVParser extends Parser {
+  def csvStringToTimeSeries(text: String, keyPrefix: String = ""): TimeSeries = {
     val lines = stripUTF8BOM(text).split('\n')
     val labels = lines(0).split(',').tail.map(keyPrefix + _)
 

@@ -22,7 +22,16 @@ class CSVParserSuite extends FunSuite with ShouldMatchers {
     val is = getClass.getClassLoader.getResourceAsStream("GOOG.csv")
     val lines = scala.io.Source.fromInputStream(is).getLines().toArray
     val text = lines.mkString("\n")
-    val ts = GoogleParser.stringToTimeSeries(text)
+    val ts = GoogleParser.csvStringToTimeSeries(text)
+
+    ts.data.rows should be (lines.length - 1)
+  }
+
+  test("CSV Parser - Quandl Finance") {
+    val is = getClass.getClassLoader.getResourceAsStream("WIKI-DATA.csv")
+    val lines = scala.io.Source.fromInputStream(is).getLines().toArray
+    val text = lines.mkString("\n")
+    val ts = QuandlParser.csvStringToTimeSeries(text)
 
     ts.data.rows should be (lines.length - 1)
   }
@@ -31,7 +40,7 @@ class CSVParserSuite extends FunSuite with ShouldMatchers {
     val is = getClass.getClassLoader.getResourceAsStream("YHOO.csv")
     val lines = scala.io.Source.fromInputStream(is).getLines().toArray
     val text = lines.mkString("\n")
-    val ts = YahooParser.stringToTimeSeries(text)
+    val ts = YahooParser.csvStringToTimeSeries(text)
 
     ts.data.rows should be (lines.length - 1)
   }

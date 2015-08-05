@@ -15,20 +15,9 @@
 
 package com.cloudera.finance.parsers
 
-import com.cloudera.sparkts.TimeSeries
-
-import org.apache.spark.SparkContext
-import org.apache.spark.rdd.RDD
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 
-object YahooParser extends CSVParser {
+object QuandlParser extends CSVParser {
   override protected val dateTimeFormatter: DateTimeFormatter =
     DateTimeFormat.forPattern("yyyy-MM-dd")
-
-  // TODO: figure out what to do with this function
-  def yahooFiles(dir: String, sc: SparkContext): RDD[TimeSeries] = {
-    sc.wholeTextFiles(dir).map { case (path, text) =>
-      csvStringToTimeSeries(text, path.split('/').last)
-    }
-  }
 }
