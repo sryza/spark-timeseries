@@ -331,21 +331,27 @@ object UnivariateTimeSeries {
    * Difference a vector with respect to the m-th prior element. Size-preserving by leaving first
    * `m` elements intact. This is the inverse of the `inverseDifferences` function.
    * @param ts Series to difference
-   * @param lag The difference lag (e.g. x means y(i) = ts(i) - ts(i - x), etc)
-   * @return a new differenced vector
+   * @param destTs Series to store the differenced values (and return for convenience)
+   * @param lag The difference lag (e.g. x means destTs(i) = ts(i) - ts(i - x), etc)
+   * @param startIndex the starting index for the differencing. Must be at least equal to lag
+   * @return the differenced vector, for convenience
    */
-  def differencesAtLag(ts: Vector[Double], lag: Int): Vector[Double] = {
+  def differencesAtLag(
+      ts: Vector[Double],
+      destTs: Vector[Double],
+      lag: Int,
+      startIndex: Int): Vector[Double] = {
+    require(startIndex >= lag, "starting index cannot be less than lag")
+    val diffedTs = if (destTs == null) ts.copy else destTs
     if (lag == 0) {
-      // for consistency, since we create a new vector in else-branch
-      ts.copy
+      diffedTs
     } else {
       val n = ts.length
-      val diffedTs = new DenseVector(Array.fill(n)(0.0))
       var i = 0
 
       while (i < n) {
-        // elements prior to `lag` are copied over without modification
-        diffedTs(i) = if (i < lag) ts(i) else ts(i) - ts(i - lag)
+        // elements prior to starting point are copied over without modification
+        diffedTs(i) = if (i < startIndex) ts(i) else ts(i) - ts(i - lag)
         i += 1
       }
       diffedTs
@@ -353,29 +359,54 @@ object UnivariateTimeSeries {
   }
 
   /**
-   * Calculate an "inverse-differenced" vector of a given lag. Size-preserving by leaving first
-   * `lag` elements intact. This is the inverse of the `differences` function.
-   * @param ts Series to add up
-   * @param lag The difference lag to add (e.g. x means y(i) = ts(i) + y(i -
-   *              x), etc)
-   * @return a new vector where the difference operation as been inverted
+   * Convenience wrapper around `differencesAtLag[Vector[Double], Vector[Double], Int, Int]`
+   * @param ts vector to difference
+   * @param lag the difference lag (e.g. x means destTs(i) = ts(i) - ts(i - x), etc)
+   * @return the differenced vector, for convenience
    */
-  def inverseDifferencesAtLag(ts: Vector[Double], lag: Int): Vector[Double] = {
+  def differencesAtLag(ts: Vector[Double], lag: Int): Vector[Double] = {
+    differencesAtLag(ts, null, lag, lag)
+  }
+
+  /**
+   * Calculate an "inverse-differenced" vector of a given lag. Size-preserving by leaving first
+   * `startIndex` elements intact. This is the inverse of the `differences` function.
+   * @param diffedTs differenced vector that we want to inverse
+   * @param destTs Series to store the added up values (and return for convenience)
+   * @param lag The difference lag (e.g. x means destTs(i) = diffedTs(i) + destTs(i - x), etc)
+   * @param startIndex the starting index for the differencing. Must be at least equal to lag
+   * @return the inverse differenced vector, for convenience
+   */
+  def inverseDifferencesAtLag(
+      diffedTs: Vector[Double],
+      destTs: Vector[Double],
+      lag: Int,
+      startIndex: Int): Vector[Double] = {
+    require(startIndex >= lag, "starting index cannot be less than lag")
+    val addedTs = if (destTs == null) diffedTs.copy else destTs
     if (lag == 0) {
-      // for consistency, since we create a new vector in else-branch
-      ts.copy
+      addedTs
     } else {
-      val n = ts.length
-      val addedTs = new DenseVector(Array.fill(n)(0.0))
+      val n = diffedTs.length
       var i = 0
 
       while (i < n) {
-        // elements prior to `order` are copied over without modification
-        addedTs(i) = if (i < lag) ts(i) else ts(i) + addedTs(i - lag)
+        // elements prior to starting point are copied over without modification
+        addedTs(i) = if (i < startIndex) diffedTs(i) else diffedTs(i) + addedTs(i - lag)
         i += 1
       }
       addedTs
     }
+  }
+
+  /**
+   * Convenience wrapper around `inverseDifferencesAtLag[Vector[Double], Vector[Double], Int, Int]`
+   * @param diffedTs differenced vector that we want to inverse
+   * @param lag the difference lag (e.g. x means destTs(i) = ts(i) - ts(i - x), etc)
+   * @return the inverse differenced vector, for convenience
+   */
+  def inverseDifferencesAtLag(diffedTs: Vector[Double], lag: Int): Vector[Double] = {
+    inverseDifferencesAtLag(diffedTs, null, lag, lag)
   }
 
   /**
@@ -388,21 +419,17 @@ object UnivariateTimeSeries {
    * @return a vector of the same length differenced to order d
    */
   def differencesOfOrderD(ts: Vector[Double], d: Int): Vector[Double] = {
-    def differencesOfOrderD0(ts: Vector[Double], d: Int, ix: Int): Vector[Double] = {
-      val diffedTs = ts.copy
-      if (d == 0) {
-        diffedTs
-      } else {
-        val n = ts.length
-        var i = ix
-        while (i < n) {
-          diffedTs(i) = ts(i) - ts(i - 1)
-          i += 1
-        }
-        differencesOfOrderD0(diffedTs, d - 1, ix + 1)
-      }
+    // we create 2 copies to avoid copying with every call, and simply swap them as necessary
+    // for higher order differencing
+    var (diffedTs, origTs) = (ts.copy, ts.copy)
+    var swap: Vector[Double] = null
+    for (i <- 1 to d) {
+      swap = origTs
+      origTs = diffedTs
+      diffedTs = swap
+      differencesAtLag(origTs, diffedTs, 1, i)
     }
-    differencesOfOrderD0(ts, d, 1)
+    diffedTs
   }
 
   /**
@@ -413,21 +440,11 @@ object UnivariateTimeSeries {
    *         vector provided
    */
   def inverseDifferencesOfOrderD(diffedTs: Vector[Double], d: Int): Vector[Double] = {
-    def inverseDifferencesOfOrderD0(diffedTs: Vector[Double], d: Int, ix: Int): Vector[Double] = {
-      val ts = diffedTs.copy
-      if (d == 0) {
-        diffedTs
-      } else {
-        val n = diffedTs.length
-        var i = ix
-        while (i < n) {
-          ts(i) = diffedTs(i) + ts(i - 1)
-          i += 1
-        }
-        inverseDifferencesOfOrderD0(ts, d - 1, ix - 1)
-      }
+    val addedTs = diffedTs.copy
+    for (i <- d to 1 by -1) {
+      inverseDifferencesAtLag(addedTs, addedTs, 1, i)
     }
-    inverseDifferencesOfOrderD0(diffedTs, d, d)
+    addedTs
   }
 }
 
