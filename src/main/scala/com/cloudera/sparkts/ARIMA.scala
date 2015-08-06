@@ -20,9 +20,10 @@ import breeze.linalg._
 import com.cloudera.sparkts.UnivariateTimeSeries.{differencesOfOrderD, inverseDifferencesOfOrderD}
 
 import org.apache.commons.math3.analysis.{MultivariateVectorFunction, MultivariateFunction}
-import org.apache.commons.math3.optim.nonlinear.scalar.gradient.NonLinearConjugateGradientOptimizer
+import org.apache.commons.math3.analysis.solvers.LaguerreSolver
 import org.apache.commons.math3.optim.{InitialGuess, MaxEval, MaxIter,
   SimpleBounds, SimpleValueChecker}
+import org.apache.commons.math3.optim.nonlinear.scalar.gradient.NonLinearConjugateGradientOptimizer
 import org.apache.commons.math3.optim.nonlinear.scalar.{GoalType, ObjectiveFunction,
   ObjectiveFunctionGradient}
 import org.apache.commons.math3.optim.nonlinear.scalar.noderiv.BOBYQAOptimizer
@@ -49,9 +50,10 @@ object ARIMA {
    * the autoregression terms, d represents the order of differencing, and q moving average error
    * terms. If includeIntercept is true, the model is fitted with a mean. In order to select the
    * appropriate order of the model, users are advised to inspect ACF and PACF plots, or compare
-   * the values of the objective function. Finally, the current implementation does not verify if
-   * the parameters fitted are stationary/invertible. Given this, it is suggested that users
-   * inspect the resulting model.
+   * the values of the objective function. Finally, while the current implementation of
+   * `fitModel` verifies that parameters fit stationarity and invertibility requirements,
+   * there is currently no function to transform them if they do not. It is up to the user
+   * to make these changes as appropriate.
    * @param p autoregressive order
    * @param d differencing order
    * @param q moving average order
@@ -92,18 +94,21 @@ object ARIMA {
       userInitParams
     }
 
-    // TODO: Enforce stationarity and invertibility for AR and MA terms
-    method match {
+    val params = method match {
       case "css-bobyqa" => {
-        val params = fitWithCSSBOBYQA(p, d, q, diffedTs, includeIntercept, initParams)
-        new ARIMAModel(p, d, q, params, includeIntercept)
+        fitWithCSSBOBYQA(p, d, q, diffedTs, includeIntercept, initParams)
       }
       case "css-cgd" => {
-        val params = fitWithCSSCGD( p, d, q, diffedTs, includeIntercept, initParams)
-        new ARIMAModel(p, d, q, params, includeIntercept)
+        fitWithCSSCGD( p, d, q, diffedTs, includeIntercept, initParams)
       }
       case _ => throw new UnsupportedOperationException()
     }
+
+    val model = new ARIMAModel(p, d, q, params, includeIntercept)
+    // provide user with a warning if either AR or MA terms don't conform to requirements
+    warnStationarityAndInvertibility(model)
+    // TODO: provide transformation for stationarity and invertibility
+    model
   }
 
   /**
@@ -228,6 +233,21 @@ object ARIMA {
     regression.newSampleData(yTrunc.drop(m - addToLag), allTerms)
     val params = regression.estimateRegressionParameters()
     params
+  }
+
+  /**
+   * Prints a message to stdout warning users about potential issues with lack of stationarity
+   * or invertibility, given parameters
+   * @param model
+   */
+  def warnStationarityAndInvertibility(model: ARIMAModel): Unit = {
+    if (!model.isStationary()) {
+      println("Warning: AR parameters are not stationary")
+    }
+
+    if (!model.isInvertible()) {
+      println("Warning: MA parameters are not invertible")
+    }
   }
 }
 
@@ -581,5 +601,55 @@ class ARIMAModel(
       results(-(d + nFuture) to -1) := forwardIntegrated
     }
     results
+  }
+
+  /**
+   * Check if the AR parameters result in stationary model. This is done by obtaining the roots
+   * to the polynomial 1 - phi_1*x - phi_2*x^2 - ... - phi_p*x^p = 0, where phi_i is the
+   * corresponding AR parameter. Note that we check the roots, not the inverse of the roots, so
+   * we check that they lie outside of the unit circle.
+   * Always returns true for models with no AR terms.
+   * See http://www.econ.ku.dk/metrics/Econometrics2_05_II/Slides/07_univariatetimeseries_2pp.pdf
+   * for more information (specifically slides 23 - 25)
+   * @return indicator of whether model's AR parameters are stationary
+   */
+  def isStationary(): Boolean = {
+    if (p == 0) {
+      true
+    } else {
+      val offset = if (hasIntercept) 1 else 0
+      val poly = Array(1.0) ++ coefficients.slice(offset, offset + p).map(-1 * _)
+      allRootsOutsidenUnitCircle(poly)
+    }
+  }
+
+  /**
+   * Checks if MA parameters result in an invertible model. Checks this by solving the roots for
+   * 1 + theta_1 * x + theta_2 * x + ... + theta_q * x ^ q = 0. Please see
+   * [[com.cloudera.sparkts.ARIMAModel.isStationary]] for more details.
+   * Always returns true for models with no MA terms.
+   * @return indicator of whether model's MA parameters are invertible
+   */
+  def isInvertible(): Boolean = {
+    if (q == 0) {
+      true
+    } else {
+      val offset = if (hasIntercept) 1 else 0
+      val poly = Array(1.0) ++ coefficients.drop(offset + p)
+      allRootsOutsidenUnitCircle(poly)
+    }
+  }
+
+  /**
+   * Checks whether all roots of polynomial passed are outside unit circle. Uses Laguerre's method
+   * see [[https://en.wikipedia.org/wiki/Laguerre%27s_method]] for more information
+   * @param poly the coefficients of the polynomial of order `poly.length`
+   * @return boolean indicating whether all roots are outside unit circle
+   */
+  private def allRootsOutsidenUnitCircle(poly: Array[Double]): Boolean = {
+    val solver = new LaguerreSolver()
+    val initGuess = 0.0 // TODO: make smarter
+    val roots = solver.solveAllComplex(poly, initGuess)
+    !roots.exists(_.abs() <= 1.0)
   }
 }
