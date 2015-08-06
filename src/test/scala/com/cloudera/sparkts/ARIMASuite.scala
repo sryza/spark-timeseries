@@ -143,4 +143,27 @@ class ARIMASuite extends FunSuite {
     val Array(c, ma) = model.coefficients
     ma should be (0.2 +- 0.05)
   }
+
+  test("Stationarity and Invertibility checks") {
+    // Testing violations of stationarity and invertibility
+    val model1 = new ARIMAModel(1, 0, 0, Array(0.2, 1.5), hasIntercept = true)
+    model1.isStationary() should be (false)
+    model1.isInvertible() should be (true)
+
+    val model2 =  new ARIMAModel(0, 0, 1, Array(0.13, 1.8), hasIntercept = true)
+    model2.isStationary() should be (true)
+    model2.isInvertible() should be (false)
+
+    //  http://www.econ.ku.dk/metrics/Econometrics2_05_II/Slides/07_univariatetimeseries_2pp.pdf
+    // AR(2) model on slide 31 should be stationary
+    val model3 = new ARIMAModel(2, 0, 0, Array(0.003359, 1.545, -0.5646), hasIntercept = true)
+    model3.isStationary() should be (true)
+    model3.isInvertible() should be (true)
+
+    // http://www.econ.ku.dk/metrics/Econometrics2_05_II/Slides/07_univariatetimeseries_2pp.pdf
+    // ARIMA(1, 0, 1) model from slide 36 should be stationary and invertible
+    val model4 = new ARIMAModel(1, 0, 1, Array(-0.09341,  0.857361, -0.300821), hasIntercept = true)
+    model4.isStationary() should be (true)
+    model4.isInvertible() should be (true)
+  }
 }
