@@ -387,6 +387,8 @@ object TimeSeriesStatisticalTests {
    * We translate the C implementation used by R's tseries:kpss.test, found at
    * https://github.com/cran/tseries/blob/master/src/ppsum.c
    * However, we add our own comments for clarity.
+   * See pg 87 of [[http://faculty.washington.edu/ezivot/econ584/notes/timeSeriesConcepts.pdf]] for
+   * more information
    */
   private def neweyWestVarianceEstimator(errors: Array[Double], lag: Int): Double = {
     val n = errors.length
