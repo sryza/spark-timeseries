@@ -37,7 +37,7 @@ import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression
  * d is the differencing order, and q is the moving average order. Using the backshift (aka
  * lag operator) B, which when applied to a Y returns the prior value, the
  * ARIMA model can be specified as
- * Y_t = c + \sum_{i=1}^p \phi_1*B^i*Y_t + \sum_{i=1}^q \theta_i*B^i*\epsilon_t + \epsilon_t
+ * Y_t = c + \sum_{i=1}^p \phi_i*B^i*Y_t + \sum_{i=1}^q \theta_i*B^i*\epsilon_t + \epsilon_t
  * where Y_i has been differenced as appropriate according to order `d`
  * See [[https://en.wikipedia.org/wiki/Autoregressive_integrated_moving_average]] for more
  * information on ARIMA.
@@ -48,17 +48,17 @@ object ARIMA {
   /**
    * Given a time series, fit a non-seasonal ARIMA model of order (p, d, q), where p represents
    * the autoregression terms, d represents the order of differencing, and q moving average error
-   * terms. If includeIntercept is true, the model is fitted with a mean. In order to select the
-   * appropriate order of the model, users are advised to inspect ACF and PACF plots, or compare
+   * terms. If includeIntercept is true, the model is fitted with an intercept. In order to select
+   * the appropriate order of the model, users are advised to inspect ACF and PACF plots, or compare
    * the values of the objective function. Finally, while the current implementation of
    * `fitModel` verifies that parameters fit stationarity and invertibility requirements,
    * there is currently no function to transform them if they do not. It is up to the user
-   * to make these changes as appropriate.
+   * to make these changes as appropriate (or select a different model specification)
    * @param p autoregressive order
    * @param d differencing order
    * @param q moving average order
    * @param ts time series to which to fit an ARIMA(p, d, q) model
-   * @param includeIntercept if true the model is fit with an intercept term, default is true
+   * @param includeIntercept if true the model is fit with an intercept term. Default is true
    * @param method objective function and optimization method, current options are 'css-bobyqa',
    *               and 'css-cgd'. Both optimize the loglikelihood in terms of the
    *               conditional sum of squares. The first uses BOBYQA for optimization, while
@@ -66,7 +66,7 @@ object ARIMA {
    * @param userInitParams A set of user provided initial parameters for optimization. If null
    *                       (default), initialized using Hannan-Rissanen algorithm. If provided,
    *                       order of parameter should be: intercept term, AR parameters (in
-   *                       increasing order), MA parameters (in increasing order)
+   *                       increasing order of lag), MA parameters (in increasing order of lag)
    *
    *
    * @return
@@ -79,17 +79,19 @@ object ARIMA {
       includeIntercept: Boolean = true,
       method: String = "css-cgd",
       userInitParams: Array[Double] = null): ARIMAModel = {
-    // Drop first d terms, can't use those to fit
+    // Drop first d terms, can't use those to fit, since not at the right level of differencing
     val diffedTs = differencesOfOrderD(ts, d).toArray.drop(d)
 
     if (p > 0 && q == 0) {
       val arModel = Autoregression.fitModel(new DenseVector(diffedTs), p)
-      return new ARIMAModel(p, d, q, Array(arModel.c) ++ arModel.coefficients, includeIntercept)
+      val intercept = if (includeIntercept) Array(arModel.c) else Array[Double]()
+      val params = intercept ++ arModel.coefficients
+      return new ARIMAModel(p, d, q, params, includeIntercept)
     }
 
     // Initial parameter guesses if none provided by user
     val initParams = if (userInitParams == null) {
-      HannanRissanenInit(p, d, q, diffedTs, includeIntercept)
+      HannanRissanenInit(p, q, diffedTs, includeIntercept)
     } else {
       userInitParams
     }
@@ -132,7 +134,7 @@ object ARIMA {
     // We set up starting/ending trust radius using default suggested in
     // http://cran.r-project.org/web/packages/minqa/minqa.pdf
     // While # of interpolation points as mentioned common in
-    // Source: http://www.damtp.cam.ac.uk/user/na/NA_papers/NA2009_06.pdf
+    // http://www.damtp.cam.ac.uk/user/na/NA_papers/NA2009_06.pdf
     val radiusStart = math.min(0.96, 0.2 * initParams.map(math.abs).max)
     val radiusEnd = radiusStart * 1e-6
     val dimension = p + q + (if (includeIntercept) 1 else 0)
@@ -201,24 +203,23 @@ object ARIMA {
    * See [[http://halweb.uc3m.es/esp/Personal/personas/amalonso/esp/TSAtema9.pdf]] for more
    * information.
    * @param p autoregressive order
-   * @param d differencing order
    * @param q moving average order
-   * @param diffedY differenced time series, as appropriate
+   * @param y time series to be modeled
    * @param includeIntercept flag to include intercept
    * @return initial ARMA(p, d, q) parameter estimates
    */
   private def HannanRissanenInit(
       p: Int,
-      d: Int,
       q: Int,
-      diffedY: Array[Double],
+      y: Array[Double],
       includeIntercept: Boolean): Array[Double] = {
     val addToLag = 1
-    val m = math.max(p, q) + addToLag // m > max(p, q)
+    // m > max(p, q) for higher order requirement
+    val m = math.max(p, q) + addToLag
     // higher order AR(m) model
-    val arModel = Autoregression.fitModel(new DenseVector(diffedY), m)
-    val arTerms1 = Lag.lagMatTrimBoth(diffedY, m, includeOriginal = false)
-    val yTrunc = diffedY.drop(m)
+    val arModel = Autoregression.fitModel(new DenseVector(y), m)
+    val arTerms1 = Lag.lagMatTrimBoth(y, m, includeOriginal = false)
+    val yTrunc = y.drop(m)
     val estimated = arTerms1.zip(
       Array.fill(yTrunc.length)(arModel.coefficients)
     ).map { case (v, b) => v.zip(b).map { case (yi, bi) => yi * bi }.sum + arModel.c }
@@ -237,7 +238,7 @@ object ARIMA {
 
   /**
    * Prints a message to stdout warning users about potential issues with lack of stationarity
-   * or invertibility, given parameters
+   * or invertibility, given AR and MA parameters, respectively
    * @param model
    */
   def warnStationarityAndInvertibility(model: ARIMAModel): Unit = {
@@ -312,13 +313,15 @@ class ARIMAModel(
    */
   def gradientlogLikelihoodCSSARMA(diffedY: Array[Double]): Array[Double] = {
     val n = diffedY.length
+    // fitted
     val yHat = new DenseVector(Array.fill(n)(0.0))
-    val yVec = new DenseVector(diffedY)
+    // reference values (i.e. gold standard)
+    val yRef = new DenseVector(diffedY)
     val maxLag = math.max(p, q)
     val intercept = if (hasIntercept) 1 else 0
     val maTerms = Array.fill(q)(0.0)
 
-    // gradient-related
+    // matrix of error derivatives at time t - 0, t - 1, ... t - q
     val dEdTheta = new DenseMatrix[Double](q + 1, coefficients.length)
     val gradient = new DenseVector(Array.fill(coefficients.length)(0.0))
 
@@ -333,8 +336,8 @@ class ARIMAModel(
 
     while (i < n) {
       j = 0
-      // initialize gradient values in each iteration to weighted average of
-      // prior error derivatives, using moving average coefficients
+      // initialize partial error derivatives in each iteration to weighted average of
+      // prior partial error derivatives, using moving average coefficients
       while (j < coefficients.length) {
         k = 0
         while (k < q) {
@@ -345,32 +348,32 @@ class ARIMAModel(
       }
       // intercept
       j = 0
-      yHat(i) = yHat(i) + intercept * coefficients(j)
+      yHat(i) += intercept * coefficients(j)
       dEdTheta(0, 0) -= intercept
 
       // autoregressive terms
       while (j < p && i - j - 1 >= 0) {
-        yHat(i) = yHat(i) + yVec(i - j - 1) * coefficients(intercept + j)
-        dEdTheta(0, intercept + j) -= yVec(i - j - 1)
+        yHat(i) += yRef(i - j - 1) * coefficients(intercept + j)
+        dEdTheta(0, intercept + j) -= yRef(i - j - 1)
         j += 1
       }
 
       // moving average terms
       j = 0
       while (j < q) {
-        yHat(i) = yHat(i) + maTerms(j) * coefficients(intercept + p + j)
+        yHat(i) += maTerms(j) * coefficients(intercept + p + j)
         dEdTheta(0, intercept + p + j) -= maTerms(j)
         j += 1
       }
 
-      error =  yVec(i) - yHat(i)
+      error = yRef(i) - yHat(i)
       sigma2 += math.pow(error, 2) / n
       updateMAErrors(maTerms, error)
       // update gradient
       gradient :+= (dEdTheta(0, ::) * error).t
       // shift back error derivatives to make room for next period
       dEdTheta(1 to -1, ::) := dEdTheta(0 to -2, ::)
-      // reset latest derivatives to 0
+      // reset latest partial error derivatives to 0
       dEdTheta(0, ::) := 0.0
       i += 1
     }
@@ -400,12 +403,12 @@ class ARIMAModel(
 
   /**
    * Perform operations with the AR and MA terms, based on the time series `ts` and the errors
-   * based off of `goldStandard` or `errors`, combined with elements from the series  `dest`.
+   * based off of `goldStandard` or `errors`, combined with elements from the series `dest`.
    * Weights for terms are taken from the current model configuration.
    * So for example: iterateARMA(series1, series_of_zeros,  _ + _ , goldStandard = series1,
    * initErrors = null)
-   * calculates the 1-step ahead forecasts for series1 assuming current coefficients, and initial
-   * MA errors of 0.
+   * calculates the 1-step ahead ARMA forecasts for series1 assuming current coefficients, and
+   * initial MA errors of 0.
    * @param ts Time series to use for AR terms
    * @param dest Time series holding initial values at each index
    * @param op Operation to perform between values in dest, and various combinations of ts, errors
@@ -420,7 +423,7 @@ class ARIMAModel(
    * @param initMATerms Initialization for first q terms of moving average. If none provided (i.e.
    *                    remains null, as per default), then initializes to all zeros
    * @return the time series resulting from the interaction of the parameters with the model's
-   *         coefficients.
+   *         coefficients
    */
   private def iterateARMA(
       ts: Vector[Double],
@@ -432,7 +435,8 @@ class ARIMAModel(
     require(goldStandard != null || errors != null, "goldStandard or errors must be passed in")
     val maTerms = if (initMATerms == null) Array.fill(q)(0.0) else initMATerms
     val intercept = if (hasIntercept) 1 else 0
-    var i = math.max(p, q) // maximum lag
+    // maximum lag
+    var i = math.max(p, q)
     var j = 0
     val n = ts.length
     var error = 0.0
@@ -463,7 +467,8 @@ class ARIMAModel(
   /**
    * Given a timeseries, assume that it is the result of an ARIMA(p, d, q) process, and apply
    * inverse operations to obtain the original series of underlying errors.
-   * To do so, we assume prior MA terms are 0.0, and prior AR are equal to the model's intercept
+   * To do so, we assume prior MA terms are 0.0, and prior AR are equal to the model's intercept or
+   * 0.0 if fit without an intercept
    * @param ts Time series of observations with this model's characteristics.
    * @param destTs
    * @return The dest series, representing remaining errors, for convenience.
@@ -485,7 +490,8 @@ class ARIMAModel(
 
   /**
    * Given a timeseries, apply an ARIMA(p, d, q) model to it.
-   * We assume that prior MA terms are 0.0 and prior AR terms are equal to the intercept
+   * We assume that prior MA terms are 0.0 and prior AR terms are equal to the intercept or 0.0 if
+   * fit without an intercept
    * @param ts Time series of i.i.d. observations.
    * @param destTs
    * @return The dest series, representing the application of the model to provided error
@@ -500,7 +506,7 @@ class ARIMAModel(
     // ts corresponded to errors, and we want to use them
     val errorsProvided = changes.copy
     iterateARMA(changes, changes, _ + _, errors = errorsProvided)
-    // perform any inverse differencing required
+    // drop assumed AR terms at start and perform any inverse differencing required
     destTs := inverseDifferencesOfOrderD(changes(maxLag to -1), d)
     destTs
   }
@@ -518,12 +524,12 @@ class ARIMAModel(
   /**
    * Provided fitted values for timeseries ts as 1-step ahead forecasts, based on current
    * model parameters, and then provide `nFuture` periods of forecast. We assume AR terms
-   * prior to the start of the series are equal to the model's intercept term. Meanwhile, MA
-   * terms prior to the start are assumed to be 0.0. If there is differencing,
-   * the first d terms come from the original series.
+   * prior to the start of the series are equal to the model's intercept term (or 0.0, if fit
+   * without and intercept term).Meanwhile, MA terms prior to the start are assumed to be 0.0. If
+   * there is differencing, the first d terms come from the original series.
    * @param ts Timeseries to use as gold-standard. Each value (i) in the returning series
    *           is a 1-step ahead forecast of ts(i). We use the difference between ts(i) -
-   *           estimated(i) to calculate the error at time i, which is used for the moving
+   *           estimate(i) to calculate the error at time i, which is used for the moving
    *           average terms.
    * @param nFuture Periods in the future to forecast (beyond length of ts)
    * @return a series consisting of fitted 1-step ahead forecasts for historicals and then
@@ -557,7 +563,7 @@ class ARIMAModel(
     iterateARMA(forward, forward, _ + _, goldStandard = forward, initMATerms = maTerms)
 
     val results = new DenseVector(Array.fill(ts.length + nFuture)(0.0))
-    // copy over first d terms
+    // copy over first d terms, since we have no corresponding differences for these
     results(0 until d) := ts(0 until d)
     // copy over historicals, drop first maxLag terms (our assumed AR terms)
     results(d until d + histLen - maxLag) := hist(maxLag to -1)
@@ -571,7 +577,7 @@ class ARIMAModel(
       // we need to create 1-step ahead forecasts for the integrated series for fitted values
       // by backing through the d-order differences
       // create and fill a matrix of the changes of order i = 0 through d
-      val diffMatrix = new DenseMatrix[Double](1 + d, ts.length)
+      val diffMatrix = new DenseMatrix[Double](d + 1, ts.length)
       diffMatrix(0, ::) := ts.t
 
       for (i <- 1 to d) {
@@ -585,14 +591,14 @@ class ARIMAModel(
       for (i <- d until histLen - maxLag) {
         // Add the fitted change value to elements at time i - 1 and of difference order < d
         // e.g. if d = 2, then we modeled value at i = 3 as (y_3 - y_2) - (y_2 - y_1), so we add
-        // y_2 - y_1 (which is at diffMatrix(1, 2)) and y_2 (which is at diffMatrix(0, 2) to get
-        // y_3
+        // to it y_2 - y_1 (which is at diffMatrix(1, 2)) and y_2 (which is at diffMatrix(0, 2) to
+        // get an estimate for y_3
         results(i) = sum(diffMatrix(0 until d, i - 1)) + hist(maxLag + i)
       }
-      // for forecasts, drop first maxLag terms, which are repeated
-      // Then take diagonal of last d terms, of order < d,
-      // so that we can inverse differencing appropriately
+      // Take diagonal of last d terms, of order < d,
+      // so that we can inverse differencing appropriately with future values
       val prevTermsForForwardInverse = diag(diffMatrix(0 until d, -d to -1))
+      // for forecasts, drop first maxLag terms
       val forwardIntegrated = inverseDifferencesOfOrderD(
         DenseVector.vertcat(prevTermsForForwardInverse, forward(maxLag to -1)),
         d
@@ -604,8 +610,8 @@ class ARIMAModel(
   }
 
   /**
-   * Check if the AR parameters result in stationary model. This is done by obtaining the roots
-   * to the polynomial 1 - phi_1*x - phi_2*x^2 - ... - phi_p*x^p = 0, where phi_i is the
+   * Check if the AR parameters result in a stationary model. This is done by obtaining the roots
+   * to the polynomial 1 - phi_1 * x - phi_2 * x^2 - ... - phi_p * x^p = 0, where phi_i is the
    * corresponding AR parameter. Note that we check the roots, not the inverse of the roots, so
    * we check that they lie outside of the unit circle.
    * Always returns true for models with no AR terms.
@@ -619,13 +625,13 @@ class ARIMAModel(
     } else {
       val offset = if (hasIntercept) 1 else 0
       val poly = Array(1.0) ++ coefficients.slice(offset, offset + p).map(-1 * _)
-      allRootsOutsidenUnitCircle(poly)
+      allRootsOutsideUnitCircle(poly)
     }
   }
 
   /**
    * Checks if MA parameters result in an invertible model. Checks this by solving the roots for
-   * 1 + theta_1 * x + theta_2 * x + ... + theta_q * x ^ q = 0. Please see
+   * 1 + theta_1 * x + theta_2 * x + ... + theta_q * x^q = 0. Please see
    * [[com.cloudera.sparkts.ARIMAModel.isStationary]] for more details.
    * Always returns true for models with no MA terms.
    * @return indicator of whether model's MA parameters are invertible
@@ -636,7 +642,7 @@ class ARIMAModel(
     } else {
       val offset = if (hasIntercept) 1 else 0
       val poly = Array(1.0) ++ coefficients.drop(offset + p)
-      allRootsOutsidenUnitCircle(poly)
+      allRootsOutsideUnitCircle(poly)
     }
   }
 
@@ -646,9 +652,10 @@ class ARIMAModel(
    * @param poly the coefficients of the polynomial of order `poly.length`
    * @return boolean indicating whether all roots are outside unit circle
    */
-  private def allRootsOutsidenUnitCircle(poly: Array[Double]): Boolean = {
+  private def allRootsOutsideUnitCircle(poly: Array[Double]): Boolean = {
     val solver = new LaguerreSolver()
-    val initGuess = 0.0 // TODO: make smarter
+    // TODO: make smarter
+    val initGuess = 0.0
     val roots = solver.solveAllComplex(poly, initGuess)
     !roots.exists(_.abs() <= 1.0)
   }
