@@ -83,7 +83,8 @@ object ARIMA {
     val diffedTs = differencesOfOrderD(ts, d).toArray.drop(d)
 
     if (p > 0 && q == 0) {
-      val arModel = Autoregression.fitModel(new DenseVector(diffedTs), p)
+      // AR model takes a flag for no intercept, so pass accordingly
+      val arModel = Autoregression.fitModel(new DenseVector(diffedTs), p, !includeIntercept)
       val intercept = if (includeIntercept) Array(arModel.c) else Array[Double]()
       val params = intercept ++ arModel.coefficients
       return new ARIMAModel(p, d, q, params, includeIntercept)
