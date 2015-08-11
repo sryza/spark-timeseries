@@ -25,6 +25,7 @@ import com.cloudera.sparkts.DateTimeIndex._
 import com.github.nscala_time.time.Imports._
 
 import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.mllib.linalg.distributed.IndexedRow
 
 import org.scalatest.{FunSuite, ShouldMatchers}
 
@@ -106,5 +107,40 @@ class TimeSeriesRDDSuite extends FunSuite with LocalSparkContext with ShouldMatc
       new File(path).listFiles().foreach(_.delete())
       new File(path).delete()
     }
+  }
+
+  test("toIndexedRowMatrix") {
+    val conf = new SparkConf().setMaster("local").setAppName(getClass.getName)
+    TimeSeriesKryoRegistrator.registerKryoClasses(conf)
+    sc = new SparkContext(conf)
+    val seriesVecs = (0 until 20 by 4).map(
+      x => new DenseVector((x until x + 4).map(_.toDouble).toArray))
+    val labels = Array("a", "b", "c", "d", "e")
+    val start = new DateTime("2015-4-9")
+    val index = uniform(start, 4, 1.days)
+    val rdd = sc.parallelize(labels.zip(seriesVecs.map(_.asInstanceOf[Vector[Double]])), 3)
+    val tsRdd = new TimeSeriesRDD(index, rdd)
+    val indexedMatrix = tsRdd.toIndexedRowMatrix()
+    val (rowIndices, rowData) = indexedMatrix.rows.collect().map { case IndexedRow(ix, data) =>
+      (ix, data.toArray)
+    }.unzip
+    rowData.toArray should be ((0.0 to 3.0 by 1.0).map(x => (x until 20.0 by 4.0).toArray).toArray)
+    rowIndices.toArray should be (Array(0, 1, 2, 3))
+  }
+
+  test("toRowMatrix") {
+    val conf = new SparkConf().setMaster("local").setAppName(getClass.getName)
+    TimeSeriesKryoRegistrator.registerKryoClasses(conf)
+    sc = new SparkContext(conf)
+    val seriesVecs = (0 until 20 by 4).map(
+      x => new DenseVector((x until x + 4).map(_.toDouble).toArray))
+    val labels = Array("a", "b", "c", "d", "e")
+    val start = new DateTime("2015-4-9")
+    val index = uniform(start, 4, 1.days)
+    val rdd = sc.parallelize(labels.zip(seriesVecs.map(_.asInstanceOf[Vector[Double]])), 3)
+    val tsRdd = new TimeSeriesRDD(index, rdd)
+    val matrix = tsRdd.toRowMatrix()
+    val rowData = matrix.rows.collect().map(_.toArray)
+    rowData.toArray should be ((0.0 to 3.0 by 1.0).map(x => (x until 20.0 by 4.0).toArray).toArray)
   }
 }
