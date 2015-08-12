@@ -20,7 +20,6 @@ import com.cloudera.sparkts.TimeSeries._
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 
 import org.json4s._
-import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 
 object QuandlParser extends CSVParser with JSONParser {
@@ -28,11 +27,18 @@ object QuandlParser extends CSVParser with JSONParser {
     DateTimeFormat.forPattern("yyyy-MM-dd")
 
   override def jsonStringToTimeSeries(s: String): TimeSeries = {
+    implicit lazy val formats = org.json4s.DefaultFormats
     val json = parse(s)
 
     val labels = (json \ "column_names" \ classOf[JString]).map( cn => cn.toString ) toArray
-    val data = (json \ "data") values // org.json4s.JsonAST.JValue#Values = List(List(..), ..)
+    val data = (json \ "data").extract[List[List[Object]]]
 
-    csvStringToTimeSeries(s)
+    val samples = data.tail.map { quote =>
+      val dt = dateTimeFormatter.parseDateTime(quote.head.toString())
+
+      (dt, quote.drop(1).map(n => parseDouble(n.toString())) toArray)
+    }.reverse
+
+    timeSeriesFromSamples(samples, labels)
   }
 }

@@ -15,6 +15,7 @@
 
 package com.cloudera.finance.parsers
 
+import org.json4s.jackson.JsonMethods._
 import org.scalatest.{FunSuite, ShouldMatchers}
 
 class JSONParserSuite extends FunSuite with ShouldMatchers {
@@ -22,8 +23,13 @@ class JSONParserSuite extends FunSuite with ShouldMatchers {
     val is = getClass.getClassLoader.getResourceAsStream("WIKI-DATA.json")
     val lines = scala.io.Source.fromInputStream(is).getLines().toArray
     val s = lines.mkString("\n")
-    val ts = QuandlParser.jsonStringToTimeSeries(text)
 
-    ts.data.rows should be (lines.length - 1)
+    // need to parse out a count for the test
+    implicit lazy val formats = org.json4s.DefaultFormats
+    val count = (parse(s) \ "data").extract[List[List[Object]]].length
+
+    val ts = QuandlParser.jsonStringToTimeSeries(s)
+
+    ts.data.rows should be (count)
   }
 }
