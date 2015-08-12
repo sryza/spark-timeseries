@@ -23,9 +23,9 @@ import scala.collection.mutable.ArrayBuffer
 
 import breeze.linalg._
 
-import org.apache.spark.SparkContext._
-import org.apache.spark.{SparkContext, Partition, Partitioner, TaskContext}
+import org.apache.spark.{Partition, Partitioner, TaskContext}
 import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.functions._
 import org.apache.spark.util.StatCounter
 
 import org.joda.time.DateTime
@@ -279,6 +279,7 @@ class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double
 
   def toInstantsDataFrame(sqlContext: SQLContext, nPartitions: Int = -1): DataFrame = {
     val instantsRDD = this.toInstants(nPartitions)
+    val vectorLength = this.first()._2.length
 
     import sqlContext.implicits._
 
@@ -287,10 +288,15 @@ class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double
 
       (timestamp, v.toArray)
     }.toDF()
-    
-    //result.printSchema()
 
-    result
+    val dataColExpr: Seq[String] = for (i <- 0 to vectorLength) yield s"_2[$i] AS v$i"
+
+    //val instantsDF = result.selectExpr("_1 AS instant", "_2[0] AS v0")
+    val instantsDF = result.selectExpr(dataColExpr)
+
+    instantsDF.show(5)
+
+    instantsDF
   }
 
   def compute(split: Partition, context: TaskContext): Iterator[(String, Vector[Double])] = {
