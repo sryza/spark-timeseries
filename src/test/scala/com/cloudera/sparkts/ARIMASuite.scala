@@ -17,12 +17,14 @@ package com.cloudera.sparkts
 
 import breeze.linalg._
 
-import com.cloudera.sparkts.UnivariateTimeSeries.differencesOfOrderD
+import com.cloudera.sparkts.UnivariateTimeSeries.{differencesOfOrderD, inverseDifferencesOfOrderD}
 
 import org.apache.commons.math3.random.MersenneTwister
 
 import org.scalatest.FunSuite
 import org.scalatest.Matchers._
+
+import scala.util.Try
 
 class ARIMASuite extends FunSuite {
   test("compare with R") {
@@ -165,5 +167,43 @@ class ARIMASuite extends FunSuite {
     val model4 = new ARIMAModel(1, 0, 1, Array(-0.09341,  0.857361, -0.300821), hasIntercept = true)
     model4.isStationary() should be (true)
     model4.isInvertible() should be (true)
+  }
+
+  test("Auto fitting ARIMA models") {
+    val model1 = new ARIMAModel(2, 0, 0, Array(2.5, 0.4, 0.3), hasIntercept = true)
+    val rand = new MersenneTwister(10L)
+    val sampled = model1.sample(250, rand)
+
+    // a series with a high integration order
+    val highI = inverseDifferencesOfOrderD(sampled, 5)
+
+    // auto fitting without increasing the maxD parameter should result in a failure
+    val failsOnHighIntegrationOrder = ARIMA.autoFit(highI).isFailure
+    failsOnHighIntegrationOrder should be (true)
+
+    // but should work if we increase the differencing order limit
+    val works = ARIMA.autoFit(highI, maxD = 10).isSuccess
+    works should be (true)
+
+    // the fitted model should have the lowest approximate AIC in the space searched
+    // will check the +/-1 area around the best model
+    val fitted = ARIMA.autoFit(sampled).get
+    val (fittedP, fittedD, fittedQ) = (fitted.p, fitted.d, fitted.q)
+    val addIntercept = fitted.hasIntercept
+    val deltas = List(-1, 0, 1)
+    val nearbySpace = for (p <- deltas.map(_ + fittedP); q <- deltas.map(_ + fittedQ)) yield {
+      (p,fittedD, q)
+    }
+    val nearbyModels = nearbySpace.map { case (p, d, q) =>
+      val model = Try(ARIMA.fitModel(p, d, q, sampled, addIntercept))
+      if (model.isFailure) {
+        ARIMA.fitModel(p, d, q, sampled, addIntercept, method = "css-bobyqa")
+      } else {
+        model.get
+      }
+    }.filter(m => m.isInvertible() && m.isStationary())
+    val nearbyApproxAICs = nearbyModels.map(_.approxAIC(sampled))
+    val currAIC = fitted.approxAIC(sampled)
+    nearbyApproxAICs.exists(_ < currAIC) should be (false)
   }
 }
