@@ -290,11 +290,9 @@ class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double
     }.toDF()
 
     val dataColExpr: Seq[String] = for (i <- 0 to vectorLength) yield s"_2[$i] AS v$i"
+    val allColsExpr = "_1 AS instant" +: dataColExpr
 
-    //val instantsDF = result.selectExpr("_1 AS instant", "_2[0] AS v0")
-    val instantsDF = result.selectExpr(dataColExpr)
-
-    instantsDF.show(5)
+    val instantsDF = result.selectExpr(allColsExpr:_*)
 
     instantsDF
   }
