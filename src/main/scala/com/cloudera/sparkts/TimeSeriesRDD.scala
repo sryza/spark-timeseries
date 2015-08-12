@@ -15,6 +15,8 @@
 
 package com.cloudera.sparkts
 
+import java.sql.Timestamp
+
 import org.apache.spark.sql.{SQLContext, DataFrame}
 
 import scala.collection.mutable.ArrayBuffer
@@ -280,14 +282,15 @@ class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double
 
     import sqlContext.implicits._
 
-    /**
-     * TODO: This is going to blow up because SparkSQL and JodaTime don't play nicely together as of Spark 1.3
-     *
-     * So, the answer is going to be to either:
-     *   - Create a UDT
-     *   - Transform the DateTime aspect of the RDD to something else that is supported (via DateTime.getMillis)
-     */
-    instantsRDD.toDF()
+    val result = instantsRDD.map{ case (dt, v) =>
+      val timestamp: Timestamp = new Timestamp(dt.getMillis())
+
+      (timestamp, v.toArray)
+    }.toDF()
+    
+    //result.printSchema()
+
+    result
   }
 
   def compute(split: Partition, context: TaskContext): Iterator[(String, Vector[Double])] = {
