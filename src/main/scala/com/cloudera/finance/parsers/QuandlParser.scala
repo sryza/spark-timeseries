@@ -33,10 +33,10 @@ object QuandlParser extends CSVParser with JSONParser {
     val labels = (json \ "column_names" \ classOf[JString]).map( cn => cn.toString ) toArray
     val data = (json \ "data").extract[List[List[Object]]]
 
-    val samples = data.tail.map { quote =>
+    val samples = data.map { quote =>
       val dt = dateTimeFormatter.parseDateTime(quote.head.toString())
 
-      (dt, quote.drop(1).map(n => parseDouble(n.toString())) toArray)
+      (dt, quote.tail.map(n => parseDouble(n.toString())) toArray)
     }.reverse
 
     timeSeriesFromSamples(samples, labels)
