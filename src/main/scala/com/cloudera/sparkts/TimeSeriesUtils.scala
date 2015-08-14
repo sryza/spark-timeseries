@@ -93,7 +93,9 @@ private[sparkts] object TimeSeriesUtils {
     val startLoc = sourceIndex.locAtDateTime(targetIndex.first)
     val endLoc = sourceIndex.locAtDateTime(targetIndex.last) + 1
     if (startLoc >= 0 && endLoc <= vec.length) {
-      vec(startLoc until endLoc)
+      // v(x .. y) on Vector[T] returns SliceVector[Int,T], which
+      // doesn't inherit from serializable, so convert to DenseVector before returning
+      vec(startLoc until endLoc).toDenseVector
     } else {
       val resultVec = DenseVector.fill(endLoc - startLoc) { defaultValue }
       val safeStartLoc = math.max(startLoc, 0)
