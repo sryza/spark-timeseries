@@ -118,6 +118,30 @@ class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double
   }
 
   /**
+   * Takes the first N series in the TimeSeriesRDD and returns a new, reduced, TimeSeriesRDD.
+   * Works by creating an array of series to include and then checks for membership.
+   * @param n the number of series to take (first n taken) n >= 0
+   * @return reduced TimeSeriesRDD
+   */
+  def takeNSeries(n: Int): TimeSeriesRDD = {
+    require(n >= 0, "n cannot be negative")
+    val includeSeries = this.keys.take(n)
+    this.filter(x => includeSeries.contains(x._1))
+  }
+
+  /**
+   * Drops the first N series in the TimeSeriesRDD and returns a new, reduced, TimeSeriesRDD.
+   * Works by creating an array of series to exclude and then checks for membership.
+   * @param n the number of series to drop (first n dropped) n >= 0
+   * @return reduced TimeSeriesRDD
+   */
+  def dropNSeries(n: Int): TimeSeriesRDD = {
+    require(n >= 0, "n cannot be negative")
+    val excludeSeries = this.keys.take(n)
+    this.filter(x => !excludeSeries.contains(x._1))
+  }
+
+  /**
    * Fills in missing data (NaNs) in each series according to a given imputation method.
    *
    * @param method "linear", "nearest", "next", or "previous"
