@@ -18,9 +18,9 @@ package com.cloudera.finance.parsers
 import com.cloudera.sparkts.TimeSeries
 import com.cloudera.sparkts.TimeSeries._
 
-trait CSVParser extends Parser {
+trait TimestampedCSVParser extends Parser {
   private val UTF8_BOM: String = "\uFEFF"
-  
+
   def csvStringToTimeSeries(text: String, keyPrefix: String = ""): TimeSeries = {
     val lines = stripUTF8BOM(text).split('\n')
     val labels = lines(0).split(',').tail.map(keyPrefix + _)

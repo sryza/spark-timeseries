@@ -17,7 +17,7 @@ package com.cloudera.finance.parsers
 
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 
-object GoogleParser extends CSVParser {
+object GoogleParser extends TimestampedCSVParser {
   override protected val dateTimeFormatter: DateTimeFormatter =
     DateTimeFormat.forPattern("d-MMM-yy")
 }

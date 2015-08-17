@@ -21,7 +21,7 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 
-object YahooParser extends CSVParser {
+object YahooParser extends TimestampedCSVParser {
   override protected val dateTimeFormatter: DateTimeFormatter =
     DateTimeFormat.forPattern("yyyy-MM-dd")
 
