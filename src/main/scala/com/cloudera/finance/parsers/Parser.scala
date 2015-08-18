@@ -8,5 +8,11 @@ trait Parser {
   protected val dateTimeFormatter: DateTimeFormatter
 
   // if we're missing or have bad data, use Double.NaN
-  protected def parseDouble(s: String): Double = try { s.toDouble } catch { case NonFatal(_) => Double.NaN }
+  protected def parseDouble(s: String): Double = {
+    try {
+      s.toDouble
+    } catch {
+      case NonFatal(_) => Double.NaN
+    }
+  }
 }
