@@ -111,7 +111,7 @@ class UniformDateTimeIndex(val start: Long, val periods: Int, val frequency: Fre
    * {@inheritDoc}
    */
   override def slice(lower: Int, upper: Int): UniformDateTimeIndex = {
-    uniform(frequency.advance(new DateTime(first), lower), upper - lower, frequency)
+    uniform(frequency.advance(new DateTime(first), lower), upper - lower + 1, frequency)
   }
 
   /**
