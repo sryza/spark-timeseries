@@ -39,8 +39,8 @@ object SimpleTickDataExample {
     seriesByFile.cache()
 
     // Merge the series from individual files into a TimeSeriesRDD
-    val start = seriesByFile.map(_.index.first).takeOrdered(1).head
-    val end = seriesByFile.map(_.index.last).top(1).head
+    val start = seriesByFile.map(_.index.first()).takeOrdered(1).head
+    val end = seriesByFile.map(_.index.last()).top(1).head
     val dtIndex = uniform(start, end, 1.businessDays)
     val tsRdd = timeSeriesRDD(dtIndex, seriesByFile)
     println(s"Num time series: ${tsRdd.count()}")

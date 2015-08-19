@@ -67,18 +67,17 @@ private[sparkts] object TimeSeriesUtils {
       targetIndex: DateTimeIndex,
       vec: Vector[Double],
       defaultValue: Double): Vector[Double] = {
-    if (targetIndex.isInstanceOf[UniformDateTimeIndex]) {
-      if (sourceIndex.isInstanceOf[UniformDateTimeIndex]) {
-        rebaseWithUniformSource(sourceIndex.asInstanceOf[UniformDateTimeIndex],
-          targetIndex.asInstanceOf[UniformDateTimeIndex], vec, defaultValue)
-      } else if (sourceIndex.isInstanceOf[IrregularDateTimeIndex]) {
-        rebaseWithIrregularSource(sourceIndex.asInstanceOf[IrregularDateTimeIndex],
-          targetIndex.asInstanceOf[UniformDateTimeIndex], vec, defaultValue)
-      } else {
-        throw new UnsupportedOperationException("Unrecognized source index type")
-      }
-    } else {
-      throw new UnsupportedOperationException("Only uniform target indices are supported")
+    targetIndex match {
+      case targetUDTI: UniformDateTimeIndex => sourceIndex match {
+        case sourceUDTI: UniformDateTimeIndex =>
+          rebaseWithUniformSource(sourceUDTI, targetUDTI, vec, defaultValue)
+        case sourceIDTI: IrregularDateTimeIndex =>
+          rebaseWithIrregularSource(sourceIDTI, targetUDTI, vec, defaultValue)
+        case _ =>
+          throw new scala.UnsupportedOperationException("Unrecognized source index type")
+        }
+      case _ =>
+        throw new scala.UnsupportedOperationException("Only uniform target indices are supported")
     }
   }
 
@@ -90,8 +89,8 @@ private[sparkts] object TimeSeriesUtils {
       targetIndex: UniformDateTimeIndex,
       vec: Vector[Double],
       defaultValue: Double): Vector[Double] = {
-    val startLoc = sourceIndex.locAtDateTime(targetIndex.first)
-    val endLoc = sourceIndex.locAtDateTime(targetIndex.last) + 1
+    val startLoc = sourceIndex.locAtDateTime(targetIndex.first())
+    val endLoc = sourceIndex.locAtDateTime(targetIndex.last()) + 1
     if (startLoc >= 0 && endLoc <= vec.length) {
       vec(startLoc until endLoc)
     } else {
@@ -113,14 +112,14 @@ private[sparkts] object TimeSeriesUtils {
       targetIndex: UniformDateTimeIndex,
       vec: Vector[Double],
       defaultValue: Double): Vector[Double] = {
-    val startLoc = -targetIndex.locAtDateTime(sourceIndex.first)
+    val startLoc = -targetIndex.locAtDateTime(sourceIndex.first())
     val startLocInSourceVec = math.max(0, startLoc)
     val dtsRelevant = sourceIndex.instants.iterator.drop(startLocInSourceVec).map(new DateTime(_))
     val vecRelevant = vec(startLocInSourceVec until vec.length).valuesIterator
     val iter = iterateWithUniformFrequency(dtsRelevant.zip(vecRelevant), targetIndex.frequency,
       defaultValue)
 
-    val resultArr = new Array[Double](targetIndex.size)
+    val resultArr = new Array[Double](targetIndex.size())
     for (i <- 0 until targetIndex.size) {
       // Add leading or trailing NaNs if target index starts earlier than source index or ends
       // after the source index
@@ -128,7 +127,7 @@ private[sparkts] object TimeSeriesUtils {
         defaultValue
       } else {
         assert(iter.hasNext)
-        iter.next._2
+        iter.next()._2
       }
     }
     new DenseVector(resultArr)
@@ -149,7 +148,7 @@ private[sparkts] object TimeSeriesUtils {
 
   def samplesToTimeSeries(samples: Iterator[(DateTime, Double)], index: UniformDateTimeIndex)
     : (DenseVector[Double]) = {
-    val arr = new Array[Double](index.size)
+    val arr = new Array[Double](index.size())
     val iter = iterateWithUniformFrequency(samples, index.frequency)
     var i = 0
     while (i < arr.length) {

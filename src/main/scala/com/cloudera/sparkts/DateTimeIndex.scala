@@ -15,9 +15,11 @@
 
 package com.cloudera.sparkts
 
+import scala.language.implicitConversions
+
 import com.github.nscala_time.time.Imports._
 
-import DateTimeIndex._
+import com.cloudera.sparkts.DateTimeIndex._
 
 /**
  * A DateTimeIndex maintains a bi-directional mapping between integers and an ordered collection of
@@ -78,52 +80,28 @@ trait DateTimeIndex extends Serializable {
 class UniformDateTimeIndex(val start: Long, val periods: Int, val frequency: Frequency)
   extends DateTimeIndex {
 
-  /**
-   * {@inheritDoc}
-   */
   override def first(): DateTime = new DateTime(start)
 
-  /**
-   * {@inheritDoc}
-   */
-  override def last(): DateTime = frequency.advance(new DateTime(first), periods - 1)
+  override def last(): DateTime = frequency.advance(new DateTime(first()), periods - 1)
 
-  /**
-   * {@inheritDoc}
-   */
-  override def size: Int = periods
+  override def size(): Int = periods
 
-  /**
-   * {@inheritDoc}
-   */
   override def slice(start: DateTime, end: DateTime): UniformDateTimeIndex = {
     uniform(start, frequency.difference(start, end) + 1, frequency)
   }
 
-  /**
-   * {@inheritDoc}
-   */
   override def slice(range: Range): UniformDateTimeIndex = {
     slice(range.head, range.last)
   }
 
-  /**
-   * {@inheritDoc}
-   */
   override def slice(lower: Int, upper: Int): UniformDateTimeIndex = {
-    uniform(frequency.advance(new DateTime(first), lower), upper - lower + 1, frequency)
+    uniform(frequency.advance(new DateTime(first()), lower), upper - lower + 1, frequency)
   }
 
-  /**
-   * {@inheritDoc}
-   */
-  override def dateTimeAtLoc(loc: Int): DateTime = frequency.advance(new DateTime(first), loc)
+  override def dateTimeAtLoc(loc: Int): DateTime = frequency.advance(new DateTime(first()), loc)
 
-  /**
-   * {@inheritDoc}
-   */
   override def locAtDateTime(dt: DateTime): Int = {
-    val loc = frequency.difference(new DateTime(first), dt)
+    val loc = frequency.difference(new DateTime(first()), dt)
     if (dateTimeAtLoc(loc) == dt) {
       loc
     } else {
@@ -142,50 +120,26 @@ class UniformDateTimeIndex(val start: Long, val periods: Int, val frequency: Fre
  * Lookups or slicing by date-time are O(log n) operations..
  */
 class IrregularDateTimeIndex(val instants: Array[Long]) extends DateTimeIndex {
-  /**
-   * {@inheritDoc}
-   */
   override def slice(start: DateTime, end: DateTime): IrregularDateTimeIndex = {
     throw new UnsupportedOperationException()
   }
 
-  /**
-   * {@inheritDoc}
-   */
   override def slice(range: Range): IrregularDateTimeIndex = {
     throw new UnsupportedOperationException()
   }
 
-  /**
-   * {@inheritDoc}
-   */
   override def slice(start: Int, end: Int): IrregularDateTimeIndex = {
     throw new UnsupportedOperationException()
   }
 
-  /**
-   * {@inheritDoc}
-   */
   override def first(): DateTime = new DateTime(instants(0))
 
-  /**
-   * {@inheritDoc}
-   */
   override def last(): DateTime = new DateTime(instants(instants.length - 1))
 
-  /**
-   * {@inheritDoc}
-   */
   override def size(): Int = instants.length
 
-  /**
-   * {@inheritDoc}
-   */
   override def dateTimeAtLoc(loc: Int): DateTime = new DateTime(instants(loc))
 
-  /**
-   * {@inheritDoc}
-   */
   override def locAtDateTime(dt: DateTime): Int = {
     java.util.Arrays.binarySearch(instants, dt.getMillis)
   }

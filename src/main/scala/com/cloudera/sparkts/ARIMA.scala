@@ -98,12 +98,8 @@ object ARIMA {
     }
 
     val params = method match {
-      case "css-bobyqa" => {
-        fitWithCSSBOBYQA(p, d, q, diffedTs, includeIntercept, initParams)
-      }
-      case "css-cgd" => {
-        fitWithCSSCGD( p, d, q, diffedTs, includeIntercept, initParams)
-      }
+      case "css-bobyqa" => fitWithCSSBOBYQA(p, d, q, diffedTs, includeIntercept, initParams)
+      case "css-cgd" => fitWithCSSCGD( p, d, q, diffedTs, includeIntercept, initParams)
       case _ => throw new UnsupportedOperationException()
     }
 
@@ -225,7 +221,7 @@ object ARIMA {
       Array.fill(yTrunc.length)(arModel.coefficients)
     ).map { case (v, b) => v.zip(b).map { case (yi, bi) => yi * bi }.sum + arModel.c }
     // errors estimated from AR(m)
-    val errors = yTrunc.zip(estimated).map { case (y, yhat) => y - yhat }
+    val errors = yTrunc.zip(estimated).map { case (yi, yihat) => yi - yihat }
     // secondary regression, regresses X_t on AR and MA terms
     val arTerms2 = Lag.lagMatTrimBoth(yTrunc, p, includeOriginal = false).drop(math.max(q - p, 0))
     val errorTerms = Lag.lagMatTrimBoth(errors, q, includeOriginal = false).drop(math.max(p - q, 0))
@@ -240,7 +236,6 @@ object ARIMA {
   /**
    * Prints a message to stdout warning users about potential issues with lack of stationarity
    * or invertibility, given AR and MA parameters, respectively
-   * @param model
    */
   def warnStationarityAndInvertibility(model: ARIMAModel): Unit = {
     if (!model.isStationary()) {
@@ -607,7 +602,6 @@ class ARIMAModel(
       // copy into results
       results(-(d + nFuture) to -1) := forwardIntegrated
     }
-    results
   }
 
   /**
@@ -632,7 +626,7 @@ class ARIMAModel(
 
   /**
    * Checks if MA parameters result in an invertible model. Checks this by solving the roots for
-   * 1 + theta_1 * x + theta_2 * x + ... + theta_q * x^q = 0. Please see
+   * 1 + theta_1 * x + theta_2 * x + ... + theta_q * x&#94;q = 0. Please see
    * [[com.cloudera.sparkts.ARIMAModel.isStationary]] for more details.
    * Always returns true for models with no MA terms.
    * @return indicator of whether model's MA parameters are invertible

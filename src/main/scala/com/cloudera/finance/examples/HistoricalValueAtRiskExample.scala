@@ -47,8 +47,8 @@ object HistoricalValueAtRiskExample {
     def loadTS(inputDir: String, lower: DateTime, upper: DateTime): TimeSeriesRDD = {
       val histories = YahooParser.yahooFiles(inputDir, sc)
       histories.cache()
-      val start = histories.map(_.index.first).takeOrdered(1).head
-      val end = histories.map(_.index.last).top(1).head
+      val start = histories.map(_.index.first()).takeOrdered(1).head
+      val end = histories.map(_.index.last()).top(1).head
       val dtIndex = uniform(start, end, 1.businessDays)
       val tsRdd = timeSeriesRDD(dtIndex, histories).
         filter(_._1.endsWith("csvClose")).
@@ -66,7 +66,7 @@ object HistoricalValueAtRiskExample {
     val factorReturns = loadTS(factorsDir, year2000, year2010).collectAsTimeSeries()
 
     // Fit an AR(1) + GARCH(1, 1) model to each factor
-    val garchModels = factorReturns.mapValues(ARGARCH.fitModel(_)).toMap
+    val garchModels = factorReturns.mapValues(ARGARCH.fitModel).toMap
     val iidFactorReturns = factorReturns.mapSeriesWithKey { case (symbol, series) =>
       val model = garchModels(symbol)
       model.removeTimeDependentEffects(series, DenseVector.zeros[Double](series.length))

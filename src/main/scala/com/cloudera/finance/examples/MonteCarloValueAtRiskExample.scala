@@ -17,14 +17,13 @@ package com.cloudera.finance.examples
 
 import com.cloudera.finance.Util._
 
-import com.cloudera.finance.{SerializableMultivariateNormalDistribution, YahooParser}
+import com.cloudera.finance.YahooParser
 import com.cloudera.sparkts.TimeSeriesRDD
 import com.cloudera.sparkts.DateTimeIndex._
 import com.cloudera.sparkts.TimeSeriesRDD._
 
 import com.github.nscala_time.time.Imports._
 
-import org.apache.commons.math3.stat.correlation.Covariance
 import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression
 
 import org.apache.spark.{SparkConf, SparkContext}
@@ -46,8 +45,8 @@ object MonteCarloValueAtRiskExample {
     def loadTS(inputDir: String, lower: DateTime, upper: DateTime): TimeSeriesRDD = {
       val histories = YahooParser.yahooFiles(instrumentsDir, sc)
       histories.cache()
-      val start = histories.map(_.index.first).takeOrdered(1).head
-      val end = histories.map(_.index.last).top(1).head
+      val start = histories.map(_.index.first()).takeOrdered(1).head
+      val end = histories.map(_.index.last()).top(1).head
       val dtIndex = uniform(start, end, 1.businessDays)
       val tsRdd = timeSeriesRDD(dtIndex, histories).
         filter(_._1.endsWith("Open")).

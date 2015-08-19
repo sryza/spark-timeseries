@@ -65,7 +65,7 @@ class TimeSeriesStatisticalTestsSuite extends FunSuite with ShouldMatchers {
     val err1 = Array.fill(n)(rand.nextGaussian)
     // heteroskedastic residuals with alternating variance of 1 and 4
     val varFactor = 2
-    val err2 = err1.zipWithIndex.map { case (x, i) =>  if(i % 2 == 0) x * varFactor else x }
+    val err2 = err1.zipWithIndex.map { case (xi, i) =>  if (i % 2 == 0) xi * varFactor else xi }
 
     // generate dependent variables
     val y1 = x.zip(err1).map { case (xi, ei) => xi + ei + 1 }
@@ -93,13 +93,13 @@ class TimeSeriesStatisticalTestsSuite extends FunSuite with ShouldMatchers {
     val indep = Array.fill(n)(rand.nextGaussian)
     val vecIndep = new DenseVector(indep)
     val (stat1, pval1) = lbtest(vecIndep, 1)
-    pval1 > 0.05
+    pval1 should be > 0.05
 
     // serially correlated
     val coef = 0.3
     val dep = indep.scanLeft(0.0) { case (prior, curr) => prior * coef + curr }.tail
     val vecDep = new DenseVector(dep)
     val (stat2, pval2) = lbtest(vecDep, 2)
-    pval2 < 0.05
+    pval2 should be < 0.05
   }
 }

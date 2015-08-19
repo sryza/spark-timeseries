@@ -103,9 +103,9 @@ class TimeSeries(val index: DateTimeIndex, val data: DenseMatrix[Double],
    * with each series.
    */
   def mapSeriesWithKey(f: (String, Vector[Double]) => Vector[Double]): TimeSeries = {
-    val newData = new DenseMatrix[Double](index.size, data.cols)
-    univariateKeyAndSeriesIterator().zipWithIndex.foreach { case ((key, series), index) =>
-      newData(::, index) := f(key, series)
+    val newData = new DenseMatrix[Double](index.size(), data.cols)
+    univariateKeyAndSeriesIterator().zipWithIndex.foreach { case ((key, series), i) =>
+      newData(::, i) := f(key, series)
     }
     new TimeSeries(index, newData, keys)
   }
@@ -115,10 +115,10 @@ class TimeSeries(val index: DateTimeIndex, val data: DenseMatrix[Double],
    * time index.
    */
   def mapSeries(newIndex: DateTimeIndex, f: (Vector[Double]) => Vector[Double]): TimeSeries = {
-    val newSize = newIndex.size
+    val newSize = newIndex.size()
     val newData = new DenseMatrix[Double](newSize, data.cols)
-    univariateSeriesIterator().zipWithIndex.foreach { case (vec, index) =>
-      newData(::, index) := f(vec)
+    univariateSeriesIterator().zipWithIndex.foreach { case (vec, i) =>
+      newData(::, i) := f(vec)
     }
     new TimeSeries(newIndex, newData, keys)
   }
@@ -130,7 +130,7 @@ class TimeSeries(val index: DateTimeIndex, val data: DenseMatrix[Double],
   /**
    * Gets the first univariate series and its key.
    */
-  def head(): (String, Vector[Double]) = univariateKeyAndSeriesIterator().next
+  def head(): (String, Vector[Double]) = univariateKeyAndSeriesIterator().next()
 }
 
 object TimeSeries {
@@ -138,7 +138,7 @@ object TimeSeries {
     : TimeSeries = {
     val mat = new DenseMatrix[Double](samples.length, samples.head._2.length)
     val dts = new Array[Long](samples.length)
-    for (i <- 0 until samples.length) {
+    for (i <- samples.indices) {
       val (dt, values) = samples(i)
       dts(i) = dt.getMillis
       mat(i to i, ::) := new DenseVector[Double](values)
