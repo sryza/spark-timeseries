@@ -323,8 +323,8 @@ object TimeSeriesStatisticalTests {
    * Testing the null hypothesis of stationarity against the alternative of a unit root.
    * Journal of Econometrics, 159-178.
    */
-  private val kpssConstantCriticalValues = ListMap(0.10 -> 0.347, 0.05 -> 0.463, 0.025 -> 0.574,
-    0.01 -> 0.739
+  private val kpssConstantCriticalValues = ListMap(
+    0.10 -> 0.347, 0.05 -> 0.463, 0.025 -> 0.574, 0.01 -> 0.739
   )
 
   /**
@@ -334,8 +334,8 @@ object TimeSeriesStatisticalTests {
    * Testing the null hypothesis of stationarity against the alternative of a unit root.
    * Journal of Econometrics, 159-178.
    */
-  private val kpssConstantAndTrendCriticalValues = ListMap(0.10 -> 0.119, 0.05 -> 0.146,
-    0.025 -> 0.176, 0.01 -> 0.216
+  private val kpssConstantAndTrendCriticalValues = ListMap(
+    0.10 -> 0.119, 0.05 -> 0.146, 0.025 -> 0.176, 0.01 -> 0.216
   )
 
   /**
@@ -412,7 +412,7 @@ object TimeSeriesStatisticalTests {
     }
     // we multiply by 2 as we calculated the sum of top row in matrix (lag 0, lag 1), (lag 0, lag 2)
     // etc but we need to also calculate first column (lag 1, lag 0), (lag 2, lag 0) etc
-    // We divide by n and obtain a partial estimate of the variance, just missing no lag variance
+    // we divide by n and obtain a partial estimate of the variance, just missing no lag variance
     val partialEstVar = (sumOfTerms * 2) / n
     // add no-lag variance
     partialEstVar + (errors.map(math.pow(_, 2)).sum / n)
