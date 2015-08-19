@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/cloudera/spark-timeseries.svg)](https://travis-ci.org/cloudera/spark-timeseries)
+
 spark-timeseries
 =============
 
