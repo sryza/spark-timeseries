@@ -295,11 +295,11 @@ class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double
     }
     // each record contains a value per time series, in original order
     // and records are ordered by time
-    val unifIndex = index.asInstanceOf[UniformDateTimeIndex]
-    val instants = this.toInstants(nPartitions)
-    val start = unifIndex.first()
-    val rows = instants.map{ x =>
-      val rowIndex = unifIndex.frequency.difference(start, x._1)
+    val uniformIndex = index.asInstanceOf[UniformDateTimeIndex]
+    val instants = toInstants(nPartitions)
+    val start = uniformIndex.first()
+    val rows = instants.map { x =>
+      val rowIndex = uniformIndex.frequency.difference(start, x._1)
       val rowData = Vectors.dense(x._2.toArray)
       IndexedRow(rowIndex, rowData)
     }
@@ -316,8 +316,8 @@ class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double
    * @return an equivalent RowMatrix
    */
   def toRowMatrix(nPartitions: Int = -1): RowMatrix = {
-    val instants = this.toInstants(nPartitions)
-    val rows = instants.map{ x => Vectors.dense(x._2.toArray) }
+    val instants = toInstants(nPartitions)
+    val rows = instants.map { x => Vectors.dense(x._2.toArray) }
     new RowMatrix(rows)
   }
 
