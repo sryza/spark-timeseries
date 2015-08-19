@@ -20,9 +20,9 @@ import breeze.linalg._
 import com.cloudera.sparkts.DateTimeIndex._
 
 import com.github.nscala_time.time.Imports._
-import org.apache.spark.sql.{SQLContext, DataFrame}
 
 import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.sql.{Row, SQLContext, DataFrame}
 
 import org.scalatest.{FunSuite, ShouldMatchers}
 
@@ -102,14 +102,24 @@ class TimeSeriesRDDSuite extends FunSuite with LocalSparkContext with ShouldMatc
     //val samples = tsRdd.toInstants().collect()
 
     val samplesDF: DataFrame = tsRdd.toInstantsDataFrame(sqlContext)
+    val sampleRows = samplesDF.collect()
+    val columnNames = samplesDF.columns
 
-    samplesDF.collect()
+    val lastCol: String = "v" + (labels.length - 1)
 
-//    samples should be (Array(
-//      (start, new DenseVector((0.0 until 20.0 by 4.0).toArray)),
-//      (start + 1.days, new DenseVector((1.0 until 20.0 by 4.0).toArray)),
-//      (start + 2.days, new DenseVector((2.0 until 20.0 by 4.0).toArray)),
-//      (start + 3.days, new DenseVector((3.0 until 20.0 by 4.0).toArray)))
+    columnNames.length should be (labels.length + 1) // labels + timestamp
+    columnNames.head should be ("instant")
+    columnNames.tail should be (Array("v0", "v1", "v2", "v3", "v4"))
+
+    val stophere = true
+
+//    sampleRows should be (Array(
+//      Row(start, new DenseVector((0.0 until 20.0 by 4.0).toArray):_*),
+//      Row(start + 1.days, Array(1.0 until 20.0 by 4.0):_*),
+//      Row(start + 2.days, Array(2.0 until 20.0 by 4.0):_*),
+//      Row(start + 3.days, Array(3.0 until 20.0 by 4.0):_*))
 //    )
+
+    val stophere2 = true
   }
 }
