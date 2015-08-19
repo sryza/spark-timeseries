@@ -79,4 +79,22 @@ class TimeSeriesRDDSuite extends FunSuite with LocalSparkContext with ShouldMatc
       (start + 3.days, new DenseVector((3.0 until 20.0 by 4.0).toArray)))
     )
   }
+
+  test("takeN/dropNSeries") {
+    val conf = new SparkConf().setMaster("local").setAppName(getClass.getName)
+    TimeSeriesKryoRegistrator.registerKryoClasses(conf)
+    sc = new SparkContext(conf)
+    val seriesVecs = (0 until 20 by 4).map(
+      x => new DenseVector((x until x + 4).map(_.toDouble).toArray))
+    val labels = Array("a", "b", "c", "d", "e")
+    val start = new DateTime("2015-4-9")
+    val index = uniform(start, 4, 1.days)
+    val rdd = sc.parallelize(labels.zip(seriesVecs.map(_.asInstanceOf[Vector[Double]])), 3)
+    val tsRdd = new TimeSeriesRDD(index, rdd)
+    val took2 = tsRdd.takeNSeries(2)
+    val dropped2 = tsRdd.dropNSeries(2)
+
+    took2.keys.collect() should be (labels.take(2))
+    dropped2.keys.collect() should be (labels.drop(2))
+  }
 }
