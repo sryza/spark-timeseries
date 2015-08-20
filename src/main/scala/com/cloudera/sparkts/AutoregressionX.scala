@@ -22,8 +22,7 @@ import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression
 
 /**
  * Models a timeseries as a function of itself (autoregressive terms) and exogenous variables, which
- * are lagged up to degree xMaxLag. If `includeOriginalX` is set to true, the regression also
- * includes non-lagged variables. Returns a model of the ARXModel type
+ * are lagged up to degree xMaxLag.
  */
 object AutoregressionX {
   /**
@@ -103,6 +102,9 @@ object AutoregressionX {
   }
 }
 
+// Jose note: not extending timeseries model, since seems to me to be a different type of model
+// addingTimeDpendent...etc wouldn't apply here with the original signature, since we need
+// exogenous variables provided
 /**
  * An autoregressive model with exogenous variables
  * @param c an intercept term, zero if none desired
