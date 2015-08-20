@@ -15,6 +15,8 @@
 
 package com.cloudera.sparkts
 
+import java.sql.Timestamp
+
 import breeze.linalg._
 
 import com.cloudera.sparkts.DateTimeIndex._
@@ -98,28 +100,19 @@ class TimeSeriesRDDSuite extends FunSuite with LocalSparkContext with ShouldMatc
     val rdd = sc.parallelize(labels.zip(seriesVectors.map(_.asInstanceOf[Vector[Double]])), 3)
     val tsRdd = new TimeSeriesRDD(index, rdd)
 
-    //val exRDD = tsRdd.toInstants()
-    //val samples = tsRdd.toInstants().collect()
-
     val samplesDF: DataFrame = tsRdd.toInstantsDataFrame(sqlContext)
     val sampleRows = samplesDF.collect()
     val columnNames = samplesDF.columns
-
-    val lastCol: String = "v" + (labels.length - 1)
 
     columnNames.length should be (labels.length + 1) // labels + timestamp
     columnNames.head should be ("instant")
     columnNames.tail should be (Array("v0", "v1", "v2", "v3", "v4"))
 
-    val stophere = true
-
-//    sampleRows should be (Array(
-//      Row(start, new DenseVector((0.0 until 20.0 by 4.0).toArray):_*),
-//      Row(start + 1.days, Array(1.0 until 20.0 by 4.0):_*),
-//      Row(start + 2.days, Array(2.0 until 20.0 by 4.0):_*),
-//      Row(start + 3.days, Array(3.0 until 20.0 by 4.0):_*))
-//    )
-
-    val stophere2 = true
+    sampleRows should be (Array(
+      Row.fromSeq(new Timestamp(start.getMillis) :: (0.0 until 20.0 by 4.0).toList),
+      Row.fromSeq(new Timestamp((start + 1.days).getMillis) :: (1.0 until 20.0 by 4.0).toList),
+      Row.fromSeq(new Timestamp((start + 2.days).getMillis) :: (2.0 until 20.0 by 4.0).toList),
+      Row.fromSeq(new Timestamp((start + 3.days).getMillis) :: (3.0 until 20.0 by 4.0).toList)
+    ))
   }
 }
