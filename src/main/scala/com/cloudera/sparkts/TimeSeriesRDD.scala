@@ -277,9 +277,15 @@ class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double
     }
   }
 
+  /**
+   * Performs the same operations as toInstants but returns a DataFrame instead.
+   *
+   * The schema of the DataFrame returned will be a java.sql.Timestamp column named "instant"
+   * and double columns named "v0", "v1", "v2", ... "vN".
+   */
   def toInstantsDataFrame(sqlContext: SQLContext, nPartitions: Int = -1): DataFrame = {
     val instantsRDD = this.toInstants(nPartitions)
-    val vectorLength = this.first()._2.length
+    val vectorLength = this.first._2.length
 
     import sqlContext.implicits._
 
