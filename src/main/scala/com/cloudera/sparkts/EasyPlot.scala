@@ -52,6 +52,20 @@ object EasyPlot {
   def ezplot(vecs: Seq[Vector[Double]]): Figure = ezplot(vecs, '-')
 
   /**
+   * Plot multiple series of varying lengths, fills in shorter series with NaNs for plotting.
+   * Useful for plotting historicals vs fitted + forecasted.
+   * @param vecs Sequence of vectors of potentially varying lengths, which are extended and
+   *             filled with NaNs, as necessary, and then plotted
+   */
+  def ezplotExtended(vecs: Seq[Vector[Double]]): Unit = {
+    val maxLen = vecs.map(_.length).max
+    val extended = vecs.map { vec =>
+      new DenseVector(vec.toArray ++ Array.fill(maxLen - vec.length)(Double.NaN))
+    }
+    ezplot(extended)
+  }
+  
+  /**
    * Autocorrelation function plot
    * @param data array of data to analyze
    * @param maxLag maximum lag for autocorrelation
