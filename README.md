@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/cloudera/spark-timeseries.svg)](https://travis-ci.org/cloudera/spark-timeseries)
+
 spark-timeseries
 =============
 
@@ -64,9 +66,9 @@ Functionality
 
 ### Time Series Math and Stats
 
-* Exponentially weighted moving average
-* Autoregressive models
-* GARCH models
+* Exponentially weighted moving average (EWMA) models
+* Autoregressive integrated moving average (ARIMA) models
+* Generalized autoregressive conditional heteroskedastic (GARCH) models
 * Missing data imputation
 * Augmented Dickey-Fuller test
 * Durbin-Watson test
