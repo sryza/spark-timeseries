@@ -84,3 +84,16 @@ Functionality
 Value at Risk (VaR) and Expected Shortfall (CVaR) through
 * Monte Carlo simulation
 * Bootstrapped historical simulation
+
+Building
+--------
+
+We use [Maven](https://maven.apache.org/) for building Java / Scala. To compile, run tests, and build
+jars:
+
+    mvn package
+    
+To run a spark-shell with spark-timeseries and its dependencies on the classpath:
+
+    spark-shell --jars target/sparktimeseries-0.0.1-jar-with-dependencies.jar
+
