@@ -96,6 +96,11 @@ jars:
 To run a spark-shell with spark-timeseries and its dependencies on the classpath:
 
     spark-shell --jars target/sparktimeseries-0.0.1-jar-with-dependencies.jar
+    
+To run Python tests (requires [nose](https://nose.readthedocs.org/en/latest/)):
+
+    cd python/sparkts
+    nosetests
 
 To publish docs, easiest is to clone a separate version of this repo in some location we'll refer
 to as DOCS_REPO.  Then:

@@ -6,3 +6,5 @@ target
 *.iml
 .idea
 scalastyle-output.xml
+*.pyc
+*.swp

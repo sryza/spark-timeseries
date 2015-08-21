@@ -16,6 +16,7 @@
 package com.cloudera.sparkts
 
 import java.io.{BufferedReader, InputStreamReader, PrintStream}
+import java.nio.ByteBuffer
 import java.sql.Timestamp
 import java.util.Arrays
 
@@ -77,7 +78,7 @@ class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double
    * RDD will be missing the first n date-times.
    */
   def differences(n: Int): TimeSeriesRDD = {
-    mapSeries(index.islice(n, index.size), vec => diff(vec.toDenseVector, n))
+    mapSeries(vec => diff(vec.toDenseVector, n), index.islice(n, index.size))
   }
 
   /**
@@ -85,7 +86,7 @@ class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double
    * RDD will be missing the first n date-times.
    */
   def quotients(n: Int): TimeSeriesRDD = {
-    mapSeries(index.islice(n, index.size), UnivariateTimeSeries.quotients(_, n))
+    mapSeries(UnivariateTimeSeries.quotients(_, n), index.islice(n, index.size))
   }
 
   /**
@@ -93,7 +94,7 @@ class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double
    * compounded) returns.
    */
   def price2ret(): TimeSeriesRDD = {
-    mapSeries(index.islice(1, index.size), vec => UnivariateTimeSeries.price2ret(vec, 1))
+    mapSeries(vec => UnivariateTimeSeries.price2ret(vec, 1), index.islice(1, index.size))
   }
 
   override def filter(f: ((String, Vector[Double])) => Boolean): TimeSeriesRDD = {
@@ -154,6 +155,15 @@ class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double
   }
 
   /**
+   * Returns a TimeSeriesRDD that's a sub-slice of the given series.
+   * @param start The start date the for slice.
+   * @param end The end date for the slice (inclusive).
+   */
+  def slice(start: Long, end: Long): TimeSeriesRDD = {
+    slice(new DateTime(start), new DateTime(end))
+  }
+
+  /**
    * Fills in missing data (NaNs) in each series according to a given imputation method.
    *
    * @param method "linear", "nearest", "next", or "previous"
@@ -175,7 +185,7 @@ class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double
    * Applies a transformation to each time series and returns a TimeSeriesRDD with the given index.
    * The caller is expected to ensure that the time series produced line up with the given index.
    */
-  def mapSeries[U](index: DateTimeIndex, f: (Vector[Double]) => Vector[Double])
+  def mapSeries[U](f: (Vector[Double]) => Vector[Double], index: DateTimeIndex)
     : TimeSeriesRDD = {
     new TimeSeriesRDD(index, map(kt => (kt._1, f(kt._2))))
   }
@@ -525,5 +535,31 @@ object TimeSeriesRDD {
     is.close()
 
     new TimeSeriesRDD(dtIndex, rdd)
+  }
+
+  /**
+   * Creates a TimeSeriesRDD from rows in a binary format that Python can write to.
+   * Not a public API. For use only by the Python API.
+   */
+  def timeSeriesRDDFromPython(index: DateTimeIndex, pyRdd: RDD[Array[Byte]]): TimeSeriesRDD = {
+    new TimeSeriesRDD(index, pyRdd.map { arr =>
+      val buf = ByteBuffer.wrap(arr)
+      val numChars = buf.getInt()
+      val keyChars = new Array[Char](numChars)
+      var i = 0
+      while (i < numChars) {
+        keyChars(i) = buf.getChar()
+        i += 1
+      }
+
+      val seriesSize = buf.getInt()
+      val series = new Array[Double](seriesSize)
+      i = 0
+      while (i < seriesSize) {
+        series(i) = buf.getDouble()
+        i += 1
+      }
+      (new String(keyChars), new DenseVector[Double](series))
+    })
   }
 }
