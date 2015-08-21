@@ -177,6 +177,10 @@ class IrregularDateTimeIndex(val instants: Array[Long]) extends DateTimeIndex {
     new IrregularDateTimeIndex(instants.slice(startLoc, endLoc + 1))
   }
 
+  override def slice(start: Long, end: Long): IrregularDateTimeIndex = {
+    throw new UnsupportedOperationException()
+  }
+
   override def islice(range: Range): IrregularDateTimeIndex = {
     new IrregularDateTimeIndex(instants.slice(range.head, range.last + 1))
   }

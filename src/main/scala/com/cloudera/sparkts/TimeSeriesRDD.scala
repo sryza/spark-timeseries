@@ -16,6 +16,7 @@
 package com.cloudera.sparkts
 
 import java.io.{BufferedReader, InputStreamReader, PrintStream}
+import java.nio.ByteBuffer
 import java.sql.Timestamp
 import java.util.Arrays
 
@@ -538,5 +539,31 @@ object TimeSeriesRDD {
     is.close()
 
     new TimeSeriesRDD(dtIndex, rdd)
+  }
+
+  /**
+   * Creates a TimeSeriesRDD from rows in a binary format that Python can write to.
+   * Not a public API. For use only by the Python API.
+   */
+  def timeSeriesRDDFromPython(index: DateTimeIndex, pyRdd: RDD[Array[Byte]]): TimeSeriesRDD = {
+    new TimeSeriesRDD(index, pyRdd.map { arr =>
+      val buf = ByteBuffer.wrap(arr)
+      val numChars = buf.getInt()
+      val keyChars = new Array[Char](numChars)
+      var i = 0
+      while (i < numChars) {
+        keyChars(i) = buf.getChar()
+        i += 1
+      }
+
+      val seriesSize = buf.getInt()
+      val series = new Array[Double](seriesSize)
+      i = 0
+      while (i < seriesSize) {
+        series(i) = buf.getDouble()
+        i += 1
+      }
+      (new String(keyChars), new DenseVector[Double](series))
+    })
   }
 }
