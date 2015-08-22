@@ -21,6 +21,8 @@ import breeze.linalg._
 
 import org.apache.spark.SparkContext._
 import org.apache.spark.{Partition, Partitioner, TaskContext}
+import org.apache.spark.mllib.linalg.distributed.{IndexedRow, IndexedRowMatrix, RowMatrix}
+import org.apache.spark.mllib.linalg.Vectors
 import org.apache.spark.rdd.RDD
 import org.apache.spark.util.StatCounter
 
@@ -269,6 +271,48 @@ class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double
         }
       }
     }
+  }
+
+  /**
+   * Converts a TimeSeriesRDD into a distributed IndexedRowMatrix, useful to take advantage
+   * of Spark MLlib's statistic functions on matrices in a distributed fashion. This is only
+   * supported for cases with a uniform time series index. See
+   * [[http://spark.apache.org/docs/latest/mllib-data-types.html]] for more information on the
+   * matrix data structure
+   * @param nPartitions number of partitions, default to -1, which represents the same number
+   *                    as currently used for the TimeSeriesRDD
+   * @return an equivalent IndexedRowMatrix
+   */
+  def toIndexedRowMatrix(nPartitions: Int = -1): IndexedRowMatrix = {
+    if (!index.isInstanceOf[UniformDateTimeIndex]) {
+      throw new UnsupportedOperationException("only supported for uniform indices")
+    }
+    // each record contains a value per time series, in original order
+    // and records are ordered by time
+    val uniformIndex = index.asInstanceOf[UniformDateTimeIndex]
+    val instants = toInstants(nPartitions)
+    val start = uniformIndex.first()
+    val rows = instants.map { x =>
+      val rowIndex = uniformIndex.frequency.difference(start, x._1)
+      val rowData = Vectors.dense(x._2.toArray)
+      IndexedRow(rowIndex, rowData)
+    }
+    new IndexedRowMatrix(rows)
+  }
+
+  /**
+   * Converts a TimeSeriesRDD into a distributed RowMatrix, note that indices in
+   * a RowMatrix are not significant, and thus this is a valid operation regardless
+   * of the type of time index.  See
+   * [[http://spark.apache.org/docs/latest/mllib-data-types.html]] for more information on the
+   * matrix data structure
+   * @param nPartitions
+   * @return an equivalent RowMatrix
+   */
+  def toRowMatrix(nPartitions: Int = -1): RowMatrix = {
+    val instants = toInstants(nPartitions)
+    val rows = instants.map { x => Vectors.dense(x._2.toArray) }
+    new RowMatrix(rows)
   }
 
   def compute(split: Partition, context: TaskContext): Iterator[(String, Vector[Double])] = {
