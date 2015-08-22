@@ -58,6 +58,8 @@ class DayFrequency(val days: Int) extends Frequency {
       false
     }
   }
+
+  override def toString(): String = s"days $days"
 }
 
 class BusinessDayFrequency(val days: Int) extends Frequency {
@@ -101,4 +103,6 @@ class BusinessDayFrequency(val days: Int) extends Frequency {
       false
     }
   }
+
+  override def toString(): String = s"businessDays $days"
 }

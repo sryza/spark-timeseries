@@ -15,12 +15,17 @@
 
 package com.cloudera.sparkts
 
+import java.io.{BufferedReader, InputStreamReader, PrintStream}
+
 import scala.collection.mutable.ArrayBuffer
 
 import breeze.linalg._
 
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.{FileSystem, Path}
+
 import org.apache.spark.SparkContext._
-import org.apache.spark.{Partition, Partitioner, TaskContext}
+import org.apache.spark.{Partition, Partitioner, SparkContext, TaskContext}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.util.StatCounter
 
@@ -276,6 +281,23 @@ class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double
   }
 
   protected def getPartitions: Array[Partition] = parent.partitions
+
+  /**
+   * Writes out the contents of this TimeSeriesRDD to a set of CSV files in the given directory,
+   * with an accompanying file in the same directory including the time index.
+   */
+  def saveAsCsv(path: String): Unit = {
+    // Write out contents
+    parent.map { case (key, vec) => key + "," + vec.valuesIterator.mkString(",") }
+      .saveAsTextFile(path)
+
+    // Write out time index
+    val fs = FileSystem.get(new Configuration())
+    val os = fs.create(new Path(path + "/timeIndex"))
+    val ps = new PrintStream(os)
+    ps.println(index.toString)
+    ps.close()
+  }
 }
 
 object TimeSeriesRDD {
@@ -307,5 +329,24 @@ object TimeSeriesRDD {
       }
     }
     new TimeSeriesRDD(targetIndex, rdd)
+  }
+
+  /**
+   * Loads a TimeSeriesRDD from a directory containing a set of CSV files and a date-time index.
+   */
+  def timeSeriesRDDFromCsv(path: String, sc: SparkContext)
+    : TimeSeriesRDD = {
+    val rdd = sc.textFile(path).map { line =>
+      val tokens = line.split(",")
+      val series = new DenseVector[Double](tokens.tail.map(_.toDouble))
+      (tokens.head, series.asInstanceOf[Vector[Double]])
+    }
+
+    val fs = FileSystem.get(new Configuration())
+    val is = fs.open(new Path(path + "/timeIndex"))
+    val dtIndex = DateTimeIndex.fromString(new BufferedReader(new InputStreamReader(is)).readLine())
+    is.close()
+
+    new TimeSeriesRDD(dtIndex, rdd)
   }
 }
