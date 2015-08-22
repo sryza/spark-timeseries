@@ -40,6 +40,8 @@ import org.joda.time.DateTime
 class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double])])
   extends RDD[(String, Vector[Double])](parent) {
 
+  lazy val keys = parent.map(_._1).collect()
+
   /**
    * Collects the RDD as a local TimeSeries
    */
