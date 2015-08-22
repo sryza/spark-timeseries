@@ -1,2 +1,20 @@
 language: java
-
+sudo: false
+install: mvn ${SPARK} ${JAVA} ${SCALA} -Dmaven.javadoc.skip=true -DskipTests=true -B -V install
+script: mvn ${SPARK} ${JAVA} ${SCALA} -Dmaven.javadoc.skip=true -q -B verify
+env:
+  global:
+    - MAVEN_OPTS=-Xmx2g
+matrix:
+  include:
+    # Covers Java 7, Open JDK, and Spark 1.3.x
+    - jdk: openjdk7
+    # Covers Java 8, Oracle JDK, and Spark 1.4.x
+    - jdk: oraclejdk8
+      env: SPARK=-Dspark.version=1.4.1 JAVA=-Djava.version=1.8
+    # Covers Scala 2.11
+    - jdk: oraclejdk7
+      env: SCALA=-Pscala-2.11 SPARK=-Dspark.version=1.4.1
+cache:
+  directories:
+    - $HOME/.m2
