@@ -24,7 +24,7 @@ import org.apache.commons.math3.random.MersenneTwister
 import org.scalatest.FunSuite
 import org.scalatest.Matchers._
 
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 class ARIMASuite extends FunSuite {
   test("compare with R") {
@@ -178,32 +178,26 @@ class ARIMASuite extends FunSuite {
     val highI = inverseDifferencesOfOrderD(sampled, 5)
 
     // auto fitting without increasing the maxD parameter should result in a failure
-    val failsOnHighIntegrationOrder = ARIMA.autoFit(highI).isFailure
-    failsOnHighIntegrationOrder should be (true)
+    val highIntegrationFailure = ARIMA.autoFit(highI).isFailure
+    highIntegrationFailure should be (true)
 
     // but should work if we increase the differencing order limit
-    val works = ARIMA.autoFit(highI, maxD = 10).isSuccess
-    works should be (true)
+    val highIntegrationWorks = ARIMA.autoFit(highI, maxD = 10).isSuccess
+    highIntegrationWorks should be (true)
 
-    // the fitted model should have the lowest approximate AIC in the space searched
-    // will check the +/-1 area around the best model
-    val fitted = ARIMA.autoFit(sampled).get
-    val (fittedP, fittedD, fittedQ) = (fitted.p, fitted.d, fitted.q)
-    val addIntercept = fitted.hasIntercept
-    val deltas = List(-1, 0, 1)
-    val nearbySpace = for (p <- deltas.map(_ + fittedP); q <- deltas.map(_ + fittedQ)) yield {
-      (p,fittedD, q)
+    // in this test, we'll throw an exception and not go on if the auto fit function fails
+    // the sample we're trying to model is I(0), and we can always fit a model with just the
+    // intercept, so a failure here would be indicative of other issues
+    val (maxP, maxQ) = (5, 5)
+    val fitted = ARIMA.autoFit(sampled, maxP = maxP, maxQ = maxQ) match {
+      case Success(model) => model
+      case _ => throw new Exception("Unable to fit model in test suite")
     }
-    val nearbyModels = nearbySpace.map { case (p, d, q) =>
-      val model = Try(ARIMA.fitModel(p, d, q, sampled, addIntercept))
-      if (model.isFailure) {
-        ARIMA.fitModel(p, d, q, sampled, addIntercept, method = "css-bobyqa")
-      } else {
-        model.get
-      }
-    }.filter(m => m.isInvertible() && m.isStationary())
-    val nearbyApproxAICs = nearbyModels.map(_.approxAIC(sampled))
-    val currAIC = fitted.approxAIC(sampled)
-    nearbyApproxAICs.exists(_ < currAIC) should be (false)
+    val fittedApproxAIC = fitted.approxAIC(sampled)
+    // The model should have a lower AIC than the dummy model (just intercept)
+    // testing other models effectively boils down to the function implementation
+    // so we don't do that here
+    val justIntercept = ARIMA.fitModel(0, fitted.d, 0, sampled, includeIntercept = true)
+    justIntercept.approxAIC(sampled) should be > fittedApproxAIC
   }
 }
