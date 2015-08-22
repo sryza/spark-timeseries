@@ -135,6 +135,11 @@ class UniformDateTimeIndex(val start: Long, val periods: Int, val frequency: Fre
     val otherIndex = other.asInstanceOf[UniformDateTimeIndex]
     otherIndex.first == first && otherIndex.periods == periods && otherIndex.frequency == frequency
   }
+
+  override def toString(): String = {
+    Array(
+      "uniform", new DateTime(start).toString, periods.toString, frequency.toString).mkString(",")
+  }
 }
 
 /**
@@ -190,6 +195,14 @@ class IrregularDateTimeIndex(val instants: Array[Long]) extends DateTimeIndex {
     java.util.Arrays.binarySearch(instants, dt.getMillis)
   }
 
+  override def equals(other: Any): Boolean = {
+    val otherIndex = other.asInstanceOf[IrregularDateTimeIndex]
+    otherIndex.instants.sameElements(instants)
+  }
+
+  override def toString(): String = {
+    "irregular," + instants.map(new DateTime(_).toString).mkString(",")
+  }
 }
 
 object DateTimeIndex {
@@ -235,4 +248,33 @@ object DateTimeIndex {
   }
 
   implicit def intToBusinessDayRichInt(n: Int): BusinessDayRichInt = new BusinessDayRichInt(n)
+
+  /**
+   * Parses a DateTimeIndex from the output of its toString method
+   */
+  def fromString(str: String): DateTimeIndex = {
+    val tokens = str.split(",")
+    tokens(0) match {
+      case "uniform" => {
+        val start = new DateTime(tokens(1))
+        val periods = tokens(2).toInt
+        val freqTokens = tokens(3).split(" ")
+        val freq = freqTokens(0) match {
+          case "days" => new DayFrequency(freqTokens(1).toInt)
+          case "businessDays" => new BusinessDayFrequency(freqTokens(1).toInt)
+          case _ => throw new IllegalArgumentException(s"Frequency ${freqTokens(0)} not recognized")
+        }
+        uniform(start, periods, freq)
+      }
+      case "irregular" => {
+        val dts = new Array[DateTime](tokens.length - 1)
+        for (i <- 1 until tokens.length) {
+          dts(i - 1) = new DateTime(tokens(i))
+        }
+        irregular(dts)
+      }
+      case _ => throw new IllegalArgumentException(
+        s"DateTimeIndex type ${tokens(0)} not recognized")
+    }
+  }
 }
