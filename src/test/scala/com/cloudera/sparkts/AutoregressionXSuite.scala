@@ -115,3 +115,4 @@ class AutoregressionXSuite extends FunSuite {
     }
   }
 }
+
