@@ -80,8 +80,8 @@ object Lag {
   /**
    * Creates a lagged matrix from a current matrix (represented in row-array form). Lags each column
    * the appropriate amount of times and then concatenates the columns.
-   * So a matrix [a b c], where a/b/c are column vectors, and lag of 2 becomes a matrix of the form
-   * [a_-1 a_-2 b_-1 b_-2 c_-1 c_-2]
+   * So given a matrix [a b c], where a/b/c are column vectors, and calling with lag of 2, becomes a
+   * matrix of the form [a_-1 a_-2 b_-1 b_-2 c_-1 c_-2]
    */
   private[sparkts] def lagMatTrimBoth(
       x: Array[Array[Double]],

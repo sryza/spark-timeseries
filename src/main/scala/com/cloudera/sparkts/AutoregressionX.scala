@@ -52,53 +52,36 @@ object AutoregressionX {
     includeOriginalX: Boolean = true,
     noIntercept: Boolean = false): ARXModel = {
     val maxLag = max(yMaxLag, xMaxLag)
-    // Make left hand side
-    val trimY = y(maxLag until y.length)
+    val arrY = y.toArray
+    // Make left hand side, note that we must drop the first maxLag terms
+    val trimY = arrY.drop(maxLag)
     // Create predictors
-    val predictors = assemblePredictors(y, x, yMaxLag, xMaxLag, includeOriginalX)
+    val predictors = assemblePredictors(arrY, matToRowArrs(x), yMaxLag, xMaxLag, includeOriginalX)
     val regression = new OLSMultipleLinearRegression()
     regression.setNoIntercept(noIntercept) // drop intercept in regression
-    regression.newSampleData(trimY.toArray, matToRowArrs(predictors))
+    regression.newSampleData(trimY, predictors)
     val params = regression.estimateRegressionParameters()
     val (c, coeffs) = if (noIntercept) (0.0, params) else (params.head, params.tail)
     new ARXModel(c, coeffs, yMaxLag, xMaxLag, includeOriginalX)
   }
 
-  // Jose note: I realllyyy don't like converting to arrays only to convert back to
-  // matrix ... so suggestions appreciated. I initially worked on having a
-  // Lag.lagMatTrimBoth(...) for `Matrix`, but ran into some issues due to the current semantics:
-  // Namely, Lag.lagMatTrimBoth(Vector(...), 0, false) results in an "empty" breeze matrix
-  // but it still has the appropriate number of rows, just 0 columns (and no data).
-  // When you call matToRowArrs on that, it returns an array of empty arrays ( of the appropriate
-  // length), which is reasonable, and matches the behavior of what happens with
-  // Lag.lagMatTrimBoth(Array(...), 0, false). So its consistent. But these kind of matrices,
-  // with rows, no columns, and no data, are not very well behaved in breeze. Indexing into them
-  // causes issues. Trying to slice causes issues. Reshaping causes issues (sometimes). So I
-  // avoided this. Which in turn leads to having to conver to array and then back to avoid this
-  // ill behavior.
-  def assemblePredictors(
-    y: Vector[Double],
-    x: Matrix[Double],
+  private[sparkts] def assemblePredictors(
+    y: Array[Double],
+    x: Array[Array[Double]],
     yMaxLag: Int,
     xMaxLag: Int,
-    includeOriginalX: Boolean = true): Matrix[Double] = {
-    val yArr = y.toArray
-    val xArr = matToRowArrs(x)
-
+    includeOriginalX: Boolean = true): Array[Array[Double]] = {
     val maxLag = max(yMaxLag, xMaxLag)
     // AR terms from dependent variable (autoregressive portion)
-    val arY = Lag.lagMatTrimBoth(yArr, yMaxLag)
-
-    // exogenous variables lagged as appropriate, reshape so that well behaved in edge cases
-    val laggedX = Lag.lagMatTrimBoth(xArr, xMaxLag)
-
+    val arY = Lag.lagMatTrimBoth(y, yMaxLag)
+    // exogenous variables lagged as appropriate
+    val laggedX = Lag.lagMatTrimBoth(x, xMaxLag)
     // adjust difference in size for arY and laggedX so that they match up
     val arYAdj = arY.drop(maxLag - yMaxLag)
     val laggedXAdj = laggedX.drop(maxLag - xMaxLag)
-    val trimmedX = if (includeOriginalX) xArr.drop(maxLag) else Array[Array[Double]]()
-    val combinedData = Array(arYAdj, laggedXAdj, trimmedX).flatMap(_.transpose.toSeq.flatten)
-    val rows = x.rows - maxLag
-    new DenseMatrix(rows, combinedData, offset = 0)
+    val trimmedX = if (includeOriginalX) x.drop(maxLag) else Array[Array[Double]]()
+    // combine matrices by concatenating column-wise
+    Array(arYAdj, laggedXAdj, trimmedX).transpose.map(_.reduceLeft(_ ++_))
   }
 }
 
@@ -125,10 +108,11 @@ class ARXModel(
     val yMaxLag: Int,
     val xMaxLag: Int,
     includesOriginalX: Boolean) {
+
   def predict(y: Vector[Double], x: Matrix[Double]): Vector[Double] = {
-    val predictors = AutoregressionX.assemblePredictors(y, x, yMaxLag, xMaxLag, includesOriginalX)
-    val predictorsN = predictors.cols
-    val resultsN = predictors.rows
+    val predictors = AutoregressionX.assemblePredictors(y.toArray, matToRowArrs(x), yMaxLag, xMaxLag, includesOriginalX)
+    val predictorsN = predictors.length
+    val resultsN = predictors.head.length
     val results = DenseVector.zeros[Double](resultsN)
 
     var i = 0
@@ -137,7 +121,7 @@ class ARXModel(
     while (i < resultsN) {
       results(i) = c
       while (j < predictorsN) {
-        results(i) += predictors(i, j) * coefficients(j)
+        results(i) += predictors(i)(j) * coefficients(j)
         j += 1
       }
       i += 1
