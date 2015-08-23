@@ -18,6 +18,7 @@ package com.cloudera.sparkts
 import breeze.linalg._
 
 import com.cloudera.sparkts.UnivariateTimeSeries.{differencesOfOrderD, inverseDifferencesOfOrderD}
+import com.cloudera.sparkts.TimeSeriesStatisticalTests.kpsstest
 
 import org.apache.commons.math3.analysis.{MultivariateVectorFunction, MultivariateFunction}
 import org.apache.commons.math3.analysis.solvers.LaguerreSolver
@@ -29,6 +30,8 @@ import org.apache.commons.math3.optim.nonlinear.scalar.{GoalType, ObjectiveFunct
 import org.apache.commons.math3.optim.nonlinear.scalar.noderiv.BOBYQAOptimizer
 import org.apache.commons.math3.random.RandomGenerator
 import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression
+
+import scala.util.{Failure, Try}
 
 /**
  * ARIMA models allow modeling timeseries as a function of prior values of the series
@@ -251,8 +254,108 @@ object ARIMA {
       println("Warning: MA parameters are not invertible")
     }
   }
-}
 
+  /**
+   * Utility function to help in fitting an automatically selected ARIMA model based on approximate
+   * Akaike Information Criterion (AIC) values. The model search is based on the heuristic
+   * developed by Hyndman and Khandakar (2008) and described in [[http://www.jstatsoft
+   * .org/v27/i03/paper]]. In contrast to the algorithm in the paper, we use an approximation to
+   * the AIC, rather than an exact value. Note that if the maximum differencing order provided
+   * does not suffice to induce stationarity, the function returns a failure, with the appropriate
+   * message. Additionally, note that the heuristic only considers models that have parameters
+   * satisfying the stationarity/invertibility constraints. Finally, note that our algorithm is
+   * slightly more lenient than the original heuristic. For example, the original heuristic
+   * rejects models with parameters "close" to violating stationarity/invertibility. We only
+   * reject those that actually violate it.
+   * @param ts time series to which to automatically fit an ARIMA model
+   * @param maxP limit for the AR order
+   * @param maxD limit for differencing order
+   * @param maxQ limit for the MA order
+   * @return an ARIMAModel wrapped in a `Try`
+   */
+  def autoFit(ts: Vector[Double], maxP: Int = 5, maxD: Int = 2, maxQ: Int = 5): Try[ARIMAModel] = {
+    // p-value threshold for stationarity test
+    val kpssSignificance = 0.05
+    // step-wise search direction changes
+    val deltas = List(-1, 0, 1)
+
+    // recursive, helper function to search model space
+    @annotation.tailrec
+    def findBetterModel(
+        diffedTs: Vector[Double],
+        testOrders: List[(Int, Int, Int)],
+        currModel: ARIMAModel,
+        currAIC: Double): ARIMAModel = {
+      val hasIntercept = currModel.hasIntercept
+      // Fitting models can sometimes fail with one optim method but succeed with other
+      // if it fails, try different method before giving up
+      val models = testOrders.map { case (p, d, q) =>
+        Try(ARIMA.fitModel(p, d, q, diffedTs, hasIntercept, method = "css-cgd")) match {
+          case Failure(e) =>
+            Try(ARIMA.fitModel(p, d, q, diffedTs, hasIntercept, method = "css-bobyqa"))
+          case worked => worked
+        }
+      }.filter(_.isSuccess).map(_.get)
+      // we only consider models that have parameters satisfying stationarity/invertibility
+      val validModels = models.filter(m => m.isStationary() && m.isInvertible())
+
+      // We can only begin to compare new models if there are any to begin with, otherwise done
+      if (validModels.isEmpty) {
+        currModel
+      } else {
+        // find the model with the lowest approximate AIC
+        val (bestModel, bestAIC) = validModels.map(m => (m, m.approxAIC(diffedTs))).minBy(_._2)
+        // note that the d remains the same as before, so we avoid calling it newD
+        val (newP, d, newQ) = (bestModel.p, bestModel.d, bestModel.q)
+        // Our search is finished when we cannot find an improvement upon the current model
+        if (bestAIC < currAIC) {
+          val currOrder = (currModel.p, currModel.d, currModel.q)
+          // new orders to test, we make sure we stay within the bounds of our search space
+          // and avoid testing the same model we already have
+          val newOrders =  for (
+            p <- deltas.map(_ + newP);
+            q <- deltas.map(_ + newQ)
+            if p <= maxP && q <= maxQ && (p, d, q) != currOrder
+          ) yield (p, d, q)
+
+          findBetterModel(diffedTs, newOrders, bestModel, bestAIC)
+        } else {
+          currModel
+        }
+      }
+    }
+    // (unsafe) helper function to later wrap in `Try` at top level
+    def autoFitUnsafe(): ARIMAModel = {
+      // following R's forecast::auto.arima -> forecast::ndiffs -> tseries::kpss.test
+      // we test for level stationarity and return lowest differencing order that results in
+      // level stationarity
+      val dOpt = (0 to maxD).find { di =>
+        val testTs = differencesOfOrderD(ts, di)
+        val (stat, criticalValues) = kpsstest(testTs, "c")
+        stat < criticalValues(kpssSignificance)
+      }
+      val d = dOpt match {
+        case Some(v) => v
+        case None =>
+          // this gets wrapped in Try at top level, so not necessarily bad to throw exception
+          throw new Exception(s"stationarity not achieved with differencing order <= $maxD")
+      }
+      val diffedTs = differencesOfOrderD(ts, d)
+      // as per heuristic, only fit intercept if differencing is <= 1 for nonseasonal arima
+      val addIntercept = d <= 1
+      // differenced time series passed in to search function to avoid recomputing each time
+      // we need to fit something for the case with no parameters, in that case we do include
+      // intercept, regardless of differencing order
+      val initModel = ARIMA.fitModel(0, 0, 0, diffedTs, includeIntercept = true)
+      val initApproxAIC = initModel.approxAIC(diffedTs)
+      val initSpecs = List((2, 0, 2), (1, 0, 0), (0, 0, 1))
+      val bestModel = findBetterModel(diffedTs, initSpecs, initModel, initApproxAIC)
+      new ARIMAModel(bestModel.p, d, bestModel.q, bestModel.coefficients, bestModel.hasIntercept)
+    }
+
+    Try(autoFitUnsafe())
+  }
+}
 
 class ARIMAModel(
     val p: Int, // AR order
@@ -659,5 +762,19 @@ class ARIMAModel(
     val initGuess = 0.0
     val roots = solver.solveAllComplex(poly, initGuess)
     !roots.exists(_.abs() <= 1.0)
+  }
+
+  /**
+   * Calculates an approximation to the Akaike Information Criterion (AIC). This is an approximation
+   * as we use the conditional likelihood, rather than the exact likelihood. Please see
+   * [[https://en.wikipedia.org/wiki/Akaike_information_criterion]] for more information on this
+   * measure.
+   * @param ts the timeseries to evaluate under current model
+   * @return an approximation to the AIC under the current model
+   */
+  def approxAIC(ts: Vector[Double]): Double = {
+    val conditionalLogLikelihood = logLikelihoodCSS(ts)
+    val interceptTerm = if (hasIntercept) 1 else 0
+    -2 * conditionalLogLikelihood + 2 * (p + q + interceptTerm)
   }
 }
