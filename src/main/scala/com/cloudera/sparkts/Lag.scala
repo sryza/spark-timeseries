@@ -16,6 +16,7 @@
 package com.cloudera.sparkts
 
 import breeze.linalg._
+import com.cloudera.finance.Util.matToRowArrs
 
 object Lag {
   /**
@@ -74,5 +75,29 @@ object Lag {
       }
     }
     lagMat
+  }
+
+  /**
+   * Creates a lagged matrix from a current matrix (represented in row-array form). Lags each column
+   * the appropriate amount of times and then concatenates the columns.
+   * So given a matrix [a b c], where a/b/c are column vectors, and calling with lag of 2, becomes a
+   * matrix of the form [a_-1 a_-2 b_-1 b_-2 c_-1 c_-2]
+   */
+  private[sparkts] def lagMatTrimBoth(
+      x: Array[Array[Double]],
+      maxLag: Int,
+      includeOriginal: Boolean): Array[Array[Double]] = {
+    val xt = x.transpose
+    // one matrix per column, consisting of all its lags
+    val matrices = for (col <- xt) yield {
+      lagMatTrimBoth(col, maxLag, includeOriginal)
+    }
+    // merge the matrices into 1 matrix by concatenating col-wise
+    matrices.transpose.map(_.reduceLeft(_ ++ _))
+  }
+
+  private[sparkts] def lagMatTrimBoth(x: Array[Array[Double]], maxLag: Int)
+    : Array[Array[Double]] = {
+    lagMatTrimBoth(x, maxLag, false)
   }
 }
