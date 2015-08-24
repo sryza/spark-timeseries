@@ -74,7 +74,7 @@ class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double
    * RDD will be missing the first n date-times.
    */
   def differences(n: Int): TimeSeriesRDD = {
-    mapSeries(index.slice(n, index.size - 1), vec => diff(vec.toDenseVector, n))
+    mapSeries(index.islice(n, index.size), vec => diff(vec.toDenseVector, n))
   }
 
   /**
@@ -82,7 +82,7 @@ class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double
    * RDD will be missing the first n date-times.
    */
   def quotients(n: Int): TimeSeriesRDD = {
-    mapSeries(index.slice(n, index.size - 1), UnivariateTimeSeries.quotients(_, n))
+    mapSeries(index.islice(n, index.size), UnivariateTimeSeries.quotients(_, n))
   }
 
   /**
@@ -90,7 +90,7 @@ class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double
    * compounded) returns.
    */
   def price2ret(): TimeSeriesRDD = {
-    mapSeries(index.slice(1, index.size - 1), vec => UnivariateTimeSeries.price2ret(vec, 1))
+    mapSeries(index.islice(1, index.size), vec => UnivariateTimeSeries.price2ret(vec, 1))
   }
 
   /**
