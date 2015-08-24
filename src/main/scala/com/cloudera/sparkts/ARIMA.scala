@@ -60,7 +60,7 @@ object ARIMA {
    * @param ts time series to which to fit an ARIMA(p, d, q) model
    * @param includeIntercept if true the model is fit with an intercept term. Default is true
    * @param method objective function and optimization method, current options are 'css-bobyqa',
-   *               and 'css-cgd'. Both optimize the loglikelihood in terms of the
+   *               and 'css-cgd'. Both optimize the log likelihood in terms of the
    *               conditional sum of squares. The first uses BOBYQA for optimization, while
    *               the second uses conjugate gradient descent. Default is 'css-cgd'
    * @param userInitParams A set of user provided initial parameters for optimization. If null
@@ -260,11 +260,14 @@ class ARIMAModel(
     val q: Int, // MA order
     val coefficients: Array[Double], // coefficients: intercept, AR, MA, with increasing degrees
     val hasIntercept: Boolean = true) extends TimeSeriesModel {
+
   /**
-   * loglikelihood based on conditional sum of squares
+   * log likelihood based on conditional sum of squares
+   *
    * Source: http://www.nuffield.ox.ac.uk/economics/papers/1997/w6/ma.pdf
+   *
    * @param y time series
-   * @return loglikehood
+   * @return log likelihood
    */
   def logLikelihoodCSS(y: Vector[Double]): Double = {
     val diffedY = differencesOfOrderD(y, d).toArray.drop(d)
@@ -272,11 +275,11 @@ class ARIMAModel(
   }
 
   /**
-   * loglikelihood based on conditional sum of squares. In contrast to logLikelihoodCSS the array
+   * log likelihood based on conditional sum of squares. In contrast to logLikelihoodCSS the array
    * provided should correspond to an already differenced array, so that the function below
-   * corresponds to the loglikelihood for the ARMA rather than the ARIMA process
+   * corresponds to the log likelihood for the ARMA rather than the ARIMA process
    * @param diffedY differenced array
-   * @return loglikelihood of ARMA
+   * @return log likelihood of ARMA
    */
   def logLikelihoodCSSARMA(diffedY: Array[Double]): Double = {
     val n = diffedY.length
@@ -296,7 +299,7 @@ class ARIMAModel(
   }
 
   /**
-   * Calculates the gradient for the loglikelihood function using CSS
+   * Calculates the gradient for the log likelihood function using CSS
    * Derivation:
    * L(y | \theta) = -\frac{n}{2}log(2\pi\sigma^2) - \frac{1}{2\pi}\sum_{i=1}^n \epsilon_t^2 \\
    * \sigma^2 = \frac{\sum_{i = 1}^n \epsilon_t^2}{n} \\
