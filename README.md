@@ -97,3 +97,15 @@ To run a spark-shell with spark-timeseries and its dependencies on the classpath
 
     spark-shell --jars target/sparktimeseries-0.0.1-jar-with-dependencies.jar
 
+To publish docs, easiest is to clone a separate version of this repo in some location we'll refer
+to as DOCS_REPO.  Then:
+
+    mvn scala:doc
+    cp -r target/site/scaladocs/* $DOCS_REPO
+    cd $DOCS_REPO
+    git checkout gh_pages
+    git add *
+    git commit -m "Some message that includes the hash of the relevant commit in master"
+    git push origin gh_pages
+
+
