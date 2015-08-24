@@ -67,18 +67,17 @@ private[sparkts] object TimeSeriesUtils {
       targetIndex: DateTimeIndex,
       vec: Vector[Double],
       defaultValue: Double): Vector[Double] = {
-    if (targetIndex.isInstanceOf[UniformDateTimeIndex]) {
-      if (sourceIndex.isInstanceOf[UniformDateTimeIndex]) {
-        rebaseWithUniformSource(sourceIndex.asInstanceOf[UniformDateTimeIndex],
-          targetIndex.asInstanceOf[UniformDateTimeIndex], vec, defaultValue)
-      } else if (sourceIndex.isInstanceOf[IrregularDateTimeIndex]) {
-        rebaseWithIrregularSource(sourceIndex.asInstanceOf[IrregularDateTimeIndex],
-          targetIndex.asInstanceOf[UniformDateTimeIndex], vec, defaultValue)
-      } else {
-        throw new UnsupportedOperationException("Unrecognized source index type")
-      }
-    } else {
-      throw new UnsupportedOperationException("Only uniform target indices are supported")
+    targetIndex match {
+      case targetUDTI: UniformDateTimeIndex => sourceIndex match {
+        case sourceUDTI: UniformDateTimeIndex =>
+          rebaseWithUniformSource(sourceUDTI, targetUDTI, vec, defaultValue)
+        case sourceIDTI: IrregularDateTimeIndex =>
+          rebaseWithIrregularSource(sourceIDTI, targetUDTI, vec, defaultValue)
+        case _ =>
+          throw new scala.UnsupportedOperationException("Unrecognized source index type")
+        }
+      case _ =>
+        throw new scala.UnsupportedOperationException("Only uniform target indices are supported")
     }
   }
 
@@ -128,7 +127,7 @@ private[sparkts] object TimeSeriesUtils {
         defaultValue
       } else {
         assert(iter.hasNext)
-        iter.next._2
+        iter.next()._2
       }
     }
     new DenseVector(resultArr)

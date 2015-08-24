@@ -17,14 +17,13 @@ package com.cloudera.finance.examples
 
 import com.cloudera.finance.Util._
 
-import com.cloudera.finance.{SerializableMultivariateNormalDistribution, YahooParser}
+import com.cloudera.finance.YahooParser
 import com.cloudera.sparkts.TimeSeriesRDD
 import com.cloudera.sparkts.DateTimeIndex._
 import com.cloudera.sparkts.TimeSeriesRDD._
 
 import com.github.nscala_time.time.Imports._
 
-import org.apache.commons.math3.stat.correlation.Covariance
 import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression
 
 import org.apache.spark.{SparkConf, SparkContext}

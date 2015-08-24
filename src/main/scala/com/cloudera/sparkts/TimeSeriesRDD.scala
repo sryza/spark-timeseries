@@ -57,7 +57,7 @@ class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double
     } else {
       val mat = new DenseMatrix[Double](elements.head._2.length, elements.length)
       val labels = new Array[String](elements.length)
-      for (i <- 0 until elements.length) {
+      for (i <- elements.indices) {
         val (label, vec) = elements(i)
         mat(::, i) := vec
         labels(i) = label
@@ -90,9 +90,6 @@ class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double
     mapSeries(index.slice(1, index.size - 1), vec => UnivariateTimeSeries.price2ret(vec, 1))
   }
 
-  /**
-   * {@inheritDoc}
-   */
   override def filter(f: ((String, Vector[Double])) => Boolean): TimeSeriesRDD = {
     new TimeSeriesRDD(index, super.filter(f))
   }
@@ -181,7 +178,7 @@ class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double
           if (chunkId == -1 || dtLoc == index.size) {
             chunk.clear()
             while (chunk.size < maxChunkSize && iter.hasNext) {
-              chunk += iter.next._2
+              chunk += iter.next()._2
             }
             dtLoc = 0
             chunkId += 1
@@ -204,7 +201,7 @@ class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double
     // (date-time, position of snippet in full sample)
 
     val partitioner = new Partitioner() {
-      val nPart = if (nPartitions == -1) parent.partitions.size else nPartitions
+      val nPart = if (nPartitions == -1) parent.partitions.length else nPartitions
       override def numPartitions: Int = nPart
       override def getPartition(key: Any): Int = key.asInstanceOf[(Int, _)]._1 / nPart
     }

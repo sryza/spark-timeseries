@@ -121,7 +121,7 @@ object TimeSeriesStatisticalTests {
   ).mapValues {
     arr => arr.map {
       subarr => (0 until 4).map(i => ADF_LARGE_SCALING(i) * subarr(i)).toArray
-    }.toArray
+    }
   }
 
   /**
@@ -156,7 +156,7 @@ object TimeSeriesStatisticalTests {
   }
 
   private def vanderflipped(vec: Array[Double], n: Int): Matrix[Double] = {
-    val numRows = vec.size
+    val numRows = vec.length
     val matArr = Array.fill[Double](numRows * n)(1.0)
     val mat = new DenseMatrix[Double](numRows, matArr, 0)
 
