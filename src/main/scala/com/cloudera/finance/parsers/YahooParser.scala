@@ -13,31 +13,22 @@
  * License.
  */
 
-package com.cloudera.finance
+package com.cloudera.finance.parsers
 
 import com.cloudera.sparkts.TimeSeries
-import com.cloudera.sparkts.TimeSeries._
 
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
+import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 
-import org.joda.time.DateTime
+object YahooParser extends TimestampedCSVParser {
+  override protected val dateTimeFormatter: DateTimeFormatter =
+    DateTimeFormat.forPattern("yyyy-MM-dd")
 
-object YahooParser {
-  def yahooStringToTimeSeries(text: String, keyPrefix: String = ""): TimeSeries = {
-    val lines = text.split('\n')
-    val labels = lines(0).split(',').tail.map(keyPrefix + _)
-    val samples = lines.tail.map { line =>
-      val tokens = line.split(',')
-      val dt = new DateTime(tokens.head)
-      (dt, tokens.tail.map(_.toDouble).toArray)
-    }.reverse
-    timeSeriesFromSamples(samples, labels)
-  }
-
+  // TODO: figure out what to do with this function
   def yahooFiles(dir: String, sc: SparkContext): RDD[TimeSeries] = {
     sc.wholeTextFiles(dir).map { case (path, text) =>
-      YahooParser.yahooStringToTimeSeries(text, path.split('/').last)
+      csvStringToTimeSeries(text, path.split('/').last)
     }
   }
 }

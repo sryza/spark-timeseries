@@ -12,16 +12,11 @@
  * the specific language governing permissions and limitations under the
  * License.
  */
-package com.cloudera.finance
 
-import org.scalatest.{FunSuite, ShouldMatchers}
+package com.cloudera.finance.parsers
 
-class YahooParserSuite extends FunSuite with ShouldMatchers {
-  test("yahoo parser") {
-    val is = getClass.getClassLoader.getResourceAsStream("GOOG.csv")
-    val lines = scala.io.Source.fromInputStream(is).getLines().toArray
-    val text = lines.mkString("\n")
-    val ts = YahooParser.yahooStringToTimeSeries(text)
-    ts.data.rows should be (lines.length - 1)
-  }
+import com.cloudera.sparkts.TimeSeries
+
+trait JSONParser extends Parser {
+  def jsonStringToTimeSeries(json: String): TimeSeries
 }
