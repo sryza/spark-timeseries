@@ -49,17 +49,17 @@ trait DateTimeIndex extends Serializable {
   /**
    * The first date-time in the index.
    */
-  def first(): DateTime
+  def first: DateTime
 
   /**
    * The last date-time in the index. Inclusive.
    */
-  def last(): DateTime
+  def last: DateTime
 
   /**
    * The number of date-times in the index.
    */
-  def size(): Int
+  def size: Int
 
   /**
    * The i-th date-time in the index.
@@ -80,11 +80,11 @@ trait DateTimeIndex extends Serializable {
 class UniformDateTimeIndex(val start: Long, val periods: Int, val frequency: Frequency)
   extends DateTimeIndex {
 
-  override def first(): DateTime = new DateTime(start)
+  override def first: DateTime = new DateTime(start)
 
-  override def last(): DateTime = frequency.advance(new DateTime(first()), periods - 1)
+  override def last: DateTime = frequency.advance(new DateTime(first), periods - 1)
 
-  override def size(): Int = periods
+  override def size: Int = periods
 
   override def slice(start: DateTime, end: DateTime): UniformDateTimeIndex = {
     uniform(start, frequency.difference(start, end) + 1, frequency)
@@ -95,13 +95,13 @@ class UniformDateTimeIndex(val start: Long, val periods: Int, val frequency: Fre
   }
 
   override def slice(lower: Int, upper: Int): UniformDateTimeIndex = {
-    uniform(frequency.advance(new DateTime(first()), lower), upper - lower + 1, frequency)
+    uniform(frequency.advance(new DateTime(first), lower), upper - lower + 1, frequency)
   }
 
-  override def dateTimeAtLoc(loc: Int): DateTime = frequency.advance(new DateTime(first()), loc)
+  override def dateTimeAtLoc(loc: Int): DateTime = frequency.advance(new DateTime(first), loc)
 
   override def locAtDateTime(dt: DateTime): Int = {
-    val loc = frequency.difference(new DateTime(first()), dt)
+    val loc = frequency.difference(new DateTime(first), dt)
     if (dateTimeAtLoc(loc) == dt) {
       loc
     } else {
@@ -132,11 +132,11 @@ class IrregularDateTimeIndex(val instants: Array[Long]) extends DateTimeIndex {
     throw new UnsupportedOperationException()
   }
 
-  override def first(): DateTime = new DateTime(instants(0))
+  override def first: DateTime = new DateTime(instants(0))
 
-  override def last(): DateTime = new DateTime(instants(instants.length - 1))
+  override def last: DateTime = new DateTime(instants(instants.length - 1))
 
-  override def size(): Int = instants.length
+  override def size: Int = instants.length
 
   override def dateTimeAtLoc(loc: Int): DateTime = new DateTime(instants(loc))
 

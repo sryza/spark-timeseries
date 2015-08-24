@@ -103,7 +103,7 @@ class TimeSeries(val index: DateTimeIndex, val data: DenseMatrix[Double],
    * with each series.
    */
   def mapSeriesWithKey(f: (String, Vector[Double]) => Vector[Double]): TimeSeries = {
-    val newData = new DenseMatrix[Double](index.size(), data.cols)
+    val newData = new DenseMatrix[Double](index.size, data.cols)
     univariateKeyAndSeriesIterator().zipWithIndex.foreach { case ((key, series), i) =>
       newData(::, i) := f(key, series)
     }
@@ -115,7 +115,7 @@ class TimeSeries(val index: DateTimeIndex, val data: DenseMatrix[Double],
    * time index.
    */
   def mapSeries(newIndex: DateTimeIndex, f: (Vector[Double]) => Vector[Double]): TimeSeries = {
-    val newSize = newIndex.size()
+    val newSize = newIndex.size
     val newData = new DenseMatrix[Double](newSize, data.cols)
     univariateSeriesIterator().zipWithIndex.foreach { case (vec, i) =>
       newData(::, i) := f(vec)

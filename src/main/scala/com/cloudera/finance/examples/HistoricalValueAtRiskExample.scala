@@ -47,8 +47,8 @@ object HistoricalValueAtRiskExample {
     def loadTS(inputDir: String, lower: DateTime, upper: DateTime): TimeSeriesRDD = {
       val histories = YahooParser.yahooFiles(inputDir, sc)
       histories.cache()
-      val start = histories.map(_.index.first()).takeOrdered(1).head
-      val end = histories.map(_.index.last()).top(1).head
+      val start = histories.map(_.index.first).takeOrdered(1).head
+      val end = histories.map(_.index.last).top(1).head
       val dtIndex = uniform(start, end, 1.businessDays)
       val tsRdd = timeSeriesRDD(dtIndex, histories).
         filter(_._1.endsWith("csvClose")).

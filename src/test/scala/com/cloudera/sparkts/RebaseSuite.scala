@@ -98,7 +98,7 @@ class RebaseSuite extends FunSuite with ShouldMatchers {
   test("irregular source same range") {
     val vec = new DenseVector((4 until 10).map(_.toDouble).toArray)
     val source = irregular((4 until 10).map(d => new DateTime(s"2015-4-$d")).toArray)
-    vec.size should be (source.size())
+    vec.size should be (source.size)
     val target = uniform(new DateTime("2015-4-4"), vec.length, 1.days)
     val rebased = rebase(source, target, vec, NaN)
     rebased should be (vec)

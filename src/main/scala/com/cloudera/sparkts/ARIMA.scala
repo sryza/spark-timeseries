@@ -566,10 +566,7 @@ class ARIMAModel(
     // drop first maxLag terms from forward curve before copying, these are part of hist already
     results(ts.length to -1) :=  forward(maxLag to -1)
 
-    // Now, if there was no differencing, things are as they should be. We're good to go
-    if (d == 0) {
-      results
-    } else {
+    if (d != 0) {
       // we need to create 1-step ahead forecasts for the integrated series for fitted values
       // by backing through the d-order differences
       // create and fill a matrix of the changes of order i = 0 through d
@@ -602,6 +599,7 @@ class ARIMAModel(
       // copy into results
       results(-(d + nFuture) to -1) := forwardIntegrated
     }
+    results
   }
 
   /**
