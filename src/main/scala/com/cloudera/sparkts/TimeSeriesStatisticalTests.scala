@@ -121,7 +121,7 @@ object TimeSeriesStatisticalTests {
   ).mapValues {
     arr => arr.map {
       subarr => (0 until 4).map(i => ADF_LARGE_SCALING(i) * subarr(i)).toArray
-    }.toArray
+    }
   }
 
   /**
@@ -156,7 +156,7 @@ object TimeSeriesStatisticalTests {
   }
 
   private def vanderflipped(vec: Array[Double], n: Int): Matrix[Double] = {
-    val numRows = vec.size
+    val numRows = vec.length
     val matArr = Array.fill[Double](numRows * n)(1.0)
     val mat = new DenseMatrix[Double](numRows, matArr, 0)
 
@@ -296,7 +296,7 @@ object TimeSeriesStatisticalTests {
   /**
    * Breusch-Pagan test for heteroskedasticity in a model
    * The statistic follows a X^2 distribution with (# of regressors - 1) degrees of freedom
-   * and provides a test for a null hypothesis of homoscedasticity
+   * and provides a test for a null hypothesis of homoskedasticity
    * From http://en.wikipedia.org/wiki/Breusch%E2%80%93Pagan_test
    * Given a vector of estimated residuals (u) from an OLS model, we create an auxiliary regression
    * that models the squared residuals (u^2) as a function of the original regressors (X)

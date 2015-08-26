@@ -116,7 +116,7 @@ class ARIMASuite extends FunSuite {
     val rand = new MersenneTwister(10L)
     val sampled = new DenseVector(Array.fill(100)(rand.nextGaussian))
     val model = ARIMA.fitModel(0, 0, 0, sampled)
-    val mean = sampled.sum / sampled.length
+    val mean = sum(sampled) / sampled.length
     model.coefficients(0) should be (mean +- 1e-4)
   }
 

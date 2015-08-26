@@ -36,7 +36,7 @@ class TimeSeriesKryoRegistrator extends KryoRegistrator {
 
 class DateTimeSerializer extends Serializer[DateTime] {
   def write(kryo: Kryo, out: Output, dt: DateTime) = {
-    out.writeLong(dt.getMillis(), true)
+    out.writeLong(dt.getMillis, true)
   }
 
   def read(kryo: Kryo, in: Input, clazz: Class[DateTime]): DateTime = {

@@ -20,7 +20,7 @@ import com.github.nscala_time.time.Imports._
 import org.joda.time.Days
 
 class BusinessDayRichInt(n: Int) {
-  def businessDays(): BusinessDayFrequency = new BusinessDayFrequency(n)
+  def businessDays: BusinessDayFrequency = new BusinessDayFrequency(n)
 }
 
 /**
@@ -41,25 +41,18 @@ trait Frequency extends Serializable {
 class DayFrequency(val days: Int) extends Frequency {
   val period = days.days
 
-  /**
-   * {@inheritDoc}
-   */
   def advance(dt: DateTime, n: Int): DateTime = dt + (n * period)
 
-  /**
-   * {@inheritDoc}
-   */
   def difference(dt1: DateTime, dt2: DateTime): Int = Days.daysBetween(dt1, dt2).getDays / days
 
   override def equals(other: Any): Boolean = {
-    if (other.isInstanceOf[DayFrequency]) {
-      other.asInstanceOf[DayFrequency].days == days
-    } else {
-      false
+    other match {
+      case frequency: DayFrequency => frequency.days == days
+      case _ => false
     }
   }
 
-  override def toString(): String = s"days $days"
+  override def toString: String = s"days $days"
 }
 
 class BusinessDayFrequency(val days: Int) extends Frequency {
@@ -78,9 +71,6 @@ class BusinessDayFrequency(val days: Int) extends Frequency {
     dt + (totalDays + standardWeekendDays + extraWeekendDays).days
   }
 
-  /**
-   * {@inheritDoc}
-   */
   def difference(dt1: DateTime, dt2: DateTime): Int = {
     if (dt2 < dt1) {
       return -difference(dt2, dt1)
@@ -97,12 +87,11 @@ class BusinessDayFrequency(val days: Int) extends Frequency {
   }
 
   override def equals(other: Any): Boolean = {
-    if (other.isInstanceOf[BusinessDayFrequency]) {
-      other.asInstanceOf[BusinessDayFrequency].days == days
-    } else {
-      false
+    other match {
+      case frequency: BusinessDayFrequency => frequency.days == days
+      case _ => false
     }
   }
 
-  override def toString(): String = s"businessDays $days"
+  override def toString: String = s"businessDays $days"
 }
