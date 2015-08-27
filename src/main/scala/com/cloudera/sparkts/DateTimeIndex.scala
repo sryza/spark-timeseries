@@ -30,6 +30,11 @@ import DateTimeIndex._
  */
 trait DateTimeIndex extends Serializable {
   /**
+   * Returns a sub-slice of the index, confined to the given interval (inclusive).
+   */
+  def slice(interval: Interval): DateTimeIndex
+
+  /**
    * Returns a sub-slice of the index, starting and ending at the given date-times (inclusive).
    */
   def slice(start: DateTime, end: DateTime): DateTimeIndex
@@ -37,12 +42,16 @@ trait DateTimeIndex extends Serializable {
   /**
    * Returns a sub-slice of the index with the given range of indices.
    */
-  def slice(range: Range): DateTimeIndex
+  def islice(range: Range): DateTimeIndex
 
   /**
-   * Returns a sub-slice of the index, starting and ending at the given indices (inclusive).
+   * Returns a sub-slice of the index, starting and ending at the given indices.
+   *
+   * Unlike the slice methods, islice is exclusive at the top of the range, as is the norm with
+   * typical array indexing, meaning that dtIndex.slice(dateTimeAtLoc(0), dateTimeAtLoc(5)) will
+   * return an index including one more element than dtIndex.islice(0, 5).
    */
-  def slice(start: Int, end: Int): DateTimeIndex
+  def islice(start: Int, end: Int): DateTimeIndex
 
   /**
    * The first date-time in the index.
@@ -96,6 +105,13 @@ class UniformDateTimeIndex(val start: Long, val periods: Int, val frequency: Fre
   /**
    * {@inheritDoc}
    */
+  override def slice(interval: Interval): UniformDateTimeIndex = {
+    slice(interval.start, interval.end)
+  }
+
+  /**
+   * {@inheritDoc}
+   */
   override def slice(start: DateTime, end: DateTime): UniformDateTimeIndex = {
     uniform(start, frequency.difference(start, end) + 1, frequency)
   }
@@ -103,14 +119,14 @@ class UniformDateTimeIndex(val start: Long, val periods: Int, val frequency: Fre
   /**
    * {@inheritDoc}
    */
-  override def slice(range: Range): UniformDateTimeIndex = {
-    slice(range.head, range.last)
+  override def islice(range: Range): UniformDateTimeIndex = {
+    islice(range.head, range.last + 1)
   }
 
   /**
    * {@inheritDoc}
    */
-  override def slice(lower: Int, upper: Int): UniformDateTimeIndex = {
+  override def islice(lower: Int, upper: Int): UniformDateTimeIndex = {
     uniform(frequency.advance(new DateTime(first), lower), upper - lower + 1, frequency)
   }
 
@@ -135,13 +151,25 @@ class UniformDateTimeIndex(val start: Long, val periods: Int, val frequency: Fre
     val otherIndex = other.asInstanceOf[UniformDateTimeIndex]
     otherIndex.first == first && otherIndex.periods == periods && otherIndex.frequency == frequency
   }
+
+  override def toString(): String = {
+    Array(
+      "uniform", new DateTime(start).toString, periods.toString, frequency.toString).mkString(",")
+  }
 }
 
 /**
  * An implementation of DateTimeIndex that allows date-times to be spaced at uneven intervals.
- * Lookups or slicing by date-time are O(log n) operations..
+ * Lookups or slicing by date-time are O(log n) operations.
  */
 class IrregularDateTimeIndex(val instants: Array[Long]) extends DateTimeIndex {
+  /**
+   * {@inheritDoc}
+   */
+  override def slice(interval: Interval): IrregularDateTimeIndex = {
+    throw new UnsupportedOperationException()
+  }
+
   /**
    * {@inheritDoc}
    */
@@ -152,14 +180,14 @@ class IrregularDateTimeIndex(val instants: Array[Long]) extends DateTimeIndex {
   /**
    * {@inheritDoc}
    */
-  override def slice(range: Range): IrregularDateTimeIndex = {
+  override def islice(range: Range): IrregularDateTimeIndex = {
     throw new UnsupportedOperationException()
   }
 
   /**
    * {@inheritDoc}
    */
-  override def slice(start: Int, end: Int): IrregularDateTimeIndex = {
+  override def islice(start: Int, end: Int): IrregularDateTimeIndex = {
     throw new UnsupportedOperationException()
   }
 
@@ -190,6 +218,14 @@ class IrregularDateTimeIndex(val instants: Array[Long]) extends DateTimeIndex {
     java.util.Arrays.binarySearch(instants, dt.getMillis)
   }
 
+  override def equals(other: Any): Boolean = {
+    val otherIndex = other.asInstanceOf[IrregularDateTimeIndex]
+    otherIndex.instants.sameElements(instants)
+  }
+
+  override def toString(): String = {
+    "irregular," + instants.map(new DateTime(_).toString).mkString(",")
+  }
 }
 
 object DateTimeIndex {
@@ -235,4 +271,33 @@ object DateTimeIndex {
   }
 
   implicit def intToBusinessDayRichInt(n: Int): BusinessDayRichInt = new BusinessDayRichInt(n)
+
+  /**
+   * Parses a DateTimeIndex from the output of its toString method
+   */
+  def fromString(str: String): DateTimeIndex = {
+    val tokens = str.split(",")
+    tokens(0) match {
+      case "uniform" => {
+        val start = new DateTime(tokens(1))
+        val periods = tokens(2).toInt
+        val freqTokens = tokens(3).split(" ")
+        val freq = freqTokens(0) match {
+          case "days" => new DayFrequency(freqTokens(1).toInt)
+          case "businessDays" => new BusinessDayFrequency(freqTokens(1).toInt)
+          case _ => throw new IllegalArgumentException(s"Frequency ${freqTokens(0)} not recognized")
+        }
+        uniform(start, periods, freq)
+      }
+      case "irregular" => {
+        val dts = new Array[DateTime](tokens.length - 1)
+        for (i <- 1 until tokens.length) {
+          dts(i - 1) = new DateTime(tokens(i))
+        }
+        irregular(dts)
+      }
+      case _ => throw new IllegalArgumentException(
+        s"DateTimeIndex type ${tokens(0)} not recognized")
+    }
+  }
 }
