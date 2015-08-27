@@ -16,6 +16,9 @@
 package com.cloudera.sparkts
 
 import java.io.{BufferedReader, InputStreamReader, PrintStream}
+import java.sql.Timestamp
+
+import org.apache.spark.sql.{SQLContext, DataFrame}
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -24,12 +27,12 @@ import breeze.linalg._
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 
-import org.apache.spark.SparkContext._
 import org.apache.spark.{Partition, Partitioner, SparkContext, TaskContext}
 import org.apache.spark.mllib.linalg.Vectors
 import org.apache.spark.mllib.linalg.distributed.{IndexedRow, IndexedRowMatrix, RowMatrix}
 import org.apache.spark.mllib.linalg.Vectors
 import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.functions._
 import org.apache.spark.util.StatCounter
 
 import org.joda.time.DateTime
@@ -205,15 +208,17 @@ class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double
     // At this point, dividedOnMapSide is an RDD of snippets of full samples that will be
     // assembled on the reduce side.  Each key is a tuple of
     // (date-time, position of snippet in full sample)
-
     val partitioner = new Partitioner() {
       val nPart = if (nPartitions == -1) parent.partitions.size else nPartitions
+
       override def numPartitions: Int = nPart
       override def getPartition(key: Any): Int = key.asInstanceOf[(Int, _)]._1 / nPart
     }
+
     implicit val ordering = new Ordering[(Int, Int)] {
       override def compare(a: (Int, Int), b: (Int, Int)): Int = {
         val dtDiff = a._1 - b._1
+
         if (dtDiff != 0){
           dtDiff
         } else {
@@ -221,6 +226,7 @@ class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double
         }
       }
     }
+
     val repartitioned = dividedOnMapSide.repartitionAndSortWithinPartitions(partitioner)
     repartitioned.mapPartitions { iter0: Iterator[((Int, Int), Vector[Double])] =>
       new Iterator[(DateTime, Vector[Double])] {
@@ -239,6 +245,7 @@ class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double
             snippets += snip
             snip = if (iter0.hasNext) iter0.next() else null
           }
+
           iter = if (snip == null) iter0 else Iterator(snip) ++ iter0
           snippets
         }
@@ -277,6 +284,32 @@ class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double
         }
       }
     }
+  }
+
+  /**
+   * Performs the same operations as toInstants but returns a DataFrame instead.
+   *
+   * The schema of the DataFrame returned will be a java.sql.Timestamp column named "instant"
+   * and double columns named "v0", "v1", "v2", ... "vN".
+   */
+  def toInstantsDataFrame(sqlContext: SQLContext, nPartitions: Int = -1): DataFrame = {
+    val instantsRDD = this.toInstants(nPartitions)
+    val vectorLength = this.first._2.length
+
+    import sqlContext.implicits._
+
+    val result = instantsRDD.map{ case (dt, v) =>
+      val timestamp: Timestamp = new Timestamp(dt.getMillis())
+
+      (timestamp, v.toArray)
+    }.toDF()
+
+    val dataColExpr: Seq[String] = for (i <- 0 to vectorLength) yield s"_2[$i] AS v$i"
+    val allColsExpr = "_1 AS instant" +: dataColExpr
+
+    val instantsDF = result.selectExpr(allColsExpr:_*)
+
+    instantsDF
   }
 
   /**
