@@ -23,7 +23,7 @@ class TimeSeries(val index: DateTimeIndex, val data: DenseMatrix[Double],
     val keys: Array[String]) extends Serializable {
 
   def slice(range: Range): TimeSeries = {
-    new TimeSeries(index.slice(range), data(range, ::), keys)
+    new TimeSeries(index.islice(range), data(range, ::), keys)
   }
 
   def union(vec: Vector[Double], key: String): TimeSeries = {
