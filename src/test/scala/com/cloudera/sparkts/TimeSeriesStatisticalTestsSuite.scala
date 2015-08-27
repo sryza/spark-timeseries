@@ -102,4 +102,46 @@ class TimeSeriesStatisticalTestsSuite extends FunSuite with ShouldMatchers {
     val (stat2, pval2) = lbtest(vecDep, 2)
     pval2 should be < 0.05
   }
+
+  test("KPSS test: R equivalence") {
+    // Note that we only test the statistic, as in contrast with the R tseries implementation
+    // we do not calculate a p-value, but rather return a map of appropriate critical values
+    // R's tseries linearly interpolates between critical values.
+
+    // version.string R version 3.2.0 (2015-04-16)
+    // > set.seed(10)
+    // > library(tseries)
+    // > v <- rnorm(20)
+    // > kpss.test(v, "Level")
+    //
+    // KPSS Test for Level Stationarity
+    //
+    // data:  v
+    // KPSS Level = 0.27596, Truncation lag parameter = 1, p-value = 0.1
+    //
+    // Warning message:
+    // In kpss.test(v, "Level") : p-value greater than printed p-value
+    // > kpss.test(v, "Trend")
+    //
+    // KPSS Test for Trend Stationarity
+    //
+    // data:  v
+    // KPSS Trend = 0.05092, Truncation lag parameter = 1, p-value = 0.1
+    //
+    // Warning message:
+    // In kpss.test(v, "Trend") : p-value greater than printed p-value
+
+    val arr = Array(0.0187461709418264, -0.184252542069064, -1.37133054992251, -0.599167715783718,
+      0.294545126567508, 0.389794300700167, -1.20807617542949, -0.363676017470862,
+      -1.62667268170309, -0.256478394123992, 1.10177950308713, 0.755781508027337,
+      -0.238233556018718, 0.98744470341339, 0.741390128383824, 0.0893472664958216,
+      -0.954943856152377, -0.195150384667239, 0.92552126209408, 0.482978524836611
+    )
+    val dv = new DenseVector(arr)
+    val cTest = kpsstest(dv, "c")._1
+    val ctTest = kpsstest(dv, "ct")._1
+
+    cTest should be (0.2759 +- 1e-4)
+    ctTest should be (0.05092 +- 1e-4)
+  }
 }
