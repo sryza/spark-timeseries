@@ -24,7 +24,7 @@ import com.cloudera.sparkts.DateTimeIndex._
 class DateTimeIndexSuite extends FunSuite with ShouldMatchers {
 
   test("to / from string") {
-    val uniformIndex = uniform(new DateTime("1990-04-10"), 5, 2 businessDays)
+    val uniformIndex = uniform(new DateTime("1990-04-10"), 5, 2.businessDays)
     val uniformStr = uniformIndex.toString
     fromString(uniformStr) should be (uniformIndex)
 
@@ -35,7 +35,7 @@ class DateTimeIndexSuite extends FunSuite with ShouldMatchers {
   }
 
   test("uniform") {
-    val index: DateTimeIndex = uniform(new DateTime("2015-04-10"), 5, 2 days)
+    val index: DateTimeIndex = uniform(new DateTime("2015-04-10"), 5, 2.days)
     index.size should be (5)
     index.first should be (new DateTime("2015-04-10"))
     index.last should be (new DateTime("2015-04-18"))

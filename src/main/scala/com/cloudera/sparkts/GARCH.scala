@@ -37,7 +37,7 @@ object GARCH {
       new SimpleValueChecker(1e-6, 1e-6))
     val gradient = new ObjectiveFunctionGradient(new MultivariateVectorFunction() {
       def value(params: Array[Double]): Array[Double] = {
-        new GARCHModel(params(0), params(1), params(2)).gradient(ts).toArray
+        new GARCHModel(params(0), params(1), params(2)).gradient(ts)
       }
     })
     val objectiveFunction = new ObjectiveFunction(new MultivariateFunction() {
@@ -129,9 +129,6 @@ class GARCHModel(
     }
   }
 
-  /**
-   * {@inheritDoc}
-   */
   def removeTimeDependentEffects(ts: Vector[Double], dest: Vector[Double]): Vector[Double] = {
     var prevEta = ts(0)
     var prevVariance = omega / (1.0 - alpha - beta)
@@ -147,9 +144,6 @@ class GARCHModel(
     dest
   }
 
-  /**
-   * {@inheritDoc}
-   */
   override def addTimeDependentEffects(ts: Vector[Double], dest: Vector[Double]): Vector[Double] = {
     var prevVariance = omega / (1.0 - alpha - beta)
     var prevEta = ts(0) * math.sqrt(prevVariance)
@@ -207,9 +201,6 @@ class ARGARCHModel(
     val alpha: Double,
     val beta: Double) extends TimeSeriesModel {
 
-  /**
-   * {@inheritDoc}
-   */
   override def removeTimeDependentEffects(ts: Vector[Double], dest: Vector[Double])
     : Vector[Double] = {
     var prevEta = ts(0) - c
@@ -226,9 +217,6 @@ class ARGARCHModel(
     dest
   }
 
-  /**
-   * {@inheritDoc}
-   */
   override def addTimeDependentEffects(ts: Vector[Double], dest: Vector[Double]): Vector[Double] = {
     var prevVariance = omega / (1.0 - alpha - beta)
     var prevEta = ts(0) * math.sqrt(prevVariance)
@@ -283,17 +271,11 @@ class EGARCHModel(
     throw new UnsupportedOperationException()
   }
 
-  /**
-   * {@inheritDoc}
-   */
   override def removeTimeDependentEffects(ts: Vector[Double], dest: Vector[Double])
     : Vector[Double] = {
     throw new UnsupportedOperationException()
   }
 
-  /**
-   * {@inheritDoc}
-   */
   override def addTimeDependentEffects(ts: Vector[Double], dest: Vector[Double]): Vector[Double] = {
     throw new UnsupportedOperationException()
   }

@@ -22,15 +22,15 @@ import org.apache.commons.math3.random.RandomGenerator
 object Util {
   def sampleWithReplacement(values: Array[Double], rand: RandomGenerator, target: Array[Double])
     : Unit = {
-    for (i <- 0 until target.length) {
+    for (i <- target.indices) {
       target(i) = values(rand.nextInt(values.length))
     }
   }
 
   def transpose(arr: Array[Array[Double]]): Array[Array[Double]] = {
     val mat = new Array[Array[Double]](arr.head.length)
-    for (i <- 0 until arr.head.length) {
-      mat(i) = arr.map(_(i)).toArray
+    for (i <- arr.head.indices) {
+      mat(i) = arr.map(_(i))
     }
     mat
   }
@@ -44,7 +44,7 @@ object Util {
   }
 
   def arrsToMat(arrs: Iterator[Array[Double]]): DenseMatrix[Double] = {
-    vecArrsToMats(arrs, arrs.length).next
+    vecArrsToMats(arrs, arrs.length).next()
   }
 
   def vecArrsToMats(vecArrs: Iterator[Array[Double]], chunkSize: Int)

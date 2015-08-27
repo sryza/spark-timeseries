@@ -17,7 +17,7 @@ package com.cloudera.sparkts
 
 import scala.Double.NaN
 
-import UnivariateTimeSeries._
+import com.cloudera.sparkts.UnivariateTimeSeries._
 
 import org.scalatest.{FunSuite, ShouldMatchers}
 

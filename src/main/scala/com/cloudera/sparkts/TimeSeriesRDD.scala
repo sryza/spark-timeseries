@@ -24,9 +24,7 @@ import breeze.linalg._
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 
-import org.apache.spark.SparkContext._
 import org.apache.spark.{Partition, Partitioner, SparkContext, TaskContext}
-import org.apache.spark.mllib.linalg.Vectors
 import org.apache.spark.mllib.linalg.distributed.{IndexedRow, IndexedRowMatrix, RowMatrix}
 import org.apache.spark.mllib.linalg.Vectors
 import org.apache.spark.rdd.RDD
@@ -60,7 +58,7 @@ class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double
     } else {
       val mat = new DenseMatrix[Double](elements.head._2.length, elements.length)
       val labels = new Array[String](elements.length)
-      for (i <- 0 until elements.length) {
+      for (i <- elements.indices) {
         val (label, vec) = elements(i)
         mat(::, i) := vec
         labels(i) = label
@@ -93,9 +91,6 @@ class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double
     mapSeries(index.islice(1, index.size), vec => UnivariateTimeSeries.price2ret(vec, 1))
   }
 
-  /**
-   * {@inheritDoc}
-   */
   override def filter(f: ((String, Vector[Double])) => Boolean): TimeSeriesRDD = {
     new TimeSeriesRDD(index, super.filter(f))
   }
@@ -184,7 +179,7 @@ class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double
           if (chunkId == -1 || dtLoc == index.size) {
             chunk.clear()
             while (chunk.size < maxChunkSize && iter.hasNext) {
-              chunk += iter.next._2
+              chunk += iter.next()._2
             }
             dtLoc = 0
             chunkId += 1
@@ -207,7 +202,7 @@ class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double
     // (date-time, position of snippet in full sample)
 
     val partitioner = new Partitioner() {
-      val nPart = if (nPartitions == -1) parent.partitions.size else nPartitions
+      val nPart = if (nPartitions == -1) parent.partitions.length else nPartitions
       override def numPartitions: Int = nPart
       override def getPartition(key: Any): Int = key.asInstanceOf[(Int, _)]._1 / nPart
     }
@@ -297,7 +292,7 @@ class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double
     // and records are ordered by time
     val uniformIndex = index.asInstanceOf[UniformDateTimeIndex]
     val instants = toInstants(nPartitions)
-    val start = uniformIndex.first()
+    val start = uniformIndex.first
     val rows = instants.map { x =>
       val rowIndex = uniformIndex.frequency.difference(start, x._1)
       val rowData = Vectors.dense(x._2.toArray)

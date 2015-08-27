@@ -32,7 +32,7 @@ object Lag {
    */
   private[sparkts] def lagMatTrimBoth(x: Array[Double], maxLag: Int, includeOriginal: Boolean)
     : Array[Array[Double]] = {
-    val numObservations = x.size
+    val numObservations = x.length
     val numRows = numObservations - maxLag
     val numCols = maxLag + (if (includeOriginal) 1 else 0)
     val lagMat = Array.ofDim[Double](numRows, numCols)

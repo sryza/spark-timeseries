@@ -30,7 +30,7 @@ object YahooParser {
     val samples = lines.tail.map { line =>
       val tokens = line.split(',')
       val dt = new DateTime(tokens.head)
-      (dt, tokens.tail.map(_.toDouble).toArray)
+      (dt, tokens.tail.map(_.toDouble))
     }.reverse
     timeSeriesFromSamples(samples, labels)
   }

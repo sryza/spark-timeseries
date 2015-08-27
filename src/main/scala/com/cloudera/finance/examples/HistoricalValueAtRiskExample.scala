@@ -66,7 +66,7 @@ object HistoricalValueAtRiskExample {
     val factorReturns = loadTS(factorsDir, year2000, year2010).collectAsTimeSeries()
 
     // Fit an AR(1) + GARCH(1, 1) model to each factor
-    val garchModels = factorReturns.mapValues(ARGARCH.fitModel(_)).toMap
+    val garchModels = factorReturns.mapValues(ARGARCH.fitModel).toMap
     val iidFactorReturns = factorReturns.mapSeriesWithKey { case (symbol, series) =>
       val model = garchModels(symbol)
       model.removeTimeDependentEffects(series, DenseVector.zeros[Double](series.length))
