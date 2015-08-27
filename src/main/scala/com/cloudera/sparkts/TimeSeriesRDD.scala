@@ -15,12 +15,20 @@
 
 package com.cloudera.sparkts
 
+import java.io.{BufferedReader, InputStreamReader, PrintStream}
+
 import scala.collection.mutable.ArrayBuffer
 
 import breeze.linalg._
 
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.{FileSystem, Path}
+
 import org.apache.spark.SparkContext._
-import org.apache.spark.{Partition, Partitioner, TaskContext}
+import org.apache.spark.{Partition, Partitioner, SparkContext, TaskContext}
+import org.apache.spark.mllib.linalg.Vectors
+import org.apache.spark.mllib.linalg.distributed.{IndexedRow, IndexedRowMatrix, RowMatrix}
+import org.apache.spark.mllib.linalg.Vectors
 import org.apache.spark.rdd.RDD
 import org.apache.spark.util.StatCounter
 
@@ -39,6 +47,8 @@ import org.joda.time.DateTime
  */
 class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double])])
   extends RDD[(String, Vector[Double])](parent) {
+
+  lazy val keys = parent.map(_._1).collect()
 
   /**
    * Collects the RDD as a local TimeSeries
@@ -64,7 +74,7 @@ class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double
    * RDD will be missing the first n date-times.
    */
   def differences(n: Int): TimeSeriesRDD = {
-    mapSeries(index.slice(n, index.size - 1), vec => diff(vec.toDenseVector, n))
+    mapSeries(index.islice(n, index.size), vec => diff(vec.toDenseVector, n))
   }
 
   /**
@@ -72,7 +82,7 @@ class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double
    * RDD will be missing the first n date-times.
    */
   def quotients(n: Int): TimeSeriesRDD = {
-    mapSeries(index.slice(n, index.size - 1), UnivariateTimeSeries.quotients(_, n))
+    mapSeries(index.islice(n, index.size), UnivariateTimeSeries.quotients(_, n))
   }
 
   /**
@@ -80,7 +90,7 @@ class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double
    * compounded) returns.
    */
   def price2ret(): TimeSeriesRDD = {
-    mapSeries(index.slice(1, index.size - 1), vec => UnivariateTimeSeries.price2ret(vec, 1))
+    mapSeries(index.islice(1, index.size), vec => UnivariateTimeSeries.price2ret(vec, 1))
   }
 
   /**
@@ -269,11 +279,70 @@ class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double
     }
   }
 
+  /**
+   * Converts a TimeSeriesRDD into a distributed IndexedRowMatrix, useful to take advantage
+   * of Spark MLlib's statistic functions on matrices in a distributed fashion. This is only
+   * supported for cases with a uniform time series index. See
+   * [[http://spark.apache.org/docs/latest/mllib-data-types.html]] for more information on the
+   * matrix data structure
+   * @param nPartitions number of partitions, default to -1, which represents the same number
+   *                    as currently used for the TimeSeriesRDD
+   * @return an equivalent IndexedRowMatrix
+   */
+  def toIndexedRowMatrix(nPartitions: Int = -1): IndexedRowMatrix = {
+    if (!index.isInstanceOf[UniformDateTimeIndex]) {
+      throw new UnsupportedOperationException("only supported for uniform indices")
+    }
+    // each record contains a value per time series, in original order
+    // and records are ordered by time
+    val uniformIndex = index.asInstanceOf[UniformDateTimeIndex]
+    val instants = toInstants(nPartitions)
+    val start = uniformIndex.first()
+    val rows = instants.map { x =>
+      val rowIndex = uniformIndex.frequency.difference(start, x._1)
+      val rowData = Vectors.dense(x._2.toArray)
+      IndexedRow(rowIndex, rowData)
+    }
+    new IndexedRowMatrix(rows)
+  }
+
+  /**
+   * Converts a TimeSeriesRDD into a distributed RowMatrix, note that indices in
+   * a RowMatrix are not significant, and thus this is a valid operation regardless
+   * of the type of time index.  See
+   * [[http://spark.apache.org/docs/latest/mllib-data-types.html]] for more information on the
+   * matrix data structure
+   * @param nPartitions
+   * @return an equivalent RowMatrix
+   */
+  def toRowMatrix(nPartitions: Int = -1): RowMatrix = {
+    val instants = toInstants(nPartitions)
+    val rows = instants.map { x => Vectors.dense(x._2.toArray) }
+    new RowMatrix(rows)
+  }
+
   def compute(split: Partition, context: TaskContext): Iterator[(String, Vector[Double])] = {
     parent.iterator(split, context)
   }
 
   protected def getPartitions: Array[Partition] = parent.partitions
+
+  /**
+   * Writes out the contents of this TimeSeriesRDD to a set of CSV files in the given directory,
+   * with an accompanying file in the same directory including the time index.
+   */
+  def saveAsCsv(path: String): Unit = {
+    // Write out contents
+    parent.map { case (key, vec) => key + "," + vec.valuesIterator.mkString(",") }
+      .saveAsTextFile(path)
+
+    // Write out time index
+    val fs = FileSystem.get(new Configuration())
+    val os = fs.create(new Path(path + "/timeIndex"))
+    val ps = new PrintStream(os)
+    ps.println(index.toString)
+    ps.close()
+  }
 }
 
 object TimeSeriesRDD {
@@ -305,5 +374,24 @@ object TimeSeriesRDD {
       }
     }
     new TimeSeriesRDD(targetIndex, rdd)
+  }
+
+  /**
+   * Loads a TimeSeriesRDD from a directory containing a set of CSV files and a date-time index.
+   */
+  def timeSeriesRDDFromCsv(path: String, sc: SparkContext)
+    : TimeSeriesRDD = {
+    val rdd = sc.textFile(path).map { line =>
+      val tokens = line.split(",")
+      val series = new DenseVector[Double](tokens.tail.map(_.toDouble))
+      (tokens.head, series.asInstanceOf[Vector[Double]])
+    }
+
+    val fs = FileSystem.get(new Configuration())
+    val is = fs.open(new Path(path + "/timeIndex"))
+    val dtIndex = DateTimeIndex.fromString(new BufferedReader(new InputStreamReader(is)).readLine())
+    is.close()
+
+    new TimeSeriesRDD(dtIndex, rdd)
   }
 }

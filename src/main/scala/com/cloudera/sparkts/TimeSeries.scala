@@ -38,7 +38,7 @@ class TimeSeries(val index: DateTimeIndex, val data: DenseMatrix[Double],
    * TimeSeries will be missing the first n date-times.
    */
   def differences(lag: Int): TimeSeries = {
-    mapSeries(index.slice(lag, index.size - 1), vec => diff(vec.toDenseVector, lag))
+    mapSeries(index.islice(lag, index.size), vec => diff(vec.toDenseVector, lag))
   }
 
   /**
@@ -52,7 +52,7 @@ class TimeSeries(val index: DateTimeIndex, val data: DenseMatrix[Double],
    * TimeSeries will be missing the first n date-times.
    */
   def quotients(lag: Int): TimeSeries = {
-    mapSeries(index.slice(lag, index.size - 1), vec => UnivariateTimeSeries.quotients(vec, lag))
+    mapSeries(index.islice(lag, index.size), vec => UnivariateTimeSeries.quotients(vec, lag))
   }
 
   /**
@@ -66,7 +66,7 @@ class TimeSeries(val index: DateTimeIndex, val data: DenseMatrix[Double],
    * compounded) returns.
    */
   def price2ret(): TimeSeries = {
-    mapSeries(index.slice(1, index.size - 1), vec => UnivariateTimeSeries.price2ret(vec, 1))
+    mapSeries(index.islice(1, index.size), vec => UnivariateTimeSeries.price2ret(vec, 1))
   }
 
   def univariateSeriesIterator(): Iterator[Vector[Double]] = {

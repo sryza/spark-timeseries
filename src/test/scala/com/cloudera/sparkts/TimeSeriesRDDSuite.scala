@@ -15,6 +15,9 @@
 
 package com.cloudera.sparkts
 
+import java.io.File
+import java.nio.file.Files
+
 import breeze.linalg._
 
 import com.cloudera.sparkts.DateTimeIndex._
@@ -22,6 +25,7 @@ import com.cloudera.sparkts.DateTimeIndex._
 import com.github.nscala_time.time.Imports._
 
 import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.mllib.linalg.distributed.IndexedRow
 
 import org.scalatest.{FunSuite, ShouldMatchers}
 
@@ -78,5 +82,65 @@ class TimeSeriesRDDSuite extends FunSuite with LocalSparkContext with ShouldMatc
       (start + 2.days, new DenseVector((2.0 until 20.0 by 4.0).toArray)),
       (start + 3.days, new DenseVector((3.0 until 20.0 by 4.0).toArray)))
     )
+  }
+
+  test("save / load") {
+    val conf = new SparkConf().setMaster("local").setAppName(getClass.getName)
+    TimeSeriesKryoRegistrator.registerKryoClasses(conf)
+    sc = new SparkContext(conf)
+    val vecs = Array(0 until 10, 10 until 20, 20 until 30)
+      .map(_.map(x => x.toDouble).toArray)
+      .map(new DenseVector(_))
+      .map(x => (x(0).toString, x))
+    val start = new DateTime("2015-4-9")
+    val index = uniform(start, 10, 1.days)
+    val rdd = new TimeSeriesRDD(index, sc.parallelize(vecs))
+
+    val tempDir = Files.createTempDirectory("saveload")
+    val path = tempDir.toFile.getAbsolutePath
+    new File(path).delete()
+    try {
+      rdd.saveAsCsv(path)
+      val loaded = TimeSeriesRDD.timeSeriesRDDFromCsv(path, sc)
+      loaded.index should be (rdd.index)
+    } finally {
+      new File(path).listFiles().foreach(_.delete())
+      new File(path).delete()
+    }
+  }
+
+  test("toIndexedRowMatrix") {
+    val conf = new SparkConf().setMaster("local").setAppName(getClass.getName)
+    TimeSeriesKryoRegistrator.registerKryoClasses(conf)
+    sc = new SparkContext(conf)
+    val seriesVecs = (0 until 20 by 4).map(
+      x => new DenseVector((x until x + 4).map(_.toDouble).toArray))
+    val labels = Array("a", "b", "c", "d", "e")
+    val start = new DateTime("2015-4-9")
+    val index = uniform(start, 4, 1.days)
+    val rdd = sc.parallelize(labels.zip(seriesVecs.map(_.asInstanceOf[Vector[Double]])), 3)
+    val tsRdd = new TimeSeriesRDD(index, rdd)
+    val indexedMatrix = tsRdd.toIndexedRowMatrix()
+    val (rowIndices, rowData) = indexedMatrix.rows.collect().map { case IndexedRow(ix, data) =>
+      (ix, data.toArray)
+    }.unzip
+    rowData.toArray should be ((0.0 to 3.0 by 1.0).map(x => (x until 20.0 by 4.0).toArray).toArray)
+    rowIndices.toArray should be (Array(0, 1, 2, 3))
+  }
+
+  test("toRowMatrix") {
+    val conf = new SparkConf().setMaster("local").setAppName(getClass.getName)
+    TimeSeriesKryoRegistrator.registerKryoClasses(conf)
+    sc = new SparkContext(conf)
+    val seriesVecs = (0 until 20 by 4).map(
+      x => new DenseVector((x until x + 4).map(_.toDouble).toArray))
+    val labels = Array("a", "b", "c", "d", "e")
+    val start = new DateTime("2015-4-9")
+    val index = uniform(start, 4, 1.days)
+    val rdd = sc.parallelize(labels.zip(seriesVecs.map(_.asInstanceOf[Vector[Double]])), 3)
+    val tsRdd = new TimeSeriesRDD(index, rdd)
+    val matrix = tsRdd.toRowMatrix()
+    val rowData = matrix.rows.collect().map(_.toArray)
+    rowData.toArray should be ((0.0 to 3.0 by 1.0).map(x => (x until 20.0 by 4.0).toArray).toArray)
   }
 }
