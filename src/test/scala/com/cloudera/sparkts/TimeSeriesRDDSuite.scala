@@ -109,7 +109,7 @@ class TimeSeriesRDDSuite extends FunSuite with LocalSparkContext with ShouldMatc
 
     columnNames.length should be (labels.length + 1) // labels + timestamp
     columnNames.head should be ("instant")
-    columnNames.tail should be (Array("v0", "v1", "v2", "v3", "v4"))
+    columnNames.tail should be (labels)
 
     sampleRows should be (Array(
       Row.fromSeq(new Timestamp(start.getMillis) :: (0.0 until 20.0 by 4.0).toList),
