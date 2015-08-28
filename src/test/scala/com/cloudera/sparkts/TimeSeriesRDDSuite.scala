@@ -17,12 +17,14 @@ package com.cloudera.sparkts
 
 import java.io.File
 import java.nio.file.Files
+import java.sql.Timestamp
 
 import breeze.linalg._
 
 import com.cloudera.sparkts.DateTimeIndex._
 
 import com.github.nscala_time.time.Imports._
+import org.apache.spark.sql.{DataFrame, Row, SQLContext}
 
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.mllib.linalg.distributed.IndexedRow
@@ -82,6 +84,39 @@ class TimeSeriesRDDSuite extends FunSuite with LocalSparkContext with ShouldMatc
       (start + 2.days, new DenseVector((2.0 until 20.0 by 4.0).toArray)),
       (start + 3.days, new DenseVector((3.0 until 20.0 by 4.0).toArray)))
     )
+  }
+
+  test("toInstantsDataFrame") {
+    val conf = new SparkConf().setMaster("local").setAppName(getClass.getName)
+
+    TimeSeriesKryoRegistrator.registerKryoClasses(conf)
+
+    sc = new SparkContext(conf)
+
+    val sqlContext = new SQLContext(sc)
+
+    val seriesVectors = (0 until 20 by 4).map(x => new DenseVector((x until x + 4).map(_.toDouble).toArray))
+    val labels = Array("a", "b", "c", "d", "e")
+    val start = new DateTime("2015-4-9")
+    val index = uniform(start, 4, 1.days)
+
+    val rdd = sc.parallelize(labels.zip(seriesVectors.map(_.asInstanceOf[Vector[Double]])), 3)
+    val tsRdd = new TimeSeriesRDD(index, rdd)
+
+    val samplesDF: DataFrame = tsRdd.toInstantsDataFrame(sqlContext)
+    val sampleRows = samplesDF.collect()
+    val columnNames = samplesDF.columns
+
+    columnNames.length should be (labels.length + 1) // labels + timestamp
+    columnNames.head should be ("instant")
+    columnNames.tail should be (labels)
+
+    sampleRows should be (Array(
+      Row.fromSeq(new Timestamp(start.getMillis) :: (0.0 until 20.0 by 4.0).toList),
+      Row.fromSeq(new Timestamp((start + 1.days).getMillis) :: (1.0 until 20.0 by 4.0).toList),
+      Row.fromSeq(new Timestamp((start + 2.days).getMillis) :: (2.0 until 20.0 by 4.0).toList),
+      Row.fromSeq(new Timestamp((start + 3.days).getMillis) :: (3.0 until 20.0 by 4.0).toList)
+    ))
   }
 
   test("save / load") {
