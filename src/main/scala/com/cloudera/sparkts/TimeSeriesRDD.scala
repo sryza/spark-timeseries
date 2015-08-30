@@ -16,6 +16,9 @@
 package com.cloudera.sparkts
 
 import java.io.{BufferedReader, InputStreamReader, PrintStream}
+import java.sql.Timestamp
+
+import org.apache.spark.sql.{DataFrame, SQLContext}
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -272,6 +275,32 @@ class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double
         }
       }
     }
+  }
+
+  /**
+   * Performs the same operations as toInstants but returns a DataFrame instead.
+   *
+   * The schema of the DataFrame returned will be a java.sql.Timestamp column named "instant"
+   * and Double columns named identically to their keys in the TimeSeriesRDD
+   */
+  def toInstantsDataFrame(sqlContext: SQLContext, nPartitions: Int = -1): DataFrame = {
+    val instantsRDD = this.toInstants(nPartitions)
+    val vectorLength = this.first._2.length
+
+    import sqlContext.implicits._
+
+    val result = instantsRDD.map{ case (dt, v) =>
+      val timestamp: Timestamp = new Timestamp(dt.getMillis())
+
+      (timestamp, v.toArray)
+    }.toDF()
+
+    val dataColExpr: Seq[String] = for (i <- 0 to vectorLength) yield s"_2[$i] AS ${ keys(i) }"
+    val allColsExpr = "_1 AS instant" +: dataColExpr
+
+    val instantsDF = result.selectExpr(allColsExpr: _*)
+
+    instantsDF
   }
 
   /**
