@@ -21,6 +21,15 @@ import breeze.stats._
 import org.apache.commons.math3.analysis.interpolation.SplineInterpolator
 
 object UnivariateTimeSeries {
+
+  /**
+   * Lags the univariate time series
+   */
+  def lag(ts: Vector[Double], maxLag: Int, includeOriginal: Boolean): Matrix[Double] =
+  {
+    Lag.lagMatTrimBoth(ts, maxLag, includeOriginal)
+  }
+
   def autocorr(ts: Array[Double], numLags: Int): Array[Double] = {
     autocorr(new DenseVector(ts), numLags).toDenseVector.data
   }
