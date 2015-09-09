@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 from unittest import TestCase
 from io import BytesIO
+from pyspark.sql import SQLContext
 
 class TimeSeriesSerializerTestCase(TestCase):
     def test_times_series_serializer(self):
@@ -44,7 +45,6 @@ class TimeSeriesRDDTestCase(PySparkTestCase):
         self.assertTrue((contents["20"] == np.arange(21, 27)).all())
 
     def test_to_instants(self):
-        # TODO: kryo registrator
         vecs = [np.arange(x, x + 4) for x in np.arange(0, 20, 4)]
         labels = ['a', 'b', 'c', 'd', 'e']
         start = '2015-4-9'
@@ -58,4 +58,30 @@ class TimeSeriesRDDTestCase(PySparkTestCase):
         self.assertTrue((samples[1][1] == np.arange(1, 20, 4)).all())
         self.assertTrue((samples[2][1] == np.arange(2, 20, 4)).all())
         self.assertTrue((samples[3][1] == np.arange(3, 20, 4)).all())
+
+    def test_to_observations(self):
+        sql_ctx = SQLContext(self.sc)
+        vecs = [np.arange(x, x + 4) for x in np.arange(0, 20, 4)]
+        labels = ['a', 'b', 'c', 'd', 'e']
+        start = '2015-4-9'
+        dt_index = uniform(start, 4, DayFrequency(1, self.sc), self.sc)
+        rdd = self.sc.parallelize(zip(labels, vecs), 3)
+        tsrdd = TimeSeriesRDD(dt_index, rdd)
+
+        obsdf = tsrdd.to_observations_dataframe(sql_ctx)
+        tsrdd_from_df = time_series_rdd_from_observations( \
+            dt_index, obsdf, 'timestamp', 'key', 'value')
+        
+        ts1 = tsrdd.collect()
+        ts1.sort(key = lambda x: x[0])
+        ts2 = tsrdd_from_df.collect()
+        ts2.sort(key = lambda x: x[0])
+        self.assertTrue(all([pair[0][0] == pair[1][0] and (pair[0][1] == pair[1][1]).all() \
+            for pair in zip(ts1, ts2)]))
+        
+        df1 = obsdf.collect()
+        df1.sort(key = lambda x: x.value)
+        df2 = tsrdd_from_df.to_observations_dataframe(sql_ctx).collect()
+        df2.sort(key = lambda x: x.value)
+        self.assertEquals(df1, df2)
 

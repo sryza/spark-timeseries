@@ -121,6 +121,7 @@
           <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
           <junitxml>.</junitxml>
           <filereports>WDF TestSuite.txt</filereports>
+          <argLine>-XX:MaxPermSize=256m -Xmx2g</argLine>
         </configuration>
         <executions>
           <execution>
