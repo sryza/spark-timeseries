@@ -17,8 +17,7 @@ package com.cloudera.sparkts
 
 import java.io.{BufferedReader, InputStreamReader, PrintStream}
 import java.sql.Timestamp
-
-import org.apache.spark.sql.{DataFrame, SQLContext}
+import java.util.Arrays
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -27,10 +26,13 @@ import breeze.linalg._
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 
-import org.apache.spark.{Partition, Partitioner, SparkContext, TaskContext}
+import org.apache.spark._
+import org.apache.spark.SparkContext._
 import org.apache.spark.mllib.linalg.distributed.{IndexedRow, IndexedRowMatrix, RowMatrix}
 import org.apache.spark.mllib.linalg.Vectors
 import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.{Row, DataFrame, SQLContext}
+import org.apache.spark.sql.types._
 import org.apache.spark.util.StatCounter
 
 import org.joda.time.DateTime
@@ -300,6 +302,29 @@ class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double
   }
 
   /**
+   * Returns a DataFrame where each row is an observation containing a timestamp, a key, and a
+   * value.
+   */
+  def toObservationsDataFrame(
+      sqlContext: SQLContext,
+      tsCol: String = "timestamp",
+      keyCol: String = "key",
+      valueCol: String = "value"): DataFrame = {
+    val rowRdd = flatMap { case (key, series) =>
+      series.iterator.map { case (i, value) =>
+        Row(new Timestamp(index.dateTimeAtLoc(i).getMillis), key, value)
+      }
+    }
+
+    val schema = new StructType(Array(
+      new StructField(tsCol, DateType),
+      new StructField(keyCol, StringType),
+      new StructField(valueCol, DoubleType)
+    ))
+    sqlContext.createDataFrame(rowRdd, schema)
+  }
+
+  /**
    * Converts a TimeSeriesRDD into a distributed IndexedRowMatrix, useful to take advantage
    * of Spark MLlib's statistic functions on matrices in a distributed fashion. This is only
    * supported for cases with a uniform time series index. See
@@ -372,7 +397,8 @@ object TimeSeriesRDD {
    * @param targetIndex DateTimeIndex to conform all the indices to.
    * @param seriesRDD RDD of time series, each with their own DateTimeIndex.
    */
-  def timeSeriesRDD(targetIndex: UniformDateTimeIndex,
+  def timeSeriesRDD(
+      targetIndex: UniformDateTimeIndex,
       seriesRDD: RDD[(String, UniformDateTimeIndex, Vector[Double])]): TimeSeriesRDD = {
     val rdd = seriesRDD.map { case (key, index, vec) =>
       val newVec = TimeSeriesUtils.rebase(index, targetIndex, vec, Double.NaN)
@@ -382,7 +408,7 @@ object TimeSeriesRDD {
   }
 
   /**
-   * Instantiates a TimeSeriesRDD.
+   * Instantiates a TimeSeriesRDD from an RDD of TimeSeries.
    *
    * @param targetIndex DateTimeIndex to conform all the indices to.
    * @param seriesRDD RDD of time series, each with their own DateTimeIndex.
@@ -394,6 +420,60 @@ object TimeSeriesRDD {
       }
     }
     new TimeSeriesRDD(targetIndex, rdd)
+  }
+
+  /**
+   * Instantiates a TimeSeriesRDD from a DataFrame of observations.
+   *
+   * @param targetIndex DateTimeIndex to conform all the series to.
+   * @param df The DataFrame.
+   * @param tsCol The Timestamp column telling when the observation occurred.
+   * @param keyCol The string column labeling which string key the observation belongs to..
+   * @param valueCol The observed value..
+   */
+  def timeSeriesRDDFromObservations(
+      targetIndex: DateTimeIndex,
+      df: DataFrame,
+      tsCol: String,
+      keyCol: String,
+      valueCol: String): TimeSeriesRDD = {
+    val rdd = df.select(tsCol, keyCol, valueCol).rdd.map { row =>
+      ((row.getString(1), row.getAs[Timestamp](0)), row.getDouble(2))
+    }
+    implicit val ordering = new Ordering[(String, Timestamp)] {
+      override def compare(a: (String, Timestamp), b: (String, Timestamp)): Int = {
+        val strCompare = a._1.compareTo(b._1)
+        if (strCompare != 0) strCompare else a._2.compareTo(b._2)
+      }
+    }
+
+    val shuffled = rdd.repartitionAndSortWithinPartitions(new Partitioner() {
+      val hashPartitioner = new HashPartitioner(rdd.partitions.size)
+      override def numPartitions: Int = hashPartitioner.numPartitions
+      override def getPartition(key: Any): Int =
+        hashPartitioner.getPartition(key.asInstanceOf[Tuple2[Any, Any]]._1)
+    })
+    new TimeSeriesRDD(targetIndex, shuffled.mapPartitions { iter =>
+      val bufferedIter = iter.buffered
+      new Iterator[(String, DenseVector[Double])]() {
+        override def hasNext: Boolean = bufferedIter.hasNext
+
+        override def next(): (String, DenseVector[Double]) = {
+          // TODO: this will be slow for Irregular DateTimeIndexes because it will result in an
+          // O(log n) lookup for each element.
+          val series = new Array[Double](targetIndex.size)
+          Arrays.fill(series, Double.NaN)
+          val first = bufferedIter.next()
+          series(targetIndex.locAtDateTime(new DateTime(first._1._2))) = first._2
+          val key = first._1._1
+          while (bufferedIter.hasNext && bufferedIter.head._1._1 == key) {
+            val sample = bufferedIter.next()
+            series(targetIndex.locAtDateTime(new DateTime(sample._1._2))) = sample._2
+          }
+          (key, new DenseVector[Double](series))
+        }
+      }
+    })
   }
 
   /**
