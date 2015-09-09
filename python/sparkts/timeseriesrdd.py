@@ -1,6 +1,7 @@
 from py4j.java_gateway import java_import
 from pyspark import RDD
 from pyspark.serializers import FramedSerializer, SpecialLengths, write_int, read_int
+from pyspark.sql import DataFrame
 from utils import datetime_to_millis
 from datetimeindex import UniformDateTimeIndex
 import struct
@@ -65,6 +66,18 @@ class TimeSeriesRDD(RDD):
          jindex = self._jtsrdd.index()
          if jindex.getClass().getName() == 'com.cloudera.sparkts.UniformDateTimeIndex':
              return UniformDateTimeIndex(None, None, None, None, jindex)
+
+    def to_observations_dataframe(self, sql_ctx, ts_col='timestamp', key_col='key', val_col='value'):
+        ssql_ctx = sql_ctx._ssql_ctx
+        jdf = self._jtsrdd.toObservationsDataFrame(ssql_ctx, ts_col, key_col, val_col)
+        return DataFrame(jdf, sql_ctx)
+
+
+def time_series_rdd_from_observations(dt_index, df, ts_col, key_col, val_col):
+    jvm = df._sc._jvm
+    jtsrdd = jvm.com.cloudera.sparkts.TimeSeriesRDD.timeSeriesRDDFromObservations( \
+      dt_index._jdt_index, df._jdf, ts_col, key_col, val_col)
+    return TimeSeriesRDD(None, None, jtsrdd, df._sc)
 
 class TimeSeriesSerializer(FramedSerializer):
     """
