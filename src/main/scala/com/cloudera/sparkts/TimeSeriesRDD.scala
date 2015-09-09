@@ -317,7 +317,7 @@ class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double
     }
 
     val schema = new StructType(Array(
-      new StructField(tsCol, DateType),
+      new StructField(tsCol, TimestampType),
       new StructField(keyCol, StringType),
       new StructField(valueCol, DoubleType)
     ))
