@@ -60,9 +60,6 @@ class UniformDateTimeIndex:
 
 class DayFrequency:
   
-    def __init__(self, jfreq):
-        self._jfreq = jfreq
-
     def __init__(self, days, sc):
         self._jfreq = sc._jvm.com.cloudera.sparkts.DayFrequency(days)
 
@@ -74,6 +71,17 @@ class DayFrequency:
 
     def __ne__(self, other):
        return not self.__eq__(other)
+
+class BusinessDayFrequency:
+
+    def __init__(self, bdays, sc):
+        self._jfreq = sc._jvm.com.cloudera.sparkts.BusinessDayFrequency(bdays)
+
+    def __eq__(self, other):
+         return self._jfreq.equals(other._jfreq)
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
 def uniform(start, periods, frequency, sc):
     start = datetime_to_millis(start)
