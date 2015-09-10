@@ -161,23 +161,25 @@ class UniformDateTimeIndex(val start: Long, val periods: Int, val frequency: Fre
 class IrregularDateTimeIndex(val instants: Array[Long]) extends DateTimeIndex {
 
   override def slice(interval: Interval): IrregularDateTimeIndex = {
-    throw new UnsupportedOperationException()
+    slice(interval.start, interval.end)
   }
 
   override def slice(start: DateTime, end: DateTime): IrregularDateTimeIndex = {
-    throw new UnsupportedOperationException()
+    slice(start.getMillis, end.getMillis)
   }
 
   override def slice(start: Long, end: Long): IrregularDateTimeIndex = {
-    throw new UnsupportedOperationException()
+    val startLoc = locAtDateTime(start)
+    val endLoc = locAtDateTime(end)
+    new IrregularDateTimeIndex(instants.slice(startLoc, endLoc + 1))
   }
 
   override def islice(range: Range): IrregularDateTimeIndex = {
-    throw new UnsupportedOperationException()
+    new IrregularDateTimeIndex(instants.slice(range.head, range.last + 1))
   }
 
   override def islice(start: Int, end: Int): IrregularDateTimeIndex = {
-    throw new UnsupportedOperationException()
+    new IrregularDateTimeIndex(instants.slice(start, end))
   }
 
   override def first: DateTime = new DateTime(instants(0))
