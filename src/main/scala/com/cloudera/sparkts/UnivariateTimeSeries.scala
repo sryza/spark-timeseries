@@ -25,8 +25,7 @@ object UnivariateTimeSeries {
   /**
    * Lags the univariate time series
    */
-  def lag(ts: Vector[Double], maxLag: Int, includeOriginal: Boolean): Matrix[Double] =
-  {
+  def lag(ts: Vector[Double], maxLag: Int, includeOriginal: Boolean): Matrix[Double] = {
     Lag.lagMatTrimBoth(ts, maxLag, includeOriginal)
   }
 
