@@ -26,6 +26,11 @@ import org.apache.commons.math3.random.MersenneTwister
 import org.scalatest.{FunSuite, ShouldMatchers}
 
 class UnivariateTimeSeriesSuite extends FunSuite with ShouldMatchers {
+  test("lag") {
+    val lagMatrix = UnivariateTimeSeries.lag(Vector(1.0, 2.0, 3.0, 4.0, 5.0), 2, true)
+    lagMatrix should be (new DenseMatrix(3, 3, Array(3.0, 4.0, 5.0, 2.0, 3.0, 4.0, 1.0, 2.0, 3.0)))
+  }
+
   test("lastNotNaN") {
     lastNotNaN(new DenseVector(Array(1.0, 2.0, 3.0, 4.0))) should be (3)
     lastNotNaN(new DenseVector(Array(1.0, 2.0, NaN, 4.0))) should be (3)
