@@ -65,7 +65,7 @@ class TimeSeriesRDD(RDD):
     def index(self):
          jindex = self._jtsrdd.index()
          if jindex.getClass().getName() == 'com.cloudera.sparkts.UniformDateTimeIndex':
-             return UniformDateTimeIndex(None, None, None, None, jindex)
+             return UniformDateTimeIndex(jindex)
 
     def to_observations_dataframe(self, sql_ctx, ts_col='timestamp', key_col='key', val_col='value'):
         ssql_ctx = sql_ctx._ssql_ctx

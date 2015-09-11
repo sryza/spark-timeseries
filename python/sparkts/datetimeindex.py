@@ -14,11 +14,8 @@ class UniformDateTimeIndex:
     to the latter.
     """ 
 
-    def __init__(self, start, periods, freq, sc, jdt_index = None):
-        if jdt_index != None:
-          self._jdt_index = jdt_index
-        else:
-          self._jdt_index = sc._jvm.com.cloudera.sparkts.UniformDateTimeIndex(start, periods, freq)
+    def __init__(self, jdt_index):
+        self._jdt_index = jdt_index
 
     def size(self):
         return self._jdt_index.size()
@@ -37,13 +34,13 @@ class UniformDateTimeIndex:
             start = datetime_to_millis(val.start)
             stop = datetime_to_millis(val.stop)
             jdt_index = self._jdt_index.slice(start, stop)
-            return UniformDateTimeIndex(None, None, None, None, jdt_index)
+            return UniformDateTimeIndex(jdt_index)
         else:
             return self._jdt_index.locAtDateTime(datetime_to_millis(val))
 
     def islice(self, start, end):
         jdt_index = self._jdt_index.islice(start, end)
-        return UniformDateTimeIndex(None, None, None, None, jdt_index)
+        return UniformDateTimeIndex(jdt_index=jdt_index)
 
     def datetime_at_loc(self, loc):
         millis = self._jdt_index.dateTimeAtLoc(loc).getMillis()
@@ -83,7 +80,16 @@ class BusinessDayFrequency:
     def __ne__(self, other):
         return not self.__eq__(other)
 
-def uniform(start, periods, frequency, sc):
-    start = datetime_to_millis(start)
-    return UniformDateTimeIndex(start, periods, frequency._jfreq, sc)
-
+def uniform(start, end=None, periods=None, freq=None, sc=None):
+    dtmodule = sc._jvm.com.cloudera.sparkts.__getattr__('DateTimeIndex$').__getattr__('MODULE$')
+    if freq is None:
+        raise ValueError("Missing frequency")
+    elif end is None and periods == None:
+        raise ValueError("Need an end date or number of periods")
+    elif end is not None:
+        return UniformDateTimeIndex(dtmodule.uniform( \
+            datetime_to_millis(start), datetime_to_millis(end), freq._jfreq))
+    else:
+        return UniformDateTimeIndex(dtmodule.uniform( \
+            datetime_to_millis(start), periods, freq._jfreq))
+ 
