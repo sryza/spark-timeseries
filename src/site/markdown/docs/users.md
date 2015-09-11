@@ -1,4 +1,4 @@
-title: Users
+title: User Guide
 
 # Terminology
 
