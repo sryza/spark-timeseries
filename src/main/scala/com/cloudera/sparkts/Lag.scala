@@ -66,7 +66,7 @@ object Lag {
     val numCols = maxLag + (if (includeOriginal) 1 else 0)
     val lagMat = new DenseMatrix[Double](numRows, numCols)
     for (r <- 0 until numRows) {
-      for (c <- 0 to maxLag) {
+      for (c <- 0 until maxLag) {
         lagMat(r, c) = x(r + maxLag - c)
       }
       if (includeOriginal) {
