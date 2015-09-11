@@ -226,6 +226,13 @@ object DateTimeIndex {
   /**
    * Create a UniformDateTimeIndex with the given start time and end time (inclusive) and frequency.
    */
+  def uniform(start: Long, end: Long, frequency: Frequency): UniformDateTimeIndex = {
+    uniform(start, frequency.difference(new DateTime(start), new DateTime(end)) + 1, frequency)
+  }
+
+  /**
+   * Create a UniformDateTimeIndex with the given start time and end time (inclusive) and frequency.
+   */
   def uniform(start: DateTime, end: DateTime, frequency: Frequency): UniformDateTimeIndex = {
     uniform(start, frequency.difference(start, end) + 1, frequency)
   }
