@@ -1,5 +1,5 @@
 import unittest
-from utils import add_pyspark_path, quiet_py4j
+from sparkts.utils import add_pyspark_path, quiet_py4j
 
 add_pyspark_path()
 quiet_py4j()

@@ -1,6 +1,6 @@
 from test_utils import PySparkTestCase
-from timeseriesrdd import *
-from datetimeindex import *
+from sparkts.timeseriesrdd import *
+from sparkts.datetimeindex import *
 import pandas as pd
 import numpy as np
 from unittest import TestCase
@@ -24,7 +24,7 @@ class TimeSeriesRDDTestCase(PySparkTestCase):
     def test_time_series_rdd(self):
         freq = DayFrequency(1, self.sc)
         start = '2015-04-09'
-        dt_index = uniform(start, 10, freq, self.sc)
+        dt_index = uniform(start, periods=10, freq=freq, sc=self.sc)
         vecs = [np.arange(0, 10), np.arange(10, 20), np.arange(20, 30)]
         rdd = self.sc.parallelize(vecs).map(lambda x: (str(x[0]), x))
         tsrdd = TimeSeriesRDD(dt_index, rdd)
@@ -37,7 +37,7 @@ class TimeSeriesRDDTestCase(PySparkTestCase):
         self.assertTrue((contents["20"] == np.arange(20, 30)).all())
 
         subslice = tsrdd['2015-04-10':'2015-04-15']
-        self.assertEquals(subslice.index(), uniform('2015-04-10', 6, freq, self.sc))
+        self.assertEquals(subslice.index(), uniform('2015-04-10', periods=6, freq=freq, sc=self.sc))
         contents = subslice.collectAsMap()
         self.assertEquals(len(contents), 3)
         self.assertTrue((contents["0"] == np.arange(1, 7)).all())
@@ -48,7 +48,7 @@ class TimeSeriesRDDTestCase(PySparkTestCase):
         vecs = [np.arange(x, x + 4) for x in np.arange(0, 20, 4)]
         labels = ['a', 'b', 'c', 'd', 'e']
         start = '2015-4-9'
-        dt_index = uniform(start, 4, DayFrequency(1, self.sc), self.sc)
+        dt_index = uniform(start, periods=4, freq=DayFrequency(1, self.sc), sc=self.sc)
         rdd = self.sc.parallelize(zip(labels, vecs), 3)
         tsrdd = TimeSeriesRDD(dt_index, rdd)
         samples = tsrdd.to_instants().collect()
@@ -64,7 +64,7 @@ class TimeSeriesRDDTestCase(PySparkTestCase):
         vecs = [np.arange(x, x + 4) for x in np.arange(0, 20, 4)]
         labels = ['a', 'b', 'c', 'd', 'e']
         start = '2015-4-9'
-        dt_index = uniform(start, 4, DayFrequency(1, self.sc), self.sc)
+        dt_index = uniform(start, periods=4, freq=DayFrequency(1, self.sc), sc=self.sc)
         rdd = self.sc.parallelize(zip(labels, vecs), 3)
         tsrdd = TimeSeriesRDD(dt_index, rdd)
 
