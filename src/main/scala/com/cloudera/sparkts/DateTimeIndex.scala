@@ -42,6 +42,12 @@ trait DateTimeIndex extends Serializable {
   def slice(start: DateTime, end: DateTime): DateTimeIndex
 
   /**
+   * Returns a sub-slice of the index, starting and ending at the given date-times in millis
+   * since the epoch (inclusive).
+   */
+  def slice(start: Long, end: Long): DateTimeIndex
+
+  /**
    * Returns a sub-slice of the index with the given range of indices.
    */
   def islice(range: Range): DateTimeIndex
@@ -80,6 +86,13 @@ trait DateTimeIndex extends Serializable {
    * returns its first appearance. If the given date-time does not appear in the index, returns -1.
    */
   def locAtDateTime(dt: DateTime): Int
+
+  /**
+   * The location of the given date-time, as milliseconds since the epoch. If the index contains the
+   * date-time more than once, returns its first appearance. If the given date-time does not appear
+   * in the index, returns -1.
+   */
+  def locAtDateTime(dt: Long): Int
 }
 
 /**
@@ -103,6 +116,10 @@ class UniformDateTimeIndex(val start: Long, val periods: Int, val frequency: Fre
     uniform(start, frequency.difference(start, end) + 1, frequency)
   }
 
+  override def slice(start: Long, end: Long): UniformDateTimeIndex = {
+    slice(new DateTime(start), new DateTime(end))
+  }
+
   override def islice(range: Range): UniformDateTimeIndex = {
     islice(range.head, range.last + 1)
   }
@@ -120,6 +137,10 @@ class UniformDateTimeIndex(val start: Long, val periods: Int, val frequency: Fre
     } else {
       -1
     }
+  }
+
+  override def locAtDateTime(dt: Long): Int = {
+    locAtDateTime(new DateTime(dt))
   }
 
   override def equals(other: Any): Boolean = {
@@ -147,6 +168,10 @@ class IrregularDateTimeIndex(val instants: Array[Long]) extends DateTimeIndex {
     throw new UnsupportedOperationException()
   }
 
+  override def slice(start: Long, end: Long): IrregularDateTimeIndex = {
+    throw new UnsupportedOperationException()
+  }
+
   override def islice(range: Range): IrregularDateTimeIndex = {
     throw new UnsupportedOperationException()
   }
@@ -167,6 +192,10 @@ class IrregularDateTimeIndex(val instants: Array[Long]) extends DateTimeIndex {
     java.util.Arrays.binarySearch(instants, dt.getMillis)
   }
 
+  override def locAtDateTime(dt: Long): Int = {
+    java.util.Arrays.binarySearch(instants, dt)
+  }
+
   override def equals(other: Any): Boolean = {
     val otherIndex = other.asInstanceOf[IrregularDateTimeIndex]
     otherIndex.instants.sameElements(instants)
@@ -178,6 +207,13 @@ class IrregularDateTimeIndex(val instants: Array[Long]) extends DateTimeIndex {
 }
 
 object DateTimeIndex {
+  /**
+   * Create a UniformDateTimeIndex with the given start time, number of periods, and frequency.
+   */
+  def uniform(start: Long, periods: Int, frequency: Frequency): UniformDateTimeIndex = {
+    new UniformDateTimeIndex(start, periods, frequency)
+  }
+
   /**
    * Create a UniformDateTimeIndex with the given start time, number of periods, and frequency.
    */
