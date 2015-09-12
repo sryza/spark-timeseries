@@ -26,9 +26,14 @@ import org.apache.commons.math3.random.MersenneTwister
 import org.scalatest.{FunSuite, ShouldMatchers}
 
 class UnivariateTimeSeriesSuite extends FunSuite with ShouldMatchers {
-  test("lag") {
+  test("lagIncludeOriginalsTrue") {
     val lagMatrix = UnivariateTimeSeries.lag(Vector(1.0, 2.0, 3.0, 4.0, 5.0), 2, true)
-    lagMatrix should be (new DenseMatrix(3, 3, Array(3.0, 4.0, 5.0, 2.0, 3.0, 4.0, 1.0, 2.0, 3.0)))
+    lagMatrix should be (DenseMatrix((3.0, 2.0, 1.0), (4.0, 3.0, 2.0), (5.0, 4.0, 3.0)))
+  }
+
+  test("lagIncludeOriginalsFalse") {
+    val lagMatrix = UnivariateTimeSeries.lag(Vector(1.0, 2.0, 3.0, 4.0, 5.0), 2, false)
+    lagMatrix should be (DenseMatrix((2.0, 1.0), (3.0, 2.0), (4.0, 3.0)))
   }
 
   test("lastNotNaN") {
