@@ -32,7 +32,7 @@ object YahooParser {
       val dt = new DateTime(tokens.head)
       (dt, tokens.tail.map(_.toDouble))
     }.reverse
-    timeSeriesFromSamples(samples, labels)
+    timeSeriesFromIrregularSamples(samples, labels)
   }
 
   def yahooFiles(dir: String, sc: SparkContext): RDD[TimeSeries] = {

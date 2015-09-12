@@ -15,14 +15,17 @@
 
 package com.cloudera.sparkts
 
+import breeze.linalg.{DenseVector, DenseMatrix}
 import com.cloudera.sparkts.TimeSeries._
 
 import com.github.nscala_time.time.Imports._
 
 import org.scalatest.{FunSuite, ShouldMatchers}
 
+import scala.collection.immutable.IndexedSeq
+
 class TimeSeriesSuite extends FunSuite with ShouldMatchers {
-  test("timeSeriesFromSamples") {
+  test("timeSeriesFromIrregularSamples") {
     val dt = new DateTime("2015-4-8")
     val samples = Array(
       ((dt, Array(1.0, 2.0, 3.0))),
@@ -30,8 +33,37 @@ class TimeSeriesSuite extends FunSuite with ShouldMatchers {
       ((dt + 2.days, Array(7.0, 8.0, 9.0))),
       ((dt + 4.days, Array(10.0, 11.0, 12.0)))
     )
+
     val labels = Array("a", "b", "c", "d")
-    val ts = timeSeriesFromSamples(samples, labels)
+    val ts = timeSeriesFromIrregularSamples(samples, labels)
     ts.data.valuesIterator.toArray should be ((1 to 12).map(_.toDouble).toArray)
+  }
+
+  test("lagsIncludingOriginals") {
+    val originalIndex = new UniformDateTimeIndex(0, 5, new DayFrequency(1))
+
+    val data = DenseMatrix((1.0, 6.0), (2.0, 7.0), (3.0, 8.0), (4.0, 9.0), (5.0, 10.0))
+
+    val originalTimeSeries = new TimeSeries(originalIndex, data, Array("a", "b"))
+
+    val laggedTimeSeries = originalTimeSeries.lags(2, true)
+
+    laggedTimeSeries.keys should be (Array("a", "lag_1(a)", "lag_2(a)", "b", "lag_1(b)", "lag_2(b)"))
+    laggedTimeSeries.index.size should be (3)
+    laggedTimeSeries.data should be (DenseMatrix((3.0, 2.0, 1.0, 8.0, 7.0, 6.0), (4.0, 3.0, 2.0, 9.0, 8.0, 7.0), (5.0, 4.0, 3.0, 10.0, 9.0, 8.0)))
+  }
+
+  test("lagsExcludingOriginals") {
+    val originalIndex = new UniformDateTimeIndex(0, 5, new DayFrequency(1))
+
+    val data = DenseMatrix((1.0, 6.0), (2.0, 7.0), (3.0, 8.0), (4.0, 9.0), (5.0, 10.0))
+
+    val originalTimeSeries = new TimeSeries(originalIndex, data, Array("a", "b"))
+
+    val laggedTimeSeries = originalTimeSeries.lags(2, false)
+
+    laggedTimeSeries.keys should be (Array("lag_1(a)", "lag_2(a)", "lag_1(b)", "lag_2(b)"))
+    laggedTimeSeries.index.size should be (3)
+    laggedTimeSeries.data should be (DenseMatrix((2.0, 1.0, 7.0, 6.0), (3.0, 2.0, 8.0, 7.0), (4.0, 3.0, 9.0, 8.0)))
   }
 }
