@@ -19,6 +19,8 @@ import java.io.File
 import java.nio.file.Files
 import java.sql.Timestamp
 
+import scala.Double.NaN
+
 import breeze.linalg._
 
 import com.cloudera.sparkts.DateTimeIndex._
@@ -203,5 +205,26 @@ class TimeSeriesRDDSuite extends FunSuite with LocalSparkContext with ShouldMatc
     val df2 = tsRddFromDF.toObservationsDataFrame(sqlContext).collect()
     df1.size should be (df2.size)
     df1.toSet should be (df2.toSet)
+  }
+
+  test("removeInstantsWithNaNs") {
+    val conf = new SparkConf().setMaster("local").setAppName(getClass.getName)
+    TimeSeriesKryoRegistrator.registerKryoClasses(conf)
+    sc = new SparkContext(conf)
+
+    val vecs = Array(
+      Array(1.0, 2.0, 3.0, 4.0), Array(5.0, NaN, 7.0, 8.0), Array(9.0, 10.0, 11.0, NaN))
+      .map(new DenseVector(_))
+      .map(x => (x(0).toString, x))
+    val start = new DateTime("2015-4-9")
+    val index = uniform(start, 4, 1.days)
+    val rdd = new TimeSeriesRDD(index, sc.parallelize(vecs))
+    val rdd2 = rdd.removeInstantsWithNaNs()
+    rdd2.index should be (irregular(Array(new DateTime("2015-4-9"), new DateTime("2015-4-11"))))
+    rdd2.map(_._2).collect() should be (Array(
+      new DenseVector(Array(1.0, 3.0)),
+      new DenseVector(Array(5.0, 7.0)),
+      new DenseVector(Array(9.0, 11.0))
+    ))
   }
 }

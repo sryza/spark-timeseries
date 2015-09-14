@@ -117,6 +117,32 @@ class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double
   }
 
   /**
+   * Return a TimeSeriesRDD with all instants removed that have a NaN in one of the series.
+   */
+  def removeInstantsWithNaNs(): TimeSeriesRDD = {
+    val zero = new Array[Boolean](index.size)
+    def merge(arr: Array[Boolean], rec: (String, Vector[Double])): Array[Boolean] = {
+      var i = 0
+      while (i < arr.length) {
+        arr(i) |= rec._2(i).isNaN
+        i += 1
+      }
+      arr
+    }
+    def comb(arr1: Array[Boolean], arr2: Array[Boolean]): Array[Boolean] = {
+      arr1.zip(arr2).map(x => x._1 || x._2)
+    }
+    val nans = aggregate(zero)(merge, comb)
+
+    val activeIndices = nans.zipWithIndex.filter(!_._1).map(_._2)
+    val newDates = activeIndices.map(index.dateTimeAtLoc)
+    val newIndex = DateTimeIndex.irregular(newDates)
+    mapSeries (series => {
+      new DenseVector[Double](activeIndices.map(x => series(x)))
+    }, newIndex)
+  }
+
+  /**
    * Returns a TimeSeriesRDD that's a sub-slice of the given series.
    * @param start The start date the for slice.
    * @param end The end date for the slice (inclusive).
