@@ -2,7 +2,7 @@ from test_utils import PySparkTestCase
 from sparkts.datetimeindex import *
 import pandas as pd
 
-class UniformDateTimeIndexTestCase(PySparkTestCase):
+class DateTimeIndexTestCase(PySparkTestCase):
     def test_uniform(self):
         freq = DayFrequency(3, self.sc)
         self.assertEqual(freq.days(), 3)
