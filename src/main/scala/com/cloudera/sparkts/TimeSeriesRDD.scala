@@ -74,6 +74,13 @@ class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double
   }
 
   /**
+   * Finds a series in the TimeSeriesRDD with the given key.
+   */
+  def findSeries(key: String): Vector[Double] = {
+    filter(_._1 == key).first()._2
+  }
+
+  /**
    * Returns a TimeSeriesRDD where each time series is differenced with the given order. The new
    * RDD will be missing the first n date-times.
    */
