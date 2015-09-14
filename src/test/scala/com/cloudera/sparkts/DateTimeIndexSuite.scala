@@ -52,4 +52,26 @@ class DateTimeIndexSuite extends FunSuite with ShouldMatchers {
     verifySlice(index.islice(2 until 4))
     verifySlice(index.islice(2 to 3))
   }
+
+  test("irregular") {
+    val index = irregular(Array(
+      "2015-04-14", "2015-04-15", "2015-04-17", "2015-04-22", "2015-04-25").map(new DateTime(_)))
+    index.size should be (5)
+    index.first should be (new DateTime("2015-04-14"))
+    index.last should be (new DateTime("2015-04-25"))
+
+    def verifySlice(index: DateTimeIndex) = {
+      index.size should be (3)
+      index.first should be (new DateTime("2015-04-15"))
+      index.last should be (new DateTime("2015-04-22"))
+    }
+
+    verifySlice(index.slice(new DateTime("2015-04-15"), new DateTime("2015-04-22")))
+    verifySlice(index.slice(new DateTime("2015-04-15") to new DateTime("2015-04-22")))
+    verifySlice(index.islice(1, 4))
+    verifySlice(index.islice(1 until 4))
+    verifySlice(index.islice(1 to 3))
+
+    // TODO: test bounds that aren't members of the index
+  }
 }

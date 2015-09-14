@@ -90,8 +90,10 @@ private[sparkts] object TimeSeriesUtils {
       targetIndex: UniformDateTimeIndex,
       vec: Vector[Double],
       defaultValue: Double): Vector[Double] = {
-    val startLoc = sourceIndex.locAtDateTime(targetIndex.first)
-    val endLoc = sourceIndex.locAtDateTime(targetIndex.last) + 1
+    val startLoc = sourceIndex.frequency.difference(
+      new DateTime(sourceIndex.first), targetIndex.first)
+    val endLoc = sourceIndex.frequency.difference(
+      new DateTime(sourceIndex.first), targetIndex.last) + 1
     if (startLoc >= 0 && endLoc <= vec.length) {
       vec(startLoc until endLoc)
     } else {

@@ -44,6 +44,12 @@ trait DateTimeIndex extends Serializable {
   def slice(start: DateTime, end: DateTime): DateTimeIndex
 
   /**
+   * Returns a sub-slice of the index, starting and ending at the given date-times in millis
+   * since the epoch (inclusive).
+   */
+  def slice(start: Long, end: Long): DateTimeIndex
+
+  /**
    * Returns a sub-slice of the index with the given range of indices.
    */
   def islice(range: Range): DateTimeIndex
@@ -82,6 +88,13 @@ trait DateTimeIndex extends Serializable {
    * returns its first appearance. If the given date-time does not appear in the index, returns -1.
    */
   def locAtDateTime(dt: DateTime): Int
+
+  /**
+   * The location of the given date-time, as milliseconds since the epoch. If the index contains the
+   * date-time more than once, returns its first appearance. If the given date-time does not appear
+   * in the index, returns -1.
+   */
+  def locAtDateTime(dt: Long): Int
 }
 
 /**
@@ -105,6 +118,10 @@ class UniformDateTimeIndex(val start: Long, val periods: Int, val frequency: Fre
     uniform(start, frequency.difference(start, end) + 1, frequency)
   }
 
+  override def slice(start: Long, end: Long): UniformDateTimeIndex = {
+    slice(new DateTime(start), new DateTime(end))
+  }
+
   override def islice(range: Range): UniformDateTimeIndex = {
     islice(range.head, range.last + 1)
   }
@@ -117,11 +134,15 @@ class UniformDateTimeIndex(val start: Long, val periods: Int, val frequency: Fre
 
   override def locAtDateTime(dt: DateTime): Int = {
     val loc = frequency.difference(new DateTime(first), dt)
-    if (dateTimeAtLoc(loc) == dt) {
+    if (loc >= 0 && loc < size && dateTimeAtLoc(loc) == dt) {
       loc
     } else {
       -1
     }
+  }
+
+  override def locAtDateTime(dt: Long): Int = {
+    locAtDateTime(new DateTime(dt))
   }
 
   override def equals(other: Any): Boolean = {
@@ -142,19 +163,25 @@ class UniformDateTimeIndex(val start: Long, val periods: Int, val frequency: Fre
 class IrregularDateTimeIndex(val instants: Array[Long]) extends DateTimeIndex {
 
   override def slice(interval: Interval): IrregularDateTimeIndex = {
-    throw new UnsupportedOperationException()
+    slice(interval.start, interval.end)
   }
 
   override def slice(start: DateTime, end: DateTime): IrregularDateTimeIndex = {
-    throw new UnsupportedOperationException()
+    slice(start.getMillis, end.getMillis)
+  }
+
+  override def slice(start: Long, end: Long): IrregularDateTimeIndex = {
+    val startLoc = locAtDateTime(start)
+    val endLoc = locAtDateTime(end)
+    new IrregularDateTimeIndex(instants.slice(startLoc, endLoc + 1))
   }
 
   override def islice(range: Range): IrregularDateTimeIndex = {
-    throw new UnsupportedOperationException()
+    new IrregularDateTimeIndex(instants.slice(range.head, range.last + 1))
   }
 
   override def islice(start: Int, end: Int): IrregularDateTimeIndex = {
-    throw new UnsupportedOperationException()
+    new IrregularDateTimeIndex(instants.slice(start, end))
   }
 
   override def first: DateTime = new DateTime(instants(0))
@@ -167,6 +194,10 @@ class IrregularDateTimeIndex(val instants: Array[Long]) extends DateTimeIndex {
 
   override def locAtDateTime(dt: DateTime): Int = {
     java.util.Arrays.binarySearch(instants, dt.getMillis)
+  }
+
+  override def locAtDateTime(dt: Long): Int = {
+    java.util.Arrays.binarySearch(instants, dt)
   }
 
   override def equals(other: Any): Boolean = {
@@ -183,8 +214,22 @@ object DateTimeIndex {
   /**
    * Create a UniformDateTimeIndex with the given start time, number of periods, and frequency.
    */
+  def uniform(start: Long, periods: Int, frequency: Frequency): UniformDateTimeIndex = {
+    new UniformDateTimeIndex(start, periods, frequency)
+  }
+
+  /**
+   * Create a UniformDateTimeIndex with the given start time, number of periods, and frequency.
+   */
   def uniform(start: DateTime, periods: Int, frequency: Frequency): UniformDateTimeIndex = {
     new UniformDateTimeIndex(start.getMillis, periods, frequency)
+  }
+
+  /**
+   * Create a UniformDateTimeIndex with the given start time and end time (inclusive) and frequency.
+   */
+  def uniform(start: Long, end: Long, frequency: Frequency): UniformDateTimeIndex = {
+    uniform(start, frequency.difference(new DateTime(start), new DateTime(end)) + 1, frequency)
   }
 
   /**
