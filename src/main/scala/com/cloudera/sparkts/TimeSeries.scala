@@ -27,7 +27,7 @@ class TimeSeries(val index: DateTimeIndex, val data: DenseMatrix[Double],
 
   /**
    * IMPORTANT: currently this assumes that the DateTimeIndex is a UniformDateTimeIndex, not an Irregular one.
-   * This means that this function won't work (yet) on TimeSeries built using timeSeriesFromSamples().
+   * This means that this function won't work (yet) on TimeSeries built using timeSeriesFromIrregularSamples().
    *
    * Lags all individual time series of the TimeSeries instance by up to maxLag amount.
    *
