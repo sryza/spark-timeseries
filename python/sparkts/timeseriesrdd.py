@@ -77,6 +77,10 @@ class TimeSeriesRDD(RDD):
     def filter(self, predicate):
         return TimeSeriesRDD(self.index(), super(TimeSeriesRDD, self).filter(predicate))
 
+    def find_series(self, key):
+        # TODO: this could be more efficient if we pushed it down into Java
+        filter(lambda x: x[0] == key).first()[1]
+
 def time_series_rdd_from_observations(dt_index, df, ts_col, key_col, val_col):
     jvm = df._sc._jvm
     jtsrdd = jvm.com.cloudera.sparkts.TimeSeriesRDD.timeSeriesRDDFromObservations( \
