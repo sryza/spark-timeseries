@@ -3,7 +3,7 @@ from utils import datetime_to_millis
 import numpy as np
 import pandas as pd
 
-class DateTimeIndex:
+class DateTimeIndex(object):
     """
     A DateTimeIndex maintains a bi-directional mapping between integers and an ordered collection of
     date-times. Multiple date-times may correspond to the same integer, implying multiple samples
@@ -55,7 +55,7 @@ class DateTimeIndex:
     def __repr__(self):
         return self._jdt_index.toString()
 
-class DayFrequency:
+class DayFrequency(object):
   
     def __init__(self, days, sc):
         self._jfreq = sc._jvm.com.cloudera.sparkts.DayFrequency(days)
@@ -69,7 +69,7 @@ class DayFrequency:
     def __ne__(self, other):
        return not self.__eq__(other)
 
-class BusinessDayFrequency:
+class BusinessDayFrequency(object):
 
     def __init__(self, bdays, sc):
         self._jfreq = sc._jvm.com.cloudera.sparkts.BusinessDayFrequency(bdays)
