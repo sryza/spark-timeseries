@@ -46,8 +46,7 @@ class TimeSeries(val index: DateTimeIndex, val data: DenseMatrix[Double],
    *   8 pm   5 	4 	      3         10	9 	      8
    *
    */
-  def lags(maxLag: Int, includeOriginals: Boolean): TimeSeries =
-  {
+  def lags(maxLag: Int, includeOriginals: Boolean): TimeSeries = {
     val numCols = maxLag * keys.length + (if (includeOriginals) keys.length else 0)
     val numRows = data.rows - maxLag
 
@@ -56,13 +55,15 @@ class TimeSeries(val index: DateTimeIndex, val data: DenseMatrix[Double],
       val offset = maxLag + (if (includeOriginals) 1 else 0)
       val start = colIndex * offset
 
-      Lag.lagMatTrimBoth(data(::, colIndex), laggedData(::, start to (start + offset - 1)), maxLag, includeOriginals)
+      Lag.lagMatTrimBoth(data(::, colIndex), laggedData(::, start to (start + offset - 1)), maxLag,
+        includeOriginals)
     })
 
     val newKeys: Array[String] = keys.indices.map(keyIndex => {
       val key = keys(keyIndex)
 
-      val lagKeys = (1 to maxLag).map(lagOrder => "lag" + lagOrder.toString() + "(" + key + ")").toArray
+      val lagKeys = (1 to maxLag).map(lagOrder => "lag" + lagOrder.toString() + "(" + key + ")")
+        .toArray
 
       if (includeOriginals)
       {
