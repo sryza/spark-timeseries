@@ -48,7 +48,7 @@ class TimeSeriesSuite extends FunSuite with ShouldMatchers {
 
     val laggedTimeSeries = originalTimeSeries.lags(2, true)
 
-    laggedTimeSeries.keys should be (Array("a", "lag_1(a)", "lag_2(a)", "b", "lag_1(b)", "lag_2(b)"))
+    laggedTimeSeries.keys should be (Array("a", "lag1(a)", "lag2(a)", "b", "lag1(b)", "lag2(b)"))
     laggedTimeSeries.index.size should be (3)
     laggedTimeSeries.data should be (DenseMatrix((3.0, 2.0, 1.0, 8.0, 7.0, 6.0), (4.0, 3.0, 2.0, 9.0, 8.0, 7.0), (5.0, 4.0, 3.0, 10.0, 9.0, 8.0)))
   }
@@ -62,7 +62,7 @@ class TimeSeriesSuite extends FunSuite with ShouldMatchers {
 
     val laggedTimeSeries = originalTimeSeries.lags(2, false)
 
-    laggedTimeSeries.keys should be (Array("lag_1(a)", "lag_2(a)", "lag_1(b)", "lag_2(b)"))
+    laggedTimeSeries.keys should be (Array("lag1(a)", "lag2(a)", "lag1(b)", "lag2(b)"))
     laggedTimeSeries.index.size should be (3)
     laggedTimeSeries.data should be (DenseMatrix((2.0, 1.0, 7.0, 6.0), (3.0, 2.0, 8.0, 7.0), (4.0, 3.0, 9.0, 8.0)))
   }

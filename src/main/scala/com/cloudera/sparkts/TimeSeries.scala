@@ -48,13 +48,6 @@ class TimeSeries(val index: DateTimeIndex, val data: DenseMatrix[Double],
    */
   def lags(maxLag: Int, includeOriginals: Boolean): TimeSeries =
   {
-//    val laggedData = (0 until data.cols).map(colIndex => {
-//      val columnVector: DenseVector[Double] = data(::, colIndex)
-//      val lagsMatrix = UnivariateTimeSeries.lag(columnVector, maxLag, includeOriginals).toDenseMatrix
-//
-//      lagsMatrix
-//    }).reduce((prev: DenseMatrix[Double], next: DenseMatrix[Double]) => DenseMatrix.horzcat(prev, next))
-
     val numCols = maxLag * keys.length + (if (includeOriginals) keys.length else 0)
     val numRows = data.rows - maxLag
 
@@ -69,7 +62,7 @@ class TimeSeries(val index: DateTimeIndex, val data: DenseMatrix[Double],
     val newKeys: Array[String] = keys.indices.map(keyIndex => {
       val key = keys(keyIndex)
 
-      val lagKeys = (1 to maxLag).map(lagOrder => "lag_" + lagOrder.toString() + "(" + key + ")").toArray
+      val lagKeys = (1 to maxLag).map(lagOrder => "lag" + lagOrder.toString() + "(" + key + ")").toArray
 
       if (includeOriginals)
       {
