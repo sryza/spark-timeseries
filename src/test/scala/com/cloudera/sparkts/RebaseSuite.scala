@@ -150,6 +150,6 @@ class RebaseSuite extends FunSuite with ShouldMatchers {
   private def assertArraysEqualWithNaN(arr1: Array[Double], arr2: Array[Double]): Unit = {
     assert(arr1.zip(arr2).forall { case (d1, d2) =>
       d1 == d2 || (d1.isNaN && d2.isNaN)
-    })
+    }, s"${arr1.mkString(",")} != ${arr2.mkString(",")}")
   }
 }

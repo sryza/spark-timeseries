@@ -132,7 +132,7 @@ class UniformDateTimeIndex(val start: Long, val periods: Int, val frequency: Fre
 
   override def locAtDateTime(dt: DateTime): Int = {
     val loc = frequency.difference(new DateTime(first), dt)
-    if (dateTimeAtLoc(loc) == dt) {
+    if (loc >= 0 && loc < size && dateTimeAtLoc(loc) == dt) {
       loc
     } else {
       -1

@@ -194,11 +194,13 @@ class TimeSeriesRDDSuite extends FunSuite with LocalSparkContext with ShouldMatc
     val obsDF = tsRdd.toObservationsDataFrame(sqlContext)
     val tsRddFromDF = TimeSeriesRDD.timeSeriesRDDFromObservations(
       index, obsDF, "timestamp", "key", "value")
+
     val ts1 = tsRdd.collect().sortBy(_._1)
     val ts2 = tsRddFromDF.collect().sortBy(_._1)
+    ts1 should be (ts2)
+
     val df1 = obsDF.collect()
     val df2 = tsRddFromDF.toObservationsDataFrame(sqlContext).collect()
-    ts1 should be (ts2)
     df1.size should be (df2.size)
     df1.toSet should be (df2.toSet)
   }
