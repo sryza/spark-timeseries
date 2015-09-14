@@ -17,7 +17,7 @@ package com.cloudera.sparkts
 
 import com.github.nscala_time.time.Imports._
 
-import org.joda.time.Days
+import org.joda.time.{Days, Hours}
 
 class BusinessDayRichInt(n: Int) {
   def businessDays: BusinessDayFrequency = new BusinessDayFrequency(n)
@@ -38,21 +38,30 @@ trait Frequency extends Serializable {
   def difference(dt1: DateTime, dt2: DateTime): Int
 }
 
-class DayFrequency(val days: Int) extends Frequency {
-  val period = days.days
 
+abstract class PeriodFrequency(val period: Period) extends Frequency {
   def advance(dt: DateTime, n: Int): DateTime = dt + (n * period)
-
-  def difference(dt1: DateTime, dt2: DateTime): Int = Days.daysBetween(dt1, dt2).getDays / days
 
   override def equals(other: Any): Boolean = {
     other match {
-      case frequency: DayFrequency => frequency.days == days
+      case frequency: PeriodFrequency => frequency.period == period
       case _ => false
     }
   }
+}
+
+class DayFrequency(val days: Int) extends PeriodFrequency(days.days) {
+
+  def difference(dt1: DateTime, dt2: DateTime): Int = Days.daysBetween(dt1, dt2).getDays / days
 
   override def toString: String = s"days $days"
+}
+
+class HourFrequency(val hours: Int) extends PeriodFrequency(hours.hours) {
+
+  def difference(dt1: DateTime, dt2: DateTime): Int = Hours.hoursBetween(dt1, dt2).getHours / hours
+
+  override def toString: String = s"hours $hours"
 }
 
 class BusinessDayFrequency(val days: Int) extends Frequency {
