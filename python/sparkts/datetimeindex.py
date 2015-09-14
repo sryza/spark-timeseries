@@ -3,7 +3,7 @@ from utils import datetime_to_millis
 import numpy as np
 import pandas as pd
 
-class UniformDateTimeIndex:
+class DateTimeIndex:
     """
     A DateTimeIndex maintains a bi-directional mapping between integers and an ordered collection of
     date-times. Multiple date-times may correspond to the same integer, implying multiple samples
@@ -34,13 +34,13 @@ class UniformDateTimeIndex:
             start = datetime_to_millis(val.start)
             stop = datetime_to_millis(val.stop)
             jdt_index = self._jdt_index.slice(start, stop)
-            return UniformDateTimeIndex(jdt_index)
+            return DateTimeIndex(jdt_index)
         else:
             return self._jdt_index.locAtDateTime(datetime_to_millis(val))
 
     def islice(self, start, end):
         jdt_index = self._jdt_index.islice(start, end)
-        return UniformDateTimeIndex(jdt_index=jdt_index)
+        return DateTimeIndex(jdt_index=jdt_index)
 
     def datetime_at_loc(self, loc):
         millis = self._jdt_index.dateTimeAtLoc(loc).getMillis()
@@ -87,9 +87,9 @@ def uniform(start, end=None, periods=None, freq=None, sc=None):
     elif end is None and periods == None:
         raise ValueError("Need an end date or number of periods")
     elif end is not None:
-        return UniformDateTimeIndex(dtmodule.uniform( \
+        return DateTimeIndex(dtmodule.uniform( \
             datetime_to_millis(start), datetime_to_millis(end), freq._jfreq))
     else:
-        return UniformDateTimeIndex(dtmodule.uniform( \
+        return DateTimeIndex(dtmodule.uniform( \
             datetime_to_millis(start), periods, freq._jfreq))
- 
+

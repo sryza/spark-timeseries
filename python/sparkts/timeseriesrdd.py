@@ -3,7 +3,7 @@ from pyspark import RDD
 from pyspark.serializers import FramedSerializer, SpecialLengths, write_int, read_int
 from pyspark.sql import DataFrame
 from utils import datetime_to_millis
-from datetimeindex import UniformDateTimeIndex
+from datetimeindex import DateTimeIndex
 import struct
 import numpy as np
 import pandas as pd
@@ -64,13 +64,15 @@ class TimeSeriesRDD(RDD):
 
     def index(self):
          jindex = self._jtsrdd.index()
-         if jindex.getClass().getName() == 'com.cloudera.sparkts.UniformDateTimeIndex':
-             return UniformDateTimeIndex(jindex)
+         return DateTimeIndex(jindex)
 
     def to_observations_dataframe(self, sql_ctx, ts_col='timestamp', key_col='key', val_col='value'):
         ssql_ctx = sql_ctx._ssql_ctx
         jdf = self._jtsrdd.toObservationsDataFrame(ssql_ctx, ts_col, key_col, val_col)
         return DataFrame(jdf, sql_ctx)
+
+    def remove_instants_with_nans(self):
+        return TimeSeriesRDD(None, None, self._jtsrdd.removeInstantsWithNaNs(), self.ctx)
 
 
 def time_series_rdd_from_observations(dt_index, df, ts_col, key_col, val_col):
