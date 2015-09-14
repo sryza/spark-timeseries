@@ -85,3 +85,15 @@ class TimeSeriesRDDTestCase(PySparkTestCase):
         df2.sort(key = lambda x: x.value)
         self.assertEquals(df1, df2)
 
+    def test_filter(self):
+        vecs = [np.arange(x, x + 4) for x in np.arange(0, 20, 4)]
+        labels = ['a', 'b', 'c', 'd', 'e']
+        start = '2015-4-9'
+        dt_index = uniform(start, periods=4, freq=DayFrequency(1, self.sc), sc=self.sc)
+        rdd = self.sc.parallelize(zip(labels, vecs), 3)
+        tsrdd = TimeSeriesRDD(dt_index, rdd)
+        filtered = tsrdd.filter(lambda x: x[0] == 'a' or x[0] == 'b')
+        self.assertEquals(filtered.count(), 2)
+        # assert it has TimeSeriesRDD functionality:
+        filtered['2015-04-10':'2015-04-15'].count()
+

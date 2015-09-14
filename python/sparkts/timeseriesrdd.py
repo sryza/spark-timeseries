@@ -74,6 +74,8 @@ class TimeSeriesRDD(RDD):
     def remove_instants_with_nans(self):
         return TimeSeriesRDD(None, None, self._jtsrdd.removeInstantsWithNaNs(), self.ctx)
 
+    def filter(self, predicate):
+        return TimeSeriesRDD(self.index(), super(TimeSeriesRDD, self).filter(predicate))
 
 def time_series_rdd_from_observations(dt_index, df, ts_col, key_col, val_col):
     jvm = df._sc._jvm
