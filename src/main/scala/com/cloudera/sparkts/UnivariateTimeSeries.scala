@@ -24,6 +24,14 @@ object UnivariateTimeSeries {
 
   /**
    * Lags the univariate time series
+   *
+   * Example input vector: (1.0, 2.0, 3.0, 4.0, 5.0)
+   *
+   * With lag 2 and includeOriginal = true should give output matrix:
+   *
+   * 3  2   1
+   * 4  3   2
+   * 5  4   3
    */
   def lag(ts: Vector[Double], maxLag: Int, includeOriginal: Boolean): Matrix[Double] = {
     Lag.lagMatTrimBoth(ts, maxLag, includeOriginal)
