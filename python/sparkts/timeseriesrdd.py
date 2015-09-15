@@ -24,7 +24,7 @@ class TimeSeriesRDD(RDD):
         if jtsrdd == None:
             # Construct from a Python RDD object and a Python DateTimeIndex
             jvm = rdd.ctx._jvm
-            jrdd = rdd._reserialize(TimeSeriesSerializer())._jrdd.map( \
+            jrdd = rdd._reserialize(_TimeSeriesSerializer())._jrdd.map( \
                 jvm.com.cloudera.sparkts.BytesToKeyAndSeries())
             self._jtsrdd = jvm.com.cloudera.sparkts.TimeSeriesRDD( \
                 dt_index._jdt_index, jrdd.rdd())
@@ -34,63 +34,134 @@ class TimeSeriesRDD(RDD):
             jvm = sc._jvm
             jrdd = jvm.org.apache.spark.api.java.JavaRDD(jtsrdd, None).map( \
                 jvm.com.cloudera.sparkts.KeyAndSeriesToBytes())
-            RDD.__init__(self, jrdd, sc, TimeSeriesSerializer())
+            RDD.__init__(self, jrdd, sc, _TimeSeriesSerializer())
             self._jtsrdd = jtsrdd
 
-    def collect_as_timeseries(self):
-        jts = self._jtsrdd.collectAsTimeSeries()
-        return TimeSeries(jts)
-
     def __getitem__(self, val):
+        """Returns a TimeSeriesRDD representing a subslice of this TimeSeriesRDD, containing only
+        values for a sub-range of the time it covers.
+        """
         start = datetime_to_millis(val.start)
         stop = datetime_to_millis(val.stop)
         return TimeSeriesRDD(None, None, self._jtsrdd.slice(start, stop), self.ctx)
 
     def differences(self, n):
+        """Returns a TimeSeriesRDD where each time series is differenced with the given order.
+        
+        The new RDD will be missing the first n date-times.
+        
+        Parameters:
+        n : int
+            The order of differencing to perform.
+        """
         return TimeSeriesRDD(None, None, self._jtsrdd.differences(n), self.ctx)
 
     def fill(self, method):
+        """Returns a TimeSeriesRDD with missing values imputed using the given method.
+        
+        Parameters:
+        method : string
+            "nearest" fills in NaNs with the closest non-NaN value, using the closest previous value
+            in the case of a tie.  "linear" does a linear interpolation from the closest filled-in
+            values.  "next" uses the closest value that is in the future of the missing value.
+            "previous" uses the closest value from the past of the missing value.  "spline"
+            interpolates using a cubic spline.
+        """
         return TimeSeriesRDD(None, None, self._jtsrdd.fill(method), self.ctx)
 
-    def map_series(self, dn, dt_index = None):
+    def map_series(self, fn, dt_index = None):
+        """Returns a TimeSeriesRDD, with a transformation applied to all the series in this RDD.
+
+        Either the series produced by the given function should conform to this TimeSeriesRDD's
+        index, or a new DateTimeIndex should be given that they conform to.
+        
+        Parameters:
+        fn : function
+            A function that maps arrays of floats to arrays of floats.
+        dt_index : DateTimeIndex
+            A DateTimeIndex for the produced TimeseriesRDD.
+        """
         if dt_index == None:
           dt_index = self.index()
         return TimeSeriesRDD(dt_index, self.map(fn))
 
     def to_instants(self):
+        """Returns an RDD of instants, each a horizontal slice of this TimeSeriesRDD at a time.
+
+        This essentially transposes the TimeSeriesRDD, producing an RDD of tuples of datetime and
+        a numpy array containing all the observations that occurred at that time.
+        """
         jrdd = self._jtsrdd.toInstants(-1).toJavaRDD().map( \
             self.ctx._jvm.com.cloudera.sparkts.InstantToBytes())
-        return RDD(jrdd, self.ctx, InstantDeserializer())
+        return RDD(jrdd, self.ctx, _InstantDeserializer())
 
     def index(self):
-         jindex = self._jtsrdd.index()
-         return DateTimeIndex(jindex)
+        """Returns the index describing the times referred to by the elements of this TimeSeriesRDD
+        """
+        jindex = self._jtsrdd.index()
+        return DateTimeIndex(jindex)
 
     def to_observations_dataframe(self, sql_ctx, ts_col='timestamp', key_col='key', val_col='value'):
+        """Returns a DataFrame of observations, each containing a timestamp, a key, and a value.
+
+        Parameters:
+        sql_ctx : SQLContext
+        ts_col : string
+            The name for the timestamp column.
+        key_col : string
+            The name for the key column.
+        val_col : string
+            The name for the value column.
+        """
         ssql_ctx = sql_ctx._ssql_ctx
         jdf = self._jtsrdd.toObservationsDataFrame(ssql_ctx, ts_col, key_col, val_col)
         return DataFrame(jdf, sql_ctx)
 
     def remove_instants_with_nans(self):
+        """Returns a TimeSeriesRDD with instants containing NaNs cut out.
+        
+        The resulting TimeSeriesRDD has a slimmed down DateTimeIndex, missing all the instants
+        for which any series in the RDD contained a NaN.
+        """
         return TimeSeriesRDD(None, None, self._jtsrdd.removeInstantsWithNaNs(), self.ctx)
 
     def filter(self, predicate):
         return TimeSeriesRDD(self.index(), super(TimeSeriesRDD, self).filter(predicate))
 
     def find_series(self, key):
+        """Finds a series in the TimeSeriesRDD by its key.
+        
+        Parameters:
+        key : string
+            The key of the series to find.
+        """
         # TODO: this could be more efficient if we pushed it down into Java
         return filter(lambda x: x[0] == key).first()[1]
 
 def time_series_rdd_from_observations(dt_index, df, ts_col, key_col, val_col):
+    """Instantiates a TimeSeriesRDD from a DataFrame of observations.
+
+    An observation is a row containing a timestamp, a string key, and float value.
+
+    Parameters:
+    dt_index : DateTimeIndex
+        The index of the RDD to create. Observations not contained in this index will be ignored.
+    df : DataFrame
+    ts_col : string
+        The name of the column in the DataFrame containing the timestamps.
+    key_col : string
+        The name of the column in the DataFrame containing the keys.
+    val_col : string
+        The name of the column in the DataFrame containing the values.
+    """
     jvm = df._sc._jvm
     jtsrdd = jvm.com.cloudera.sparkts.TimeSeriesRDD.timeSeriesRDDFromObservations( \
       dt_index._jdt_index, df._jdf, ts_col, key_col, val_col)
     return TimeSeriesRDD(None, None, jtsrdd, df._sc)
 
-class TimeSeriesSerializer(FramedSerializer):
-    """
-    Serializes (key, vector) pairs.
-    TODO: documentation
+class _TimeSeriesSerializer(FramedSerializer):
+    """Serializes (key, vector) pairs to and from bytes.  Must be compatible with the Scala
+    implementation in com.cloudera.sparkts.{BytesToKeyAndSeries, KeyAndSeriesToBytes}
     """
 
     def dumps(self, obj):
@@ -115,9 +186,13 @@ class TimeSeriesSerializer(FramedSerializer):
         return (key, _read_vec(stream))
 
     def __repr__(self):
-        return 'TimeSeriesSerializer'
+        return '_TimeSeriesSerializer'
 
-class InstantDeserializer(FramedSerializer):
+class _InstantDeserializer(FramedSerializer):
+    """Serializes (timestamp, vector) pairs to an from bytes.  Must be compatible with the Scala
+    implementation in com.cloudera.sparkts.InstantToBytes
+    """
+    
     def loads(self, obj):
         stream = BytesIO(obj)
         timestamp_ms = struct.unpack('!q', stream.read(8))[0]
@@ -125,7 +200,7 @@ class InstantDeserializer(FramedSerializer):
         return (pd.Timestamp(timestamp_ms * 1000000), _read_vec(stream))
 
     def __repr__(self):
-        return "InstantDeserializer"
+        return "_InstantDeserializer"
 
 def _read_vec(stream):
     vector_length = read_int(stream)

@@ -1,5 +1,6 @@
 from test_utils import PySparkTestCase
 from sparkts.timeseriesrdd import *
+from sparkts.timeseriesrdd import _TimeSeriesSerializer
 from sparkts.datetimeindex import *
 import pandas as pd
 import numpy as np
@@ -9,7 +10,7 @@ from pyspark.sql import SQLContext
 
 class TimeSeriesSerializerTestCase(TestCase):
     def test_times_series_serializer(self):
-        serializer = TimeSeriesSerializer()
+        serializer = _TimeSeriesSerializer()
         stream = BytesIO()
         series = [('abc', np.array([4.0, 4.0, 5.0])), ('123', np.array([1.0, 2.0, 3.0]))]
         serializer.dump_stream(iter(series), stream)

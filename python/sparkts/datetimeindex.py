@@ -18,13 +18,19 @@ class DateTimeIndex(object):
         self._jdt_index = jdt_index
 
     def size(self):
+        """Returns the number of timestamps included in the index.
+        """
         return self._jdt_index.size()
 
     def first(self):
+        """Returns the earliest timestamp in the index, as a Pandas Timestamp.
+        """
         millis = self._jdt_index.first().getMillis()
         return pd.Timestamp(millis * 1000000)
 
     def last(self):
+        """Returns the latest timestamp in the index, as a Pandas Timestamp.
+        """
         millis = self._jdt_index.last().getMillis()
         return pd.Timestamp(millis * 1000000)
 
@@ -39,10 +45,21 @@ class DateTimeIndex(object):
             return self._jdt_index.locAtDateTime(datetime_to_millis(val))
 
     def islice(self, start, end):
+        """Returns a new DateTimeIndex, containing a subslice of the timestamps in this index,
+        as specified by the given integer start and end locations.
+
+        Parameters:
+        start : int
+            The location of the start of the range, inclusive.
+        end : int
+            The location of the end of the range, exclusive.
+        """
         jdt_index = self._jdt_index.islice(start, end)
         return DateTimeIndex(jdt_index=jdt_index)
 
     def datetime_at_loc(self, loc):
+        """Returns the timestamp at the given integer location as a Pandas Timestamp.
+        """
         millis = self._jdt_index.dateTimeAtLoc(loc).getMillis()
         return pd.Timestamp(millis * 1000000)
 
@@ -55,7 +72,16 @@ class DateTimeIndex(object):
     def __repr__(self):
         return self._jdt_index.toString()
 
-class DayFrequency(object):
+class _Frequency(object):
+    def __eq__(self, other):
+        return self._jfreq.equals(other._jfreq)
+
+    def __ne__(self, other):
+       return not self.__eq__(other)
+
+class DayFrequency(_Frequency):
+    """A frequency that can be used for a uniform DateTimeIndex, where the period is given in days.
+    """
   
     def __init__(self, days, sc):
         self._jfreq = sc._jvm.com.cloudera.sparkts.DayFrequency(days)
@@ -63,13 +89,10 @@ class DayFrequency(object):
     def days(self):
         return self._jfreq.days()
 
-    def __eq__(self, other):
-        return self._jfreq.equals(other._jfreq)
-
-    def __ne__(self, other):
-       return not self.__eq__(other)
-
 class BusinessDayFrequency(object):
+    """A frequency that can be used for a uniform DateTimeIndex, where the period is given in
+    business days.
+    """
 
     def __init__(self, bdays, sc):
         self._jfreq = sc._jvm.com.cloudera.sparkts.BusinessDayFrequency(bdays)
@@ -81,6 +104,17 @@ class BusinessDayFrequency(object):
         return not self.__eq__(other)
 
 def uniform(start, end=None, periods=None, freq=None, sc=None):
+    """Instantiates a uniform DateTimeIndex.
+
+    Either end or periods must be specified.
+    
+    Parameters:
+    start : string, long (millis from epoch), or Pandas Timestamp
+    end : string, long (millis from epoch), or Pandas Timestamp
+    periods : int
+    freq : a frequency object
+    sc : SparkContext
+    """
     dtmodule = sc._jvm.com.cloudera.sparkts.__getattr__('DateTimeIndex$').__getattr__('MODULE$')
     if freq is None:
         raise ValueError("Missing frequency")
