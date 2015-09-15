@@ -36,9 +36,8 @@ object Lag {
     val numRows = numObservations - maxLag
     val numCols = maxLag + (if (includeOriginal) 1 else 0)
     val lagMat = Array.ofDim[Double](numRows, numCols)
-    var initialLag = 1
 
-    if (includeOriginal) initialLag = 0
+    val initialLag = if (includeOriginal) 0 else 1
 
     for (r <- 0 until numRows) {
       for (c <- initialLag to maxLag) {
@@ -67,9 +66,7 @@ object Lag {
     val numCols = maxLag + (if (includeOriginal) 1 else 0)
     val lagMat = new DenseMatrix[Double](numRows, numCols)
 
-    var initialLag = 1
-
-    if (includeOriginal) initialLag = 0
+    val initialLag = if (includeOriginal) 0 else 1
 
     for (r <- 0 until numRows) {
       for (c <- initialLag to maxLag) {
@@ -79,14 +76,15 @@ object Lag {
     lagMat
   }
 
-  private[sparkts] def lagMatTrimBoth(x: Vector[Double], outputMat: DenseMatrix[Double],
-                                      maxLag: Int, includeOriginal: Boolean) = {
+  private[sparkts] def lagMatTrimBoth(
+      x: Vector[Double],
+      outputMat: DenseMatrix[Double],
+      maxLag: Int,
+      includeOriginal: Boolean): Unit = {
     val numObservations = x.size
     val numRows = numObservations - maxLag
 
-    var initialLag = 1
-
-    if (includeOriginal) initialLag = 0
+    val initialLag = if (includeOriginal) 0 else 1
 
     for (r <- 0 until numRows) {
       for (c <- initialLag to maxLag) {

@@ -137,9 +137,9 @@ class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double
     val activeIndices = nans.zipWithIndex.filter(!_._1).map(_._2)
     val newDates = activeIndices.map(index.dateTimeAtLoc)
     val newIndex = DateTimeIndex.irregular(newDates)
-    mapSeries (newIndex, series => {
+    mapSeries(series => {
       new DenseVector[Double](activeIndices.map(x => series(x)))
-    })
+    }, newIndex)
   }
 
   /**

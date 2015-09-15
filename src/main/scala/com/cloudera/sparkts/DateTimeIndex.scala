@@ -30,7 +30,8 @@ import com.cloudera.sparkts.DateTimeIndex._
  * as a location in an array, in the context of this class, we use "location", or "loc", to refer
  * to the latter.
  *
- * NOTE: In the sequence, index 0 represents the oldest point in time. The highest index is the most recent point.
+ * NOTE: In the sequence, index 0 represents the oldest point in time. The highest index is the most
+ * recent point.
  */
 trait DateTimeIndex extends Serializable {
   /**
