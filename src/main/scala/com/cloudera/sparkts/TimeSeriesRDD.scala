@@ -346,8 +346,12 @@ class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double
       keyCol: String = "key",
       valueCol: String = "value"): DataFrame = {
     val rowRdd = flatMap { case (key, series) =>
-      series.iterator.map { case (i, value) =>
-        Row(new Timestamp(index.dateTimeAtLoc(i).getMillis), key, value)
+      series.iterator.flatMap { case (i, value) =>
+        if (value.isNaN) {
+          None
+        } else {
+          Some(Row(new Timestamp(index.dateTimeAtLoc(i).getMillis), key, value))
+        }
       }
     }
 
