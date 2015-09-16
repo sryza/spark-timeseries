@@ -1,8 +1,10 @@
 title: Overview
 
-Spark-Timeseries is a library for analyzing large-scale time series data sets.  It is hosted
-[here](https://github.com/cloudera/spark-timeseries).  Scaladoc is available
-[here](http://cloudera.github.io/spark-timeseries).
+# Overview
+
+Spark-Timeseries is a Python and Scala library for analyzing large-scale time series data sets.  It
+is hosted [here](https://github.com/cloudera/spark-timeseries).  Scaladoc is available
+[here](scaladocs/index.html).
 
 Spark-Timeseries offers:
 
@@ -27,9 +29,10 @@ programming problems, they don't tend to come up very often in finance, where an
 a value for every minute of every trading day for ten years needs less than a couple million
 elements.
 
-# Dependencies
+## Dependencies
 
 The library sits on a few other excellent Java and Scala libraries.
+
 * [Breeze](https://github.com/scalanlp/breeze) for NumPy-like, BLAS-able linear algebra.
 * [JodaTime](http://www.joda.org/joda-time/) for dates and times. 
 * [Apache Commons Math](https://commons.apache.org/proper/commons-math/) for general math and
@@ -37,7 +40,9 @@ The library sits on a few other excellent Java and Scala libraries.
 * [Apache Spark](https://spark.apache.org/) for distributed computation with in-memory
   capabilities.
 
-# Functionality
+
+
+## Functionality
 
 ### Time Series Manipulation
 

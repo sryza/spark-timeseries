@@ -1,6 +1,8 @@
 title: User Guide
 
-# Terminology
+# User Guide
+
+## Terminology
 
 A variety of terms are used to describe time series data, and many of these apply to conflicting or
 overlapping concepts.  In the interest of clarity, in spark-timeseries, we stick to the following
@@ -19,7 +21,10 @@ set of definitions:
   time.
 * **Observation** - A tuple of (timestamp, key, value).
 
-# Abstractions
+
+## Abstractions
+
+### TimeSeriesRDD
 
 The central abstraction of the library is the `TimeSeriesRDD`, a lazy distributed collection of
 univariate series with a conformed time dimension. It is lazy in the sense that it is an RDD: it
@@ -30,7 +35,7 @@ distributed. The time dimension is conformed in the sense that a single `DateTim
 all the univariate series. Each univariate series within the RDD has a key to identify it. 
 
 TimeSeriesRDDs then support efficient series-wise operations like slicing, imputing missing values
-based on surrounding elements, and training time-series models:
+based on surrounding elements, and training time-series models.  For example, in Scala:
 
     val tsRdd: TimeSeriesRDD = ...
     
@@ -43,4 +48,21 @@ based on surrounding elements, and training time-series models:
     // Use an AR(1) model to remove serial correlations
     val residuals = filled.mapSeries(series => ar(series, 1).removeTimeDependentEffects(series))
 
+Or in Python:
 
+    tsrdd = ...
+
+    # Find a sub-slice between two dates
+    subslice = tsrdd['2015-04-10':'2015-04-14']
+
+    # Fill in missing values based on linear interpolation
+    filled = subslice.fill('linear')
+    
+
+### DateTimeIndex
+
+The time spanned by a TimeSeriesRDD is encapsulated in a `DateTimeIndex`, which is essentially an
+ordered collection of timestamps.  DateTimeIndexes come in two flavors: uniform and irregular.
+Uniform DateTimeIndexes have a concise representation including a start date, a frequency (i.e.
+the interval between two timestamps), and a number of periods.  Irregular indices are simply
+represented by an ordered collection of timestamps.

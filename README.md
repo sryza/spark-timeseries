@@ -5,7 +5,8 @@ spark-timeseries
 
 A Scala / Python library for interacting with time series data on Apache Spark.
 
-Scaladoc is available at http://cloudera.github.io/spark-timeseries.
+Docs are available at http://cloudera.github.io/spark-timeseries.
+Scaladoc is available at http://cloudera.github.io/spark-timeseries/scaladocs/index.html.
 
 The aim here is to provide
 * A set of abstractions for manipulating large time series data sets, similar to
@@ -115,12 +116,13 @@ To run Python tests (requires [nose](https://nose.readthedocs.org/en/latest/)):
 To publish docs, easiest is to clone a separate version of this repo in some location we'll refer
 to as DOCS_REPO.  Then:
 
+    mvn site -Ddependency.locations.enabled=false
     mvn scala:doc
-    cp -r target/site/scaladocs/* $DOCS_REPO
+    cp -r target/site/* $DOCS_REPO
     cd $DOCS_REPO
-    git checkout gh_pages
-    git add *
+    git checkout gh-pages
+    git add -A
     git commit -m "Some message that includes the hash of the relevant commit in master"
-    git push origin gh_pages
+    git push origin gh-pages
 
 
