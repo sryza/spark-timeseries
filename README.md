@@ -6,7 +6,10 @@ spark-timeseries
 A Scala / Python library for interacting with time series data on Apache Spark.
 
 Docs are available at http://cloudera.github.io/spark-timeseries.
+
 Scaladoc is available at http://cloudera.github.io/spark-timeseries/scaladocs/index.html.
+
+Python doc is available at http://cloudera.github.io/spark-timeseries/pydoc/py-modindex.html.
 
 The aim here is to provide
 * A set of abstractions for manipulating large time series data sets, similar to
@@ -111,14 +114,28 @@ To run a spark-shell with spark-timeseries and its dependencies on the classpath
 To run Python tests (requires [nose](https://nose.readthedocs.org/en/latest/)):
 
     cd python
+    export SPARK_HOME=<location of local Spark installation>
     nosetests
 
 To publish docs, easiest is to clone a separate version of this repo in some location we'll refer
 to as DOCS_REPO.  Then:
 
+    # Build main doc
     mvn site -Ddependency.locations.enabled=false
+    
+    # Build scaladoc
     mvn scala:doc
+    
+    # Build Python doc
+    cd python
+    export SPARK_HOME=<location of local Spark installation>
+    export PYTHONPATH=$PYTHONPATH::$SPARK_HOME/python:$SPARK_HOME/python/lib/*
+    sphinx-apidoc -o source/ sparkts/ sparkts/test/
+    make html
+    cd ..
+    
     cp -r target/site/* $DOCS_REPO
+    cp -r python/build/html/ $DOCS_REPO/pydoc
     cd $DOCS_REPO
     git checkout gh-pages
     git add -A

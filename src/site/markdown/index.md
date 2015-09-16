@@ -3,8 +3,11 @@ title: Overview
 # Overview
 
 Spark-Timeseries is a Python and Scala library for analyzing large-scale time series data sets.  It
-is hosted [here](https://github.com/cloudera/spark-timeseries).  Scaladoc is available
-[here](scaladocs/index.html).
+is hosted [here](https://github.com/cloudera/spark-timeseries).
+
+Scaladoc is available [here](scaladocs/index.html).
+
+Python doc is available [here](pydoc/py-modindex.html).
 
 Spark-Timeseries offers:
 

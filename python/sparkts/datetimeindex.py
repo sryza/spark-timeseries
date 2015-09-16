@@ -18,19 +18,16 @@ class DateTimeIndex(object):
         self._jdt_index = jdt_index
 
     def size(self):
-        """Returns the number of timestamps included in the index.
-        """
+        """Returns the number of timestamps included in the index."""
         return self._jdt_index.size()
 
     def first(self):
-        """Returns the earliest timestamp in the index, as a Pandas Timestamp.
-        """
+        """Returns the earliest timestamp in the index, as a Pandas Timestamp."""
         millis = self._jdt_index.first().getMillis()
         return pd.Timestamp(millis * 1000000)
 
     def last(self):
-        """Returns the latest timestamp in the index, as a Pandas Timestamp.
-        """
+        """Returns the latest timestamp in the index, as a Pandas Timestamp."""
         millis = self._jdt_index.last().getMillis()
         return pd.Timestamp(millis * 1000000)
 
@@ -45,10 +42,12 @@ class DateTimeIndex(object):
             return self._jdt_index.locAtDateTime(datetime_to_millis(val))
 
     def islice(self, start, end):
-        """Returns a new DateTimeIndex, containing a subslice of the timestamps in this index,
+        """
+        Returns a new DateTimeIndex, containing a subslice of the timestamps in this index,
         as specified by the given integer start and end locations.
 
-        Parameters:
+        Parameters
+        ----------
         start : int
             The location of the start of the range, inclusive.
         end : int
@@ -58,8 +57,7 @@ class DateTimeIndex(object):
         return DateTimeIndex(jdt_index=jdt_index)
 
     def datetime_at_loc(self, loc):
-        """Returns the timestamp at the given integer location as a Pandas Timestamp.
-        """
+        """Returns the timestamp at the given integer location as a Pandas Timestamp."""
         millis = self._jdt_index.dateTimeAtLoc(loc).getMillis()
         return pd.Timestamp(millis * 1000000)
 

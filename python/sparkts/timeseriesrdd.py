@@ -38,7 +38,8 @@ class TimeSeriesRDD(RDD):
             self._jtsrdd = jtsrdd
 
     def __getitem__(self, val):
-        """Returns a TimeSeriesRDD representing a subslice of this TimeSeriesRDD, containing only
+        """
+        Returns a TimeSeriesRDD representing a subslice of this TimeSeriesRDD, containing only
         values for a sub-range of the time it covers.
         """
         start = datetime_to_millis(val.start)
@@ -46,20 +47,24 @@ class TimeSeriesRDD(RDD):
         return TimeSeriesRDD(None, None, self._jtsrdd.slice(start, stop), self.ctx)
 
     def differences(self, n):
-        """Returns a TimeSeriesRDD where each time series is differenced with the given order.
+        """
+        Returns a TimeSeriesRDD where each time series is differenced with the given order.
         
         The new RDD will be missing the first n date-times.
         
-        Parameters:
+        Parameters
+        ----------
         n : int
             The order of differencing to perform.
         """
         return TimeSeriesRDD(None, None, self._jtsrdd.differences(n), self.ctx)
 
     def fill(self, method):
-        """Returns a TimeSeriesRDD with missing values imputed using the given method.
+        """
+        Returns a TimeSeriesRDD with missing values imputed using the given method.
         
-        Parameters:
+        Parameters
+        ----------
         method : string
             "nearest" fills in NaNs with the closest non-NaN value, using the closest previous value
             in the case of a tie.  "linear" does a linear interpolation from the closest filled-in
@@ -70,12 +75,14 @@ class TimeSeriesRDD(RDD):
         return TimeSeriesRDD(None, None, self._jtsrdd.fill(method), self.ctx)
 
     def map_series(self, fn, dt_index = None):
-        """Returns a TimeSeriesRDD, with a transformation applied to all the series in this RDD.
+        """
+        Returns a TimeSeriesRDD, with a transformation applied to all the series in this RDD.
 
         Either the series produced by the given function should conform to this TimeSeriesRDD's
         index, or a new DateTimeIndex should be given that they conform to.
         
-        Parameters:
+        Parameters
+        ----------
         fn : function
             A function that maps arrays of floats to arrays of floats.
         dt_index : DateTimeIndex
@@ -86,7 +93,8 @@ class TimeSeriesRDD(RDD):
         return TimeSeriesRDD(dt_index, self.map(fn))
 
     def to_instants(self):
-        """Returns an RDD of instants, each a horizontal slice of this TimeSeriesRDD at a time.
+        """
+        Returns an RDD of instants, each a horizontal slice of this TimeSeriesRDD at a time.
 
         This essentially transposes the TimeSeriesRDD, producing an RDD of tuples of datetime and
         a numpy array containing all the observations that occurred at that time.
@@ -102,9 +110,11 @@ class TimeSeriesRDD(RDD):
         return DateTimeIndex(jindex)
 
     def to_observations_dataframe(self, sql_ctx, ts_col='timestamp', key_col='key', val_col='value'):
-        """Returns a DataFrame of observations, each containing a timestamp, a key, and a value.
+        """
+        Returns a DataFrame of observations, each containing a timestamp, a key, and a value.
 
-        Parameters:
+        Parameters
+        ----------
         sql_ctx : SQLContext
         ts_col : string
             The name for the timestamp column.
@@ -118,7 +128,8 @@ class TimeSeriesRDD(RDD):
         return DataFrame(jdf, sql_ctx)
 
     def remove_instants_with_nans(self):
-        """Returns a TimeSeriesRDD with instants containing NaNs cut out.
+        """
+        Returns a TimeSeriesRDD with instants containing NaNs cut out.
         
         The resulting TimeSeriesRDD has a slimmed down DateTimeIndex, missing all the instants
         for which any series in the RDD contained a NaN.
@@ -129,9 +140,11 @@ class TimeSeriesRDD(RDD):
         return TimeSeriesRDD(self.index(), super(TimeSeriesRDD, self).filter(predicate))
 
     def find_series(self, key):
-        """Finds a series in the TimeSeriesRDD by its key.
+        """
+        Finds a series in the TimeSeriesRDD by its key.
         
-        Parameters:
+        Parameters
+        ----------
         key : string
             The key of the series to find.
         """
@@ -143,7 +156,8 @@ def time_series_rdd_from_observations(dt_index, df, ts_col, key_col, val_col):
 
     An observation is a row containing a timestamp, a string key, and float value.
 
-    Parameters:
+    Parameters
+    ----------
     dt_index : DateTimeIndex
         The index of the RDD to create. Observations not contained in this index will be ignored.
     df : DataFrame
@@ -189,7 +203,8 @@ class _TimeSeriesSerializer(FramedSerializer):
         return '_TimeSeriesSerializer'
 
 class _InstantDeserializer(FramedSerializer):
-    """Serializes (timestamp, vector) pairs to an from bytes.  Must be compatible with the Scala
+    """
+    Serializes (timestamp, vector) pairs to an from bytes.  Must be compatible with the Scala
     implementation in com.cloudera.sparkts.InstantToBytes
     """
     
