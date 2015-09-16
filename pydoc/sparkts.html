@@ -1,0 +1,386 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>sparkts package &mdash; spark-timeseries 0.0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="spark-timeseries 0.0.1 documentation" href="index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">spark-timeseries 0.0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="sparkts-package">
+<h1>sparkts package<a class="headerlink" href="#sparkts-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-sparkts.datetimeindex">
+<span id="sparkts-datetimeindex-module"></span><h2>sparkts.datetimeindex module<a class="headerlink" href="#module-sparkts.datetimeindex" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="sparkts.datetimeindex.BusinessDayFrequency">
+<em class="property">class </em><code class="descclassname">sparkts.datetimeindex.</code><code class="descname">BusinessDayFrequency</code><span class="sig-paren">(</span><em>bdays</em>, <em>sc</em><span class="sig-paren">)</span><a class="headerlink" href="#sparkts.datetimeindex.BusinessDayFrequency" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>A frequency that can be used for a uniform DateTimeIndex, where the period is given in
+business days.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="sparkts.datetimeindex.DateTimeIndex">
+<em class="property">class </em><code class="descclassname">sparkts.datetimeindex.</code><code class="descname">DateTimeIndex</code><span class="sig-paren">(</span><em>jdt_index</em><span class="sig-paren">)</span><a class="headerlink" href="#sparkts.datetimeindex.DateTimeIndex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>A DateTimeIndex maintains a bi-directional mapping between integers and an ordered collection of
+date-times. Multiple date-times may correspond to the same integer, implying multiple samples
+at the same date-time.</p>
+<p>To avoid confusion between the meaning of &#8220;index&#8221; as it appears in &#8220;DateTimeIndex&#8221; and &#8220;index&#8221;
+as a location in an array, in the context of this class, we use &#8220;location&#8221;, or &#8220;loc&#8221;, to refer
+to the latter.</p>
+<dl class="method">
+<dt id="sparkts.datetimeindex.DateTimeIndex.datetime_at_loc">
+<code class="descname">datetime_at_loc</code><span class="sig-paren">(</span><em>loc</em><span class="sig-paren">)</span><a class="headerlink" href="#sparkts.datetimeindex.DateTimeIndex.datetime_at_loc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the timestamp at the given integer location as a Pandas Timestamp.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sparkts.datetimeindex.DateTimeIndex.first">
+<code class="descname">first</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sparkts.datetimeindex.DateTimeIndex.first" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the earliest timestamp in the index, as a Pandas Timestamp.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sparkts.datetimeindex.DateTimeIndex.islice">
+<code class="descname">islice</code><span class="sig-paren">(</span><em>start</em>, <em>end</em><span class="sig-paren">)</span><a class="headerlink" href="#sparkts.datetimeindex.DateTimeIndex.islice" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a new DateTimeIndex, containing a subslice of the timestamps in this index,
+as specified by the given integer start and end locations.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>start</strong> (<em>int</em>) &#8211; The location of the start of the range, inclusive.</li>
+<li><strong>end</strong> (<em>int</em>) &#8211; The location of the end of the range, exclusive.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sparkts.datetimeindex.DateTimeIndex.last">
+<code class="descname">last</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sparkts.datetimeindex.DateTimeIndex.last" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the latest timestamp in the index, as a Pandas Timestamp.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sparkts.datetimeindex.DateTimeIndex.size">
+<code class="descname">size</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sparkts.datetimeindex.DateTimeIndex.size" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the number of timestamps included in the index.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="sparkts.datetimeindex.DayFrequency">
+<em class="property">class </em><code class="descclassname">sparkts.datetimeindex.</code><code class="descname">DayFrequency</code><span class="sig-paren">(</span><em>days</em>, <em>sc</em><span class="sig-paren">)</span><a class="headerlink" href="#sparkts.datetimeindex.DayFrequency" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">sparkts.datetimeindex._Frequency</span></code></p>
+<p>A frequency that can be used for a uniform DateTimeIndex, where the period is given in days.</p>
+<dl class="method">
+<dt id="sparkts.datetimeindex.DayFrequency.days">
+<code class="descname">days</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sparkts.datetimeindex.DayFrequency.days" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="sparkts.datetimeindex.uniform">
+<code class="descclassname">sparkts.datetimeindex.</code><code class="descname">uniform</code><span class="sig-paren">(</span><em>start</em>, <em>end=None</em>, <em>periods=None</em>, <em>freq=None</em>, <em>sc=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sparkts.datetimeindex.uniform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Instantiates a uniform DateTimeIndex.</p>
+<p>Either end or periods must be specified.</p>
+<p>Parameters:
+start : string, long (millis from epoch), or Pandas Timestamp
+end : string, long (millis from epoch), or Pandas Timestamp
+periods : int
+freq : a frequency object
+sc : SparkContext</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-sparkts.timeseriesrdd">
+<span id="sparkts-timeseriesrdd-module"></span><h2>sparkts.timeseriesrdd module<a class="headerlink" href="#module-sparkts.timeseriesrdd" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="sparkts.timeseriesrdd.TimeSeriesRDD">
+<em class="property">class </em><code class="descclassname">sparkts.timeseriesrdd.</code><code class="descname">TimeSeriesRDD</code><span class="sig-paren">(</span><em>dt_index</em>, <em>rdd</em>, <em>jtsrdd=None</em>, <em>sc=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sparkts.timeseriesrdd.TimeSeriesRDD" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">pyspark.rdd.RDD</span></code></p>
+<p>A lazy distributed collection of univariate series with a conformed time dimension. Lazy in the
+sense that it is an RDD: it encapsulates all the information needed to generate its elements,
+but doesn&#8217;t materialize them upon instantiation. Distributed in the sense that different
+univariate series within the collection can be stored and processed on different nodes. Within
+each univariate series, observations are not distributed. The time dimension is conformed in the
+sense that a single DateTimeIndex applies to all the univariate series. Each univariate series
+within the RDD has a String key to identify it.</p>
+<dl class="method">
+<dt id="sparkts.timeseriesrdd.TimeSeriesRDD.__getitem__">
+<code class="descname">__getitem__</code><span class="sig-paren">(</span><em>val</em><span class="sig-paren">)</span><a class="headerlink" href="#sparkts.timeseriesrdd.TimeSeriesRDD.__getitem__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a TimeSeriesRDD representing a subslice of this TimeSeriesRDD, containing only
+values for a sub-range of the time it covers.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sparkts.timeseriesrdd.TimeSeriesRDD.differences">
+<code class="descname">differences</code><span class="sig-paren">(</span><em>n</em><span class="sig-paren">)</span><a class="headerlink" href="#sparkts.timeseriesrdd.TimeSeriesRDD.differences" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a TimeSeriesRDD where each time series is differenced with the given order.</p>
+<p>The new RDD will be missing the first n date-times.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>n</strong> (<em>int</em>) &#8211; The order of differencing to perform.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sparkts.timeseriesrdd.TimeSeriesRDD.fill">
+<code class="descname">fill</code><span class="sig-paren">(</span><em>method</em><span class="sig-paren">)</span><a class="headerlink" href="#sparkts.timeseriesrdd.TimeSeriesRDD.fill" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a TimeSeriesRDD with missing values imputed using the given method.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>method</strong> (<em>string</em>) &#8211; &#8220;nearest&#8221; fills in NaNs with the closest non-NaN value, using the closest previous value
+in the case of a tie.  &#8220;linear&#8221; does a linear interpolation from the closest filled-in
+values.  &#8220;next&#8221; uses the closest value that is in the future of the missing value.
+&#8220;previous&#8221; uses the closest value from the past of the missing value.  &#8220;spline&#8221;
+interpolates using a cubic spline.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sparkts.timeseriesrdd.TimeSeriesRDD.filter">
+<code class="descname">filter</code><span class="sig-paren">(</span><em>predicate</em><span class="sig-paren">)</span><a class="headerlink" href="#sparkts.timeseriesrdd.TimeSeriesRDD.filter" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="sparkts.timeseriesrdd.TimeSeriesRDD.find_series">
+<code class="descname">find_series</code><span class="sig-paren">(</span><em>key</em><span class="sig-paren">)</span><a class="headerlink" href="#sparkts.timeseriesrdd.TimeSeriesRDD.find_series" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds a series in the TimeSeriesRDD by its key.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>key</strong> (<em>string</em>) &#8211; The key of the series to find.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sparkts.timeseriesrdd.TimeSeriesRDD.index">
+<code class="descname">index</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sparkts.timeseriesrdd.TimeSeriesRDD.index" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the index describing the times referred to by the elements of this TimeSeriesRDD</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sparkts.timeseriesrdd.TimeSeriesRDD.map_series">
+<code class="descname">map_series</code><span class="sig-paren">(</span><em>fn</em>, <em>dt_index=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sparkts.timeseriesrdd.TimeSeriesRDD.map_series" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a TimeSeriesRDD, with a transformation applied to all the series in this RDD.</p>
+<p>Either the series produced by the given function should conform to this TimeSeriesRDD&#8217;s
+index, or a new DateTimeIndex should be given that they conform to.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>fn</strong> (<em>function</em>) &#8211; A function that maps arrays of floats to arrays of floats.</li>
+<li><strong>dt_index</strong> (<a class="reference internal" href="#sparkts.datetimeindex.DateTimeIndex" title="sparkts.datetimeindex.DateTimeIndex"><em>DateTimeIndex</em></a>) &#8211; A DateTimeIndex for the produced TimeseriesRDD.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sparkts.timeseriesrdd.TimeSeriesRDD.remove_instants_with_nans">
+<code class="descname">remove_instants_with_nans</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sparkts.timeseriesrdd.TimeSeriesRDD.remove_instants_with_nans" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a TimeSeriesRDD with instants containing NaNs cut out.</p>
+<p>The resulting TimeSeriesRDD has a slimmed down DateTimeIndex, missing all the instants
+for which any series in the RDD contained a NaN.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sparkts.timeseriesrdd.TimeSeriesRDD.to_instants">
+<code class="descname">to_instants</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sparkts.timeseriesrdd.TimeSeriesRDD.to_instants" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an RDD of instants, each a horizontal slice of this TimeSeriesRDD at a time.</p>
+<p>This essentially transposes the TimeSeriesRDD, producing an RDD of tuples of datetime and
+a numpy array containing all the observations that occurred at that time.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sparkts.timeseriesrdd.TimeSeriesRDD.to_observations_dataframe">
+<code class="descname">to_observations_dataframe</code><span class="sig-paren">(</span><em>sql_ctx</em>, <em>ts_col='timestamp'</em>, <em>key_col='key'</em>, <em>val_col='value'</em><span class="sig-paren">)</span><a class="headerlink" href="#sparkts.timeseriesrdd.TimeSeriesRDD.to_observations_dataframe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a DataFrame of observations, each containing a timestamp, a key, and a value.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>sql_ctx</strong> (<em>SQLContext</em>) &#8211; </li>
+<li><strong>ts_col</strong> (<em>string</em>) &#8211; The name for the timestamp column.</li>
+<li><strong>key_col</strong> (<em>string</em>) &#8211; The name for the key column.</li>
+<li><strong>val_col</strong> (<em>string</em>) &#8211; The name for the value column.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="sparkts.timeseriesrdd.time_series_rdd_from_observations">
+<code class="descclassname">sparkts.timeseriesrdd.</code><code class="descname">time_series_rdd_from_observations</code><span class="sig-paren">(</span><em>dt_index</em>, <em>df</em>, <em>ts_col</em>, <em>key_col</em>, <em>val_col</em><span class="sig-paren">)</span><a class="headerlink" href="#sparkts.timeseriesrdd.time_series_rdd_from_observations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Instantiates a TimeSeriesRDD from a DataFrame of observations.</p>
+<p>An observation is a row containing a timestamp, a string key, and float value.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>dt_index</strong> (<a class="reference internal" href="#sparkts.datetimeindex.DateTimeIndex" title="sparkts.datetimeindex.DateTimeIndex"><em>DateTimeIndex</em></a>) &#8211; The index of the RDD to create. Observations not contained in this index will be ignored.</li>
+<li><strong>df</strong> (<em>DataFrame</em>) &#8211; </li>
+<li><strong>ts_col</strong> (<em>string</em>) &#8211; The name of the column in the DataFrame containing the timestamps.</li>
+<li><strong>key_col</strong> (<em>string</em>) &#8211; The name of the column in the DataFrame containing the keys.</li>
+<li><strong>val_col</strong> (<em>string</em>) &#8211; The name of the column in the DataFrame containing the values.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-sparkts.utils">
+<span id="sparkts-utils-module"></span><h2>sparkts.utils module<a class="headerlink" href="#module-sparkts.utils" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="sparkts.utils.add_pyspark_path">
+<code class="descclassname">sparkts.utils.</code><code class="descname">add_pyspark_path</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sparkts.utils.add_pyspark_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add PySpark to the library path based on the value of SPARK_HOME.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sparkts.utils.datetime_to_millis">
+<code class="descclassname">sparkts.utils.</code><code class="descname">datetime_to_millis</code><span class="sig-paren">(</span><em>dt</em><span class="sig-paren">)</span><a class="headerlink" href="#sparkts.utils.datetime_to_millis" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accept a string, Pandas Timestamp, or long, and return millis since the epoch.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sparkts.utils.quiet_py4j">
+<code class="descclassname">sparkts.utils.</code><code class="descname">quiet_py4j</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sparkts.utils.quiet_py4j" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-sparkts">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-sparkts" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">sparkts package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-sparkts.datetimeindex">sparkts.datetimeindex module</a></li>
+<li><a class="reference internal" href="#module-sparkts.timeseriesrdd">sparkts.timeseriesrdd module</a></li>
+<li><a class="reference internal" href="#module-sparkts.utils">sparkts.utils module</a></li>
+<li><a class="reference internal" href="#module-sparkts">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/sparkts.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">spark-timeseries 0.0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2015, Sandy Ryza.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </div>
+  </body>
+</html>
