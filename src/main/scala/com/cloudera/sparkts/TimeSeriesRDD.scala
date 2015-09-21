@@ -97,10 +97,10 @@ class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double
   }
 
   /**
-   * Returns a return series for each time series. Assumes periodic (as opposed to continuously
+   * Returns a return rate series for each time series. Assumes periodic (as opposed to continuously
    * compounded) returns.
    */
-  def price2ret(): TimeSeriesRDD = {
+  def returnRates(): TimeSeriesRDD = {
     mapSeries(vec => UnivariateTimeSeries.price2ret(vec, 1), index.islice(1, index.size))
   }
 

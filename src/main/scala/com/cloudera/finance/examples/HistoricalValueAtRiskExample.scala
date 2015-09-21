@@ -55,7 +55,7 @@ object HistoricalValueAtRiskExample {
         filterStartingBefore(lower).filterEndingAfter(upper)
       tsRdd.fill("linear").
         slice(lower, upper).
-        price2ret().
+        returnRates().
         mapSeries(_.map(x => math.log(1 + x)))
     }
 
