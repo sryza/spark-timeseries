@@ -130,7 +130,6 @@ to as DOCS_REPO.  Then:
     cd python
     export SPARK_HOME=<location of local Spark installation>
     export PYTHONPATH=$PYTHONPATH::$SPARK_HOME/python:$SPARK_HOME/python/lib/*
-    sphinx-apidoc -o source/ sparkts/ sparkts/test/
     make html
     cd ..
     
