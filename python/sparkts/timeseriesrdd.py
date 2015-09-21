@@ -149,7 +149,15 @@ class TimeSeriesRDD(RDD):
             The key of the series to find.
         """
         # TODO: this could be more efficient if we pushed it down into Java
-        return filter(lambda x: x[0] == key).first()[1]
+        return self.filter(lambda x: x[0] == key).first()[1]
+
+    def return_rates(self):
+        """
+        Returns a TimeSeriesRDD where each series is a return rate series for a series in this RDD.
+        
+        Assumes periodic (as opposed to continuously compounded) returns.
+        """
+        return TimeSeriesRDD(None, None, self._jtsrdd.returnRates(), self.ctx)
 
 def time_series_rdd_from_observations(dt_index, df, ts_col, key_col, val_col):
     """Instantiates a TimeSeriesRDD from a DataFrame of observations.
