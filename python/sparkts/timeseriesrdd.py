@@ -127,6 +127,13 @@ class TimeSeriesRDD(RDD):
         jdf = self._jtsrdd.toObservationsDataFrame(ssql_ctx, ts_col, key_col, val_col)
         return DataFrame(jdf, sql_ctx)
 
+    def to_pandas_series_rdd(self):
+        """
+        Returns an RDD of Pandas Series objects indexed with Pandas DatetimeIndexes
+        """
+        pd_index = self.index().to_pandas_index()
+        return self.map(lambda x: (x[0], pd.Series(x[1], pd_index)))
+
     def remove_instants_with_nans(self):
         """
         Returns a TimeSeriesRDD with instants containing NaNs cut out.

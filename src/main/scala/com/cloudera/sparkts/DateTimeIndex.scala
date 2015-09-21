@@ -96,6 +96,11 @@ trait DateTimeIndex extends Serializable {
    * in the index, returns -1.
    */
   def locAtDateTime(dt: Long): Int
+
+  /**
+   * Returns the contents of the DateTimeIndex as an array of millisecond values from the epoch.
+   */
+  def toMillisArray(): Array[Long]
 }
 
 /**
@@ -144,6 +149,14 @@ class UniformDateTimeIndex(val start: Long, val periods: Int, val frequency: Fre
 
   override def locAtDateTime(dt: Long): Int = {
     locAtDateTime(new DateTime(dt))
+  }
+
+  override def toMillisArray(): Array[Long] = {
+    val arr = new Array[Long](periods)
+    for (i <- 0 until periods) {
+      arr(i) = dateTimeAtLoc(i).getMillis
+    }
+    arr
   }
 
   override def equals(other: Any): Boolean = {
@@ -201,6 +214,10 @@ class IrregularDateTimeIndex(val instants: Array[Long]) extends DateTimeIndex {
     java.util.Arrays.binarySearch(instants, dt)
   }
 
+  override def toMillisArray(): Array[Long] = {
+    instants.toArray
+  }
+
   override def equals(other: Any): Boolean = {
     val otherIndex = other.asInstanceOf[IrregularDateTimeIndex]
     otherIndex.instants.sameElements(instants)
@@ -245,6 +262,13 @@ object DateTimeIndex {
    */
   def irregular(dts: Array[DateTime]): IrregularDateTimeIndex = {
     new IrregularDateTimeIndex(dts.map(_.getMillis))
+  }
+
+  /**
+   * Create an IrregularDateTimeIndex composed of the given date-times, as millis from the epoch.
+   */
+  def irregular(dts: Array[Long]): IrregularDateTimeIndex = {
+    new IrregularDateTimeIndex(dts)
   }
 
   /**

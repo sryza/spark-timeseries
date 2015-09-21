@@ -98,3 +98,19 @@ class TimeSeriesRDDTestCase(PySparkTestCase):
         # assert it has TimeSeriesRDD functionality:
         filtered['2015-04-10':'2015-04-15'].count()
 
+    def test_to_pandas_series_rdd(self):
+        vecs = [np.arange(x, x + 4) for x in np.arange(0, 20, 4)]
+        labels = ['a', 'b', 'c', 'd', 'e']
+        start = '2015-4-9'
+        dt_index = uniform(start, periods=4, freq=DayFrequency(1, self.sc), sc=self.sc)
+        rdd = self.sc.parallelize(zip(labels, vecs), 3)
+        tsrdd = TimeSeriesRDD(dt_index, rdd)
+
+        series_arr = tsrdd.to_pandas_series_rdd().collect()
+
+        pd_index = dt_index.to_pandas_index()
+        self.assertEquals(len(vecs), len(series_arr))
+        for i in xrange(len(vecs)):
+            self.assertEquals(series_arr[i][0], labels[i])
+            self.assertTrue(pd.Series(vecs[i], pd_index).equals(series_arr[i][1]))
+
