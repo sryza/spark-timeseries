@@ -87,6 +87,16 @@ class DayFrequency(_Frequency):
     def days(self):
         return self._jfreq.days()
 
+class HourFrequency(_Frequency):
+    """A frequency that can be used for a uniform DateTimeIndex, where the period is given in hours.
+    """
+
+    def __init__(self, hours, sc):
+        self._jfreq = sc._jvm.com.cloudera.sparkts.HourFrequency(hours)
+
+    def hours(self):
+        return self_jfreq.hours()
+
 class BusinessDayFrequency(object):
     """A frequency that can be used for a uniform DateTimeIndex, where the period is given in
     business days.
