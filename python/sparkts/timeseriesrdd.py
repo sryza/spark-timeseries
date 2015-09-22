@@ -103,6 +103,17 @@ class TimeSeriesRDD(RDD):
             self.ctx._jvm.com.cloudera.sparkts.InstantToBytes())
         return RDD(jrdd, self.ctx, _InstantDeserializer())
 
+    def to_instants_dataframe(self, sql_ctx):
+        """
+        Returns a DataFrame of instants, each a horizontal slice of this TimeSeriesRDD at a time.
+
+        This essentially transposes the TimeSeriesRDD, producing a DataFrame where each column
+        is a key form one of the rows in the TimeSeriesRDD.
+        """
+        ssql_ctx = sql_ctx._ssql_ctx
+        jdf = self._jtsrdd.toInstantsDataFrame(ssql_ctx, -1)
+        return DataFrame(jdf, sql_ctx)
+
     def index(self):
         """Returns the index describing the times referred to by the elements of this TimeSeriesRDD
         """
