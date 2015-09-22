@@ -143,8 +143,30 @@ class RebaseSuite extends FunSuite with ShouldMatchers {
     rebased.toArray should be (Array(47.0, 47.0, 1.0, 2.0, 47.0, 3.0, 47.0))
   }
 
-  test("different frequencies") {
+  test("irregular source, irregular target") {
+    // Triples of source index, target index, expected output
+    // Assumes that at time i, value of source series is i
+    val cases = Array(
+      (Array(1, 2, 3), Array(1, 2, 3), Array(1, 2, 3)),
+      (Array(1, 2, 3), Array(1, 2), Array(1, 2)),
+      (Array(1, 2), Array(1, 2, 3), Array(1, 2, -1)),
+      (Array(2, 3), Array(1, 2, 3), Array(-1, 2, 3)),
+      (Array(1, 2), Array(2, 3), Array(2, -1)),
+      (Array(1, 2, 3), Array(1, 3), Array(1, 3)),
+      (Array(1, 2, 3, 4), Array(1, 3), Array(1, 3)),
+      (Array(1, 2, 3, 4), Array(1, 4), Array(1, 4)),
+      (Array(1, 2, 3, 4), Array(2, 4), Array(2, 4)),
+      (Array(1, 2, 3, 4), Array(2, 3), Array(2, 3)),
+      (Array(1, 2, 3, 4), Array(1, 3, 4), Array(1, 3, 4))
+    )
 
+    cases.foreach { case (source, target, expected) =>
+      val sourceIndex = irregular(source.map(x => new DateTime(s"2015-04-0$x")))
+      val targetIndex = irregular(target.map(x => new DateTime(s"2015-04-0$x")))
+      val vec = new DenseVector[Double](source.map(_.toDouble))
+      val expectedVec = new DenseVector[Double](expected.map(_.toDouble))
+      rebase(sourceIndex, targetIndex, vec, -1) should be (expectedVec)
+    }
   }
 
   private def assertArraysEqualWithNaN(arr1: Array[Double], arr2: Array[Double]): Unit = {

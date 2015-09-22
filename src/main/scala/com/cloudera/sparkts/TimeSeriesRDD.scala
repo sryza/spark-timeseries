@@ -157,8 +157,8 @@ class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double
    */
   def slice(start: DateTime, end: DateTime): TimeSeriesRDD = {
     val targetIndex = index.slice(start, end)
-    new TimeSeriesRDD(targetIndex,
-      mapSeries(TimeSeriesUtils.rebase(index, targetIndex, _, Double.NaN)))
+    val rebaser = TimeSeriesUtils.rebaser(index, targetIndex, Double.NaN)
+    new TimeSeriesRDD(targetIndex, mapSeries(rebaser))
   }
 
   /**
@@ -434,6 +434,17 @@ class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double
     val ps = new PrintStream(os)
     ps.println(index.toString)
     ps.close()
+  }
+
+  /**
+   * Returns a TimeSeriesRDD rebased on top of a new index.  Any timestamps that exist in the new
+   * index but not in the existing index will be filled in with NaNs.
+   *
+   * @param newIndex The DateTimeIndex for the new RDD
+   */
+  def withIndex(newIndex: DateTimeIndex): TimeSeriesRDD = {
+    val rebaser = TimeSeriesUtils.rebaser(index, newIndex, Double.NaN)
+    mapSeries(rebaser, newIndex)
   }
 }
 
