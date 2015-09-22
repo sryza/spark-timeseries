@@ -37,6 +37,7 @@ import org.apache.spark.sql.types._
 import org.apache.spark.util.StatCounter
 
 import org.joda.time.DateTime
+import org.joda.time.DateTimeZone.UTC
 
 /**
  * A lazy distributed collection of univariate series with a conformed time dimension. Lazy in the
@@ -522,14 +523,14 @@ object TimeSeriesRDD {
           val series = new Array[Double](targetIndex.size)
           Arrays.fill(series, Double.NaN)
           val first = bufferedIter.next()
-          val firstLoc = targetIndex.locAtDateTime(new DateTime(first._1._2))
+          val firstLoc = targetIndex.locAtDateTime(new DateTime(first._1._2, UTC))
           if (firstLoc >= 0) {
             series(firstLoc) = first._2
           }
           val key = first._1._1
           while (bufferedIter.hasNext && bufferedIter.head._1._1 == key) {
             val sample = bufferedIter.next()
-            val sampleLoc = targetIndex.locAtDateTime(new DateTime(sample._1._2))
+            val sampleLoc = targetIndex.locAtDateTime(new DateTime(sample._1._2, UTC))
             if (sampleLoc >= 0) {
               series(sampleLoc) = sample._2
             }
