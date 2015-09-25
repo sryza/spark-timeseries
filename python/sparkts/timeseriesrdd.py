@@ -145,6 +145,16 @@ class TimeSeriesRDD(RDD):
         pd_index = self.index().to_pandas_index()
         return self.map(lambda x: (x[0], pd.Series(x[1], pd_index)))
 
+    def to_pandas_dataframe(self):
+        """
+        Pulls the contents of the RDD to the driver and places them in a Pandas DataFrame.
+        
+        Each record in the RDD becomes and column, and the DataFrame is indexed with a
+        DatetimeIndex generated from this RDD's index.
+        """
+        pd_index = self.index().to_pandas_index()
+        return pd.DataFrame.from_items(self.collect()).set_index(pd_index)
+
     def remove_instants_with_nans(self):
         """
         Returns a TimeSeriesRDD with instants containing NaNs cut out.
