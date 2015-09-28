@@ -15,6 +15,8 @@
 
 package com.cloudera.sparkts
 
+import org.joda.time.DateTimeConstants
+
 import scala.language.implicitConversions
 
 import com.github.nscala_time.time.Imports._
@@ -324,7 +326,9 @@ object DateTimeIndex {
     throw new UnsupportedOperationException()
   }
 
-  implicit def intToBusinessDayRichInt(n: Int): BusinessDayRichInt = new BusinessDayRichInt(n)
+  implicit def intToBusinessDayRichInt(n: Int) : BusinessDayRichInt = new BusinessDayRichInt(n)
+
+  implicit def intToBusinessDayRichInt(tuple: (Int, Int)) : BusinessDayRichInt = new BusinessDayRichInt(tuple._1, tuple._2)
 
   /**
    * Parses a DateTimeIndex from the output of its toString method
