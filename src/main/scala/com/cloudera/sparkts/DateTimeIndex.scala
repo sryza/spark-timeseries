@@ -15,8 +15,6 @@
 
 package com.cloudera.sparkts
 
-import org.joda.time.DateTimeConstants
-
 import scala.language.implicitConversions
 
 import com.github.nscala_time.time.Imports._
