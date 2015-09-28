@@ -34,6 +34,21 @@ class DateTimeIndexSuite extends FunSuite with ShouldMatchers {
     fromString(irregularStr) should be (irregularIndex)
   }
 
+  test("to / from string with time zone") {
+    val zone = DateTimeZone.forOffsetHours(4)
+    val uniformIndex = uniform(new DateTime("1990-04-10", zone), 5, 2.businessDays)
+    val uniformStr = uniformIndex.toString
+    fromString(uniformStr, zone) should be (uniformIndex)
+
+    val irregularIndex = irregular(
+      Array(new DateTime("1990-04-10T01:00:00.000", zone),
+        new DateTime("1990-04-12T01:00:00.000", zone),
+        new DateTime("1990-04-13T01:00:00.000", zone)),
+      zone)
+    val irregularStr = irregularIndex.toString
+    fromString(irregularStr, zone) should be (irregularIndex)
+  }
+
   test("uniform") {
     val index: DateTimeIndex = uniform(new DateTime("2015-04-10"), 5, 2.days)
     index.size should be (5)
