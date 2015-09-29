@@ -81,24 +81,4 @@ class BusinessDayFrequencySuite extends FunSuite with ShouldMatchers {
     val aMonday = new DateTime("2015-4-13")
     caseOf(aMonday, DateTimeConstants.SUNDAY)
   }
-
-  test("aligned day of week") {
-    val businessDayFrequencyStartAtSunday = (1, DateTimeConstants.SUNDAY).businessDays
-    businessDayFrequencyStartAtSunday.aligned(DateTimeConstants.SUNDAY) should be (1)
-    businessDayFrequencyStartAtSunday.aligned(DateTimeConstants.MONDAY) should be (2)
-    businessDayFrequencyStartAtSunday.aligned(DateTimeConstants.TUESDAY) should be (3)
-    businessDayFrequencyStartAtSunday.aligned(DateTimeConstants.WEDNESDAY) should be (4)
-    businessDayFrequencyStartAtSunday.aligned(DateTimeConstants.THURSDAY) should be (5)
-    businessDayFrequencyStartAtSunday.aligned(DateTimeConstants.FRIDAY) should be (6)
-    businessDayFrequencyStartAtSunday.aligned(DateTimeConstants.SATURDAY) should be (7)
-
-    val businessDayFrequencyStartAtMonday = (1, DateTimeConstants.MONDAY).businessDays
-    businessDayFrequencyStartAtMonday.aligned(DateTimeConstants.SUNDAY) should be (7)
-    businessDayFrequencyStartAtMonday.aligned(DateTimeConstants.MONDAY) should be (1)
-    businessDayFrequencyStartAtMonday.aligned(DateTimeConstants.TUESDAY) should be (2)
-    businessDayFrequencyStartAtMonday.aligned(DateTimeConstants.WEDNESDAY) should be (3)
-    businessDayFrequencyStartAtMonday.aligned(DateTimeConstants.THURSDAY) should be (4)
-    businessDayFrequencyStartAtMonday.aligned(DateTimeConstants.FRIDAY) should be (5)
-    businessDayFrequencyStartAtMonday.aligned(DateTimeConstants.SATURDAY) should be (6)
-  }
 }

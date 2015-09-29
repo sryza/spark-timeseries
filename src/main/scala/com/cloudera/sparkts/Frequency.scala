@@ -15,6 +15,8 @@
 
 package com.cloudera.sparkts
 
+import com.cloudera.sparkts.DateTimeIndex._
+
 import com.github.nscala_time.time.Imports._
 
 import org.joda.time.{DateTimeConstants, Days, Hours}
@@ -72,7 +74,7 @@ class BusinessDayFrequency(val days: Int,
    */
   def advance(dt: DateTime, n: Int): DateTime = {
     val dayOfWeek = dt.getDayOfWeek
-    val alignedDayOfWeek = aligned(dayOfWeek)
+    val alignedDayOfWeek = rebaseDayOfWeek(dayOfWeek, firstDayOfWeek)
     if (alignedDayOfWeek > 5) {
       throw new IllegalArgumentException(s"$dt is not a business day")
     }
@@ -89,7 +91,7 @@ class BusinessDayFrequency(val days: Int,
     }
     val daysBetween = Days.daysBetween(dt1, dt2).getDays
     val dayOfWeek1 = dt1.getDayOfWeek
-    val alignedDayOfWeek1 = aligned(dayOfWeek1)
+    val alignedDayOfWeek1 = rebaseDayOfWeek(dayOfWeek1, firstDayOfWeek)
     if (alignedDayOfWeek1 > 5) {
       throw new IllegalArgumentException(s"$dt1 is not a business day")
     }
@@ -106,38 +108,5 @@ class BusinessDayFrequency(val days: Int,
     }
   }
 
-  /**
-   * Given the ISO index of the day of week, the method returns the day
-   * of week index relative to the first day of week i.e. assuming the
-   * the first day of week is the base index and has the value of 1
-   *
-   * For example, if the first day of week is set to be Sunday,
-   * the week would be indexed:
-   *   Sunday   : 1
-   *   Monday   : 2
-   *   Tuesday  : 3
-   *   Wednesday: 4
-   *   Thursday : 5
-   *   Friday   : 6 <-- Weekend
-   *   Saturday : 7 <-- Weekend
-   *
-   * If the first day of week is set to be Monday,
-   * the week would be indexed:
-   *   Monday   : 1
-   *   Tuesday  : 2
-   *   Wednesday: 3
-   *   Thursday : 4
-   *   Friday   : 5
-   *   Saturday : 6 <-- Weekend
-   *   Sunday   : 7 <-- Weekend
-   *
-   * @param dayOfWeek the ISO index of the day of week
-   * @return the day of week index aligned w.r.t the first day of week
-   */
-  private[sparkts] def aligned(dayOfWeek: Int) : Int = {
-    (dayOfWeek - firstDayOfWeek + DateTimeConstants.MONDAY +
-      DateTimeConstants.DAYS_PER_WEEK - 1) % DateTimeConstants.DAYS_PER_WEEK + 1
-  }
-
-  override def toString: String = s"businessDays $days"
+  override def toString: String = s"businessDays $days firstDayOfWeek $firstDayOfWeek"
 }

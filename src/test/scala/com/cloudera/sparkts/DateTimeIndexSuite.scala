@@ -15,6 +15,7 @@
 
 package com.cloudera.sparkts
 
+import org.joda.time.DateTimeConstants
 import org.scalatest.{FunSuite, ShouldMatchers}
 
 import com.github.nscala_time.time.Imports._
@@ -38,7 +39,7 @@ class DateTimeIndexSuite extends FunSuite with ShouldMatchers {
     val zone = DateTimeZone.forOffsetHours(4)
     val uniformIndex = uniform(new DateTime("1990-04-10", zone), 5, 2.businessDays)
     val uniformStr = uniformIndex.toString
-    fromString(uniformStr, zone) should be (uniformIndex)
+    fromString(uniformStr) should be (uniformIndex)
 
     val irregularIndex = irregular(
       Array(new DateTime("1990-04-10T01:00:00.000", zone),
@@ -46,7 +47,7 @@ class DateTimeIndexSuite extends FunSuite with ShouldMatchers {
         new DateTime("1990-04-13T01:00:00.000", zone)),
       zone)
     val irregularStr = irregularIndex.toString
-    fromString(irregularStr, zone) should be (irregularIndex)
+    fromString(irregularStr) should be (irregularIndex)
   }
 
   test("uniform") {
@@ -88,5 +89,25 @@ class DateTimeIndexSuite extends FunSuite with ShouldMatchers {
     verifySlice(index.islice(1 to 3))
 
     // TODO: test bounds that aren't members of the index
+  }
+
+  test("rebased day of week") {
+    val firstDayOfWeekSunday = DateTimeConstants.SUNDAY
+    rebaseDayOfWeek(DateTimeConstants.SUNDAY, firstDayOfWeekSunday) should be (1)
+    rebaseDayOfWeek(DateTimeConstants.MONDAY, firstDayOfWeekSunday) should be (2)
+    rebaseDayOfWeek(DateTimeConstants.TUESDAY, firstDayOfWeekSunday) should be (3)
+    rebaseDayOfWeek(DateTimeConstants.WEDNESDAY, firstDayOfWeekSunday) should be (4)
+    rebaseDayOfWeek(DateTimeConstants.THURSDAY, firstDayOfWeekSunday) should be (5)
+    rebaseDayOfWeek(DateTimeConstants.FRIDAY, firstDayOfWeekSunday) should be (6)
+    rebaseDayOfWeek(DateTimeConstants.SATURDAY, firstDayOfWeekSunday) should be (7)
+
+    val firstDayOfWeekMonday = DateTimeConstants.MONDAY
+    rebaseDayOfWeek(DateTimeConstants.SUNDAY, firstDayOfWeekMonday) should be (7)
+    rebaseDayOfWeek(DateTimeConstants.MONDAY, firstDayOfWeekMonday) should be (1)
+    rebaseDayOfWeek(DateTimeConstants.TUESDAY, firstDayOfWeekMonday) should be (2)
+    rebaseDayOfWeek(DateTimeConstants.WEDNESDAY, firstDayOfWeekMonday) should be (3)
+    rebaseDayOfWeek(DateTimeConstants.THURSDAY, firstDayOfWeekMonday) should be (4)
+    rebaseDayOfWeek(DateTimeConstants.FRIDAY, firstDayOfWeekMonday) should be (5)
+    rebaseDayOfWeek(DateTimeConstants.SATURDAY, firstDayOfWeekMonday) should be (6)
   }
 }
