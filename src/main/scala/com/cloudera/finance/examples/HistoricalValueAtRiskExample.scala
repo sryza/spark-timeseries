@@ -15,6 +15,8 @@
 
 package com.cloudera.finance.examples
 
+import java.util.TimeZone
+
 import breeze.linalg._
 
 import com.cloudera.finance.YahooParser
@@ -29,6 +31,7 @@ import org.apache.commons.math3.random.{MersenneTwister, RandomGenerator}
 import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression
 
 import org.apache.spark.{SparkConf, SparkContext}
+import org.joda.time.DateTimeZone.UTC
 
 object HistoricalValueAtRiskExample {
   def main(args: Array[String]): Unit = {
@@ -45,7 +48,7 @@ object HistoricalValueAtRiskExample {
 
     // Load the data into a TimeSeriesRDD where each series holds 1-day log returns
     def loadTS(inputDir: String, lower: DateTime, upper: DateTime): TimeSeriesRDD = {
-      val histories = YahooParser.yahooFiles(inputDir, sc)
+      val histories = YahooParser.yahooFiles(inputDir, sc, UTC)
       histories.cache()
       val start = histories.map(_.index.first).takeOrdered(1).head
       val end = histories.map(_.index.last).top(1).head
