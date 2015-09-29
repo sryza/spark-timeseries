@@ -184,7 +184,8 @@ class TimeSeries(val index: DateTimeIndex, val data: DenseMatrix[Double],
 }
 
 object TimeSeries {
-  def timeSeriesFromIrregularSamples(samples: Seq[(DateTime, Array[Double])], keys: Array[String])
+  def timeSeriesFromIrregularSamples(samples: Seq[(DateTime, Array[Double])], keys: Array[String],
+                                      zone: DateTimeZone = DateTimeZone.getDefault())
     : TimeSeries = {
     val mat = new DenseMatrix[Double](samples.length, samples.head._2.length)
     val dts = new Array[Long](samples.length)
@@ -193,7 +194,7 @@ object TimeSeries {
       dts(i) = dt.getMillis
       mat(i to i, ::) := new DenseVector[Double](values)
     }
-    new TimeSeries(new IrregularDateTimeIndex(dts), mat, keys)
+    new TimeSeries(new IrregularDateTimeIndex(dts, zone), mat, keys)
   }
 
   /**
