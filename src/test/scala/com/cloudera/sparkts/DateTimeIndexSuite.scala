@@ -22,6 +22,8 @@ import com.github.nscala_time.time.Imports._
 
 import com.cloudera.sparkts.DateTimeIndex._
 
+import org.joda.time.DateTimeZone.UTC
+
 class DateTimeIndexSuite extends FunSuite with ShouldMatchers {
 
   test("to / from string") {
@@ -51,19 +53,19 @@ class DateTimeIndexSuite extends FunSuite with ShouldMatchers {
   }
 
   test("uniform") {
-    val index: DateTimeIndex = uniform(new DateTime("2015-04-10"), 5, 2.days)
+    val index: DateTimeIndex = uniform(new DateTime("2015-04-10", UTC), 5, 2.days)
     index.size should be (5)
-    index.first should be (new DateTime("2015-04-10"))
-    index.last should be (new DateTime("2015-04-18"))
+    index.first should be (new DateTime("2015-04-10", UTC))
+    index.last should be (new DateTime("2015-04-18", UTC))
 
     def verifySlice(index: DateTimeIndex) = {
       index.size should be (2)
-      index.first should be (new DateTime("2015-04-14"))
-      index.last should be (new DateTime("2015-04-16"))
+      index.first should be (new DateTime("2015-04-14", UTC))
+      index.last should be (new DateTime("2015-04-16", UTC))
     }
 
-    verifySlice(index.slice(new DateTime("2015-04-14"), new DateTime("2015-04-16")))
-    verifySlice(index.slice(new DateTime("2015-04-14") to new DateTime("2015-04-16")))
+    verifySlice(index.slice(new DateTime("2015-04-14", UTC), new DateTime("2015-04-16", UTC)))
+    verifySlice(index.slice(new DateTime("2015-04-14", UTC) to new DateTime("2015-04-16", UTC)))
     verifySlice(index.islice(2, 4))
     verifySlice(index.islice(2 until 4))
     verifySlice(index.islice(2 to 3))
@@ -71,19 +73,20 @@ class DateTimeIndexSuite extends FunSuite with ShouldMatchers {
 
   test("irregular") {
     val index = irregular(Array(
-      "2015-04-14", "2015-04-15", "2015-04-17", "2015-04-22", "2015-04-25").map(new DateTime(_)))
+      "2015-04-14", "2015-04-15", "2015-04-17", "2015-04-22", "2015-04-25"
+    ).map(new DateTime(_, UTC)))
     index.size should be (5)
-    index.first should be (new DateTime("2015-04-14"))
-    index.last should be (new DateTime("2015-04-25"))
+    index.first should be (new DateTime("2015-04-14", UTC))
+    index.last should be (new DateTime("2015-04-25", UTC))
 
     def verifySlice(index: DateTimeIndex) = {
       index.size should be (3)
-      index.first should be (new DateTime("2015-04-15"))
-      index.last should be (new DateTime("2015-04-22"))
+      index.first should be (new DateTime("2015-04-15", UTC))
+      index.last should be (new DateTime("2015-04-22", UTC))
     }
 
-    verifySlice(index.slice(new DateTime("2015-04-15"), new DateTime("2015-04-22")))
-    verifySlice(index.slice(new DateTime("2015-04-15") to new DateTime("2015-04-22")))
+    verifySlice(index.slice(new DateTime("2015-04-15", UTC), new DateTime("2015-04-22", UTC)))
+    verifySlice(index.slice(new DateTime("2015-04-15", UTC) to new DateTime("2015-04-22", UTC)))
     verifySlice(index.islice(1, 4))
     verifySlice(index.islice(1 until 4))
     verifySlice(index.islice(1 to 3))

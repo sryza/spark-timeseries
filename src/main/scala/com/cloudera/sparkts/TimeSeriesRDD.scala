@@ -28,7 +28,6 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 
 import org.apache.spark._
-import org.apache.spark.SparkContext._
 import org.apache.spark.mllib.linalg.distributed.{IndexedRow, IndexedRowMatrix, RowMatrix}
 import org.apache.spark.mllib.linalg.Vectors
 import org.apache.spark.rdd.RDD
@@ -157,8 +156,8 @@ class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double
    */
   def slice(start: DateTime, end: DateTime): TimeSeriesRDD = {
     val targetIndex = index.slice(start, end)
-    new TimeSeriesRDD(targetIndex,
-      mapSeries(TimeSeriesUtils.rebase(index, targetIndex, _, Double.NaN)))
+    val rebaser = TimeSeriesUtils.rebaser(index, targetIndex, Double.NaN)
+    new TimeSeriesRDD(targetIndex, mapSeries(rebaser))
   }
 
   /**
@@ -435,6 +434,17 @@ class TimeSeriesRDD(val index: DateTimeIndex, parent: RDD[(String, Vector[Double
     ps.println(index.toString)
     ps.close()
   }
+
+  /**
+   * Returns a TimeSeriesRDD rebased on top of a new index.  Any timestamps that exist in the new
+   * index but not in the existing index will be filled in with NaNs.
+   *
+   * @param newIndex The DateTimeIndex for the new RDD
+   */
+  def withIndex(newIndex: DateTimeIndex): TimeSeriesRDD = {
+    val rebaser = TimeSeriesUtils.rebaser(index, newIndex, Double.NaN)
+    mapSeries(rebaser, newIndex)
+  }
 }
 
 object TimeSeriesRDD {
@@ -511,14 +521,14 @@ object TimeSeriesRDD {
           val series = new Array[Double](targetIndex.size)
           Arrays.fill(series, Double.NaN)
           val first = bufferedIter.next()
-          val firstLoc = targetIndex.locAtDateTime(new DateTime(first._1._2))
+          val firstLoc = targetIndex.locAtDateTime(new DateTime(first._1._2, targetIndex.zone))
           if (firstLoc >= 0) {
             series(firstLoc) = first._2
           }
           val key = first._1._1
           while (bufferedIter.hasNext && bufferedIter.head._1._1 == key) {
             val sample = bufferedIter.next()
-            val sampleLoc = targetIndex.locAtDateTime(new DateTime(sample._1._2))
+            val sampleLoc = targetIndex.locAtDateTime(new DateTime(sample._1._2, targetIndex.zone))
             if (sampleLoc >= 0) {
               series(sampleLoc) = sample._2
             }

@@ -3,7 +3,7 @@ from pyspark import RDD
 from pyspark.serializers import FramedSerializer, SpecialLengths, write_int, read_int
 from pyspark.sql import DataFrame
 from utils import datetime_to_millis
-from datetimeindex import DateTimeIndex
+from datetimeindex import DateTimeIndex, irregular
 import struct
 import numpy as np
 import pandas as pd
@@ -145,6 +145,16 @@ class TimeSeriesRDD(RDD):
         pd_index = self.index().to_pandas_index()
         return self.map(lambda x: (x[0], pd.Series(x[1], pd_index)))
 
+    def to_pandas_dataframe(self):
+        """
+        Pulls the contents of the RDD to the driver and places them in a Pandas DataFrame.
+        
+        Each record in the RDD becomes and column, and the DataFrame is indexed with a
+        DatetimeIndex generated from this RDD's index.
+        """
+        pd_index = self.index().to_pandas_index()
+        return pd.DataFrame.from_items(self.collect()).set_index(pd_index)
+
     def remove_instants_with_nans(self):
         """
         Returns a TimeSeriesRDD with instants containing NaNs cut out.
@@ -177,8 +187,35 @@ class TimeSeriesRDD(RDD):
         """
         return TimeSeriesRDD(None, None, self._jtsrdd.returnRates(), self.ctx)
 
+    def with_index(self, new_index):
+        """
+        Returns a TimeSeriesRDD rebased on top of a new index.  Any timestamps that exist in the new
+        index but not in the existing index will be filled in with NaNs.
+        
+        Parameters
+        ----------
+        new_index : DateTimeIndex
+        """
+        return TimeSeriesRDD(None, None, self._jtsrdd.withIndex(new_index._jdt_index), self.ctx)
+
+def time_series_rdd_from_pandas_series_rdd(series_rdd, sc):
+    """
+    Instantiates a TimeSeriesRDD from an RDD of Pandas Series objects.
+
+    The series in the RDD are all expected to have the same DatetimeIndex.
+
+    Parameters
+    ----------
+    series_rdd : RDD of (string, pandas.Series) tuples
+    sc : SparkContext
+    """
+    first = series_rdd.first()
+    dt_index = irregular(first[1].index, sc)
+    return TimeSeriesRDD(dt_index, series_rdd.mapValues(lambda x: x.values))
+
 def time_series_rdd_from_observations(dt_index, df, ts_col, key_col, val_col):
-    """Instantiates a TimeSeriesRDD from a DataFrame of observations.
+    """
+    Instantiates a TimeSeriesRDD from a DataFrame of observations.
 
     An observation is a row containing a timestamp, a string key, and float value.
 

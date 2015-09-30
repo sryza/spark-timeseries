@@ -16,11 +16,7 @@
 package com.cloudera.sparkts
 
 import breeze.linalg._
-import breeze.numerics._
-import com.github.nscala_time.time.Imports
 import com.github.nscala_time.time.Imports._
-
-import scala.collection.immutable.{IndexedSeq, Iterable}
 
 class TimeSeries(val index: DateTimeIndex, val data: DenseMatrix[Double],
     val keys: Array[String]) extends Serializable {
