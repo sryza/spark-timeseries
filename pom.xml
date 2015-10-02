@@ -44,6 +44,22 @@
     <breeze.version>0.10</breeze.version>
   </properties>
 
+  <distributionManagement>
+    <repository>
+      <id>sparkts.repo</id>
+      <url>https://repository.cloudera.com/artifactory/libs-release-local</url>
+    </repository>
+    <snapshotRepository>
+      <id>sparkts.snapshots.repo</id>
+      <url>https://repository.cloudera.com/artifactory/libs-snapshot-local</url>
+    </snapshotRepository>
+    <site>
+      <id>sparkts.website</id>
+      <name>Spark Timeseries documentation</name>
+      <url>http://cloudera.github.io/spark-timeseries/</url>
+    </site>
+  </distributionManagement>
+  
   <build>
     <plugins>
       <plugin>
