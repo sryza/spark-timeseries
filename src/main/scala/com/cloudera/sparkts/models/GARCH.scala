@@ -13,15 +13,14 @@
  * License.
  */
 
-package com.cloudera.sparkts
+package com.cloudera.sparkts.models
 
 import breeze.linalg._
-
 import org.apache.commons.math3.analysis.{MultivariateFunction, MultivariateVectorFunction}
-import org.apache.commons.math3.optim.{MaxEval, MaxIter, InitialGuess, SimpleValueChecker}
+import org.apache.commons.math3.optim.nonlinear.scalar.gradient.NonLinearConjugateGradientOptimizer
 import org.apache.commons.math3.optim.nonlinear.scalar.{ObjectiveFunction,
   ObjectiveFunctionGradient}
-import org.apache.commons.math3.optim.nonlinear.scalar.gradient.NonLinearConjugateGradientOptimizer
+import org.apache.commons.math3.optim.{InitialGuess, MaxEval, MaxIter, SimpleValueChecker}
 import org.apache.commons.math3.random.RandomGenerator
 
 object GARCH {

@@ -13,16 +13,13 @@
  * License.
  */
 
-package com.cloudera.sparkts
+package com.cloudera.sparkts.models
 
 import java.util.Random
 
 import breeze.linalg._
-
 import org.apache.commons.math3.random.MersenneTwister
-
 import org.scalatest.FunSuite
-import org.scalatest.Matchers._
 
 class AutoregressionSuite extends FunSuite {
   test("fit AR(1) model") {

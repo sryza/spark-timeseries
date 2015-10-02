@@ -13,20 +13,19 @@
  * License.
  */
 
-package com.cloudera.sparkts
+package com.cloudera.sparkts.models
 
 import breeze.linalg._
-
+import com.cloudera.sparkts.Lag
 import com.cloudera.sparkts.UnivariateTimeSeries.{differencesOfOrderD, inverseDifferencesOfOrderD}
-
-import org.apache.commons.math3.analysis.{MultivariateVectorFunction, MultivariateFunction}
 import org.apache.commons.math3.analysis.solvers.LaguerreSolver
-import org.apache.commons.math3.optim.{InitialGuess, MaxEval, MaxIter,
-  SimpleBounds, SimpleValueChecker}
+import org.apache.commons.math3.analysis.{MultivariateFunction, MultivariateVectorFunction}
 import org.apache.commons.math3.optim.nonlinear.scalar.gradient.NonLinearConjugateGradientOptimizer
+import org.apache.commons.math3.optim.nonlinear.scalar.noderiv.BOBYQAOptimizer
 import org.apache.commons.math3.optim.nonlinear.scalar.{GoalType, ObjectiveFunction,
   ObjectiveFunctionGradient}
-import org.apache.commons.math3.optim.nonlinear.scalar.noderiv.BOBYQAOptimizer
+import org.apache.commons.math3.optim.{InitialGuess, MaxEval, MaxIter, SimpleBounds,
+   SimpleValueChecker}
 import org.apache.commons.math3.random.RandomGenerator
 import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression
 
@@ -628,7 +627,7 @@ class ARIMAModel(
   /**
    * Checks if MA parameters result in an invertible model. Checks this by solving the roots for
    * 1 + theta_1 * x + theta_2 * x + ... + theta_q * x&#94;q = 0. Please see
-   * [[com.cloudera.sparkts.ARIMAModel.isStationary]] for more details.
+   * [[ARIMAModel.isStationary]] for more details.
    * Always returns true for models with no MA terms.
    * @return indicator of whether model's MA parameters are invertible
    */

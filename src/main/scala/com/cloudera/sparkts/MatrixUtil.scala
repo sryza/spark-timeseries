@@ -13,20 +13,11 @@
  * License.
  */
 
-package com.cloudera.finance
+package com.cloudera.sparkts
 
 import breeze.linalg._
 
-import org.apache.commons.math3.random.RandomGenerator
-
-object Util {
-  def sampleWithReplacement(values: Array[Double], rand: RandomGenerator, target: Array[Double])
-    : Unit = {
-    for (i <- target.indices) {
-      target(i) = values(rand.nextInt(values.length))
-    }
-  }
-
+private[sparkts] object MatrixUtil {
   def transpose(arr: Array[Array[Double]]): Array[Array[Double]] = {
     val mat = new Array[Array[Double]](arr.head.length)
     for (i <- arr.head.indices) {

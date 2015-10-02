@@ -12,7 +12,7 @@
  * the specific language governing permissions and limitations under the
  * License.
  */
-package com.cloudera.finance
+package com.cloudera.sparkts.parsers
 
 import org.scalatest.{FunSuite, ShouldMatchers}
 

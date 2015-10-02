@@ -13,14 +13,11 @@
  * License.
  */
 
-package com.cloudera.sparkts
+package com.cloudera.sparkts.models
 
 import breeze.linalg._
-
 import com.cloudera.sparkts.UnivariateTimeSeries.differencesOfOrderD
-
 import org.apache.commons.math3.random.MersenneTwister
-
 import org.scalatest.FunSuite
 import org.scalatest.Matchers._
 

@@ -12,12 +12,11 @@
  * the specific language governing permissions and limitations under the
  * License.
  */
-package com.cloudera.sparkts
+package com.cloudera.sparkts.stats
 
 import breeze.linalg._
-
+import com.cloudera.sparkts.models.ARModel
 import org.apache.commons.math3.random.MersenneTwister
-
 import org.scalatest.FunSuite
 
 class AugmentedDickeyFullerSuite extends FunSuite {

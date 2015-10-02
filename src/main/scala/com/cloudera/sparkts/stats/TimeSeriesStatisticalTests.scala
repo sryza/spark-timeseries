@@ -12,13 +12,11 @@
  * the specific language governing permissions and limitations under the
  * License.
  */
-package com.cloudera.sparkts
+package com.cloudera.sparkts.stats
 
 import breeze.linalg._
 import breeze.numerics.polyval
-
-import com.cloudera.finance.Util
-
+import com.cloudera.sparkts.{Lag, MatrixUtil, UnivariateTimeSeries}
 import org.apache.commons.math3.distribution.{ChiSquaredDistribution, NormalDistribution}
 import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression
 
@@ -219,10 +217,10 @@ object TimeSeriesStatisticalTests {
     val ols = new OLSMultipleLinearRegression()
     ols.setNoIntercept(true)
     if (regression != "nc") {
-      val withTrend = Util.matToRowArrs(addTrend(lagMat, regression))
+      val withTrend = MatrixUtil.matToRowArrs(addTrend(lagMat, regression))
       ols.newSampleData(tsdShort.toArray, withTrend)
     } else {
-      ols.newSampleData(tsdShort.toArray, Util.matToRowArrs(lagMat))
+      ols.newSampleData(tsdShort.toArray, MatrixUtil.matToRowArrs(lagMat))
     }
 
     val olsParamStandardErrors = ols.estimateRegressionParametersStandardErrors()
@@ -267,7 +265,7 @@ object TimeSeriesStatisticalTests {
    */
   def bgtest(residuals: Vector[Double], factors: Matrix[Double], maxLag: Int): (Double, Double) = {
     val origResiduals = residuals.toArray
-    val origFactors = Util.matToRowArrs(factors) // X (wiki)
+    val origFactors = MatrixUtil.matToRowArrs(factors) // X (wiki)
     // auxiliary regression model
     val lagResids = Lag.lagMatTrimBoth(origResiduals, maxLag, false) // u_hat_lagged (wiki)
     val nObs = lagResids.length
@@ -312,7 +310,7 @@ object TimeSeriesStatisticalTests {
    */
   def bptest(residuals: Vector[Double], factors: Matrix[Double]): (Double, Double) = {
     val residualsSquared = residuals.toArray.map(x => x * x) // u^2
-    val origFactors = Util.matToRowArrs(factors) // X
+    val origFactors = MatrixUtil.matToRowArrs(factors) // X
     val auxOLS = new OLSMultipleLinearRegression() // auxiliary OLS for bp test
     auxOLS.newSampleData(residualsSquared, origFactors) // u^2 = beta * X
     val bpstat = residuals.length * auxOLS.calculateRSquared()
