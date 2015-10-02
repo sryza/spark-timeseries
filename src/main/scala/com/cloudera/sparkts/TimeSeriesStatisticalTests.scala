@@ -196,6 +196,10 @@ object TimeSeriesStatisticalTests {
   /**
    * Augmented Dickey-Fuller test for a unit root in a univariate time series.
    *
+   * The null hypothesis is that the time series contains a unit root, implying that differencing is required to make
+   * it stationary.  The alternative hypothesis is that the time series is stationary.  Lower values of the test
+   * statistic imply lower p-values, and thus higher likelihood of rejecting the null hypothesis.
+   *
    * @param ts The time series.
    * @return A tuple containing the test statistic and p value.
    */
