@@ -17,12 +17,12 @@ package com.cloudera.sparkts
 
 import breeze.linalg._
 
-object Lag {
+private[sparkts] object Lag {
   /**
    * Makes a lag matrix from the given time series with the given lag, trimming both rows and
    * columns so that every element in the matrix is full.
    */
-  private[sparkts] def lagMatTrimBoth(x: Array[Double], maxLag: Int): Array[Array[Double]] = {
+  def lagMatTrimBoth(x: Array[Double], maxLag: Int): Array[Array[Double]] = {
     lagMatTrimBoth(x, maxLag, false)
   }
 
@@ -30,7 +30,7 @@ object Lag {
    * Makes a lag matrix from the given time series with the given lag, trimming both rows and
    * columns so that every element in the matrix is full.
    */
-  private[sparkts] def lagMatTrimBoth(x: Array[Double], maxLag: Int, includeOriginal: Boolean)
+  def lagMatTrimBoth(x: Array[Double], maxLag: Int, includeOriginal: Boolean)
     : Array[Array[Double]] = {
     val numObservations = x.length
     val numRows = numObservations - maxLag
@@ -51,7 +51,7 @@ object Lag {
    * Makes a lag matrix from the given time series with the given lag, trimming both rows and
    * columns so that every element in the matrix is full.
    */
-  private[sparkts] def lagMatTrimBoth(x: Vector[Double], maxLag: Int): Matrix[Double] = {
+  def lagMatTrimBoth(x: Vector[Double], maxLag: Int): Matrix[Double] = {
     lagMatTrimBoth(x, maxLag, false)
   }
 
@@ -59,7 +59,7 @@ object Lag {
    * Makes a lag matrix from the given time series with the given lag, trimming both rows and
    * columns so that every element in the matrix is full.
    */
-  private[sparkts] def lagMatTrimBoth(x: Vector[Double], maxLag: Int, includeOriginal: Boolean)
+  def lagMatTrimBoth(x: Vector[Double], maxLag: Int, includeOriginal: Boolean)
     : Matrix[Double] = {
     val numObservations = x.size
     val numRows = numObservations - maxLag
@@ -76,7 +76,7 @@ object Lag {
     lagMat
   }
 
-  private[sparkts] def lagMatTrimBoth(
+  def lagMatTrimBoth(
       x: Vector[Double],
       outputMat: DenseMatrix[Double],
       maxLag: Int,
