@@ -1,0 +1,395 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html>
+        <head>
+          <title>sparkts - Spark Timeseries 0.1.0 API - com.cloudera.sparkts</title>
+          <meta name="description" content="sparkts - Spark Timeseries 0.1.0 API - com.cloudera.sparkts" />
+          <meta name="keywords" content="sparkts Spark Timeseries 0.1.0 API com.cloudera.sparkts" />
+          <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+          
+      <link href="../../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
+      <link href="../../../lib/diagrams.css" media="screen" type="text/css" rel="stylesheet" id="diagrams-css" />
+      <script type="text/javascript">
+         if(top === self) {
+            var url = '../../../index.html';
+            var hash = 'com.cloudera.sparkts.package';
+            var anchor = window.location.hash;
+            var anchor_opt = '';
+            if (anchor.length >= 1)
+              anchor_opt = '@' + anchor.substring(1);
+            window.location.href = url + '#' + hash + anchor_opt;
+         }
+   	  </script>
+    
+        </head>
+        <body class="value">
+      <div id="definition">
+        <img src="../../../lib/package_big.png" />
+        <p id="owner"><a href="../../package.html" class="extype" name="com">com</a>.<a href="../package.html" class="extype" name="com.cloudera">cloudera</a></p>
+        <h1>sparkts</h1>
+      </div>
+
+      <h4 id="signature" class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <span class="name">sparkts</span>
+      </span>
+      </h4>
+      
+          <div id="comment" class="fullcommenttop"></div>
+        
+
+      <div id="mbrsel">
+        <div id="textfilter"><span class="pre"></span><span class="input"><input id="mbrsel-input" type="text" accesskey="/" /></span><span class="post"></span></div>
+        
+        
+        <div id="visbl">
+            <span class="filtertype">Visibility</span>
+            <ol><li class="public in"><span>Public</span></li><li class="all out"><span>All</span></li></ol>
+          </div>
+      </div>
+
+      <div id="template">
+        <div id="allMembers">
+        
+
+        <div id="types" class="types members">
+              <h3>Type Members</h3>
+              <ol><li name="com.cloudera.sparkts.BusinessDayFrequency" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="BusinessDayFrequencyextendsFrequency"></a>
+      <a id="BusinessDayFrequency:BusinessDayFrequency"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="BusinessDayFrequency.html"><span class="name">BusinessDayFrequency</span></a><span class="result"> extends <a href="Frequency.html" class="extype" name="com.cloudera.sparkts.Frequency">Frequency</a></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.cloudera.sparkts.BusinessDayRichInt" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="BusinessDayRichIntextendsAnyRef"></a>
+      <a id="BusinessDayRichInt:BusinessDayRichInt"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="BusinessDayRichInt.html"><span class="name">BusinessDayRichInt</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.cloudera.sparkts.DateTimeIndex" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="DateTimeIndexextendsSerializable"></a>
+      <a id="DateTimeIndex:DateTimeIndex"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="DateTimeIndex.html"><span class="name">DateTimeIndex</span></a><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">A DateTimeIndex maintains a bi-directional mapping between integers and an ordered collection of
+date-times.</p>
+    </li><li name="com.cloudera.sparkts.DateTimeSerializer" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="DateTimeSerializerextendsSerializer[org.joda.time.DateTime]"></a>
+      <a id="DateTimeSerializer:DateTimeSerializer"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="DateTimeSerializer.html"><span class="name">DateTimeSerializer</span></a><span class="result"> extends <span class="extype" name="com.esotericsoftware.kryo.Serializer">Serializer</span>[<span class="extype" name="org.joda.time.DateTime">DateTime</span>]</span>
+      </span>
+      </h4>
+      
+    </li><li name="com.cloudera.sparkts.DayFrequency" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="DayFrequencyextendsPeriodFrequency"></a>
+      <a id="DayFrequency:DayFrequency"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="DayFrequency.html"><span class="name">DayFrequency</span></a><span class="result"> extends <a href="PeriodFrequency.html" class="extype" name="com.cloudera.sparkts.PeriodFrequency">PeriodFrequency</a></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.cloudera.sparkts.Frequency" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="FrequencyextendsSerializable"></a>
+      <a id="Frequency:Frequency"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="Frequency.html"><span class="name">Frequency</span></a><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">A frequency for a uniform index.</p>
+    </li><li name="com.cloudera.sparkts.HourFrequency" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="HourFrequencyextendsPeriodFrequency"></a>
+      <a id="HourFrequency:HourFrequency"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="HourFrequency.html"><span class="name">HourFrequency</span></a><span class="result"> extends <a href="PeriodFrequency.html" class="extype" name="com.cloudera.sparkts.PeriodFrequency">PeriodFrequency</a></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.cloudera.sparkts.IrregularDateTimeIndex" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="IrregularDateTimeIndexextendsDateTimeIndex"></a>
+      <a id="IrregularDateTimeIndex:IrregularDateTimeIndex"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="IrregularDateTimeIndex.html"><span class="name">IrregularDateTimeIndex</span></a><span class="result"> extends <a href="DateTimeIndex.html" class="extype" name="com.cloudera.sparkts.DateTimeIndex">DateTimeIndex</a></span>
+      </span>
+      </h4>
+      <p class="comment cmt">An implementation of DateTimeIndex that allows date-times to be spaced at uneven intervals.</p>
+    </li><li name="com.cloudera.sparkts.PeriodFrequency" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="PeriodFrequencyextendsFrequency"></a>
+      <a id="PeriodFrequency:PeriodFrequency"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">abstract </span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="PeriodFrequency.html"><span class="name">PeriodFrequency</span></a><span class="result"> extends <a href="Frequency.html" class="extype" name="com.cloudera.sparkts.Frequency">Frequency</a></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.cloudera.sparkts.TimeSeries" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="TimeSeriesextendsSerializable"></a>
+      <a id="TimeSeries:TimeSeries"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="TimeSeries.html"><span class="name">TimeSeries</span></a><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.cloudera.sparkts.TimeSeriesFilter" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="TimeSeriesFilterextendsSerializable"></a>
+      <a id="TimeSeriesFilter:TimeSeriesFilter"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="TimeSeriesFilter.html"><span class="name">TimeSeriesFilter</span></a><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.cloudera.sparkts.TimeSeriesKryoRegistrator" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="TimeSeriesKryoRegistratorextendsKryoRegistrator"></a>
+      <a id="TimeSeriesKryoRegistrator:TimeSeriesKryoRegistrator"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="TimeSeriesKryoRegistrator.html"><span class="name">TimeSeriesKryoRegistrator</span></a><span class="result"> extends <span class="extype" name="org.apache.spark.serializer.KryoRegistrator">KryoRegistrator</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.cloudera.sparkts.TimeSeriesRDD" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="TimeSeriesRDDextendsRDD[(String,breeze.linalg.Vector[Double])]"></a>
+      <a id="TimeSeriesRDD:TimeSeriesRDD"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="TimeSeriesRDD.html"><span class="name">TimeSeriesRDD</span></a><span class="result"> extends <span class="extype" name="org.apache.spark.rdd.RDD">RDD</span>[(<span class="extype" name="scala.Predef.String">String</span>, <span class="extype" name="breeze.linalg.Vector">Vector</span>[<span class="extype" name="scala.Double">Double</span>])]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">A lazy distributed collection of univariate series with a conformed time dimension.</p>
+    </li><li name="com.cloudera.sparkts.UniformDateTimeIndex" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="UniformDateTimeIndexextendsDateTimeIndex"></a>
+      <a id="UniformDateTimeIndex:UniformDateTimeIndex"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="UniformDateTimeIndex.html"><span class="name">UniformDateTimeIndex</span></a><span class="result"> extends <a href="DateTimeIndex.html" class="extype" name="com.cloudera.sparkts.DateTimeIndex">DateTimeIndex</a></span>
+      </span>
+      </h4>
+      <p class="comment cmt">An implementation of DateTimeIndex that contains date-times spaced at regular intervals.</p>
+    </li></ol>
+            </div>
+
+        
+
+        <div id="values" class="values members">
+              <h3>Value Members</h3>
+              <ol><li name="com.cloudera.sparkts.DateTimeIndex" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="DateTimeIndex"></a>
+      <a id="DateTimeIndex:DateTimeIndex"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="DateTimeIndex$.html"><span class="name">DateTimeIndex</span></a><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.cloudera.sparkts.EasyPlot" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="EasyPlot"></a>
+      <a id="EasyPlot:EasyPlot"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="EasyPlot$.html"><span class="name">EasyPlot</span></a>
+      </span>
+      </h4>
+      
+    </li><li name="com.cloudera.sparkts.TimeSeries" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="TimeSeries"></a>
+      <a id="TimeSeries:TimeSeries"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="TimeSeries$.html"><span class="name">TimeSeries</span></a><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.cloudera.sparkts.TimeSeriesKryoRegistrator" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="TimeSeriesKryoRegistrator"></a>
+      <a id="TimeSeriesKryoRegistrator:TimeSeriesKryoRegistrator"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="TimeSeriesKryoRegistrator$.html"><span class="name">TimeSeriesKryoRegistrator</span></a>
+      </span>
+      </h4>
+      
+    </li><li name="com.cloudera.sparkts.TimeSeriesRDD" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="TimeSeriesRDD"></a>
+      <a id="TimeSeriesRDD:TimeSeriesRDD"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="TimeSeriesRDD$.html"><span class="name">TimeSeriesRDD</span></a><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.cloudera.sparkts.UnivariateTimeSeries" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="UnivariateTimeSeries"></a>
+      <a id="UnivariateTimeSeries:UnivariateTimeSeries"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="UnivariateTimeSeries$.html"><span class="name">UnivariateTimeSeries</span></a>
+      </span>
+      </h4>
+      
+    </li><li name="com.cloudera.sparkts.models" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="models"></a>
+      <a id="models:models"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <a href="models/package.html"><span class="name">models</span></a>
+      </span>
+      </h4>
+      
+    </li><li name="com.cloudera.sparkts.parsers" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="parsers"></a>
+      <a id="parsers:parsers"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <a href="parsers/package.html"><span class="name">parsers</span></a>
+      </span>
+      </h4>
+      
+    </li><li name="com.cloudera.sparkts.stats" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="stats"></a>
+      <a id="stats:stats"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <a href="stats/package.html"><span class="name">stats</span></a>
+      </span>
+      </h4>
+      
+    </li></ol>
+            </div>
+
+        
+
+        
+        </div>
+
+        <div id="inheritedMembers">
+        
+        
+        </div>
+
+        <div id="groupedMembers">
+        <div class="group" name="Ungrouped">
+              <h3>Ungrouped</h3>
+              
+            </div>
+        </div>
+
+      </div>
+
+      <div id="tooltip"></div>
+
+      <div id="footer">  </div>
+      <script defer="defer" type="text/javascript" id="jquery-js" src="../../../lib/jquery.js"></script><script defer="defer" type="text/javascript" id="jquery-ui-js" src="../../../lib/jquery-ui.js"></script><script defer="defer" type="text/javascript" id="tools-tooltip-js" src="../../../lib/tools.tooltip.js"></script><script defer="defer" type="text/javascript" id="template-js" src="../../../lib/template.js"></script>
+    </body>
+      </html>

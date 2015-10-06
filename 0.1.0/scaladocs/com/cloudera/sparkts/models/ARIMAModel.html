@@ -1,0 +1,700 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html>
+        <head>
+          <title>ARIMAModel - Spark Timeseries 0.1.0 API - com.cloudera.sparkts.models.ARIMAModel</title>
+          <meta name="description" content="ARIMAModel - Spark Timeseries 0.1.0 API - com.cloudera.sparkts.models.ARIMAModel" />
+          <meta name="keywords" content="ARIMAModel Spark Timeseries 0.1.0 API com.cloudera.sparkts.models.ARIMAModel" />
+          <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+          
+      <link href="../../../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
+      <link href="../../../../lib/diagrams.css" media="screen" type="text/css" rel="stylesheet" id="diagrams-css" />
+      <script type="text/javascript">
+         if(top === self) {
+            var url = '../../../../index.html';
+            var hash = 'com.cloudera.sparkts.models.ARIMAModel';
+            var anchor = window.location.hash;
+            var anchor_opt = '';
+            if (anchor.length >= 1)
+              anchor_opt = '@' + anchor.substring(1);
+            window.location.href = url + '#' + hash + anchor_opt;
+         }
+   	  </script>
+    
+        </head>
+        <body class="type">
+      <div id="definition">
+        <img src="../../../../lib/class_big.png" />
+        <p id="owner"><a href="../../../package.html" class="extype" name="com">com</a>.<a href="../../package.html" class="extype" name="com.cloudera">cloudera</a>.<a href="../package.html" class="extype" name="com.cloudera.sparkts">sparkts</a>.<a href="package.html" class="extype" name="com.cloudera.sparkts.models">models</a></p>
+        <h1>ARIMAModel</h1>
+      </div>
+
+      <h4 id="signature" class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <span class="name">ARIMAModel</span><span class="result"> extends <a href="TimeSeriesModel.html" class="extype" name="com.cloudera.sparkts.models.TimeSeriesModel">TimeSeriesModel</a></span>
+      </span>
+      </h4>
+      
+          <div id="comment" class="fullcommenttop"><div class="toggleContainer block">
+          <span class="toggle">Linear Supertypes</span>
+          <div class="superTypes hiddenContent"><a href="TimeSeriesModel.html" class="extype" name="com.cloudera.sparkts.models.TimeSeriesModel">TimeSeriesModel</a>, <span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
+        </div></div>
+        
+
+      <div id="mbrsel">
+        <div id="textfilter"><span class="pre"></span><span class="input"><input id="mbrsel-input" type="text" accesskey="/" /></span><span class="post"></span></div>
+        <div id="order">
+              <span class="filtertype">Ordering</span>
+              <ol>
+                
+                <li class="alpha in"><span>Alphabetic</span></li>
+                <li class="inherit out"><span>By inheritance</span></li>
+              </ol>
+            </div>
+        <div id="ancestors">
+                <span class="filtertype">Inherited<br />
+                </span>
+                <ol id="linearization">
+                  <li class="in" name="com.cloudera.sparkts.models.ARIMAModel"><span>ARIMAModel</span></li><li class="in" name="com.cloudera.sparkts.models.TimeSeriesModel"><span>TimeSeriesModel</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
+                </ol>
+              </div><div id="ancestors">
+            <span class="filtertype"></span>
+            <ol>
+              <li class="hideall out"><span>Hide All</span></li>
+              <li class="showall in"><span>Show all</span></li>
+            </ol>
+            <a href="http://docs.scala-lang.org/overviews/scaladoc/usage.html#members" target="_blank">Learn more about member selection</a>
+          </div>
+        <div id="visbl">
+            <span class="filtertype">Visibility</span>
+            <ol><li class="public in"><span>Public</span></li><li class="all out"><span>All</span></li></ol>
+          </div>
+      </div>
+
+      <div id="template">
+        <div id="allMembers">
+        <div id="constructors" class="members">
+              <h3>Instance Constructors</h3>
+              <ol><li name="com.cloudera.sparkts.models.ARIMAModel#&lt;init&gt;" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="&lt;init&gt;(p:Int,d:Int,q:Int,coefficients:Array[Double],hasIntercept:Boolean):com.cloudera.sparkts.models.ARIMAModel"></a>
+      <a id="&lt;init&gt;:ARIMAModel"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">new</span>
+      </span>
+      <span class="symbol">
+        <span class="name">ARIMAModel</span><span class="params">(<span name="p">p: <span class="extype" name="scala.Int">Int</span></span>, <span name="d">d: <span class="extype" name="scala.Int">Int</span></span>, <span name="q">q: <span class="extype" name="scala.Int">Int</span></span>, <span name="coefficients">coefficients: <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Double">Double</span>]</span>, <span name="hasIntercept">hasIntercept: <span class="extype" name="scala.Boolean">Boolean</span> = <span class="symbol">true</span></span>)</span>
+      </span>
+      </h4>
+      
+    </li></ol>
+            </div>
+
+        
+
+        
+
+        <div id="values" class="values members">
+              <h3>Value Members</h3>
+              <ol><li name="scala.AnyRef#!=" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="!=(x$1:AnyRef):Boolean"></a>
+      <a id="!=(AnyRef):Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.AnyRef">AnyRef</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="scala.Any#!=" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="!=(x$1:Any):Boolean"></a>
+      <a id="!=(Any):Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.Any">Any</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
+    </li><li name="scala.AnyRef###" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="##():Int"></a>
+      <a id="##():Int"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Int">Int</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="scala.AnyRef#==" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="==(x$1:AnyRef):Boolean"></a>
+      <a id="==(AnyRef):Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.AnyRef">AnyRef</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="scala.Any#==" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="==(x$1:Any):Boolean"></a>
+      <a id="==(Any):Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.Any">Any</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
+    </li><li name="com.cloudera.sparkts.models.ARIMAModel#addTimeDependentEffects" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="addTimeDependentEffects(ts:breeze.linalg.Vector[Double],destTs:breeze.linalg.Vector[Double]):breeze.linalg.Vector[Double]"></a>
+      <a id="addTimeDependentEffects(Vector[Double],Vector[Double]):Vector[Double]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">addTimeDependentEffects</span><span class="params">(<span name="ts">ts: <span class="extype" name="breeze.linalg.Vector">Vector</span>[<span class="extype" name="scala.Double">Double</span>]</span>, <span name="destTs">destTs: <span class="extype" name="breeze.linalg.Vector">Vector</span>[<span class="extype" name="scala.Double">Double</span>]</span>)</span><span class="result">: <span class="extype" name="breeze.linalg.Vector">Vector</span>[<span class="extype" name="scala.Double">Double</span>]</span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Given a timeseries, apply an ARIMA(p, d, q) model to it.</p><div class="fullcomment"><div class="comment cmt"><p>Given a timeseries, apply an ARIMA(p, d, q) model to it.
+We assume that prior MA terms are 0.0 and prior AR terms are equal to the intercept or 0.0 if
+fit without an intercept</p></div><dl class="paramcmts block"><dt class="param">ts</dt><dd class="cmt"><p>Time series of i.i.d. observations.</p></dd><dt class="param">destTs</dt><dd class="cmt"></dd><dt>returns</dt><dd class="cmt"><p>The dest series, representing the application of the model to provided error
+        terms, for convenience.
+</p></dd></dl><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.cloudera.sparkts.models.ARIMAModel">ARIMAModel</a> → <a href="TimeSeriesModel.html" class="extype" name="com.cloudera.sparkts.models.TimeSeriesModel">TimeSeriesModel</a></dd></dl></div>
+    </li><li name="scala.Any#asInstanceOf" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="asInstanceOf[T0]:T0"></a>
+      <a id="asInstanceOf[T0]:T0"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">asInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <span class="extype" name="scala.Any.asInstanceOf.T0">T0</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
+    </li><li name="scala.AnyRef#clone" visbl="prt" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="clone():Object"></a>
+      <a id="clone():AnyRef"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">clone</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../java$lang.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@throws</span><span class="args">(<span>
+      
+      <span class="defval" name="classOf[java.lang.CloneNotSupportedException]">...</span>
+    </span>)</span>
+              
+        </dd></dl></div>
+    </li><li name="com.cloudera.sparkts.models.ARIMAModel#coefficients" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="coefficients:Array[Double]"></a>
+      <a id="coefficients:Array[Double]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">coefficients</span><span class="result">: <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Double">Double</span>]</span>
+      </span>
+      </h4>
+      
+    </li><li name="com.cloudera.sparkts.models.ARIMAModel#d" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="d:Int"></a>
+      <a id="d:Int"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">d</span><span class="result">: <span class="extype" name="scala.Int">Int</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="scala.AnyRef#eq" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="eq(x$1:AnyRef):Boolean"></a>
+      <a id="eq(AnyRef):Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.AnyRef">AnyRef</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="scala.AnyRef#equals" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="equals(x$1:Any):Boolean"></a>
+      <a id="equals(Any):Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.Any">Any</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="scala.AnyRef#finalize" visbl="prt" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="finalize():Unit"></a>
+      <a id="finalize():Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">finalize</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../java$lang.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@throws</span><span class="args">(<span>
+      
+      <span class="symbol">classOf[java.lang.Throwable]</span>
+    </span>)</span>
+              
+        </dd></dl></div>
+    </li><li name="com.cloudera.sparkts.models.ARIMAModel#forecast" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="forecast(ts:breeze.linalg.Vector[Double],nFuture:Int):breeze.linalg.Vector[Double]"></a>
+      <a id="forecast(Vector[Double],Int):Vector[Double]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">forecast</span><span class="params">(<span name="ts">ts: <span class="extype" name="breeze.linalg.Vector">Vector</span>[<span class="extype" name="scala.Double">Double</span>]</span>, <span name="nFuture">nFuture: <span class="extype" name="scala.Int">Int</span></span>)</span><span class="result">: <span class="extype" name="breeze.linalg.Vector">Vector</span>[<span class="extype" name="scala.Double">Double</span>]</span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Provided fitted values for timeseries ts as 1-step ahead forecasts, based on current
+model parameters, and then provide <code>nFuture</code> periods of forecast.</p><div class="fullcomment"><div class="comment cmt"><p>Provided fitted values for timeseries ts as 1-step ahead forecasts, based on current
+model parameters, and then provide <code>nFuture</code> periods of forecast. We assume AR terms
+prior to the start of the series are equal to the model's intercept term (or 0.0, if fit
+without and intercept term).Meanwhile, MA terms prior to the start are assumed to be 0.0. If
+there is differencing, the first d terms come from the original series.</p></div><dl class="paramcmts block"><dt class="param">ts</dt><dd class="cmt"><p>Timeseries to use as gold-standard. Each value (i) in the returning series
+          is a 1-step ahead forecast of ts(i). We use the difference between ts(i) -
+          estimate(i) to calculate the error at time i, which is used for the moving
+          average terms.</p></dd><dt class="param">nFuture</dt><dd class="cmt"><p>Periods in the future to forecast (beyond length of ts)</p></dd><dt>returns</dt><dd class="cmt"><p>a series consisting of fitted 1-step ahead forecasts for historicals and then
+        <code>nFuture</code> periods of forecasts. Note that in the future values error terms become
+        zero and prior predictions are used for any AR terms.
+</p></dd></dl></div>
+    </li><li name="scala.AnyRef#getClass" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="getClass():Class[_]"></a>
+      <a id="getClass():Class[_]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">getClass</span><span class="params">()</span><span class="result">: <span class="extype" name="java.lang.Class">Class</span>[_]</span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="com.cloudera.sparkts.models.ARIMAModel#gradientlogLikelihoodCSSARMA" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="gradientlogLikelihoodCSSARMA(diffedY:Array[Double]):Array[Double]"></a>
+      <a id="gradientlogLikelihoodCSSARMA(Array[Double]):Array[Double]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">gradientlogLikelihoodCSSARMA</span><span class="params">(<span name="diffedY">diffedY: <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Double">Double</span>]</span>)</span><span class="result">: <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Double">Double</span>]</span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Calculates the gradient for the log likelihood function using CSS
+Derivation:
+L(y | \theta) = -\frac{n}{2}log(2\pi\sigma<sup>2) - \frac{1}{2\pi}\sum_{i=1}</sup>n \epsilon_t<sup>2 \\
+\sigma</sup>2 = \frac{\sum_{i = 1}<sup>n \epsilon_t</sup>2}{n} \\
+\frac{\partial L}{\partial \theta} = -\frac{1}{\sigma<sup>2}
+\sum_{i = 1}</sup>n \epsilon_t \frac{\partial \epsilon_t}{\partial \theta} \\
+\frac{\partial \epsilon_t}{\partial \theta} = -\frac{\partial \hat{y}}{\partial \theta} \\
+\frac{\partial\hat{y}}{\partial c} = 1 +
+\phi_{t-q}<sup>{t-1}*\frac{\partial \epsilon_{t-q}</sup>{t-1}}{\partial c} \\
+\frac{\partial\hat{y}}{\partial \theta_{ar_i}} =  y_{t - i} +
+\phi_{t-q}<sup>{t-1}*\frac{\partial \epsilon_{t-q}</sup>{t-1}}{\partial \theta_{ar_i}} \\
+\frac{\partial\hat{y}}{\partial \theta_{ma_i}} =  \epsilon_{t - i} +
+\phi_{t-q}<sup>{t-1}*\frac{\partial \epsilon_{t-q}</sup>{t-1}}{\partial \theta_{ma_i}} \\</p><div class="fullcomment"><div class="comment cmt"><p>Calculates the gradient for the log likelihood function using CSS
+Derivation:
+L(y | \theta) = -\frac{n}{2}log(2\pi\sigma<sup>2) - \frac{1}{2\pi}\sum_{i=1}</sup>n \epsilon_t<sup>2 \\
+\sigma</sup>2 = \frac{\sum_{i = 1}<sup>n \epsilon_t</sup>2}{n} \\
+\frac{\partial L}{\partial \theta} = -\frac{1}{\sigma<sup>2}
+\sum_{i = 1}</sup>n \epsilon_t \frac{\partial \epsilon_t}{\partial \theta} \\
+\frac{\partial \epsilon_t}{\partial \theta} = -\frac{\partial \hat{y}}{\partial \theta} \\
+\frac{\partial\hat{y}}{\partial c} = 1 +
+\phi_{t-q}<sup>{t-1}*\frac{\partial \epsilon_{t-q}</sup>{t-1}}{\partial c} \\
+\frac{\partial\hat{y}}{\partial \theta_{ar_i}} =  y_{t - i} +
+\phi_{t-q}<sup>{t-1}*\frac{\partial \epsilon_{t-q}</sup>{t-1}}{\partial \theta_{ar_i}} \\
+\frac{\partial\hat{y}}{\partial \theta_{ma_i}} =  \epsilon_{t - i} +
+\phi_{t-q}<sup>{t-1}*\frac{\partial \epsilon_{t-q}</sup>{t-1}}{\partial \theta_{ma_i}} \\</p></div><dl class="paramcmts block"><dt class="param">diffedY</dt><dd class="cmt"><p>array of differenced values</p></dd><dt>returns</dt><dd class="cmt"><p>
+</p></dd></dl></div>
+    </li><li name="com.cloudera.sparkts.models.ARIMAModel#hasIntercept" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="hasIntercept:Boolean"></a>
+      <a id="hasIntercept:Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">hasIntercept</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="scala.AnyRef#hashCode" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="hashCode():Int"></a>
+      <a id="hashCode():Int"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Int">Int</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="scala.Any#isInstanceOf" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="isInstanceOf[T0]:Boolean"></a>
+      <a id="isInstanceOf[T0]:Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
+    </li><li name="com.cloudera.sparkts.models.ARIMAModel#isInvertible" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="isInvertible():Boolean"></a>
+      <a id="isInvertible():Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">isInvertible</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Checks if MA parameters result in an invertible model.</p><div class="fullcomment"><div class="comment cmt"><p>Checks if MA parameters result in an invertible model. Checks this by solving the roots for
+1 + theta_1 * x + theta_2 * x + ... + theta_q * x&#94;q = 0. Please see
+<a href="#isStationary():Boolean" class="extmbr" name="com.cloudera.sparkts.models.ARIMAModel#isStationary">ARIMAModel.isStationary</a> for more details.
+Always returns true for models with no MA terms.</p></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>indicator of whether model's MA parameters are invertible
+</p></dd></dl></div>
+    </li><li name="com.cloudera.sparkts.models.ARIMAModel#isStationary" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="isStationary():Boolean"></a>
+      <a id="isStationary():Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">isStationary</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Check if the AR parameters result in a stationary model.</p><div class="fullcomment"><div class="comment cmt"><p>Check if the AR parameters result in a stationary model. This is done by obtaining the roots
+to the polynomial 1 - phi_1 * x - phi_2 * x<sup>2 - ... - phi_p * x</sup>p = 0, where phi_i is the
+corresponding AR parameter. Note that we check the roots, not the inverse of the roots, so
+we check that they lie outside of the unit circle.
+Always returns true for models with no AR terms.
+See http://www.econ.ku.dk/metrics/Econometrics2_05_II/Slides/07_univariatetimeseries_2pp.pdf
+for more information (specifically slides 23 - 25)</p></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>indicator of whether model's AR parameters are stationary
+</p></dd></dl></div>
+    </li><li name="com.cloudera.sparkts.models.ARIMAModel#logLikelihoodCSS" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="logLikelihoodCSS(y:breeze.linalg.Vector[Double]):Double"></a>
+      <a id="logLikelihoodCSS(Vector[Double]):Double"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">logLikelihoodCSS</span><span class="params">(<span name="y">y: <span class="extype" name="breeze.linalg.Vector">Vector</span>[<span class="extype" name="scala.Double">Double</span>]</span>)</span><span class="result">: <span class="extype" name="scala.Double">Double</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">log likelihood based on conditional sum of squares</p><div class="fullcomment"><div class="comment cmt"><p>log likelihood based on conditional sum of squares</p><p>Source: http://www.nuffield.ox.ac.uk/economics/papers/1997/w6/ma.pdf
+</p></div><dl class="paramcmts block"><dt class="param">y</dt><dd class="cmt"><p>time series</p></dd><dt>returns</dt><dd class="cmt"><p>log likelihood
+</p></dd></dl></div>
+    </li><li name="com.cloudera.sparkts.models.ARIMAModel#logLikelihoodCSSARMA" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="logLikelihoodCSSARMA(diffedY:Array[Double]):Double"></a>
+      <a id="logLikelihoodCSSARMA(Array[Double]):Double"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">logLikelihoodCSSARMA</span><span class="params">(<span name="diffedY">diffedY: <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Double">Double</span>]</span>)</span><span class="result">: <span class="extype" name="scala.Double">Double</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">log likelihood based on conditional sum of squares.</p><div class="fullcomment"><div class="comment cmt"><p>log likelihood based on conditional sum of squares. In contrast to logLikelihoodCSS the array
+provided should correspond to an already differenced array, so that the function below
+corresponds to the log likelihood for the ARMA rather than the ARIMA process</p></div><dl class="paramcmts block"><dt class="param">diffedY</dt><dd class="cmt"><p>differenced array</p></dd><dt>returns</dt><dd class="cmt"><p>log likelihood of ARMA
+</p></dd></dl></div>
+    </li><li name="scala.AnyRef#ne" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="ne(x$1:AnyRef):Boolean"></a>
+      <a id="ne(AnyRef):Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.AnyRef">AnyRef</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="scala.AnyRef#notify" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="notify():Unit"></a>
+      <a id="notify():Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">notify</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="scala.AnyRef#notifyAll" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="notifyAll():Unit"></a>
+      <a id="notifyAll():Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="com.cloudera.sparkts.models.ARIMAModel#p" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="p:Int"></a>
+      <a id="p:Int"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">p</span><span class="result">: <span class="extype" name="scala.Int">Int</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.cloudera.sparkts.models.ARIMAModel#q" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="q:Int"></a>
+      <a id="q:Int"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">q</span><span class="result">: <span class="extype" name="scala.Int">Int</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.cloudera.sparkts.models.ARIMAModel#removeTimeDependentEffects" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="removeTimeDependentEffects(ts:breeze.linalg.Vector[Double],destTs:breeze.linalg.Vector[Double]):breeze.linalg.Vector[Double]"></a>
+      <a id="removeTimeDependentEffects(Vector[Double],Vector[Double]):Vector[Double]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">removeTimeDependentEffects</span><span class="params">(<span name="ts">ts: <span class="extype" name="breeze.linalg.Vector">Vector</span>[<span class="extype" name="scala.Double">Double</span>]</span>, <span name="destTs">destTs: <span class="extype" name="breeze.linalg.Vector">Vector</span>[<span class="extype" name="scala.Double">Double</span>]</span>)</span><span class="result">: <span class="extype" name="breeze.linalg.Vector">Vector</span>[<span class="extype" name="scala.Double">Double</span>]</span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Given a timeseries, assume that it is the result of an ARIMA(p, d, q) process, and apply
+inverse operations to obtain the original series of underlying errors.</p><div class="fullcomment"><div class="comment cmt"><p>Given a timeseries, assume that it is the result of an ARIMA(p, d, q) process, and apply
+inverse operations to obtain the original series of underlying errors.
+To do so, we assume prior MA terms are 0.0, and prior AR are equal to the model's intercept or
+0.0 if fit without an intercept</p></div><dl class="paramcmts block"><dt class="param">ts</dt><dd class="cmt"><p>Time series of observations with this model's characteristics.</p></dd><dt class="param">destTs</dt><dd class="cmt"></dd><dt>returns</dt><dd class="cmt"><p>The dest series, representing remaining errors, for convenience.
+</p></dd></dl><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.cloudera.sparkts.models.ARIMAModel">ARIMAModel</a> → <a href="TimeSeriesModel.html" class="extype" name="com.cloudera.sparkts.models.TimeSeriesModel">TimeSeriesModel</a></dd></dl></div>
+    </li><li name="com.cloudera.sparkts.models.ARIMAModel#sample" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="sample(n:Int,rand:org.apache.commons.math3.random.RandomGenerator):breeze.linalg.Vector[Double]"></a>
+      <a id="sample(Int,RandomGenerator):Vector[Double]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">sample</span><span class="params">(<span name="n">n: <span class="extype" name="scala.Int">Int</span></span>, <span name="rand">rand: <span class="extype" name="org.apache.commons.math3.random.RandomGenerator">RandomGenerator</span></span>)</span><span class="result">: <span class="extype" name="breeze.linalg.Vector">Vector</span>[<span class="extype" name="scala.Double">Double</span>]</span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Sample a series of size n assuming an ARIMA(p, d, q) process.</p><div class="fullcomment"><div class="comment cmt"><p>Sample a series of size n assuming an ARIMA(p, d, q) process.</p></div><dl class="paramcmts block"><dt class="param">n</dt><dd class="cmt"><p>size of sample</p></dd><dt>returns</dt><dd class="cmt"><p>series reflecting ARIMA(p, d, q) process
+</p></dd></dl></div>
+    </li><li name="scala.AnyRef#synchronized" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="synchronized[T0](x$1:=&gt;T0):T0"></a>
+      <a id="synchronized[T0](⇒T0):T0"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">synchronized</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="params">(<span name="arg0">arg0: ⇒ <span class="extype" name="java.lang.AnyRef.synchronized.T0">T0</span></span>)</span><span class="result">: <span class="extype" name="java.lang.AnyRef.synchronized.T0">T0</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="scala.AnyRef#toString" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="toString():String"></a>
+      <a id="toString():String"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">toString</span><span class="params">()</span><span class="result">: <span class="extype" name="java.lang.String">String</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="com.cloudera.sparkts.models.ARIMAModel#updateMAErrors" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="updateMAErrors(errs:Array[Double],newError:Double):Unit"></a>
+      <a id="updateMAErrors(Array[Double],Double):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">updateMAErrors</span><span class="params">(<span name="errs">errs: <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Double">Double</span>]</span>, <span name="newError">newError: <span class="extype" name="scala.Double">Double</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Updates the error vector in place with a new (more recent) error
+The newest error is placed in position 0, while older errors &quot;fall off the end&quot;</p><div class="fullcomment"><div class="comment cmt"><p>Updates the error vector in place with a new (more recent) error
+The newest error is placed in position 0, while older errors &quot;fall off the end&quot;</p></div><dl class="paramcmts block"><dt class="param">errs</dt><dd class="cmt"><p>array of errors of length q in ARIMA(p, d, q), holds errors for t-1 through t-q</p></dd><dt class="param">newError</dt><dd class="cmt"><p>the error at time t</p></dd><dt>returns</dt><dd class="cmt"><p>a modified array with the latest error placed into index 0
+</p></dd></dl></div>
+    </li><li name="scala.AnyRef#wait" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="wait():Unit"></a>
+      <a id="wait():Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">wait</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@throws</span><span class="args">(<span>
+      
+      <span class="defval" name="classOf[java.lang.InterruptedException]">...</span>
+    </span>)</span>
+              
+        </dd></dl></div>
+    </li><li name="scala.AnyRef#wait" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="wait(x$1:Long,x$2:Int):Unit"></a>
+      <a id="wait(Long,Int):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.Long">Long</span></span>, <span name="arg1">arg1: <span class="extype" name="scala.Int">Int</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@throws</span><span class="args">(<span>
+      
+      <span class="defval" name="classOf[java.lang.InterruptedException]">...</span>
+    </span>)</span>
+              
+        </dd></dl></div>
+    </li><li name="scala.AnyRef#wait" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="wait(x$1:Long):Unit"></a>
+      <a id="wait(Long):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.Long">Long</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@throws</span><span class="args">(<span>
+      
+      <span class="defval" name="classOf[java.lang.InterruptedException]">...</span>
+    </span>)</span>
+              
+        </dd></dl></div>
+    </li></ol>
+            </div>
+
+        
+
+        
+        </div>
+
+        <div id="inheritedMembers">
+        <div class="parent" name="com.cloudera.sparkts.models.TimeSeriesModel">
+              <h3>Inherited from <a href="TimeSeriesModel.html" class="extype" name="com.cloudera.sparkts.models.TimeSeriesModel">TimeSeriesModel</a></h3>
+            </div><div class="parent" name="scala.AnyRef">
+              <h3>Inherited from <span class="extype" name="scala.AnyRef">AnyRef</span></h3>
+            </div><div class="parent" name="scala.Any">
+              <h3>Inherited from <span class="extype" name="scala.Any">Any</span></h3>
+            </div>
+        
+        </div>
+
+        <div id="groupedMembers">
+        <div class="group" name="Ungrouped">
+              <h3>Ungrouped</h3>
+              
+            </div>
+        </div>
+
+      </div>
+
+      <div id="tooltip"></div>
+
+      <div id="footer">  </div>
+      <script defer="defer" type="text/javascript" id="jquery-js" src="../../../../lib/jquery.js"></script><script defer="defer" type="text/javascript" id="jquery-ui-js" src="../../../../lib/jquery-ui.js"></script><script defer="defer" type="text/javascript" id="tools-tooltip-js" src="../../../../lib/tools.tooltip.js"></script><script defer="defer" type="text/javascript" id="template-js" src="../../../../lib/template.js"></script>
+    </body>
+      </html>
