@@ -15,15 +15,16 @@
 
 package com.cloudera.sparkts
 
-import breeze.linalg._
-import breeze.numerics._
-import com.github.nscala_time.time.Imports
 import com.github.nscala_time.time.Imports._
+import breeze.linalg.{diff, DenseMatrix => BDM, DenseVector => BDV}
+import org.apache.spark.mllib.linalg.{DenseMatrix, Vector}
 
-import scala.collection.immutable.{IndexedSeq, Iterable}
+import MatrixUtil._
 
-class TimeSeries(val index: DateTimeIndex, val data: DenseMatrix[Double],
+class TimeSeries(val index: DateTimeIndex, val data: DenseMatrix,
     val keys: Array[String]) extends Serializable {
+
+  private def dataToBreeze: BDM[Double] = data
 
   /**
    * IMPORTANT: currently this assumes that the DateTimeIndex is a UniformDateTimeIndex, not an
@@ -49,15 +50,16 @@ class TimeSeries(val index: DateTimeIndex, val data: DenseMatrix[Double],
    */
   def lags(maxLag: Int, includeOriginals: Boolean): TimeSeries = {
     val numCols = maxLag * keys.length + (if (includeOriginals) keys.length else 0)
-    val numRows = data.rows - maxLag
+    val numRows = data.numRows - maxLag
 
-    val laggedData = new DenseMatrix[Double](numRows, numCols)
-    (0 until data.cols).foreach { colIndex =>
+    val dataBreeze = dataToBreeze
+    val laggedDataBreeze = new BDM[Double](numRows, numCols)
+    (0 until data.numCols).foreach { colIndex =>
       val offset = maxLag + (if (includeOriginals) 1 else 0)
       val start = colIndex * offset
 
-      Lag.lagMatTrimBoth(data(::, colIndex), laggedData(::, start to (start + offset - 1)), maxLag,
-        includeOriginals)
+      Lag.lagMatTrimBoth(dataBreeze(::, colIndex), laggedDataBreeze(::, start to (start + offset - 1)),
+        maxLag, includeOriginals)
     }
 
     val newKeys = keys.indices.map { keyIndex =>
@@ -67,19 +69,19 @@ class TimeSeries(val index: DateTimeIndex, val data: DenseMatrix[Double],
       if (includeOriginals) Array(key) ++ lagKeys else lagKeys
     }.reduce((prev: Array[String], next: Array[String]) => prev ++ next)
 
-    val newDatetimeIndex = index.islice(maxLag, data.rows)
+    val newDatetimeIndex = index.islice(maxLag, dataBreeze.rows)
 
-    new TimeSeries(newDatetimeIndex, laggedData, newKeys)
+    new TimeSeries(newDatetimeIndex, laggedDataBreeze, newKeys)
   }
 
   def slice(range: Range): TimeSeries = {
-    new TimeSeries(index.islice(range), data(range, ::), keys)
+    new TimeSeries(index.islice(range), dataToBreeze(range, ::), keys)
   }
 
-  def union(vec: Vector[Double], key: String): TimeSeries = {
-    val mat = DenseMatrix.zeros[Double](data.rows, data.cols + 1)
-    (0 until data.cols).foreach(c => mat(::, c to c) := data(::, c to c))
-    mat(::, -1 to -1) := vec
+  def union(vec: Vector, key: String): TimeSeries = {
+    val mat = BDM.zeros[Double](data.rows, data.cols + 1)
+    (0 until data.cols).foreach(c => mat(::, c to c) := dataToBreeze(::, c to c))
+    mat(::, -1 to -1) := toBreeze(vec)
     new TimeSeries(index, mat, keys :+ key)
   }
 
@@ -88,7 +90,7 @@ class TimeSeries(val index: DateTimeIndex, val data: DenseMatrix[Double],
    * TimeSeries will be missing the first n date-times.
    */
   def differences(lag: Int): TimeSeries = {
-    mapSeries(index.islice(lag, index.size), vec => diff(vec.toDenseVector, lag))
+    mapSeries(index.islice(lag, index.size), vec => diff(toBreeze(vec).toDenseVector, lag))
   }
 
   /**
@@ -119,24 +121,24 @@ class TimeSeries(val index: DateTimeIndex, val data: DenseMatrix[Double],
     mapSeries(index.islice(1, index.size), vec => UnivariateTimeSeries.price2ret(vec, 1))
   }
 
-  def univariateSeriesIterator(): Iterator[Vector[Double]] = {
-    new Iterator[Vector[Double]] {
+  def univariateSeriesIterator(): Iterator[Vector] = {
+    new Iterator[Vector] {
       var i = 0
       def hasNext: Boolean = i < data.cols
-      def next(): Vector[Double] = {
+      def next(): Vector = {
         i += 1
-        data(::, i - 1)
+        dataToBreeze(::, i - 1)
       }
     }
   }
 
-  def univariateKeyAndSeriesIterator(): Iterator[(String, Vector[Double])] = {
-    new Iterator[(String, Vector[Double])] {
+  def univariateKeyAndSeriesIterator(): Iterator[(String, Vector)] = {
+    new Iterator[(String, Vector)] {
       var i = 0
       def hasNext: Boolean = i < data.cols
-      def next(): (String, Vector[Double]) = {
+      def next(): (String, Vector) = {
         i += 1
-        (keys(i - 1), data(::, i - 1))
+        (keys(i - 1), dataToBreeze(::, i - 1))
       }
     }
   }
@@ -144,7 +146,7 @@ class TimeSeries(val index: DateTimeIndex, val data: DenseMatrix[Double],
   /**
    * Applies a transformation to each series that preserves the time index.
    */
-  def mapSeries(f: (Vector[Double]) => Vector[Double]): TimeSeries = {
+  def mapSeries(f: (Vector) => Vector): TimeSeries = {
     mapSeries(index, f)
   }
 
@@ -152,10 +154,10 @@ class TimeSeries(val index: DateTimeIndex, val data: DenseMatrix[Double],
    * Applies a transformation to each series that preserves the time index. Passes the key along
    * with each series.
    */
-  def mapSeriesWithKey(f: (String, Vector[Double]) => Vector[Double]): TimeSeries = {
-    val newData = new DenseMatrix[Double](index.size, data.cols)
+  def mapSeriesWithKey(f: (String, Vector) => Vector): TimeSeries = {
+    val newData = new BDM[Double](index.size, data.cols)
     univariateKeyAndSeriesIterator().zipWithIndex.foreach { case ((key, series), i) =>
-      newData(::, i) := f(key, series)
+      newData(::, i) := toBreeze(f(key, series))
     }
     new TimeSeries(index, newData, keys)
   }
@@ -164,34 +166,34 @@ class TimeSeries(val index: DateTimeIndex, val data: DenseMatrix[Double],
    * Applies a transformation to each series such that the resulting series align with the given
    * time index.
    */
-  def mapSeries(newIndex: DateTimeIndex, f: (Vector[Double]) => Vector[Double]): TimeSeries = {
+  def mapSeries(newIndex: DateTimeIndex, f: (Vector) => Vector): TimeSeries = {
     val newSize = newIndex.size
-    val newData = new DenseMatrix[Double](newSize, data.cols)
+    val newData = new BDM[Double](newSize, data.cols)
     univariateSeriesIterator().zipWithIndex.foreach { case (vec, i) =>
-      newData(::, i) := f(vec)
+      newData(::, i) := toBreeze(f(vec))
     }
     new TimeSeries(newIndex, newData, keys)
   }
 
-  def mapValues[U](f: (Vector[Double]) => U): Seq[(String, U)] = {
+  def mapValues[U](f: (Vector) => U): Seq[(String, U)] = {
     univariateKeyAndSeriesIterator().map(ks => (ks._1, f(ks._2))).toSeq
   }
 
   /**
    * Gets the first univariate series and its key.
    */
-  def head(): (String, Vector[Double]) = univariateKeyAndSeriesIterator().next()
+  def head(): (String, Vector) = univariateKeyAndSeriesIterator().next()
 }
 
 object TimeSeries {
   def timeSeriesFromIrregularSamples(samples: Seq[(DateTime, Array[Double])], keys: Array[String])
     : TimeSeries = {
-    val mat = new DenseMatrix[Double](samples.length, samples.head._2.length)
+    val mat = new BDM[Double](samples.length, samples.head._2.length)
     val dts = new Array[Long](samples.length)
     for (i <- samples.indices) {
       val (dt, values) = samples(i)
       dts(i) = dt.getMillis
-      mat(i to i, ::) := new DenseVector[Double](values)
+      mat(i to i, ::) := new BDV[Double](values)
     }
     new TimeSeries(new IrregularDateTimeIndex(dts), mat, keys)
   }
@@ -204,10 +206,10 @@ object TimeSeries {
       samples: Seq[Array[Double]],
       index: UniformDateTimeIndex,
       keys: Array[String]): TimeSeries = {
-    val mat = new DenseMatrix[Double](samples.length, samples.head.length)
+    val mat = new BDM[Double](samples.length, samples.head.length)
 
     for (i <- samples.indices) {
-      mat(i to i, ::) := new DenseVector[Double](samples(i))
+      mat(i to i, ::) := new BDV[Double](samples(i))
     }
     new TimeSeries(index, mat, keys)
   }
