@@ -24,8 +24,11 @@ import org.apache.spark.rdd.RDD
 import org.joda.time.{DateTimeZone, DateTime}
 
 object YahooParser {
-  def yahooStringToTimeSeries(text: String, keyPrefix: String = "",
-                              zone: DateTimeZone = DateTimeZone.getDefault): TimeSeries = {
+  def yahooStringToTimeSeries(
+    text: String,
+    keyPrefix: String = "",
+    zone: DateTimeZone = DateTimeZone.getDefault)
+    : TimeSeries = {
     val lines = text.split('\n')
     val labels = lines(0).split(',').tail.map(keyPrefix + _)
     val samples = lines.tail.map { line =>
@@ -36,8 +39,11 @@ object YahooParser {
     timeSeriesFromIrregularSamples(samples, labels, zone)
   }
 
-  def yahooFiles(dir: String, sc: SparkContext,
-                 zone: DateTimeZone = DateTimeZone.getDefault): RDD[TimeSeries] = {
+  def yahooFiles(
+    dir: String,
+    sc: SparkContext,
+    zone: DateTimeZone = DateTimeZone.getDefault)
+    : RDD[TimeSeries] = {
     sc.wholeTextFiles(dir).map { case (path, text) =>
       YahooParser.yahooStringToTimeSeries(text, path.split('/').last, zone)
     }

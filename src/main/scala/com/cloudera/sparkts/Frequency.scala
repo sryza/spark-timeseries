@@ -66,8 +66,9 @@ class HourFrequency(val hours: Int) extends PeriodFrequency(hours.hours) {
   override def toString: String = s"hours $hours"
 }
 
-class BusinessDayFrequency(val days: Int,
-                           val firstDayOfWeek: Int = DateTimeConstants.MONDAY)
+class BusinessDayFrequency(
+  val days: Int,
+  val firstDayOfWeek: Int = DateTimeConstants.MONDAY)
   extends Frequency {
   /**
    * Advances the given DateTime by (n * days) business days.

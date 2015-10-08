@@ -180,8 +180,10 @@ class TimeSeries(val index: DateTimeIndex, val data: DenseMatrix[Double],
 }
 
 object TimeSeries {
-  def timeSeriesFromIrregularSamples(samples: Seq[(DateTime, Array[Double])], keys: Array[String],
-                                      zone: DateTimeZone = DateTimeZone.getDefault())
+  def timeSeriesFromIrregularSamples(
+      samples: Seq[(DateTime, Array[Double])],
+      keys: Array[String],
+      zone: DateTimeZone = DateTimeZone.getDefault())
     : TimeSeries = {
     val mat = new DenseMatrix[Double](samples.length, samples.head._2.length)
     val dts = new Array[Long](samples.length)
@@ -200,7 +202,8 @@ object TimeSeries {
   def timeSeriesFromUniformSamples(
       samples: Seq[Array[Double]],
       index: UniformDateTimeIndex,
-      keys: Array[String]): TimeSeries = {
+      keys: Array[String])
+    : TimeSeries = {
     val mat = new DenseMatrix[Double](samples.length, samples.head.length)
 
     for (i <- samples.indices) {
