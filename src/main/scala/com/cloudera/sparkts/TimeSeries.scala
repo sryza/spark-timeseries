@@ -194,8 +194,7 @@ object TimeSeries {
   implicit def laggedStringKey(key: String, lagOrder: Int): String = s"lag${lagOrder.toString}($key)"
 
   def timeSeriesFromIrregularSamples[K](samples: Seq[(DateTime, Array[Double])], keys: Array[K])
-                                       (implicit kClassTag: ClassTag[K])
-    : TimeSeries[K] = {
+     (implicit kClassTag: ClassTag[K]): TimeSeries[K] = {
     val mat = new BDM[Double](samples.length, samples.head._2.length)
     val dts = new Array[Long](samples.length)
     for (i <- samples.indices) {
@@ -214,8 +213,7 @@ object TimeSeries {
       samples: Seq[Array[Double]],
       index: UniformDateTimeIndex,
       keys: Array[K])
-     (implicit kClassTag: ClassTag[K])
-  : TimeSeries[K] = {
+     (implicit kClassTag: ClassTag[K]): TimeSeries[K] = {
     val mat = new BDM[Double](samples.length, samples.head.length)
 
     for (i <- samples.indices) {
