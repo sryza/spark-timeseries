@@ -13,12 +13,10 @@
  * License.
  */
 
-package com.cloudera.sparkts
+package com.cloudera.sparkts.models
 
 import breeze.linalg._
-
 import org.apache.commons.math3.random.MersenneTwister
-
 import org.scalatest.FunSuite
 
 class GARCHSuite extends FunSuite {

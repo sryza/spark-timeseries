@@ -13,7 +13,7 @@
  * License.
  */
 
-package com.cloudera.finance
+package com.cloudera.sparkts.parsers
 
 import com.cloudera.sparkts.TimeSeries
 import com.cloudera.sparkts.TimeSeries._

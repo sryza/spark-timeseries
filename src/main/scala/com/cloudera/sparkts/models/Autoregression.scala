@@ -13,12 +13,11 @@
  * License.
  */
 
-package com.cloudera.sparkts
+package com.cloudera.sparkts.models
 
 import breeze.linalg._
-
-import com.cloudera.finance.Util.matToRowArrs
-
+import com.cloudera.sparkts.Lag
+import com.cloudera.sparkts.MatrixUtil._
 import org.apache.commons.math3.random.RandomGenerator
 import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression
 

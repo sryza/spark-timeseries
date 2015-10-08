@@ -14,15 +14,12 @@
  * License.
  */
 
-package com.cloudera.sparkts
+package com.cloudera.sparkts.stats
 
 import breeze.linalg._
-
-import com.cloudera.sparkts.TimeSeriesStatisticalTests._
-
+import com.cloudera.sparkts.stats.TimeSeriesStatisticalTests._
 import org.apache.commons.math.stat.regression.OLSMultipleLinearRegression
 import org.apache.commons.math3.random.MersenneTwister
-
 import org.scalatest.{FunSuite, ShouldMatchers}
 
 class TimeSeriesStatisticalTestsSuite extends FunSuite with ShouldMatchers {

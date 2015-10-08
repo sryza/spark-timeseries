@@ -17,6 +17,7 @@ package com.cloudera.sparkts
 
 import breeze.linalg._
 import breeze.stats._
+import com.cloudera.sparkts.models.{ARModel, Autoregression}
 
 import org.apache.commons.math3.analysis.interpolation.SplineInterpolator
 

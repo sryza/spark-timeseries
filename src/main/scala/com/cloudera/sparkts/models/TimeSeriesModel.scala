@@ -13,7 +13,7 @@
  * License.
  */
 
-package com.cloudera.sparkts
+package com.cloudera.sparkts.models
 
 import breeze.linalg._
 
