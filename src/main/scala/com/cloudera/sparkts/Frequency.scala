@@ -15,12 +15,14 @@
 
 package com.cloudera.sparkts
 
+import com.cloudera.sparkts.DateTimeIndex._
+
 import com.github.nscala_time.time.Imports._
 
-import org.joda.time.{Days, Hours}
+import org.joda.time.{DateTimeConstants, Days, Hours}
 
-class BusinessDayRichInt(n: Int) {
-  def businessDays: BusinessDayFrequency = new BusinessDayFrequency(n)
+class BusinessDayRichInt(n: Int, firstDayOfWeek: Int = DateTimeConstants.MONDAY) {
+  def businessDays: BusinessDayFrequency = new BusinessDayFrequency(n, firstDayOfWeek)
 }
 
 /**
@@ -64,19 +66,23 @@ class HourFrequency(val hours: Int) extends PeriodFrequency(hours.hours) {
   override def toString: String = s"hours $hours"
 }
 
-class BusinessDayFrequency(val days: Int) extends Frequency {
+class BusinessDayFrequency(
+  val days: Int,
+  val firstDayOfWeek: Int = DateTimeConstants.MONDAY)
+  extends Frequency {
   /**
-   * Advances the given DateTime by n business days.
+   * Advances the given DateTime by (n * days) business days.
    */
   def advance(dt: DateTime, n: Int): DateTime = {
     val dayOfWeek = dt.getDayOfWeek
-    if (dayOfWeek > 5) {
+    val alignedDayOfWeek = rebaseDayOfWeek(dayOfWeek, firstDayOfWeek)
+    if (alignedDayOfWeek > 5) {
       throw new IllegalArgumentException(s"$dt is not a business day")
     }
     val totalDays = n * days
     val standardWeekendDays = (totalDays / 5) * 2
     val remaining = totalDays % 5
-    val extraWeekendDays = if (dayOfWeek + remaining > 5) 2 else 0
+    val extraWeekendDays = if (alignedDayOfWeek + remaining > 5) 2 else 0
     dt + (totalDays + standardWeekendDays + extraWeekendDays).days
   }
 
@@ -86,12 +92,13 @@ class BusinessDayFrequency(val days: Int) extends Frequency {
     }
     val daysBetween = Days.daysBetween(dt1, dt2).getDays
     val dayOfWeek1 = dt1.getDayOfWeek
-    if (dayOfWeek1 > 5) {
+    val alignedDayOfWeek1 = rebaseDayOfWeek(dayOfWeek1, firstDayOfWeek)
+    if (alignedDayOfWeek1 > 5) {
       throw new IllegalArgumentException(s"$dt1 is not a business day")
     }
     val standardWeekendDays = (daysBetween / 7) * 2
     val remaining  = daysBetween % 7
-    val extraWeekendDays = if (dayOfWeek1 + remaining > 5) 2 else 0
+    val extraWeekendDays = if (alignedDayOfWeek1 + remaining > 5) 2 else 0
     (daysBetween - standardWeekendDays - extraWeekendDays) / days
   }
 
@@ -102,5 +109,5 @@ class BusinessDayFrequency(val days: Int) extends Frequency {
     }
   }
 
-  override def toString: String = s"businessDays $days"
+  override def toString: String = s"businessDays $days firstDayOfWeek $firstDayOfWeek"
 }

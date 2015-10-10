@@ -16,11 +16,7 @@
 package com.cloudera.sparkts
 
 import breeze.linalg._
-import breeze.numerics._
-import com.github.nscala_time.time.Imports
 import com.github.nscala_time.time.Imports._
-
-import scala.collection.immutable.{IndexedSeq, Iterable}
 
 class TimeSeries(val index: DateTimeIndex, val data: DenseMatrix[Double],
     val keys: Array[String]) extends Serializable {
@@ -184,7 +180,10 @@ class TimeSeries(val index: DateTimeIndex, val data: DenseMatrix[Double],
 }
 
 object TimeSeries {
-  def timeSeriesFromIrregularSamples(samples: Seq[(DateTime, Array[Double])], keys: Array[String])
+  def timeSeriesFromIrregularSamples(
+      samples: Seq[(DateTime, Array[Double])],
+      keys: Array[String],
+      zone: DateTimeZone = DateTimeZone.getDefault())
     : TimeSeries = {
     val mat = new DenseMatrix[Double](samples.length, samples.head._2.length)
     val dts = new Array[Long](samples.length)
@@ -193,7 +192,7 @@ object TimeSeries {
       dts(i) = dt.getMillis
       mat(i to i, ::) := new DenseVector[Double](values)
     }
-    new TimeSeries(new IrregularDateTimeIndex(dts), mat, keys)
+    new TimeSeries(new IrregularDateTimeIndex(dts, zone), mat, keys)
   }
 
   /**
@@ -203,7 +202,8 @@ object TimeSeries {
   def timeSeriesFromUniformSamples(
       samples: Seq[Array[Double]],
       index: UniformDateTimeIndex,
-      keys: Array[String]): TimeSeries = {
+      keys: Array[String])
+    : TimeSeries = {
     val mat = new DenseMatrix[Double](samples.length, samples.head.length)
 
     for (i <- samples.indices) {
