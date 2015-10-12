@@ -23,8 +23,7 @@ import scala.reflect.ClassTag
  * within the RDD has a String key to identify it.
  *
  */
-class JavaTimeSeriesRDD[K](tsrdd: TimeSeriesRDD[K])
-                          (implicit override val kClassTag: ClassTag[K])
+class JavaTimeSeriesRDD[K](tsrdd: TimeSeriesRDD[K])(implicit override val kClassTag: ClassTag[K])
   extends JavaPairRDD[K, Vector](tsrdd) {
 
   def index = tsrdd.index

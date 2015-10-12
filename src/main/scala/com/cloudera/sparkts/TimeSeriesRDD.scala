@@ -52,7 +52,7 @@ import scala.reflect.ClassTag
  * @param index The DateTimeIndex shared by all the time series.
  */
 class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector)])
-                      (implicit val kClassTag: ClassTag[K])
+    (implicit val kClassTag: ClassTag[K])
   extends RDD[(K, Vector)](parent) {
 
   lazy val keys = parent.map(_._1).collect()
