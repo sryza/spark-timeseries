@@ -51,9 +51,7 @@ class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix,
    *   8 pm   5 	4 	      3         10	9 	      8
    *
    */
-  def lags(maxLag: Int, includeOriginals: Boolean)
-          (implicit laggedKey: (K, Int) => K)
-  : TimeSeries[K] = {
+  def lags(maxLag: Int, includeOriginals: Boolean)(implicit laggedKey: (K, Int) => K): TimeSeries[K] = {
     val numCols = maxLag * keys.length + (if (includeOriginals) keys.length else 0)
     val numRows = data.numRows - maxLag
 
@@ -193,8 +191,12 @@ class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix,
 object TimeSeries {
   implicit def laggedStringKey(key: String, lagOrder: Int): String = s"lag${lagOrder.toString}($key)"
 
-  def timeSeriesFromIrregularSamples[K](samples: Seq[(DateTime, Array[Double])], keys: Array[K])
-     (implicit kClassTag: ClassTag[K]): TimeSeries[K] = {
+  def timeSeriesFromIrregularSamples[K](
+      samples: Seq[(DateTime, Array[Double])],
+      keys: Array[K],
+      zone: DateTimeZone = DateTimeZone.getDefault())
+      (implicit kClassTag: ClassTag[K])
+    : TimeSeries[K] = {
     val mat = new BDM[Double](samples.length, samples.head._2.length)
     val dts = new Array[Long](samples.length)
     for (i <- samples.indices) {
@@ -202,7 +204,7 @@ object TimeSeries {
       dts(i) = dt.getMillis
       mat(i to i, ::) := new BDV[Double](values)
     }
-    new TimeSeries[K](new IrregularDateTimeIndex(dts), mat, keys)
+    new TimeSeries[K](new IrregularDateTimeIndex(dts, zone), mat, keys)
   }
 
   /**

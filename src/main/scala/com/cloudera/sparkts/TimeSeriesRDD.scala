@@ -26,7 +26,6 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 
 import org.apache.spark._
-import org.apache.spark.SparkContext._
 import org.apache.spark.mllib.linalg.distributed.{IndexedRow, IndexedRowMatrix, RowMatrix}
 import org.apache.spark.mllib.linalg.{Vectors, DenseVector, DenseMatrix, Vector}
 import breeze.linalg.{diff, DenseMatrix => BDM, Vector => BV, DenseVector => BDV}
@@ -36,7 +35,6 @@ import org.apache.spark.sql.types._
 import org.apache.spark.util.StatCounter
 
 import org.joda.time.DateTime
-import org.joda.time.DateTimeZone.UTC
 
 import MatrixUtil._
 
@@ -149,7 +147,7 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector)])
 
     val activeIndices = nans.zipWithIndex.filter(!_._1).map(_._2)
     val newDates = activeIndices.map(index.dateTimeAtLoc)
-    val newIndex = DateTimeIndex.irregular(newDates)
+    val newIndex = DateTimeIndex.irregular(newDates, index.zone)
     mapSeries(series => {
       new DenseVector(activeIndices.map(x => series(x)))
     }, newIndex)
@@ -463,7 +461,7 @@ object TimeSeriesRDD {
   def timeSeriesRDD[K](
       targetIndex: UniformDateTimeIndex,
       seriesRDD: RDD[(K, UniformDateTimeIndex, Vector)])
-                      (implicit kClassTag: ClassTag[K]): TimeSeriesRDD[K] = {
+      (implicit kClassTag: ClassTag[K]): TimeSeriesRDD[K] = {
     val rdd = seriesRDD.map { case (key, index, vec) =>
       val newVec: Vector = TimeSeriesUtils.rebase(index, targetIndex, vec, Double.NaN)
       (key, newVec)
@@ -478,7 +476,7 @@ object TimeSeriesRDD {
    * @param seriesRDD RDD of time series, each with their own DateTimeIndex.
    */
   def timeSeriesRDD[K](targetIndex: DateTimeIndex, seriesRDD: RDD[TimeSeries[K]])
-                      (implicit kClassTag: ClassTag[K]): TimeSeriesRDD[K] = {
+    (implicit kClassTag: ClassTag[K]): TimeSeriesRDD[K] = {
     val rdd = seriesRDD.flatMap { series =>
       series.univariateKeyAndSeriesIterator().map { case (key, vec) =>
         val newVec: Vector = TimeSeriesUtils.rebase(series.index, targetIndex, vec, Double.NaN)
@@ -530,14 +528,14 @@ object TimeSeriesRDD {
           val series = new Array[Double](targetIndex.size)
           Arrays.fill(series, Double.NaN)
           val first = bufferedIter.next()
-          val firstLoc = targetIndex.locAtDateTime(new DateTime(first._1._2, UTC))
+          val firstLoc = targetIndex.locAtDateTime(new DateTime(first._1._2, targetIndex.zone))
           if (firstLoc >= 0) {
             series(firstLoc) = first._2
           }
           val key = first._1._1
           while (bufferedIter.hasNext && bufferedIter.head._1._1 == key) {
             val sample = bufferedIter.next()
-            val sampleLoc = targetIndex.locAtDateTime(new DateTime(sample._1._2, UTC))
+            val sampleLoc = targetIndex.locAtDateTime(new DateTime(sample._1._2, targetIndex.zone))
             if (sampleLoc >= 0) {
               series(sampleLoc) = sample._2
             }
