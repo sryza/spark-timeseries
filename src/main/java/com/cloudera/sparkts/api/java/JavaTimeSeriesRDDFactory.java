@@ -26,7 +26,7 @@ public final class JavaTimeSeriesRDDFactory {
         return JAVA_TIME_SERIES_RDD.javaTimeSeriesRDD(
                 index,
                 seriesRDD,
-                ClassTag$.MODULE$.apply(keyClass));
+                ClassTag$.MODULE$.<K>apply(keyClass));
     }
 
     /**
@@ -43,7 +43,7 @@ public final class JavaTimeSeriesRDDFactory {
         return JAVA_TIME_SERIES_RDD.javaTimeSeriesRDD(
                 targetIndex,
                 seriesRDD,
-                ClassTag$.MODULE$.apply(keyClass));
+                ClassTag$.MODULE$.<K>apply(keyClass));
     }
 
     /**
@@ -60,7 +60,7 @@ public final class JavaTimeSeriesRDDFactory {
         return JAVA_TIME_SERIES_RDD.javaTimeSeriesRDD(
                 targetIndex,
                 seriesRDD,
-                ClassTag$.MODULE$.apply(keyClass));
+                ClassTag$.MODULE$.<K>apply(keyClass));
     }
 
     /**
