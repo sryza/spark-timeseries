@@ -5,6 +5,7 @@ import com.cloudera.sparkts.DateTimeIndex;
 import com.cloudera.sparkts.DayFrequency;
 import com.github.nscala_time.time.RichReadableInstant;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeConstants;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
 import scala.runtime.RichInt;
@@ -15,7 +16,7 @@ public class DateTimeIndexFactorySuite {
     @Test
     public void testToFromString() {
         DateTimeIndex uniformIndex = DateTimeIndexFactory.uniform(new DateTime("1990-04-10"),
-                5, new BusinessDayFrequency(2));
+                5, new BusinessDayFrequency(2, DateTimeConstants.MONDAY));
         String uniformStr = uniformIndex.toString();
         assertEquals(DateTimeIndexFactory.fromString(uniformStr), uniformIndex);
 
@@ -27,7 +28,8 @@ public class DateTimeIndexFactorySuite {
 
     @Test
     public void testUniform() {
-        DateTimeIndex index = DateTimeIndexFactory.uniform(new DateTime("2015-04-10", DateTimeZone.UTC), 5, new DayFrequency(2));
+        DateTimeIndex index = DateTimeIndexFactory.uniform(
+                new DateTime("2015-04-10", DateTimeZone.UTC), 5, new DayFrequency(2));
         assertEquals(index.size(), 5);
         assertEquals(index.first(), new DateTime("2015-04-10", DateTimeZone.UTC));
         assertEquals(index.last(), new DateTime("2015-04-18", DateTimeZone.UTC));

@@ -2,6 +2,7 @@ package com.cloudera.sparkts.api.java
 
 import com.cloudera.sparkts.MatrixUtil._
 import com.cloudera.sparkts.{UniformDateTimeIndex, DateTimeIndex, TimeSeries}
+import com.github.nscala_time.time.Imports._
 import org.apache.spark.mllib.linalg.{Vector, DenseMatrix}
 import org.apache.spark.api.java.function.{Function => JFunction, Function2 => JFunction2}
 import org.joda.time.DateTime
@@ -9,22 +10,19 @@ import org.joda.time.DateTime
 import scala.collection.JavaConversions
 import scala.reflect.ClassTag
 
-class JavaTimeSeries[K](val ts: TimeSeries[K])
-                       (implicit val kClassTag: ClassTag[K])
+class JavaTimeSeries[K](val ts: TimeSeries[K])(implicit val kClassTag: ClassTag[K])
   extends Serializable {
 
-  def this(index: DateTimeIndex, data: DenseMatrix, keys: Array[K])
-          (implicit kClassTag: ClassTag[K]) {
+  def this(index: DateTimeIndex, data: DenseMatrix, keys: Array[K])(implicit kClassTag: ClassTag[K]) {
     this(new TimeSeries[K](index, data, keys))
   }
 
-  def this(index: DateTimeIndex, data: DenseMatrix, keys: List[K])
-          (implicit kClassTag: ClassTag[K]) {
+  def this(index: DateTimeIndex, data: DenseMatrix, keys: List[K])(implicit kClassTag: ClassTag[K]) {
     this(new TimeSeries[K](index, data, keys.toArray))
   }
 
   def this(index: DateTimeIndex, data: DenseMatrix, keys: java.util.List[K])
-          (implicit kClassTag: ClassTag[K]) {
+    (implicit kClassTag: ClassTag[K]) {
     this(index, data, JavaConversions.asScalaBuffer(keys).toArray)
   }
 
@@ -59,7 +57,7 @@ class JavaTimeSeries[K](val ts: TimeSeries[K])
    *
    */
   def lags(maxLag: Int, includeOriginals: Boolean, laggedKey: JFunction2[K, java.lang.Integer, K])
-  : JavaTimeSeries[K] = {
+    : JavaTimeSeries[K] = {
     new JavaTimeSeries[K](ts.lags(maxLag, includeOriginals)
       ((k: K, i: Int) => laggedKey.call(k, new java.lang.Integer(i))))
   }
@@ -136,18 +134,23 @@ class JavaTimeSeries[K](val ts: TimeSeries[K])
 }
 
 object JavaTimeSeries {
-  def javaTimeSeriesFromIrregularSamples[K](samples: Seq[(DateTime, Array[Double])], keys: Array[K])
-    (implicit kClassTag: ClassTag[K]): JavaTimeSeries[K] =
-    new JavaTimeSeries[K](TimeSeries.timeSeriesFromIrregularSamples[K](samples, keys))
+  def javaTimeSeriesFromIrregularSamples[K](
+      samples: Seq[(DateTime, Array[Double])],
+      keys: Array[K],
+      zone: DateTimeZone = DateTimeZone.getDefault())
+      (implicit kClassTag: ClassTag[K])
+    : JavaTimeSeries[K] =
+    new JavaTimeSeries[K](TimeSeries.timeSeriesFromIrregularSamples[K](samples, keys, zone))
 
   /**
    * This function should only be called when you can safely make the assumption that the time
    * samples are uniform (monotonously increasing) across time.
    */
   def javaTimeSeriesFromUniformSamples[K](
-     samples: Seq[Array[Double]],
-     index: UniformDateTimeIndex,
-     keys: Array[K])
-   (implicit kClassTag: ClassTag[K]): JavaTimeSeries[K] =
+      samples: Seq[Array[Double]],
+      index: UniformDateTimeIndex,
+      keys: Array[K])
+      (implicit kClassTag: ClassTag[K])
+    : JavaTimeSeries[K] =
     new JavaTimeSeries[K](TimeSeries.timeSeriesFromUniformSamples[K](samples, index, keys))
 }

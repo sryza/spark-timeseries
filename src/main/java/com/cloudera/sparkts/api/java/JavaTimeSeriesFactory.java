@@ -2,6 +2,7 @@ package com.cloudera.sparkts.api.java;
 
 import com.cloudera.sparkts.UniformDateTimeIndex;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import scala.Tuple2;
 import scala.collection.JavaConversions;
 import scala.reflect.ClassTag$;
@@ -16,11 +17,13 @@ public final class JavaTimeSeriesFactory {
     public static <K> JavaTimeSeries<K> timeSeriesFromIrregularSamples(
             List<Tuple2<DateTime, double[]>> samples,
             K[] keys,
+            DateTimeZone zone,
             Class<K> keyClass) {
         return JAVA_TIME_SERIES.javaTimeSeriesFromIrregularSamples(
                 JavaConversions.asScalaBuffer(samples),
                 keys,
-                ClassTag$.MODULE$.apply(keyClass));
+                zone != null ? zone : DateTimeZone.getDefault(),
+                ClassTag$.MODULE$.<K>apply(keyClass));
     }
 
     /**
@@ -36,6 +39,6 @@ public final class JavaTimeSeriesFactory {
                 JavaConversions.asScalaBuffer(samples),
                 index,
                 keys,
-                ClassTag$.MODULE$.apply(keyClass));
+                ClassTag$.MODULE$.<K>apply(keyClass));
     }
 }

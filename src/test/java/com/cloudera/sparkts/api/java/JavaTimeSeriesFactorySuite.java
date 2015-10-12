@@ -2,6 +2,7 @@ package com.cloudera.sparkts.api.java;
 
 import com.cloudera.sparkts.*;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.junit.Test;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -23,14 +24,15 @@ public class JavaTimeSeriesFactorySuite {
 
         String[] labels = new String[]{"a", "b", "c", "d"};
         JavaTimeSeries<String> ts = JavaTimeSeriesFactory.timeSeriesFromIrregularSamples(
-                samples, labels, String.class);
+                samples, labels, null, String.class);
         assertArrayEquals(new double[]{1d, 2d, 3d, 4d, 5d, 6d, 7d, 8d, 9d, 10d, 11d, 12d},
                 ts.dataAsArray(), 0);
     }
 
     @Test
     public void testLagsIncludingOriginals() {
-        UniformDateTimeIndex originalIndex = new UniformDateTimeIndex(0, 5, new DayFrequency(1));
+        UniformDateTimeIndex originalIndex = new UniformDateTimeIndex(0, 5, new DayFrequency(1),
+                DateTimeZone.getDefault());
 
         List<double[]> samples = new ArrayList<>();
         samples.add(new double[] { 1.0, 6.0 });
@@ -57,7 +59,8 @@ public class JavaTimeSeriesFactorySuite {
 
     @Test
     public void testLagsExcludingOriginals() {
-        UniformDateTimeIndex originalIndex = new UniformDateTimeIndex(0, 5, new DayFrequency(1));
+        UniformDateTimeIndex originalIndex = new UniformDateTimeIndex(0, 5, new DayFrequency(1),
+                DateTimeZone.getDefault());
 
         List<double[]> samples = new ArrayList<>();
         samples.add(new double[] { 1.0, 6.0 });
