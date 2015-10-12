@@ -151,7 +151,7 @@ private[sparkts] object MatrixUtil {
         new DenseVector[Double](v.values)
       case v: SSV =>
         new SparseVector[Double](v.indices, v.values, v.size)
-      case v: SV =>
+      case v =>
         sys.error("Unsupported Spark vector type: " + v.getClass.getName)
     }
   }
