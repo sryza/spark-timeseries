@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
-public class JavaTimeSeriesRDDFactorySuite {
+public class JavaTimeSeriesRDDFactoryTest {
     private double[] until(int a, int b) {
         return JavaConversions.asJavaCollection(new RichInt(a).until(b))
                 .stream().mapToDouble(o -> new Double((int) o))

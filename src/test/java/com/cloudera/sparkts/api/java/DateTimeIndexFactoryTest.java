@@ -12,7 +12,7 @@ import scala.runtime.RichInt;
 
 import static org.junit.Assert.assertEquals;
 
-public class DateTimeIndexFactorySuite {
+public class DateTimeIndexFactoryTest {
     @Test
     public void testToFromString() {
         DateTimeIndex uniformIndex = DateTimeIndexFactory.uniform(new DateTime("1990-04-10"),

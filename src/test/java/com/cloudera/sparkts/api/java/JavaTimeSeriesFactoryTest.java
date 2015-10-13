@@ -12,7 +12,7 @@ import scala.Tuple2;
 import java.util.ArrayList;
 import java.util.List;
 
-public class JavaTimeSeriesFactorySuite {
+public class JavaTimeSeriesFactoryTest {
     @Test
     public void testTimeSeriesFromIrregularSamples() {
         DateTime dt = new DateTime("2015-4-8");
