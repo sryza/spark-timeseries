@@ -141,7 +141,8 @@ private[sparkts] object TimeSeriesUtils {
       defaultValue: Double): Vector[Double] => Vector[Double] = {
     val startLoc = -targetIndex.locAtDateTime(sourceIndex.first)
     val startLocInSourceVec = math.max(0, startLoc)
-    val dtsRelevant = sourceIndex.instants.iterator.drop(startLocInSourceVec).map(new DateTime(_))
+    val dtsRelevant = sourceIndex.instants.iterator.drop(startLocInSourceVec)
+      .map(new DateTime(_, targetIndex.dateTimeZone))
 
     vec: Vector[Double] => {
       val vecRelevant = vec(startLocInSourceVec until vec.length).valuesIterator
