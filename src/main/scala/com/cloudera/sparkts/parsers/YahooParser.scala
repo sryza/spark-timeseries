@@ -28,7 +28,7 @@ object YahooParser {
     text: String,
     keyPrefix: String = "",
     zone: DateTimeZone = DateTimeZone.getDefault)
-    : TimeSeries = {
+    : TimeSeries[String] = {
     val lines = text.split('\n')
     val labels = lines(0).split(',').tail.map(keyPrefix + _)
     val samples = lines.tail.map { line =>
@@ -43,7 +43,7 @@ object YahooParser {
     dir: String,
     sc: SparkContext,
     zone: DateTimeZone = DateTimeZone.getDefault)
-    : RDD[TimeSeries] = {
+    : RDD[TimeSeries[String]] = {
     sc.wholeTextFiles(dir).map { case (path, text) =>
       YahooParser.yahooStringToTimeSeries(text, path.split('/').last, zone)
     }
