@@ -79,6 +79,52 @@ class TimeSeries(val index: DateTimeIndex, val data: DenseMatrix[Double],
     new TimeSeries(newDatetimeIndex, laggedData, newKeys)
   }
 
+  def lags(lagsPerCol: Map[String, (Boolean, Int)]): TimeSeries = {
+    val maxLag = lagsPerCol.map(pair => pair._2._2).max
+    val numCols = lagsPerCol.map(pair => pair._2._2 + (if (pair._2._1) 1 else 0)).sum
+    val numRows = data.rows - maxLag
+
+    val laggedData = new DenseMatrix[Double](numRows, numCols)
+
+    //val pairArray: Array[(String, (Boolean, Int))] = lagsPerCol.toArray
+
+    var curStart = 0
+    keys.indices.zip(keys).foreach(indexKeyPair => {
+      val colIndex = indexKeyPair._1
+      val curLag = lagsPerCol(indexKeyPair._2)._2
+      val curInclude = lagsPerCol(indexKeyPair._2)._1
+      val offset = curLag + (if (curInclude) 1 else 0)
+
+      Lag.lagMatTrimBoth(data(::, colIndex), laggedData(::, curStart to (curStart + offset - 1)),
+        curLag, maxLag, curInclude)
+
+      curStart += offset
+    })
+
+    val newKeys: Array[String] = keys.indices.map(keyIndex => {
+      val key = keys(keyIndex)
+
+      var lagKeys = Array[String]()
+      if (lagsPerCol.contains(key))
+      {
+        lagKeys = (1 to lagsPerCol(key)._2).map(lagOrder => "lag" + lagOrder.toString() + "(" + key + ")")
+          .toArray
+      }
+
+      if (lagsPerCol(key)._1)
+      {
+        Array(key) ++ lagKeys
+      } else {
+        lagKeys
+      }
+    }).reduce((prev: Array[String], next: Array[String]) => prev ++ next)
+
+    // This assumes the datetimeindex's 0 index represents the oldest data point
+    val newDatetimeIndex = index.islice(maxLag, data.rows)
+
+    new TimeSeries(newDatetimeIndex, laggedData, newKeys)
+  }
+
   def slice(range: Range): TimeSeries = {
     new TimeSeries(index.islice(range), data(range, ::), keys)
   }
@@ -148,12 +194,12 @@ class TimeSeries(val index: DateTimeIndex, val data: DenseMatrix[Double],
     }
   }
 
-  def toSamples() =
+  def toSamples(): IndexedSeq[(Imports.DateTime, Vector[Double])] =
   {
     (0 until data.rows).map(rowIndex => (index.dateTimeAtLoc(rowIndex), data(rowIndex, ::).inner.toVector))
   }
 
-  def toRowSequence() =
+  def toRowSequence(): IndexedSeq[(Int, Vector[Double])] =
   {
     (0 until data.rows).map(rowIndex => (rowIndex, data(rowIndex, ::).inner.toVector))
   }
@@ -225,6 +271,18 @@ object TimeSeries {
       val values = samples(i)
 
       mat(i to i, ::) := new DenseVector[Double](values)
+    }
+    new TimeSeries(index, mat, keys)
+  }
+
+  def timeSeriesFromVectors(vectors: Seq[Vector[Double]], index: DateTimeIndex, keys: Array[String])
+  : TimeSeries = {
+    val mat = new DenseMatrix[Double](index.size, vectors.length)
+
+    for (i <- vectors.indices) {
+      val series = vectors(i)
+
+      mat(::, i to i) := series
     }
     new TimeSeries(index, mat, keys)
   }

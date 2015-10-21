@@ -66,4 +66,20 @@ class TimeSeriesSuite extends FunSuite with ShouldMatchers {
     laggedTimeSeries.index.size should be (3)
     laggedTimeSeries.data should be (DenseMatrix((2.0, 1.0, 7.0, 6.0), (3.0, 2.0, 8.0, 7.0), (4.0, 3.0, 9.0, 8.0)))
   }
+
+  test("customLags") {
+    val originalIndex = new UniformDateTimeIndex(0, 5, new DayFrequency(1))
+
+    val data = DenseMatrix((1.0, 6.0), (2.0, 7.0), (3.0, 8.0), (4.0, 9.0), (5.0, 10.0))
+
+    val originalTimeSeries = new TimeSeries(originalIndex, data, Array("a", "b"))
+
+    val lagMap = Map[String, (Boolean, Int)](("a" -> (true, 0)), ("b" -> (false, 2)))
+    val laggedTimeSeries = originalTimeSeries.lags(lagMap.toMap)
+
+    laggedTimeSeries.keys should be (Array("a", "lag1(b)", "lag2(b)"))
+    laggedTimeSeries.index.size should be (3)
+    laggedTimeSeries.data should be (DenseMatrix((3.0, 7.0, 6.0), (4.0, 8.0, 7.0), (5.0, 9.0, 8.0)))
+  }
+
 }
