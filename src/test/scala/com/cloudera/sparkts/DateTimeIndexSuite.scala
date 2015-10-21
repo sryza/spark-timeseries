@@ -15,11 +15,14 @@
 
 package com.cloudera.sparkts
 
+import org.joda.time.DateTimeConstants
 import org.scalatest.{FunSuite, ShouldMatchers}
 
 import com.github.nscala_time.time.Imports._
 
 import com.cloudera.sparkts.DateTimeIndex._
+
+import org.joda.time.DateTimeZone.UTC
 
 class DateTimeIndexSuite extends FunSuite with ShouldMatchers {
 
@@ -34,20 +37,35 @@ class DateTimeIndexSuite extends FunSuite with ShouldMatchers {
     fromString(irregularStr) should be (irregularIndex)
   }
 
+  test("to / from string with time zone") {
+    val zone = DateTimeZone.forOffsetHours(4)
+    val uniformIndex = uniform(new DateTime("1990-04-10", zone), 5, 2.businessDays)
+    val uniformStr = uniformIndex.toString
+    fromString(uniformStr) should be (uniformIndex)
+
+    val irregularIndex = irregular(
+      Array(new DateTime("1990-04-10T01:00:00.000", zone),
+        new DateTime("1990-04-12T01:00:00.000", zone),
+        new DateTime("1990-04-13T01:00:00.000", zone)),
+      zone)
+    val irregularStr = irregularIndex.toString
+    fromString(irregularStr) should be (irregularIndex)
+  }
+
   test("uniform") {
-    val index: DateTimeIndex = uniform(new DateTime("2015-04-10"), 5, 2.days)
+    val index: DateTimeIndex = uniform(new DateTime("2015-04-10", UTC), 5, 2.days)
     index.size should be (5)
-    index.first should be (new DateTime("2015-04-10"))
-    index.last should be (new DateTime("2015-04-18"))
+    index.first should be (new DateTime("2015-04-10", UTC))
+    index.last should be (new DateTime("2015-04-18", UTC))
 
     def verifySlice(index: DateTimeIndex) = {
       index.size should be (2)
-      index.first should be (new DateTime("2015-04-14"))
-      index.last should be (new DateTime("2015-04-16"))
+      index.first should be (new DateTime("2015-04-14", UTC))
+      index.last should be (new DateTime("2015-04-16", UTC))
     }
 
-    verifySlice(index.slice(new DateTime("2015-04-14"), new DateTime("2015-04-16")))
-    verifySlice(index.slice(new DateTime("2015-04-14") to new DateTime("2015-04-16")))
+    verifySlice(index.slice(new DateTime("2015-04-14", UTC), new DateTime("2015-04-16", UTC)))
+    verifySlice(index.slice(new DateTime("2015-04-14", UTC) to new DateTime("2015-04-16", UTC)))
     verifySlice(index.islice(2, 4))
     verifySlice(index.islice(2 until 4))
     verifySlice(index.islice(2 to 3))
@@ -55,23 +73,44 @@ class DateTimeIndexSuite extends FunSuite with ShouldMatchers {
 
   test("irregular") {
     val index = irregular(Array(
-      "2015-04-14", "2015-04-15", "2015-04-17", "2015-04-22", "2015-04-25").map(new DateTime(_)))
+      "2015-04-14", "2015-04-15", "2015-04-17", "2015-04-22", "2015-04-25"
+    ).map(new DateTime(_, UTC)))
     index.size should be (5)
-    index.first should be (new DateTime("2015-04-14"))
-    index.last should be (new DateTime("2015-04-25"))
+    index.first should be (new DateTime("2015-04-14", UTC))
+    index.last should be (new DateTime("2015-04-25", UTC))
 
     def verifySlice(index: DateTimeIndex) = {
       index.size should be (3)
-      index.first should be (new DateTime("2015-04-15"))
-      index.last should be (new DateTime("2015-04-22"))
+      index.first should be (new DateTime("2015-04-15", UTC))
+      index.last should be (new DateTime("2015-04-22", UTC))
     }
 
-    verifySlice(index.slice(new DateTime("2015-04-15"), new DateTime("2015-04-22")))
-    verifySlice(index.slice(new DateTime("2015-04-15") to new DateTime("2015-04-22")))
+    verifySlice(index.slice(new DateTime("2015-04-15", UTC), new DateTime("2015-04-22", UTC)))
+    verifySlice(index.slice(new DateTime("2015-04-15", UTC) to new DateTime("2015-04-22", UTC)))
     verifySlice(index.islice(1, 4))
     verifySlice(index.islice(1 until 4))
     verifySlice(index.islice(1 to 3))
 
     // TODO: test bounds that aren't members of the index
+  }
+
+  test("rebased day of week") {
+    val firstDayOfWeekSunday = DateTimeConstants.SUNDAY
+    rebaseDayOfWeek(DateTimeConstants.SUNDAY, firstDayOfWeekSunday) should be (1)
+    rebaseDayOfWeek(DateTimeConstants.MONDAY, firstDayOfWeekSunday) should be (2)
+    rebaseDayOfWeek(DateTimeConstants.TUESDAY, firstDayOfWeekSunday) should be (3)
+    rebaseDayOfWeek(DateTimeConstants.WEDNESDAY, firstDayOfWeekSunday) should be (4)
+    rebaseDayOfWeek(DateTimeConstants.THURSDAY, firstDayOfWeekSunday) should be (5)
+    rebaseDayOfWeek(DateTimeConstants.FRIDAY, firstDayOfWeekSunday) should be (6)
+    rebaseDayOfWeek(DateTimeConstants.SATURDAY, firstDayOfWeekSunday) should be (7)
+
+    val firstDayOfWeekMonday = DateTimeConstants.MONDAY
+    rebaseDayOfWeek(DateTimeConstants.SUNDAY, firstDayOfWeekMonday) should be (7)
+    rebaseDayOfWeek(DateTimeConstants.MONDAY, firstDayOfWeekMonday) should be (1)
+    rebaseDayOfWeek(DateTimeConstants.TUESDAY, firstDayOfWeekMonday) should be (2)
+    rebaseDayOfWeek(DateTimeConstants.WEDNESDAY, firstDayOfWeekMonday) should be (3)
+    rebaseDayOfWeek(DateTimeConstants.THURSDAY, firstDayOfWeekMonday) should be (4)
+    rebaseDayOfWeek(DateTimeConstants.FRIDAY, firstDayOfWeekMonday) should be (5)
+    rebaseDayOfWeek(DateTimeConstants.SATURDAY, firstDayOfWeekMonday) should be (6)
   }
 }

@@ -15,6 +15,8 @@
 
 package com.cloudera.sparkts
 
+import com.cloudera.sparkts.models.ARModel
+
 import scala.Double.NaN
 
 import breeze.linalg._

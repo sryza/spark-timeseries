@@ -60,80 +60,147 @@ private[sparkts] object TimeSeriesUtils {
    *
    * The source index must have the same frequency as the target index.
    *
-   * Currently only uniform target indices are supported.
+   * Currently only irregular target indices are not supported with uniform source indices.
    */
   def rebase(
       sourceIndex: DateTimeIndex,
       targetIndex: DateTimeIndex,
       vec: Vector[Double],
       defaultValue: Double): Vector[Double] = {
+    rebaser(sourceIndex, targetIndex, defaultValue)(vec)
+  }
+
+  /**
+   * Returns a function that accepts a series of values indexed by the given source index and moves
+   * it to conform to a target index. The target index need not fit inside the source index -
+   * non-overlapping regions will be filled with NaNs or the given default value.
+   *
+   * The source index must have the same frequency as the target index.
+   *
+   * Currently only irregular target indices are not supported with uniform source indices.
+   */
+  def rebaser(
+      sourceIndex: DateTimeIndex,
+      targetIndex: DateTimeIndex,
+      defaultValue: Double): Vector[Double] => Vector[Double] = {
     targetIndex match {
       case targetDTI: UniformDateTimeIndex =>
         sourceIndex match {
           case sourceDTI: UniformDateTimeIndex =>
-            rebaseWithUniformSource(sourceDTI, targetDTI, vec, defaultValue)
+            rebaserWithUniformSource(sourceDTI, targetDTI, defaultValue)
           case sourceDTI: IrregularDateTimeIndex =>
-            rebaseWithIrregularSource(sourceDTI, targetDTI, vec, defaultValue)
+            rebaserWithIrregularSource(sourceDTI, targetDTI, defaultValue)
           case _ =>
             throw new scala.UnsupportedOperationException("Unrecognized source index type")
         }
-      case _ =>
-        throw new scala.UnsupportedOperationException("Only uniform target indices are supported")
+      case targetDTI: IrregularDateTimeIndex =>
+        sourceIndex match {
+          case sourceDTI: IrregularDateTimeIndex =>
+            rebaserIrregularSourceIrregularTarget(sourceDTI, targetDTI, defaultValue)
+          case _ =>
+            throw new scala.UnsupportedOperationException(
+              "Irregular targets only supported with irregular sources")
+        }
     }
   }
 
   /**
-   * Implementation for moveIndex when source index is uniform.
+   * Implementation for rebase when source index is uniform.
    */
-  private def rebaseWithUniformSource(
+  private def rebaserWithUniformSource(
       sourceIndex: UniformDateTimeIndex,
       targetIndex: UniformDateTimeIndex,
-      vec: Vector[Double],
-      defaultValue: Double): Vector[Double] = {
+      defaultValue: Double): Vector[Double] => Vector[Double] = {
     val startLoc = sourceIndex.frequency.difference(
       new DateTime(sourceIndex.first), targetIndex.first)
     val endLoc = sourceIndex.frequency.difference(
       new DateTime(sourceIndex.first), targetIndex.last) + 1
-    if (startLoc >= 0 && endLoc <= vec.length) {
-      vec(startLoc until endLoc)
-    } else {
-      val resultVec = DenseVector.fill(endLoc - startLoc) { defaultValue }
-      val safeStartLoc = math.max(startLoc, 0)
-      val safeEndLoc = math.min(endLoc, vec.length)
-      val resultStartLoc = if (startLoc < 0) -startLoc else 0
-      val resultEndLoc = resultStartLoc + (safeEndLoc - safeStartLoc)
-      resultVec(resultStartLoc until resultEndLoc) := vec(safeStartLoc until safeEndLoc)
-      resultVec
+
+    val safeStartLoc = math.max(startLoc, 0)
+    val resultStartLoc = if (startLoc < 0) -startLoc else 0
+
+    vec: Vector[Double] => {
+      if (startLoc >= 0 && endLoc <= vec.length) {
+        vec(startLoc until endLoc)
+      } else {
+        val resultVec = DenseVector.fill(endLoc - startLoc) { defaultValue }
+        val safeEndLoc = math.min(endLoc, vec.length)
+        val resultEndLoc = resultStartLoc + (safeEndLoc - safeStartLoc)
+        resultVec(resultStartLoc until resultEndLoc) := vec(safeStartLoc until safeEndLoc)
+        resultVec
+      }
     }
   }
 
   /**
-   * Implementation for moveIndex when source index is irregular.
+   * Implementation for rebase when source index is irregular.
    */
-  private def rebaseWithIrregularSource(
+  private def rebaserWithIrregularSource(
       sourceIndex: IrregularDateTimeIndex,
       targetIndex: UniformDateTimeIndex,
-      vec: Vector[Double],
-      defaultValue: Double): Vector[Double] = {
+      defaultValue: Double): Vector[Double] => Vector[Double] = {
     val startLoc = -targetIndex.locAtDateTime(sourceIndex.first)
     val startLocInSourceVec = math.max(0, startLoc)
-    val dtsRelevant = sourceIndex.instants.iterator.drop(startLocInSourceVec).map(new DateTime(_))
-    val vecRelevant = vec(startLocInSourceVec until vec.length).valuesIterator
-    val iter = iterateWithUniformFrequency(dtsRelevant.zip(vecRelevant), targetIndex.frequency,
-      defaultValue)
+    val dtsRelevant = sourceIndex.instants.iterator.drop(startLocInSourceVec)
+      .map(new DateTime(_, targetIndex.dateTimeZone))
 
-    val resultArr = new Array[Double](targetIndex.size)
-    for (i <- 0 until targetIndex.size) {
-      // Add leading or trailing NaNs if target index starts earlier than source index or ends
-      // after the source index
-      resultArr(i) = if (i < -startLoc || !iter.hasNext) {
-        defaultValue
-      } else {
-        assert(iter.hasNext)
-        iter.next()._2
+    vec: Vector[Double] => {
+      val vecRelevant = vec(startLocInSourceVec until vec.length).valuesIterator
+      val iter = iterateWithUniformFrequency(dtsRelevant.zip(vecRelevant), targetIndex.frequency,
+        defaultValue)
+
+      val resultArr = new Array[Double](targetIndex.size)
+      for (i <- 0 until targetIndex.size) {
+        // Add leading or trailing NaNs if target index starts earlier than source index or ends
+        // after the source index
+        resultArr(i) = if (i < -startLoc || !iter.hasNext) {
+          defaultValue
+        } else {
+          assert(iter.hasNext)
+          iter.next()._2
+        }
       }
+      new DenseVector(resultArr)
     }
-    new DenseVector(resultArr)
+  }
+
+  private def rebaserIrregularSourceIrregularTarget(
+      sourceIndex: IrregularDateTimeIndex,
+      targetIndex: IrregularDateTimeIndex,
+      defaultValue: Double): Vector[Double] => Vector[Double] = {
+    // indexMapping(i) = j means that resultArr(i) should be filled with the value from
+    // vec(j)
+    val indexMapping = new Array[Int](targetIndex.size)
+
+    val sourceStamps = sourceIndex.instants
+    val targetStamps = targetIndex.instants
+    var posInSource = 0
+    var i = 0
+    while (i < targetIndex.size) {
+      while (posInSource < sourceStamps.length && sourceStamps(posInSource) < targetStamps(i)) {
+        posInSource += 1
+      }
+      if (posInSource < sourceStamps.length && sourceStamps(posInSource) == targetStamps(i)) {
+        indexMapping(i) = posInSource
+      } else {
+        indexMapping(i) = -1
+      }
+      i += 1
+    }
+
+    vec: Vector[Double] => {
+      var i = 0
+      val resultArr = new Array[Double](targetIndex.size)
+      while (i < indexMapping.length) {
+        if (indexMapping(i) != -1) {
+          resultArr(i) = vec(indexMapping(i))
+        } else {
+          resultArr(i) = defaultValue
+        }
+        i += 1
+      }
+      new DenseVector(resultArr)
+    }
   }
 
   def samplesToTimeSeries(samples: Iterator[(DateTime, Double)], frequency: Frequency)

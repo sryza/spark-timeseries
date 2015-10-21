@@ -17,6 +17,7 @@ package com.cloudera.sparkts
 
 import breeze.linalg._
 import breeze.plot._
+import com.cloudera.sparkts.models.Autoregression
 
 import org.apache.commons.math3.distribution.NormalDistribution
 
