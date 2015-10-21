@@ -68,14 +68,28 @@ class TimeSeries(val index: DateTimeIndex, val data: DenseMatrix[Double],
     new TimeSeries(newDatetimeIndex, laggedData, newKeys)
   }
 
+  /**
+   * IMPORTANT: currently this assumes that the DateTimeIndex is a UniformDateTimeIndex, not an
+   * Irregular one. This means that this function won't work (yet) on TimeSeries built using
+   * timeSeriesFromIrregularSamples().
+   *
+   * Lags the specified individual time series of the TimeSeries instance by up to their matching lag amount.
+   * Each time series can be indicated to either retain the original value, or drop it.
+   *
+   * In other words, the lagsPerCol has the following structure:
+   *
+   *    ("variableName1" -> (keepOriginalValue, maxLag),
+   *     "variableName2" -> (keepOriginalValue, maxLag),
+   *     ...)
+   *     
+   * See description of the above lags function for an example of the lagging process.
+   */
   def lags(lagsPerCol: Map[String, (Boolean, Int)]): TimeSeries = {
     val maxLag = lagsPerCol.map(pair => pair._2._2).max
     val numCols = lagsPerCol.map(pair => pair._2._2 + (if (pair._2._1) 1 else 0)).sum
     val numRows = data.rows - maxLag
 
     val laggedData = new DenseMatrix[Double](numRows, numCols)
-
-    //val pairArray: Array[(String, (Boolean, Int))] = lagsPerCol.toArray
 
     var curStart = 0
     keys.indices.zip(keys).foreach(indexKeyPair => {
@@ -94,14 +108,12 @@ class TimeSeries(val index: DateTimeIndex, val data: DenseMatrix[Double],
       val key = keys(keyIndex)
 
       var lagKeys = Array[String]()
-      if (lagsPerCol.contains(key))
-      {
+      if (lagsPerCol.contains(key)) {
         lagKeys = (1 to lagsPerCol(key)._2).map(lagOrder => "lag" + lagOrder.toString() + "(" + key + ")")
           .toArray
       }
 
-      if (lagsPerCol(key)._1)
-      {
+      if (lagsPerCol(key)._1) {
         Array(key) ++ lagKeys
       } else {
         lagKeys
