@@ -3,9 +3,13 @@
 spark-timeseries
 =============
 
-A Scala / Java library for interacting with time series data on Apache Spark.
+A Scala / Python library for interacting with time series data on Apache Spark.
 
-Scaladoc is available at http://cloudera.github.io/spark-timeseries.
+Docs are available at http://cloudera.github.io/spark-timeseries.
+
+Scaladoc is available at http://cloudera.github.io/spark-timeseries/scaladocs/index.html.
+
+Python doc is available at http://cloudera.github.io/spark-timeseries/pydoc/py-modindex.html.
 
 The aim here is to provide
 * A set of abstractions for manipulating large time series data sets, similar to
@@ -42,7 +46,8 @@ Abstractions
 
 The central abstraction of the library is the `TimeSeriesRDD`, a lazy distributed collection of univariate series with a conformed time dimension. It is lazy in the sense that it is an RDD: it encapsulates all the information needed to generate its elements, but doesn't materialize them upon instantiation. It is distributed in the sense that different univariate series within the collection can be stored and processed on different nodes.  Within each univariate series, observations are not distributed. The time dimension is conformed in the sense that a single `DateTimeIndex` applies to all the univariate series. Each univariate series within the RDD has a key to identify it. 
 
-TimeSeriesRDDs then support efficient series-wise operations like slicing, imputing missing values based on surrounding elements, and training time-series models:
+TimeSeriesRDDs then support efficient series-wise operations like slicing, imputing missing values
+based on surrounding elements, and training time-series models.  In Scala:
 
     val tsRdd: TimeSeriesRDD = ...
     
@@ -55,6 +60,15 @@ TimeSeriesRDDs then support efficient series-wise operations like slicing, imput
     // Use an AR(1) model to remove serial correlations
     val residuals = filled.mapSeries(series => ar(series, 1).removeTimeDependentEffects(series))
 
+In Python:
+
+    tsrdd = ...
+    
+    # Find a sub-slice between two dates
+    subslice = tsrdd['2015-04-10':'2015-04-14']
+    
+    # Fill in missing values based on linear interpolation
+    filled = subslice.fill('linear')
 
 Functionality
 --------------------------
@@ -96,16 +110,35 @@ jars:
 To run a spark-shell with spark-timeseries and its dependencies on the classpath:
 
     spark-shell --jars target/sparktimeseries-0.0.1-jar-with-dependencies.jar
+    
+To run Python tests (requires [nose](https://nose.readthedocs.org/en/latest/)):
+
+    cd python
+    export SPARK_HOME=<location of local Spark installation>
+    nosetests
 
 To publish docs, easiest is to clone a separate version of this repo in some location we'll refer
 to as DOCS_REPO.  Then:
 
+    # Build main doc
+    mvn site -Ddependency.locations.enabled=false
+    
+    # Build scaladoc
     mvn scala:doc
-    cp -r target/site/scaladocs/* $DOCS_REPO
+    
+    # Build Python doc
+    cd python
+    export SPARK_HOME=<location of local Spark installation>
+    export PYTHONPATH=$PYTHONPATH::$SPARK_HOME/python:$SPARK_HOME/python/lib/*
+    make html
+    cd ..
+    
+    cp -r target/site/* $DOCS_REPO
+    cp -r python/build/html/ $DOCS_REPO/pydoc
     cd $DOCS_REPO
-    git checkout gh_pages
-    git add *
+    git checkout gh-pages
+    git add -A
     git commit -m "Some message that includes the hash of the relevant commit in master"
-    git push origin gh_pages
+    git push origin gh-pages
 
 

@@ -188,7 +188,7 @@ class TimeSeriesRDDSuite extends FunSuite with LocalSparkContext with ShouldMatc
     val seriesVecs = (0 until 20 by 4).map(
       x => new DenseVector((x until x + 4).map(_.toDouble).toArray))
     val labels = Array("a", "b", "c", "d", "e")
-    val start = new DateTime("2015-4-9")
+    val start = new DateTime("2015-4-9", DateTimeZone.UTC)
     val index = uniform(start, 4, 1.days)
     val rdd = sc.parallelize(labels.zip(seriesVecs.map(_.asInstanceOf[Vector[Double]])), 3)
     val tsRdd = new TimeSeriesRDD(index, rdd)

@@ -6,3 +6,10 @@ target
 *.iml
 .idea
 scalastyle-output.xml
+*.pyc
+*.swp
+python/build/
+python/dist/
+python/*.egg-info
+*.log
+

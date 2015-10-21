@@ -16,18 +16,15 @@
 package com.cloudera.sparkts
 
 import breeze.linalg._
-import breeze.numerics._
-import com.github.nscala_time.time.Imports
 import com.github.nscala_time.time.Imports._
-
-import scala.collection.immutable.{IndexedSeq, Iterable}
 
 class TimeSeries(val index: DateTimeIndex, val data: DenseMatrix[Double],
     val keys: Array[String]) extends Serializable {
 
   /**
-   * IMPORTANT: currently this assumes that the DateTimeIndex is a UniformDateTimeIndex, not an Irregular one.
-   * This means that this function won't work (yet) on TimeSeries built using timeSeriesFromIrregularSamples().
+   * IMPORTANT: currently this assumes that the DateTimeIndex is a UniformDateTimeIndex, not an
+   * Irregular one. This means that this function won't work (yet) on TimeSeries built using
+   * timeSeriesFromIrregularSamples().
    *
    * Lags all individual time series of the TimeSeries instance by up to maxLag amount.
    *
@@ -40,7 +37,7 @@ class TimeSeries(val index: DateTimeIndex, val data: DenseMatrix[Double],
    *   8 pm 	5 	10
    *
    * With maxLag 2 and includeOriginals = true, we would get:
-   *   time 	a 	lag_1(a) 	lag_2(a)  b 	lag_1(b)  lag_2(b)
+   *   time 	a 	lag1(a) 	lag2(a)  b 	lag1(b)  lag2(b)
    *   6 pm 	3 	2 	      1         8 	7 	      6
    *   7 pm 	4 	3 	      2         9 	8 	      7
    *   8 pm   5 	4 	      3         10	9 	      8
@@ -51,29 +48,21 @@ class TimeSeries(val index: DateTimeIndex, val data: DenseMatrix[Double],
     val numRows = data.rows - maxLag
 
     val laggedData = new DenseMatrix[Double](numRows, numCols)
-    (0 until data.cols).foreach(colIndex => {
+    (0 until data.cols).foreach { colIndex =>
       val offset = maxLag + (if (includeOriginals) 1 else 0)
       val start = colIndex * offset
 
       Lag.lagMatTrimBoth(data(::, colIndex), laggedData(::, start to (start + offset - 1)), maxLag,
         includeOriginals)
-    })
+    }
 
-    val newKeys: Array[String] = keys.indices.map(keyIndex => {
+    val newKeys = keys.indices.map { keyIndex =>
       val key = keys(keyIndex)
+      val lagKeys = (1 to maxLag).map(lagOrder => s"lag${lagOrder.toString}($key)").toArray
 
-      val lagKeys = (1 to maxLag).map(lagOrder => "lag" + lagOrder.toString() + "(" + key + ")")
-        .toArray
+      if (includeOriginals) Array(key) ++ lagKeys else lagKeys
+    }.reduce((prev: Array[String], next: Array[String]) => prev ++ next)
 
-      if (includeOriginals)
-      {
-        Array(key) ++ lagKeys
-      } else {
-        lagKeys
-      }
-    }).reduce((prev: Array[String], next: Array[String]) => prev ++ next)
-
-    // This assumes the datetimeindex's 0 index represents the oldest data point
     val newDatetimeIndex = index.islice(maxLag, data.rows)
 
     new TimeSeries(newDatetimeIndex, laggedData, newKeys)
@@ -148,16 +137,6 @@ class TimeSeries(val index: DateTimeIndex, val data: DenseMatrix[Double],
     }
   }
 
-  def toSamples() =
-  {
-    (0 until data.rows).map(rowIndex => (index.dateTimeAtLoc(rowIndex), data(rowIndex, ::).inner.toVector))
-  }
-
-  def toRowSequence() =
-  {
-    (0 until data.rows).map(rowIndex => (rowIndex, data(rowIndex, ::).inner.toVector))
-  }
-
   /**
    * Applies a transformation to each series that preserves the time index.
    */
@@ -201,7 +180,10 @@ class TimeSeries(val index: DateTimeIndex, val data: DenseMatrix[Double],
 }
 
 object TimeSeries {
-  def timeSeriesFromIrregularSamples(samples: Seq[(DateTime, Array[Double])], keys: Array[String])
+  def timeSeriesFromIrregularSamples(
+      samples: Seq[(DateTime, Array[Double])],
+      keys: Array[String],
+      zone: DateTimeZone = DateTimeZone.getDefault())
     : TimeSeries = {
     val mat = new DenseMatrix[Double](samples.length, samples.head._2.length)
     val dts = new Array[Long](samples.length)
@@ -210,21 +192,22 @@ object TimeSeries {
       dts(i) = dt.getMillis
       mat(i to i, ::) := new DenseVector[Double](values)
     }
-    new TimeSeries(new IrregularDateTimeIndex(dts), mat, keys)
+    new TimeSeries(new IrregularDateTimeIndex(dts, zone), mat, keys)
   }
 
   /**
-   * This function should only be called when you can safely make the assumption that the time samples are
-   * uniform (monotonously increasing) across time.
+   * This function should only be called when you can safely make the assumption that the time
+   * samples are uniform (monotonously increasing) across time.
    */
-  def timeSeriesFromUniformSamples(samples: Seq[Array[Double]], index: UniformDateTimeIndex, keys: Array[String])
-  : TimeSeries = {
+  def timeSeriesFromUniformSamples(
+      samples: Seq[Array[Double]],
+      index: UniformDateTimeIndex,
+      keys: Array[String])
+    : TimeSeries = {
     val mat = new DenseMatrix[Double](samples.length, samples.head.length)
 
     for (i <- samples.indices) {
-      val values = samples(i)
-
-      mat(i to i, ::) := new DenseVector[Double](values)
+      mat(i to i, ::) := new DenseVector[Double](samples(i))
     }
     new TimeSeries(index, mat, keys)
   }
