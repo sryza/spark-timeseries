@@ -46,7 +46,8 @@ class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix[Double],
    *   8 pm   5 	4 	      3         10	9 	      8
    *
    */
-  def lags(maxLag: Int, includeOriginals: Boolean)(implicit laggedKey: (K, Int) => K): TimeSeries[K] = {
+  def lags(maxLag: Int, includeOriginals: Boolean)(implicit laggedKey: (K, Int) => K)
+    : TimeSeries[K] = {
     val numCols = maxLag * keys.length + (if (includeOriginals) keys.length else 0)
     val numRows = data.rows - maxLag
 
@@ -183,7 +184,8 @@ class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix[Double],
 }
 
 object TimeSeries {
-  implicit def laggedStringKey(key: String, lagOrder: Int): String = s"lag${lagOrder.toString}($key)"
+  implicit def laggedStringKey(key: String, lagOrder: Int): String =
+    s"lag${lagOrder.toString}($key)"
 
   def timeSeriesFromIrregularSamples[K](
       samples: Seq[(DateTime, Array[Double])],

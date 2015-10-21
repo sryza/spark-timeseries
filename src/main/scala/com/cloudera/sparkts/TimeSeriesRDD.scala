@@ -567,7 +567,8 @@ object TimeSeriesRDD {
    * Creates a TimeSeriesRDD from rows in a binary format that Python can write to.
    * Not a public API. For use only by the Python API.
    */
-  def timeSeriesRDDFromPython(index: DateTimeIndex, pyRdd: RDD[Array[Byte]]): TimeSeriesRDD[String] = {
+  def timeSeriesRDDFromPython(index: DateTimeIndex, pyRdd: RDD[Array[Byte]])
+    : TimeSeriesRDD[String] = {
     new TimeSeriesRDD[String](index, pyRdd.map { arr =>
       val buf = ByteBuffer.wrap(arr)
       val numChars = buf.getInt()
