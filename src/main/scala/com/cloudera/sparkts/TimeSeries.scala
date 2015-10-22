@@ -61,7 +61,7 @@ class TimeSeries(val index: DateTimeIndex, val data: DenseMatrix[Double],
       val lagKeys = (1 to maxLag).map(lagOrder => s"lag${lagOrder.toString}($key)").toArray
 
       if (includeOriginals) Array(key) ++ lagKeys else lagKeys
-    }.reduce((prev: Array[String], next: Array[String]) => prev ++ next)
+    }.reduce(_ ++ _)
 
     val newDatetimeIndex = index.islice(maxLag, data.rows)
 
@@ -81,7 +81,7 @@ class TimeSeries(val index: DateTimeIndex, val data: DenseMatrix[Double],
    *    ("variableName1" -> (keepOriginalValue, maxLag),
    *     "variableName2" -> (keepOriginalValue, maxLag),
    *     ...)
-   *     
+   *
    * See description of the above lags function for an example of the lagging process.
    */
   def lags(lagsPerCol: Map[String, (Boolean, Int)]): TimeSeries = {
@@ -92,7 +92,7 @@ class TimeSeries(val index: DateTimeIndex, val data: DenseMatrix[Double],
     val laggedData = new DenseMatrix[Double](numRows, numCols)
 
     var curStart = 0
-    keys.indices.zip(keys).foreach(indexKeyPair => {
+    keys.indices.zip(keys).foreach { indexKeyPair =>
       val colIndex = indexKeyPair._1
       val curLag = lagsPerCol(indexKeyPair._2)._2
       val curInclude = lagsPerCol(indexKeyPair._2)._1
@@ -102,15 +102,15 @@ class TimeSeries(val index: DateTimeIndex, val data: DenseMatrix[Double],
         curLag, maxLag, curInclude)
 
       curStart += offset
-    })
+    }
 
     val newKeys: Array[String] = keys.indices.map(keyIndex => {
       val key = keys(keyIndex)
 
       var lagKeys = Array[String]()
       if (lagsPerCol.contains(key)) {
-        lagKeys = (1 to lagsPerCol(key)._2).map(lagOrder => "lag" + lagOrder.toString() + "(" + key + ")")
-          .toArray
+        lagKeys = (1 to lagsPerCol(key)._2).map(lagOrder => "lag" + lagOrder.toString() +
+                                                            "(" + key + ")").toArray
       }
 
       if (lagsPerCol(key)._1) {
@@ -118,7 +118,7 @@ class TimeSeries(val index: DateTimeIndex, val data: DenseMatrix[Double],
       } else {
         lagKeys
       }
-    }).reduce((prev: Array[String], next: Array[String]) => prev ++ next)
+    }).reduce(_ ++ _)
 
     // This assumes the datetimeindex's 0 index represents the oldest data point
     val newDatetimeIndex = index.islice(maxLag, data.rows)
@@ -193,16 +193,6 @@ class TimeSeries(val index: DateTimeIndex, val data: DenseMatrix[Double],
         (keys(i - 1), data(::, i - 1))
       }
     }
-  }
-
-  def toSamples(): IndexedSeq[(DateTime, Vector[Double])] =
-  {
-    (0 until data.rows).map(rowIndex => (index.dateTimeAtLoc(rowIndex), data(rowIndex, ::).inner.toVector))
-  }
-
-  def toRowSequence(): IndexedSeq[(Int, Vector[Double])] =
-  {
-    (0 until data.rows).map(rowIndex => (rowIndex, data(rowIndex, ::).inner.toVector))
   }
 
   /**

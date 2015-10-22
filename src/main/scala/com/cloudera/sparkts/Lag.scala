@@ -93,8 +93,10 @@ private[sparkts] object Lag {
     }
   }
 
-  private[sparkts] def lagMatTrimBoth(x: Vector[Double], outputMat: DenseMatrix[Double],
-                                      currentMaxLag: Int, totalMaxLag: Int,
+  private[sparkts] def lagMatTrimBoth(x: Vector[Double],
+                                      outputMat: DenseMatrix[Double],
+                                      currentMaxLag: Int,
+                                      totalMaxLag: Int,
                                       includeOriginal: Boolean) = {
     val numObservations = x.size
     val numRows = numObservations - totalMaxLag
