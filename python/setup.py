@@ -13,6 +13,7 @@ setup(
     version=VERSION,
     packages=find_packages(),
     classifiers = [],
+    keywords = ['spark', 'time', 'series', 'data', 'analysis'],
     package_data = {
         'sparkts.jar': ['../target/' + JAR_FILE]
     },
