@@ -78,6 +78,65 @@ class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix[Double],
     new TimeSeries[U](newDatetimeIndex, laggedData, newKeys.asInstanceOf[Array[U]])
   }
 
+  /**
+   * IMPORTANT: currently this assumes that the DateTimeIndex is a UniformDateTimeIndex, not an
+   * Irregular one. This means that this function won't work (yet) on TimeSeries built using
+   * timeSeriesFromIrregularSamples().
+   *
+   * Lags the specified individual time series of the TimeSeries instance by up to their matching lag amount.
+   * Each time series can be indicated to either retain the original value, or drop it.
+   *
+   * In other words, the lagsPerCol has the following structure:
+   *
+   *    ("variableName1" -> (keepOriginalValue, maxLag),
+   *     "variableName2" -> (keepOriginalValue, maxLag),
+   *     ...)
+   *
+   * See description of the above lags function for an example of the lagging process.
+   */
+  def lagsPerColumn[U: ClassTag](  lagsPerCol: Map[K, (Boolean, Int)],
+                          laggedKey: ((K, Int) => U) = laggedPairKey[K]_)
+  : TimeSeries[U] = {
+    val maxLag = lagsPerCol.map(pair => pair._2._2).max
+    val numCols = lagsPerCol.map(pair => pair._2._2 + (if (pair._2._1) 1 else 0)).sum
+    val numRows = data.rows - maxLag
+
+    val laggedData = new DenseMatrix[Double](numRows, numCols)
+
+    var curStart = 0
+    keys.indices.zip(keys).foreach { indexKeyPair =>
+      val colIndex = indexKeyPair._1
+      val curLag = lagsPerCol(indexKeyPair._2)._2
+      val curInclude = lagsPerCol(indexKeyPair._2)._1
+      val offset = curLag + (if (curInclude) 1 else 0)
+
+      Lag.lagMatTrimBoth(data(::, colIndex), laggedData(::, curStart to (curStart + offset - 1)),
+        curLag, maxLag, curInclude)
+
+      curStart += offset
+    }
+
+    val newKeys: Array[U] = keys.indices.map(keyIndex => {
+      val key = keys(keyIndex)
+
+      var lagKeys = Array[U]()
+      if (lagsPerCol.contains(key)) {
+        lagKeys = (1 to lagsPerCol(key)._2).map(lagOrder => laggedKey(key, lagOrder)).toArray
+      }
+
+      if (lagsPerCol(key)._1) {
+        Array(laggedKey(key, 0)) ++ lagKeys
+      } else {
+        lagKeys
+      }
+    }).reduce(_ ++ _)
+
+    // This assumes the datetimeindex's 0 index represents the oldest data point
+    val newDatetimeIndex = index.islice(maxLag, data.rows)
+
+    new TimeSeries[U](newDatetimeIndex, laggedData, newKeys.asInstanceOf[Array[U]])
+  }
+
   def slice(range: Range): TimeSeries[K] = {
     new TimeSeries[K](index.islice(range), data(range, ::), keys)
   }

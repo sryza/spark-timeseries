@@ -92,4 +92,23 @@ private[sparkts] object Lag {
       }
     }
   }
+
+  private[sparkts] def lagMatTrimBoth(x: Vector[Double],
+                                      outputMat: DenseMatrix[Double],
+                                      currentMaxLag: Int,
+                                      totalMaxLag: Int,
+                                      includeOriginal: Boolean) = {
+    val numObservations = x.size
+    val numRows = numObservations - totalMaxLag
+
+    var initialLag = 1
+
+    if (includeOriginal) initialLag = 0
+
+    for (r <- 0 until numRows) {
+      for (c <- initialLag to currentMaxLag) {
+        outputMat(r, (c - initialLag)) = x(r + totalMaxLag - c)
+      }
+    }
+  }
 }
