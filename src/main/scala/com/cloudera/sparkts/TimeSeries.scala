@@ -242,16 +242,6 @@ class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix[Double],
     univariateKeyAndSeriesIterator().map(ks => (ks._1, f(ks._2))).toSeq
   }
 
-  def toSamples(): IndexedSeq[(DateTime, Vector[Double])] =
-  {
-    (0 until data.rows).map(rowIndex => (index.dateTimeAtLoc(rowIndex), data(rowIndex, ::).inner.toVector))
-  }
-
-  def toRowSequence(): IndexedSeq[(Int, Vector[Double])] =
-  {
-    (0 until data.rows).map(rowIndex => (rowIndex, data(rowIndex, ::).inner.toVector))
-  }
-
   /**
    * Gets the first univariate series and its key.
    */
@@ -294,21 +284,6 @@ object TimeSeries {
 
     for (i <- samples.indices) {
       mat(i to i, ::) := new DenseVector[Double](samples(i))
-    }
-    new TimeSeries[K](index, mat, keys)
-  }
-
-  def timeSeriesFromVectors[K](vectors: Seq[Vector[Double]],
-                               index: DateTimeIndex,
-                               keys: Array[K])
-                              (implicit kClassTag: ClassTag[K])
-  : TimeSeries[K] = {
-    val mat = new DenseMatrix[Double](index.size, vectors.length)
-
-    for (i <- vectors.indices) {
-      val series = vectors(i)
-
-      mat(::, i to i) := series
     }
     new TimeSeries[K](index, mat, keys)
   }
