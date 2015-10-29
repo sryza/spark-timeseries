@@ -9,14 +9,11 @@ setup(
     description = 'A library for analyzing large time series data with Apache Spark',
     author = 'Sandy Ryza',
     author_email = 'sandy@cloudera.com',
-    url = 'https://github.com/sryza/spark-timeseries',
+    url = 'https://github.com/cloudera/spark-timeseries',
     version=VERSION,
     packages=find_packages(),
     classifiers = [],
     keywords = ['spark', 'time', 'series', 'data', 'analysis'],
-    package_data = {
-        'sparkts.jar': ['../target/' + JAR_FILE]
-    },
     install_requires = [
         'pandas >= 0.13',
         'numpy >= 1.9.2'
