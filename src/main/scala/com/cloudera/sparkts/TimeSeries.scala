@@ -83,8 +83,8 @@ class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix[Double],
    * Irregular one. This means that this function won't work (yet) on TimeSeries built using
    * timeSeriesFromIrregularSamples().
    *
-   * Lags the specified individual time series of the TimeSeries instance by up to their matching lag amount.
-   * Each time series can be indicated to either retain the original value, or drop it.
+   * Lags the specified individual time series of the TimeSeries instance by up to their matching
+   * lag amount. Each time series can be indicated to either retain the original value, or drop it.
    *
    * In other words, the lagsPerCol has the following structure:
    *
@@ -94,10 +94,10 @@ class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix[Double],
    *
    * See description of the above lags function for an example of the lagging process.
    */
-  def lagsPerColumn[U: ClassTag](  lagsPerCol: Map[K, (Boolean, Int)],
-                          laggedKey: ((K, Int) => U) = laggedPairKey[K]_)
-  : TimeSeries[U] = {
-    val maxLag = lagsPerCol.map(pair => pair._2._2).max
+  def lagsPerColumn[U : ClassTag](
+      lagsPerCol: Map[K, (Boolean, Int)],
+      laggedKey: ((K, Int) => U) = laggedPairKey[K]_): TimeSeries[U] = {
+    val maxLag = lagsPerCol.map(_._2._2).max
     val numCols = lagsPerCol.map(pair => pair._2._2 + (if (pair._2._1) 1 else 0)).sum
     val numRows = data.rows - maxLag
 
@@ -132,9 +132,9 @@ class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix[Double],
     }).reduce(_ ++ _)
 
     // This assumes the datetimeindex's 0 index represents the oldest data point
-    val newDatetimeIndex = index.islice(maxLag, data.rows)
+    val newIndex = index.islice(maxLag, data.rows)
 
-    new TimeSeries[U](newDatetimeIndex, laggedData, newKeys.asInstanceOf[Array[U]])
+    new TimeSeries[U](newIndex, laggedData, newKeys)
   }
 
   def slice(range: Range): TimeSeries[K] = {

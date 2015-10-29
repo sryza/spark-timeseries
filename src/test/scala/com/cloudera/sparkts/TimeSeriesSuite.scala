@@ -75,13 +75,9 @@ class TimeSeriesSuite extends FunSuite with ShouldMatchers {
     val originalTimeSeries = new TimeSeries(originalIndex, data, Array("a", "b"))
 
     val lagMap = Map[String, (Boolean, Int)](("a" -> (true, 0)), ("b" -> (false, 2)))
-    val laggedTimeSeries = originalTimeSeries.lagsPerColumn[String](lagMap.toMap, (key, lagOrder) =>
-      if (lagOrder == 0)
-      {
-        key
-      } else {
-        "lag" + lagOrder.toString() + "(" + key + ")"
-      })
+    val laggedTimeSeries = originalTimeSeries.lagsPerColumn(lagMap,
+      (key, lagOrder) => if (lagOrder == 0) { key } else { "lag" + lagOrder + "(" + key + ")" }
+    )
 
     laggedTimeSeries.keys should be (Array("a", "lag1(b)", "lag2(b)"))
     laggedTimeSeries.index.size should be (3)
