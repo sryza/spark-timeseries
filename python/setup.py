@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import os
 
-VERSION = '0.1.0'
+VERSION = '0.2.0-SNAPSHOT'
 JAR_FILE = 'sparkts-' + VERSION + '-jar-with-dependencies.jar'
 
 setup(
@@ -12,11 +12,9 @@ setup(
     url = 'https://github.com/sryza/spark-timeseries',
     version=VERSION,
     packages=find_packages(),
+    include_package_data = True,
     classifiers = [],
     keywords = ['spark', 'time', 'series', 'data', 'analysis'],
-    package_data = {
-        'sparkts.jar': ['../target/' + JAR_FILE]
-    },
     install_requires = [
         'pandas >= 0.13',
         'numpy >= 1.9.2'
