@@ -1,6 +1,6 @@
 [![Build Status](https://travis-ci.org/cloudera/spark-timeseries.svg)](https://travis-ci.org/cloudera/spark-timeseries)
 
-spark-timeseries
+spark-ts
 =============
 
 A Scala / Python library for interacting with time series data on Apache Spark.
@@ -107,9 +107,9 @@ jars:
 
     mvn package
     
-To run a spark-shell with spark-timeseries and its dependencies on the classpath:
+To run a spark-shell with spark-ts and its dependencies on the classpath:
 
-    spark-shell --jars target/sparktimeseries-0.0.1-jar-with-dependencies.jar
+    spark-shell --jars target/sparkts-0.0.1-jar-with-dependencies.jar
     
 To run Python tests (requires [nose](https://nose.readthedocs.org/en/latest/)):
 
@@ -141,4 +141,9 @@ to as DOCS_REPO.  Then:
     git commit -m "Some message that includes the hash of the relevant commit in master"
     git push origin gh-pages
 
+To release, first follow the directions [here](https://github.com/OryxProject/oryx/wiki/How-To-Release)
+to build and publish Maven packages.  Then, to build and publish Python packages:
 
+    cp target/sparkts-$VERSION-jar-with-dependencies.jar python/
+    
+    python setup.py sdist

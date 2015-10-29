@@ -18,10 +18,10 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.cloudera.sparkts</groupId>
-  <artifactId>sparktimeseries</artifactId>
+  <artifactId>sparkts</artifactId>
   <version>0.2.0-SNAPSHOT</version>
   <packaging>jar</packaging>
-  <name>Spark Timeseries</name>
+  <name>Spark TS</name>
 
   <prerequisites>
     <maven>3.1.1</maven>
@@ -55,7 +55,7 @@
     </snapshotRepository>
     <site>
       <id>sparkts.website</id>
-      <name>Spark Timeseries documentation</name>
+      <name>Spark TS documentation</name>
       <url>http://cloudera.github.io/spark-timeseries/</url>
     </site>
   </distributionManagement>
@@ -249,7 +249,7 @@
         </dependencies>
         <configuration>
           <mavenExecutorId>forked-path</mavenExecutorId>
-          <tagNameFormat>sparktimeseries-@{project.version}</tagNameFormat>
+          <tagNameFormat>sparkts-@{project.version}</tagNameFormat>
           <goals>deploy</goals>
         </configuration>
       </plugin>
