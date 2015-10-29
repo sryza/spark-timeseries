@@ -78,7 +78,7 @@
         <executions>
           <execution>
             <phase>compile</phase>
-	    <goals>
+            <goals>
               <goal>compile</goal>
             </goals>
           </execution>
