@@ -209,10 +209,6 @@ class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix[Double],
       .inner.toVector))
   }
 
-  def toRowSequence(): IndexedSeq[(Int, Vector[Double])] = {
-    (0 until data.rows).map(rowIndex => (rowIndex, data(rowIndex, ::).inner.toVector))
-  }
-
   /**
    * Applies a transformation to each series that preserves the time index.
    */
