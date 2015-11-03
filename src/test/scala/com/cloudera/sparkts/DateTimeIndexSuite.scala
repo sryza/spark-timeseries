@@ -113,4 +113,26 @@ class DateTimeIndexSuite extends FunSuite with ShouldMatchers {
     rebaseDayOfWeek(DateTimeConstants.FRIDAY, firstDayOfWeekMonday) should be (5)
     rebaseDayOfWeek(DateTimeConstants.SATURDAY, firstDayOfWeekMonday) should be (6)
   }
+
+  test("locAtDatetime returns -1") {
+    val index = irregular(Array(
+      "2015-04-14", "2015-04-15", "2015-04-17", "2015-04-22", "2015-04-25"
+    ).map(new DateTime(_, UTC)))
+    index.size should be (5)
+    index.first should be (new DateTime("2015-04-14", UTC))
+    index.last should be (new DateTime("2015-04-25", UTC))
+
+    val loc1 = index.locAtDateTime(new DateTime(2015, 4, 15, 0, 0, UTC))
+    loc1 should be (1)
+
+    val loc2 = index.locAtDateTime(new DateTime(2015, 4, 16, 0, 0, UTC))
+    loc2 should be (-1)
+
+    val loc3 = index.locAtDateTime(new DateTime(2015, 4, 25, 0, 0, UTC))
+    loc3 should be (4)
+
+    val loc4 = index.locAtDateTime(new DateTime(2015, 4, 24, 0, 0, UTC))
+    loc4 should be (-1)
+  }
+
 }
