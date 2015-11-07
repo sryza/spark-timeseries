@@ -79,7 +79,7 @@ public class JavaTimeSeriesRDDFactoryTest {
         list.add(new Tuple3<>("20.0", index, new DenseVector(until(20, 30))));
 
         JavaTimeSeriesRDD<String> rdd = JavaTimeSeriesRDDFactory.javaTimeSeriesRDD(
-                index, sc.parallelize(list), String.class);
+                index, sc.parallelize(list));
         JavaTimeSeriesRDD<String> slice = rdd.slice(start.plusDays(1), start.plusDays(6));
 
         assertEquals(DateTimeIndexFactory.uniform(start.plusDays(1), 6, new DayFrequency(1)),
@@ -106,7 +106,7 @@ public class JavaTimeSeriesRDDFactoryTest {
         list.add(new Tuple3<>("20.0", index, new DenseVector(until(20, 30))));
 
         JavaTimeSeriesRDD<String> rdd = JavaTimeSeriesRDDFactory.javaTimeSeriesRDD(
-                index, sc.parallelize(list), String.class);
+                index, sc.parallelize(list));
         assertEquals(3, rdd.filterEndingAfter(start).count());
 
         sc.close();
@@ -128,7 +128,7 @@ public class JavaTimeSeriesRDDFactoryTest {
 
         JavaPairRDD<String, Vector> rdd = sc.parallelizePairs(list, 3);
         JavaTimeSeriesRDD<String> tsRdd = JavaTimeSeriesRDDFactory.javaTimeSeriesRDD(
-                index, rdd, String.class);
+                index, rdd);
 
         List<Tuple2<DateTime, Vector>> samples = tsRdd.toInstants().collect();
         assertEquals(
@@ -159,7 +159,7 @@ public class JavaTimeSeriesRDDFactoryTest {
 
         JavaPairRDD<String, Vector> rdd = sc.parallelizePairs(list, 3);
         JavaTimeSeriesRDD<String> tsRdd = JavaTimeSeriesRDDFactory.javaTimeSeriesRDD(
-                index, rdd, String.class);
+                index, rdd);
 
         DataFrame samplesDF = tsRdd.toInstantsDataFrame(sqlContext);
         Row[] sampleRows = samplesDF.collect();
@@ -195,7 +195,7 @@ public class JavaTimeSeriesRDDFactoryTest {
         list.add(new Tuple3<>("20.0", index, new DenseVector(until(20, 30))));
 
         JavaTimeSeriesRDD<String> rdd = JavaTimeSeriesRDDFactory.javaTimeSeriesRDD(
-                index, sc.parallelize(list), String.class);
+                index, sc.parallelize(list));
 
         Path tempDir = null;
 
@@ -249,7 +249,7 @@ public class JavaTimeSeriesRDDFactoryTest {
 
         JavaPairRDD<String, Vector> rdd = sc.parallelizePairs(list, 3);
         JavaTimeSeriesRDD<String> tsRdd = JavaTimeSeriesRDDFactory.javaTimeSeriesRDD(
-                index, rdd, String.class);
+                index, rdd);
 
         IndexedRowMatrix indexedMatrix = tsRdd.toIndexedRowMatrix();
         JavaPairRDD<Long, double[]> indeciesDataRDD =
@@ -285,7 +285,7 @@ public class JavaTimeSeriesRDDFactoryTest {
 
         JavaPairRDD<String, Vector> rdd = sc.parallelizePairs(list, 3);
         JavaTimeSeriesRDD<String> tsRdd = JavaTimeSeriesRDDFactory.javaTimeSeriesRDD(
-                index, rdd, String.class);
+                index, rdd);
 
         RowMatrix matrix = tsRdd.toRowMatrix();
         List<double[]> rowData = new JavaRDD<>(matrix.rows(), classTagOf(Vector.class))
@@ -318,7 +318,7 @@ public class JavaTimeSeriesRDDFactoryTest {
 
         JavaPairRDD<String, Vector> rdd = sc.parallelizePairs(list, 3);
         JavaTimeSeriesRDD<String> tsRdd = JavaTimeSeriesRDDFactory.javaTimeSeriesRDD(
-                index, rdd, String.class);
+                index, rdd);
 
         DataFrame obsDF = tsRdd.toObservationsDataFrame(sqlContext, "timestamp", "key", "value");
         JavaTimeSeriesRDD<String> tsRddFromDF = JavaTimeSeriesRDDFactory.javaTimeSeriesRDDFromObservations(
@@ -369,7 +369,7 @@ public class JavaTimeSeriesRDDFactoryTest {
         list.add(new Tuple3<>("9.0", index, new DenseVector(new double[]{ 9d, 10d, 11d, Double.NaN })));
 
         JavaTimeSeriesRDD<String> rdd = JavaTimeSeriesRDDFactory.javaTimeSeriesRDD(
-                index, sc.parallelize(list), String.class);
+                index, sc.parallelize(list));
 
         JavaTimeSeriesRDD<String> rdd2 = rdd.removeInstantsWithNaNs();
 

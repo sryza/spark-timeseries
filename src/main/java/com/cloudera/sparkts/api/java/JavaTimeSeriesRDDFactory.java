@@ -9,6 +9,8 @@ import org.apache.spark.mllib.linalg.Vector;
 import scala.Tuple3;
 import scala.reflect.ClassTag$;
 
+import java.lang.reflect.Array;
+
 public final class JavaTimeSeriesRDDFactory {
     private static final JavaTimeSeriesRDD$ JAVA_TIME_SERIES_RDD = JavaTimeSeriesRDD$.MODULE$;
 
@@ -17,16 +19,14 @@ public final class JavaTimeSeriesRDDFactory {
      *
      * @param index DateTimeIndex
      * @param seriesRDD JavaPairRDD of time series
-     * @param keyClass the Class of the time series key.
      */
     public static <K> JavaTimeSeriesRDD<K> javaTimeSeriesRDD(
         DateTimeIndex index,
-        JavaPairRDD<K, Vector> seriesRDD,
-        Class<K> keyClass) {
+        JavaPairRDD<K, Vector> seriesRDD) {
         return JAVA_TIME_SERIES_RDD.javaTimeSeriesRDD(
                 index,
                 seriesRDD,
-                ClassTag$.MODULE$.<K>apply(keyClass));
+                ClassTag$.MODULE$.<K>apply(seriesRDD.first()._1().getClass()));
     }
 
     /**
@@ -34,16 +34,14 @@ public final class JavaTimeSeriesRDDFactory {
      *
      * @param targetIndex DateTimeIndex to conform all the indices to.
      * @param seriesRDD JavaRDD of time series, each with their own DateTimeIndex.
-     * @param keyClass the Class of the time series key.
      */
     public static <K> JavaTimeSeriesRDD<K> javaTimeSeriesRDD(
         UniformDateTimeIndex targetIndex,
-        JavaRDD<Tuple3<K, UniformDateTimeIndex, Vector>> seriesRDD,
-        Class<K> keyClass) {
+        JavaRDD<Tuple3<K, UniformDateTimeIndex, Vector>> seriesRDD) {
         return JAVA_TIME_SERIES_RDD.javaTimeSeriesRDD(
                 targetIndex,
                 seriesRDD,
-                ClassTag$.MODULE$.<K>apply(keyClass));
+                ClassTag$.MODULE$.<K>apply(seriesRDD.first()._1().getClass()));
     }
 
     /**
@@ -51,16 +49,15 @@ public final class JavaTimeSeriesRDDFactory {
      *
      * @param targetIndex DateTimeIndex to conform all the indices to.
      * @param seriesRDD JavaRDD of time series, each with their own DateTimeIndex.
-     * @param keyClass the Class of the time series key.
      */
     public static <K> JavaTimeSeriesRDD<K> javaTimeSeriesRDD(
         DateTimeIndex targetIndex,
-        JavaRDD<JavaTimeSeries<K>> seriesRDD,
-        Class<K> keyClass) {
+        JavaRDD<JavaTimeSeries<K>> seriesRDD) {
+        java.lang.reflect.Array.class.cast(null);
         return JAVA_TIME_SERIES_RDD.javaTimeSeriesRDD(
                 targetIndex,
                 seriesRDD,
-                ClassTag$.MODULE$.<K>apply(keyClass));
+                ClassTag$.MODULE$.<K>apply(((K[]) seriesRDD.first().keys())[0].getClass()));
     }
 
     /**
