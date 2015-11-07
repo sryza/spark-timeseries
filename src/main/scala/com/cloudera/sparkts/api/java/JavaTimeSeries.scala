@@ -222,4 +222,12 @@ object JavaTimeSeries {
       (implicit kClassTag: ClassTag[K])
     : JavaTimeSeries[K] =
     new JavaTimeSeries[K](TimeSeries.timeSeriesFromUniformSamples[K](samples, index, keys))
+
+  def javaTimeSeriesFromVectors[K](
+      vectors: Iterable[Vector],
+      index: DateTimeIndex,
+      keys: Array[K])
+      (implicit kClassTag: ClassTag[K])
+    : JavaTimeSeries[K] =
+    new JavaTimeSeries[K](TimeSeries.timeSeriesFromVectors(vectors, index, keys))
 }

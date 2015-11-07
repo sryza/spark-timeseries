@@ -1,6 +1,8 @@
 package com.cloudera.sparkts.api.java;
 
+import com.cloudera.sparkts.DateTimeIndex;
 import com.cloudera.sparkts.UniformDateTimeIndex;
+import org.apache.spark.mllib.linalg.Vector;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import scala.Tuple2;
@@ -14,7 +16,7 @@ public final class JavaTimeSeriesFactory {
 
     private JavaTimeSeriesFactory() {}
 
-    public static <K> JavaTimeSeries<K> timeSeriesFromIrregularSamples(
+    public static <K> JavaTimeSeries<K> javaTimeSeriesFromIrregularSamples(
             List<Tuple2<DateTime, double[]>> samples,
             K[] keys,
             DateTimeZone zone,
@@ -30,13 +32,25 @@ public final class JavaTimeSeriesFactory {
      * This function should only be called when you can safely make the assumption that the time
      * samples are uniform (monotonously increasing) across time.
      */
-    public static <K> JavaTimeSeries<K> timeSeriesFromUniformSamples(
+    public static <K> JavaTimeSeries<K> javaTimeSeriesFromUniformSamples(
             List<double[]> samples,
             UniformDateTimeIndex index,
             K[] keys,
             Class<K> keyClass) {
         return JAVA_TIME_SERIES.javaTimeSeriesFromUniformSamples(
                 JavaConversions.asScalaBuffer(samples),
+                index,
+                keys,
+                ClassTag$.MODULE$.<K>apply(keyClass));
+    }
+
+    public static <K> JavaTimeSeries<K> javaTimeSeriesFromVectors(
+            Iterable<Vector> samples,
+            DateTimeIndex index,
+            K[] keys,
+            Class<K> keyClass) {
+        return JAVA_TIME_SERIES.javaTimeSeriesFromVectors(
+                JavaConversions.iterableAsScalaIterable(samples),
                 index,
                 keys,
                 ClassTag$.MODULE$.<K>apply(keyClass));
