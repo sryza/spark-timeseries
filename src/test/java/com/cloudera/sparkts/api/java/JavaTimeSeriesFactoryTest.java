@@ -10,7 +10,9 @@ import static org.junit.Assert.assertEquals;
 import scala.Tuple2;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class JavaTimeSeriesFactoryTest {
     @Test
@@ -88,6 +90,39 @@ public class JavaTimeSeriesFactoryTest {
         assertArrayEquals(new double[]{2.0, 1.0, 7.0, 6.0,
                         3.0, 2.0, 8.0, 7.0,
                         4.0, 3.0, 9.0, 8.0},
+                laggedTimeSeries.dataAsArray(), 0);
+    }
+
+    @Test
+    public void testCustomLags() {
+        UniformDateTimeIndex originalIndex = new UniformDateTimeIndex(0, 5, new DayFrequency(1),
+                DateTimeZone.getDefault());
+
+        List<double[]> samples = new ArrayList<>();
+        samples.add(new double[] { 1.0, 6.0 });
+        samples.add(new double[] { 2.0, 7.0 });
+        samples.add(new double[] { 3.0, 8.0 });
+        samples.add(new double[] { 4.0, 9.0 });
+        samples.add(new double[] { 5.0, 10.0 });
+
+        JavaTimeSeries<String> originalTimeSeries = JavaTimeSeriesFactory.timeSeriesFromUniformSamples(
+                samples, originalIndex, new String[] { "a", "b" }, String.class);
+
+        Map<String, Tuple2<Boolean, Integer>> lagMap = new HashMap<>();
+        lagMap.put("a", new Tuple2<>(true, 0));
+        lagMap.put("b", new Tuple2<>(false, 2));
+
+        JavaTimeSeries<String> laggedTimeSeries = originalTimeSeries.lags(
+                lagMap, new JavaTimeSeries.laggedStringKey());
+
+        String laggedKeysExpected[] = new String[] { "a", "lag1(b)", "lag2(b)" };
+
+        assertArrayEquals(laggedKeysExpected, (String[]) laggedTimeSeries.keys());
+        assertEquals(3, laggedTimeSeries.index().size());
+
+        assertArrayEquals(new double[]{3.0, 7.0, 6.0,
+                        4.0, 8.0, 7.0,
+                        5.0, 9.0, 8.0},
                 laggedTimeSeries.dataAsArray(), 0);
     }
 }

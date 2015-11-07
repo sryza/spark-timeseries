@@ -63,8 +63,7 @@ class JavaTimeSeries[K](val ts: TimeSeries[K])(implicit val kClassTag: ClassTag[
   def lags[U](maxLag: Int, includeOriginals: Boolean,
       laggedKey: JFunction2[K, java.lang.Integer, U])
     : JavaTimeSeries[U] = {
-    implicit val classTagOfU: ClassTag[U] = ClassTag.apply(
-      laggedKey.call(keys(0), new java.lang.Integer(0)).getClass)
+    implicit val classTagOfU: ClassTag[U] = classTagOf(laggedKey)
     new JavaTimeSeries[U](ts.lags(maxLag, includeOriginals,
       (k: K, i: Int) => laggedKey.call(k, new java.lang.Integer(i))))
   }
@@ -78,6 +77,47 @@ class JavaTimeSeries[K](val ts: TimeSeries[K])(implicit val kClassTag: ClassTag[
     : JavaTimeSeries[(K, java.lang.Integer)] = {
     lags(maxLag, includeOriginals, new laggedPairKey[K])
   }
+
+  /**
+   * IMPORTANT: this function assumes that the DateTimeIndex is a UniformDateTimeIndex, not an
+   * Irregular one.
+   *
+   * Lags the specified individual time series of the TimeSeries instance by up to their matching lag amount.
+   * Each time series can be indicated to either retain the original value, or drop it.
+   *
+   * In other words, the lagsPerCol has the following structure:
+   *
+   *    ("variableName1" -> (keepOriginalValue, maxLag),
+   *     "variableName2" -> (keepOriginalValue, maxLag),
+   *     ...)
+   *
+   * See description of the above lags function for an example of the lagging process.
+   */
+  def lags[U](lagsPerCol: java.util.Map[K, (java.lang.Boolean, java.lang.Integer)],
+      laggedKey: JFunction2[K, java.lang.Integer, U])
+    : JavaTimeSeries[U] = {
+    implicit val classTagOfU: ClassTag[U] = classTagOf(laggedKey)
+    val map = JavaConversions.mapAsScalaMap(lagsPerCol).map {
+      a => (a._1, (a._2._1.booleanValue(), a._2._2.intValue()))
+    }.toMap
+    new JavaTimeSeries[U](ts.lags(map,
+      (k: K, i: Int) => laggedKey.call(k, new java.lang.Integer(i))))
+  }
+
+  /**
+   * This is equivalent to lags(lagsPerCol, new JavaTimeSeries.laggedPairKey()).
+   * It returns JavaTimeSeries with a new key that is a pair of (original key, lag order).
+   *
+   */
+  def lags[U >: (K, java.lang.Integer)](
+      lagsPerCol: java.util.Map[K, (java.lang.Boolean, java.lang.Integer)])
+    : JavaTimeSeries[(K, java.lang.Integer)] = {
+    lags(lagsPerCol, new laggedPairKey[K])
+  }
+
+  private[sparkts]
+  def classTagOf[U](laggedKey: JFunction2[K, java.lang.Integer, U]): ClassTag[U] =
+    ClassTag.apply(laggedKey.call(keys(0), new java.lang.Integer(0)).getClass)
 
   def slice(range: Range): JavaTimeSeries[K] = new JavaTimeSeries[K](ts.slice(range))
 
