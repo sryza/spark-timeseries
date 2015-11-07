@@ -44,11 +44,13 @@ public class JavaTimeSeriesFactoryTest {
         JavaTimeSeries<String> originalTimeSeries = JavaTimeSeriesFactory.timeSeriesFromUniformSamples(
                 samples, originalIndex, new String[] { "a", "b" }, String.class);
 
-        JavaTimeSeries<String> laggedTimeSeries = originalTimeSeries.lags(2, true,
-                (k, i) -> "lag" + i + "(" + k + ")");
+        JavaTimeSeries<String> laggedTimeSeries = originalTimeSeries.lags(
+                2, true, new JavaTimeSeries.laggedStringKey());
 
-        assertArrayEquals(new String[] { "a", "lag1(a)", "lag2(a)", "b", "lag1(b)", "lag2(b)" },
-                (String[]) laggedTimeSeries.keys());
+        String laggedKeysExpected[] = new String[] { "a", "lag1(a)", "lag2(a)",
+                "b", "lag1(b)", "lag2(b)" };
+
+        assertArrayEquals(laggedKeysExpected, (String[]) laggedTimeSeries.keys());
         assertEquals(3, laggedTimeSeries.index().size());
 
         assertArrayEquals(new double[] { 3.0, 2.0, 1.0, 8.0, 7.0, 6.0,
@@ -72,11 +74,15 @@ public class JavaTimeSeriesFactoryTest {
         JavaTimeSeries<String> originalTimeSeries = JavaTimeSeriesFactory.timeSeriesFromUniformSamples(
                 samples, originalIndex, new String[] { "a", "b" }, String.class);
 
-        JavaTimeSeries<String> laggedTimeSeries = originalTimeSeries.lags(2, false,
-                (k, i) -> "lag" + i + "(" + k + ")");
+        JavaTimeSeries<Tuple2<String, Integer>> laggedTimeSeries = originalTimeSeries.lags(2, false);
 
-        assertArrayEquals(new String[] { "lag1(a)", "lag2(a)", "lag1(b)", "lag2(b)" },
-                (String[]) laggedTimeSeries.keys());
+        Tuple2<String, Integer> laggedKeysExpected[] = new Tuple2[4];
+        laggedKeysExpected[0] = new Tuple2<>("a", 1);
+        laggedKeysExpected[1] = new Tuple2<>("a", 2);
+        laggedKeysExpected[2] = new Tuple2<>("b", 1);
+        laggedKeysExpected[3] = new Tuple2<>("b", 2);
+
+        assertArrayEquals(laggedKeysExpected, (Tuple2<String, Integer>[]) laggedTimeSeries.keys());
         assertEquals(3, laggedTimeSeries.index().size());
 
         assertArrayEquals(new double[]{2.0, 1.0, 7.0, 6.0,

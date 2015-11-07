@@ -476,7 +476,7 @@ object TimeSeriesRDD {
    * @param seriesRDD RDD of time series, each with their own DateTimeIndex.
    */
   def timeSeriesRDD[K](targetIndex: DateTimeIndex, seriesRDD: RDD[TimeSeries[K]])
-    (implicit kClassTag: ClassTag[K]): TimeSeriesRDD[K] = {
+      (implicit kClassTag: ClassTag[K]): TimeSeriesRDD[K] = {
     val rdd = seriesRDD.flatMap { series =>
       series.univariateKeyAndSeriesIterator().map { case (key, vec) =>
         val newVec: Vector = TimeSeriesUtils.rebase(series.index, targetIndex, vec, Double.NaN)
@@ -569,7 +569,8 @@ object TimeSeriesRDD {
    * Creates a TimeSeriesRDD from rows in a binary format that Python can write to.
    * Not a public API. For use only by the Python API.
    */
-  def timeSeriesRDDFromPython(index: DateTimeIndex, pyRdd: RDD[Array[Byte]]): TimeSeriesRDD[String] = {
+  def timeSeriesRDDFromPython(index: DateTimeIndex, pyRdd: RDD[Array[Byte]])
+    : TimeSeriesRDD[String] = {
     new TimeSeriesRDD[String](index, pyRdd.map { arr =>
       val buf = ByteBuffer.wrap(arr)
       val numChars = buf.getInt()

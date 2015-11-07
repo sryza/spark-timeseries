@@ -228,11 +228,13 @@ class IrregularDateTimeIndex(
   override def dateTimeAtLoc(loc: Int): DateTime = new DateTime(instants(loc), dateTimeZone)
 
   override def locAtDateTime(dt: DateTime): Int = {
-    java.util.Arrays.binarySearch(instants, dt.getMillis)
+    val loc = java.util.Arrays.binarySearch(instants, dt.getMillis)
+    if (loc < 0) -1 else loc
   }
 
   override def locAtDateTime(dt: Long): Int = {
-    java.util.Arrays.binarySearch(instants, dt)
+    val loc = java.util.Arrays.binarySearch(instants, dt)
+    if (loc < 0) -1 else loc
   }
 
   override def toMillisArray(): Array[Long] = {

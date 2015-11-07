@@ -15,14 +15,12 @@
 
 package com.cloudera.sparkts
 
-import breeze.linalg.{DenseVector, DenseMatrix}
+import breeze.linalg.DenseMatrix
 import com.cloudera.sparkts.TimeSeries._
 
 import com.github.nscala_time.time.Imports._
 
 import org.scalatest.{FunSuite, ShouldMatchers}
-
-import scala.collection.immutable.IndexedSeq
 
 import MatrixUtil._
 
@@ -48,7 +46,7 @@ class TimeSeriesSuite extends FunSuite with ShouldMatchers {
 
     val originalTimeSeries = new TimeSeries(originalIndex, data, Array("a", "b"))
 
-    val laggedTimeSeries = originalTimeSeries.lags(2, true)
+    val laggedTimeSeries = originalTimeSeries.lags(2, true, TimeSeries.laggedStringKey)
 
     laggedTimeSeries.keys should be (Array("a", "lag1(a)", "lag2(a)", "b", "lag1(b)", "lag2(b)"))
     laggedTimeSeries.index.size should be (3)
@@ -65,9 +63,25 @@ class TimeSeriesSuite extends FunSuite with ShouldMatchers {
 
     val laggedTimeSeries = originalTimeSeries.lags(2, false)
 
-    laggedTimeSeries.keys should be (Array("lag1(a)", "lag2(a)", "lag1(b)", "lag2(b)"))
+    laggedTimeSeries.keys should be (Array(("a", 1), ("a", 2), ("b", 1), ("b", 2)))
     laggedTimeSeries.index.size should be (3)
     toBreeze(laggedTimeSeries.data) should be (DenseMatrix((2.0, 1.0, 7.0, 6.0), (3.0, 2.0, 8.0, 7.0),
       (4.0, 3.0, 9.0, 8.0)))
   }
+
+  test("customLags") {
+    val originalIndex = new UniformDateTimeIndex(0, 5, new DayFrequency(1))
+
+    val data = DenseMatrix((1.0, 6.0), (2.0, 7.0), (3.0, 8.0), (4.0, 9.0), (5.0, 10.0))
+
+    val originalTimeSeries = new TimeSeries(originalIndex, data, Array("a", "b"))
+
+    val lagMap = Map[String, (Boolean, Int)](("a" -> (true, 0)), ("b" -> (false, 2)))
+    val laggedTimeSeries = originalTimeSeries.lagsPerColumn[String](lagMap.toMap, laggedStringKey)
+
+    laggedTimeSeries.keys should be (Array("a", "lag1(b)", "lag2(b)"))
+    laggedTimeSeries.index.size should be (3)
+    toBreeze(laggedTimeSeries.data) should be (DenseMatrix((3.0, 7.0, 6.0), (4.0, 8.0, 7.0), (5.0, 9.0, 8.0)))
+  }
+
 }
