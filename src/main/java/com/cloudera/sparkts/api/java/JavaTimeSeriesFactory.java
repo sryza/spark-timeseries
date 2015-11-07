@@ -19,13 +19,12 @@ public final class JavaTimeSeriesFactory {
     public static <K> JavaTimeSeries<K> javaTimeSeriesFromIrregularSamples(
             List<Tuple2<DateTime, double[]>> samples,
             K[] keys,
-            DateTimeZone zone,
-            Class<K> keyClass) {
+            DateTimeZone zone) {
         return JAVA_TIME_SERIES.javaTimeSeriesFromIrregularSamples(
                 JavaConversions.asScalaBuffer(samples),
                 keys,
                 zone != null ? zone : DateTimeZone.getDefault(),
-                ClassTag$.MODULE$.<K>apply(keyClass));
+                ClassTag$.MODULE$.<K>apply(keys[0].getClass()));
     }
 
     /**
@@ -35,24 +34,22 @@ public final class JavaTimeSeriesFactory {
     public static <K> JavaTimeSeries<K> javaTimeSeriesFromUniformSamples(
             List<double[]> samples,
             UniformDateTimeIndex index,
-            K[] keys,
-            Class<K> keyClass) {
+            K[] keys) {
         return JAVA_TIME_SERIES.javaTimeSeriesFromUniformSamples(
                 JavaConversions.asScalaBuffer(samples),
                 index,
                 keys,
-                ClassTag$.MODULE$.<K>apply(keyClass));
+                ClassTag$.MODULE$.<K>apply(keys[0].getClass()));
     }
 
     public static <K> JavaTimeSeries<K> javaTimeSeriesFromVectors(
             Iterable<Vector> samples,
             DateTimeIndex index,
-            K[] keys,
-            Class<K> keyClass) {
+            K[] keys) {
         return JAVA_TIME_SERIES.javaTimeSeriesFromVectors(
                 JavaConversions.iterableAsScalaIterable(samples),
                 index,
                 keys,
-                ClassTag$.MODULE$.<K>apply(keyClass));
+                ClassTag$.MODULE$.<K>apply(keys[0].getClass()));
     }
 }
