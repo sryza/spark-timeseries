@@ -23,6 +23,7 @@ import com.github.nscala_time.time.Imports._
 import org.scalatest.{FunSuite, ShouldMatchers}
 
 import MatrixUtil._
+import TimeSeries._
 
 class TimeSeriesSuite extends FunSuite with ShouldMatchers {
   test("timeSeriesFromIrregularSamples") {
@@ -46,7 +47,7 @@ class TimeSeriesSuite extends FunSuite with ShouldMatchers {
 
     val originalTimeSeries = new TimeSeries(originalIndex, data, Array("a", "b"))
 
-    val laggedTimeSeries = originalTimeSeries.lags(2, true, TimeSeries.laggedStringKey)
+    val laggedTimeSeries = originalTimeSeries.lags(2, true, laggedStringKey _)
 
     laggedTimeSeries.keys should be (Array("a", "lag1(a)", "lag2(a)", "b", "lag1(b)", "lag2(b)"))
     laggedTimeSeries.index.size should be (3)
@@ -77,7 +78,7 @@ class TimeSeriesSuite extends FunSuite with ShouldMatchers {
     val originalTimeSeries = new TimeSeries(originalIndex, data, Array("a", "b"))
 
     val lagMap = Map[String, (Boolean, Int)](("a" -> (true, 0)), ("b" -> (false, 2)))
-    val laggedTimeSeries = originalTimeSeries.lagsPerColumn[String](lagMap.toMap, laggedStringKey)
+    val laggedTimeSeries = originalTimeSeries.lags(lagMap.toMap, laggedStringKey _)
 
     laggedTimeSeries.keys should be (Array("a", "lag1(b)", "lag2(b)"))
     laggedTimeSeries.index.size should be (3)
