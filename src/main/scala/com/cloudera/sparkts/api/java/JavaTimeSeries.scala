@@ -159,6 +159,9 @@ class JavaTimeSeries[K](val ts: TimeSeries[K])(implicit val kClassTag: ClassTag[
   def univariateKeyAndSeriesIterator(): java.util.Iterator[(K, Vector)] =
     JavaConversions.asJavaIterator(ts.univariateKeyAndSeriesIterator)
 
+  def toInstants(): java.util.List[(DateTime, Vector)] =
+    JavaConversions.seqAsJavaList(ts.toInstants())
+
   /**
    * Applies a transformation to each series that preserves the time index.
    */
