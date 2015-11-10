@@ -154,6 +154,27 @@ class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix[Double],
     mapSeries(index.islice(lag, index.size), vec => diff(vec.toDenseVector, lag))
   }
 
+  def timeDerivative(baseFrequency: Frequency): TimeSeries[K] = {
+    val instants = toInstants()
+
+    val pairs = instants.drop(1).zip(instants)
+
+    val diffedData = new DenseMatrix[Double](instants.length - 1, instants.head._2.length)
+    for (rowIndex <- 0 until instants.length - 1) {
+      val pair = pairs(rowIndex)
+      val timeDiff = baseFrequency.difference(pair._2._1, pair._1._1)
+
+      for (i <- 0 until pair._1._2.size) {
+        val tmp = pair._1._2(i) - pair._2._2(i)
+        val diffValue = tmp / timeDiff
+
+        diffedData(rowIndex, i) = diffValue
+      }
+    }
+
+    new TimeSeries[K](index.islice(1, index.size), diffedData, keys)
+  }
+
   /**
    * Returns a TimeSeries where each time series is differenced with order 1. The new TimeSeries
    * will be missing the first date-time.
