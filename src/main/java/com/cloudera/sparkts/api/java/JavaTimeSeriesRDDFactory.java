@@ -53,7 +53,6 @@ public final class JavaTimeSeriesRDDFactory {
     public static <K> JavaTimeSeriesRDD<K> javaTimeSeriesRDD(
         DateTimeIndex targetIndex,
         JavaRDD<JavaTimeSeries<K>> seriesRDD) {
-        java.lang.reflect.Array.class.cast(null);
         return JAVA_TIME_SERIES_RDD.javaTimeSeriesRDD(
                 targetIndex,
                 seriesRDD,

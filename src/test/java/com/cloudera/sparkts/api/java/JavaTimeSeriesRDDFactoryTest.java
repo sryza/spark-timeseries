@@ -5,6 +5,8 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.api.java.function.Function;
+import org.apache.spark.api.java.function.PairFunction;
 import org.apache.spark.mllib.linalg.DenseVector;
 import org.apache.spark.mllib.linalg.Vector;
 import org.apache.spark.mllib.linalg.distributed.IndexedRow;
@@ -25,27 +27,39 @@ import scala.reflect.ClassTag;
 import scala.reflect.ClassTag$;
 import scala.runtime.RichInt;
 
-import java.io.IOException;
+import java.io.File;
+import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Timestamp;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
-public class JavaTimeSeriesRDDFactoryTest {
+public class JavaTimeSeriesRDDFactoryTest implements Serializable {
     private double[] until(int a, int b) {
-        return JavaConversions.asJavaCollection(new RichInt(a).until(b))
-                .stream().mapToDouble(o -> new Double((int) o))
-                .toArray();
+        Collection<Object> collection = JavaConversions
+                .asJavaCollection(new RichInt(a).until(b));
+        double[] res = new double[collection.size()];
+        Iterator<Object> iter = collection.iterator();
+        int i = 0;
+        while (iter.hasNext()) {
+            res[i++] = (double) (int) iter.next();
+        }
+        return res;
     }
 
     private double[] untilBy(int a, int b, int step) {
-        return JavaConversions.asJavaCollection(new RichInt(a).until(b).by(step))
-                .stream().mapToDouble(o -> new Double((int) o))
-                .toArray();
+        Collection<Object> collection = JavaConversions
+                .asJavaCollection(new RichInt(a).until(b).by(step));
+        double[] res = new double[collection.size()];
+        Iterator<Object> iter = collection.iterator();
+        int i = 0;
+        while (iter.hasNext()) {
+            res[i++] = (double) (int) iter.next();
+        }
+        return res;
     }
 
     private Row rowFrom(Timestamp timestamp, double[] data) {
@@ -74,9 +88,9 @@ public class JavaTimeSeriesRDDFactoryTest {
         DateTime start = new DateTime("2015-4-9");
         UniformDateTimeIndex index = DateTimeIndexFactory.uniform(start, 10, new DayFrequency(1));
         List<Tuple3<String, UniformDateTimeIndex, Vector>> list = new ArrayList<>();
-        list.add(new Tuple3<>("0.0", index, new DenseVector(until(0, 10))));
-        list.add(new Tuple3<>("10.0", index, new DenseVector(until(10, 20))));
-        list.add(new Tuple3<>("20.0", index, new DenseVector(until(20, 30))));
+        list.add(new Tuple3<>("0.0", index, (Vector) new DenseVector(until(0, 10))));
+        list.add(new Tuple3<>("10.0", index, (Vector) new DenseVector(until(10, 20))));
+        list.add(new Tuple3<>("20.0", index, (Vector) new DenseVector(until(20, 30))));
 
         JavaTimeSeriesRDD<String> rdd = JavaTimeSeriesRDDFactory.javaTimeSeriesRDD(
                 index, sc.parallelize(list));
@@ -101,9 +115,9 @@ public class JavaTimeSeriesRDDFactoryTest {
         DateTime start = new DateTime("2015-4-9");
         UniformDateTimeIndex index = DateTimeIndexFactory.uniform(start, 10, new DayFrequency(1));
         List<Tuple3<String, UniformDateTimeIndex, Vector>> list = new ArrayList<>();
-        list.add(new Tuple3<>("0.0", index, new DenseVector(until(0, 10))));
-        list.add(new Tuple3<>("10.0", index, new DenseVector(until(10, 20))));
-        list.add(new Tuple3<>("20.0", index, new DenseVector(until(20, 30))));
+        list.add(new Tuple3<>("0.0", index, (Vector) new DenseVector(until(0, 10))));
+        list.add(new Tuple3<>("10.0", index, (Vector) new DenseVector(until(10, 20))));
+        list.add(new Tuple3<>("20.0", index, (Vector) new DenseVector(until(20, 30))));
 
         JavaTimeSeriesRDD<String> rdd = JavaTimeSeriesRDDFactory.javaTimeSeriesRDD(
                 index, sc.parallelize(list));
@@ -122,7 +136,8 @@ public class JavaTimeSeriesRDDFactoryTest {
         List<Tuple2<String, Vector>> list = new ArrayList<>();
         for(int i = 0; i < seeds.length; i++) {
             double seed = seeds[i];
-            list.add(new Tuple2<>(labels[i], new DenseVector(until((int) seed, (int) seed + 4))));
+            list.add(new Tuple2<>(labels[i],
+                    (Vector) new DenseVector(until((int) seed, (int) seed + 4))));
         }
         UniformDateTimeIndex index = DateTimeIndexFactory.uniform(start, 4, new DayFrequency(1));
 
@@ -153,7 +168,8 @@ public class JavaTimeSeriesRDDFactoryTest {
         List<Tuple2<String, Vector>> list = new ArrayList<>();
         for(int i = 0; i < seeds.length; i++) {
             double seed = seeds[i];
-            list.add(new Tuple2<>(labels[i], new DenseVector(until((int) seed, (int) seed + 4))));
+            list.add(new Tuple2<>(labels[i],
+                    (Vector) new DenseVector(until((int) seed, (int) seed + 4))));
         }
         UniformDateTimeIndex index = DateTimeIndexFactory.uniform(start, 4, new DayFrequency(1));
 
@@ -165,9 +181,7 @@ public class JavaTimeSeriesRDDFactoryTest {
         Row[] sampleRows = samplesDF.collect();
         String[] columnNames = samplesDF.columns();
         String[] columnNamesTail = new String[columnNames.length - 1];
-        for(int i = 0; i < columnNamesTail.length; i++) {
-            columnNamesTail[i] = columnNames[i + 1];
-        }
+        System.arraycopy(columnNames, 1, columnNamesTail, 0, columnNamesTail.length);
 
         assertEquals(labels.length + 1 /*labels + timestamp*/, columnNames.length);
         assertEquals("instant", columnNames[0]);
@@ -190,9 +204,9 @@ public class JavaTimeSeriesRDDFactoryTest {
         DateTime start = new DateTime("2015-4-9");
         UniformDateTimeIndex index = DateTimeIndexFactory.uniform(start, 10, new DayFrequency(1));
         List<Tuple3<String, UniformDateTimeIndex, Vector>> list = new ArrayList<>();
-        list.add(new Tuple3<>("0.0", index, new DenseVector(until(0, 10))));
-        list.add(new Tuple3<>("10.0", index, new DenseVector(until(10, 20))));
-        list.add(new Tuple3<>("20.0", index, new DenseVector(until(20, 30))));
+        list.add(new Tuple3<>("0.0", index, (Vector) new DenseVector(until(0, 10))));
+        list.add(new Tuple3<>("10.0", index, (Vector) new DenseVector(until(10, 20))));
+        list.add(new Tuple3<>("20.0", index, (Vector) new DenseVector(until(20, 30))));
 
         JavaTimeSeriesRDD<String> rdd = JavaTimeSeriesRDDFactory.javaTimeSeriesRDD(
                 index, sc.parallelize(list));
@@ -211,16 +225,9 @@ public class JavaTimeSeriesRDDFactoryTest {
             e.printStackTrace();
         } finally {
             if (tempDir != null) {
-                try {
-                    Files.list(tempDir).forEach((path) -> {
-                        try {
-                            Files.delete(path);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    });
-                } catch (Exception e) {
-                    e.printStackTrace();
+                File[] files = tempDir.toFile().listFiles();
+                for (File tempFile: files) {
+                    tempFile.delete();
                 }
                 try {
                     Files.deleteIfExists(tempDir);
@@ -243,7 +250,8 @@ public class JavaTimeSeriesRDDFactoryTest {
         List<Tuple2<String, Vector>> list = new ArrayList<>();
         for(int i = 0; i < seeds.length; i++) {
             double seed = seeds[i];
-            list.add(new Tuple2<>(labels[i], new DenseVector(until((int) seed, (int) seed + 4))));
+            list.add(new Tuple2<>(labels[i],
+                    (Vector) new DenseVector(until((int) seed, (int) seed + 4))));
         }
         UniformDateTimeIndex index = DateTimeIndexFactory.uniform(start, 4, new DayFrequency(1));
 
@@ -254,7 +262,12 @@ public class JavaTimeSeriesRDDFactoryTest {
         IndexedRowMatrix indexedMatrix = tsRdd.toIndexedRowMatrix();
         JavaPairRDD<Long, double[]> indeciesDataRDD =
                 new JavaRDD<>(indexedMatrix.rows(), classTagOf(IndexedRow.class))
-                .mapToPair(ir -> new Tuple2<>(ir.index(), ir.vector().toArray()));
+                .mapToPair(new PairFunction<IndexedRow, Long, double[]>() {
+                    @Override
+                    public Tuple2<Long, double[]> call(IndexedRow ir) throws Exception {
+                        return new Tuple2<>(ir.index(), ir.vector().toArray());
+                    }
+                });
         List<double[]> rowData = indeciesDataRDD.values().collect();
         Long[] rowIndices = indeciesDataRDD.keys().collect().toArray(new Long[0]);
 
@@ -279,7 +292,8 @@ public class JavaTimeSeriesRDDFactoryTest {
         List<Tuple2<String, Vector>> list = new ArrayList<>();
         for(int i = 0; i < seeds.length; i++) {
             double seed = seeds[i];
-            list.add(new Tuple2<>(labels[i], new DenseVector(until((int) seed, (int) seed + 4))));
+            list.add(new Tuple2<>(labels[i],
+                    (Vector) new DenseVector(until((int) seed, (int) seed + 4))));
         }
         UniformDateTimeIndex index = DateTimeIndexFactory.uniform(start, 4, new DayFrequency(1));
 
@@ -289,7 +303,12 @@ public class JavaTimeSeriesRDDFactoryTest {
 
         RowMatrix matrix = tsRdd.toRowMatrix();
         List<double[]> rowData = new JavaRDD<>(matrix.rows(), classTagOf(Vector.class))
-                .map(v -> v.toArray()).collect();
+                .map(new Function<Vector, double[]>() {
+                    @Override
+                    public double[] call(Vector v) throws Exception {
+                        return v.toArray();
+                    }
+                }).collect();
 
         assertArrayEquals(Arrays.asList(untilBy(0, 20, 4),
                         untilBy(1, 20, 4),
@@ -312,7 +331,8 @@ public class JavaTimeSeriesRDDFactoryTest {
         List<Tuple2<String, Vector>> list = new ArrayList<>();
         for(int i = 0; i < seeds.length; i++) {
             double seed = seeds[i];
-            list.add(new Tuple2<>(labels[i], new DenseVector(until((int) seed, (int) seed + 4))));
+            list.add(new Tuple2<>(labels[i],
+                    (Vector) new DenseVector(until((int) seed, (int) seed + 4))));
         }
         UniformDateTimeIndex index = DateTimeIndexFactory.uniform(start, 4, new DayFrequency(1));
 
@@ -324,28 +344,28 @@ public class JavaTimeSeriesRDDFactoryTest {
         JavaTimeSeriesRDD<String> tsRddFromDF = JavaTimeSeriesRDDFactory.javaTimeSeriesRDDFromObservations(
                 index, obsDF, "timestamp", "key", "value");
 
+
         assertArrayEquals(
-                tsRdd.collect().stream()
-                        .sorted((kv1, kv2) -> kv1._1().compareTo(kv2._1()))
-                        .collect(Collectors.toList()).toArray(),
-                tsRddFromDF.collect().stream()
-                        .sorted((kv1, kv2) -> kv1._1().compareTo(kv2._1()))
-                        .collect(Collectors.toList()).toArray()
+                tsRdd.sortByKey().collect().toArray(),
+                tsRddFromDF.sortByKey().collect().toArray()
         );
 
         Row[] df1 = obsDF.collect();
         Row[] df2 = tsRddFromDF.toObservationsDataFrame(sqlContext, "timestamp", "key", "value").collect();
 
-        Comparator<Row> comparator = (r1, r2) -> {
-            int c = 0;
-            c = r1.<Double>getAs(2).compareTo(r2.<Double>getAs(2));
-            if(c == 0) {
-                c = r1.<String>getAs(1).compareTo(r2.<String>getAs(1));
+        Comparator<Row> comparator = new Comparator<Row>() {
+            @Override
+            public int compare(Row r1, Row r2) {
+                int c;
+                c = r1.<Double>getAs(2).compareTo(r2.<Double>getAs(2));
                 if(c == 0) {
-                    c = r1.<Timestamp>getAs(0).compareTo(r2.<Timestamp>getAs(0));
-                    return c;
+                    c = r1.<String>getAs(1).compareTo(r2.<String>getAs(1));
+                    if(c == 0) {
+                        c = r1.<Timestamp>getAs(0).compareTo(r2.<Timestamp>getAs(0));
+                        return c;
+                    } else return c;
                 } else return c;
-            } else return c;
+            }
         };
 
         Arrays.sort(df1, comparator);
@@ -364,9 +384,12 @@ public class JavaTimeSeriesRDDFactoryTest {
         DateTime start = new DateTime("2015-4-9");
         UniformDateTimeIndex index = DateTimeIndexFactory.uniform(start, 4, new DayFrequency(1));
         List<Tuple3<String, UniformDateTimeIndex, Vector>> list = new ArrayList<>();
-        list.add(new Tuple3<>("1.0", index, new DenseVector(until(1, 5))));
-        list.add(new Tuple3<>("5.0", index, new DenseVector(new double[]{ 5d, Double.NaN, 7d, 8d })));
-        list.add(new Tuple3<>("9.0", index, new DenseVector(new double[]{ 9d, 10d, 11d, Double.NaN })));
+        list.add(new Tuple3<>("1.0", index,
+                (Vector) new DenseVector(until(1, 5))));
+        list.add(new Tuple3<>("5.0", index,
+                (Vector) new DenseVector(new double[]{ 5d, Double.NaN, 7d, 8d })));
+        list.add(new Tuple3<>("9.0", index,
+                (Vector) new DenseVector(new double[]{ 9d, 10d, 11d, Double.NaN })));
 
         JavaTimeSeriesRDD<String> rdd = JavaTimeSeriesRDDFactory.javaTimeSeriesRDD(
                 index, sc.parallelize(list));
