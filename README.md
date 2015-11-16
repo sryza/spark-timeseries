@@ -7,9 +7,9 @@ A Scala / Python library for interacting with time series data on Apache Spark.
 
 Docs are available at http://cloudera.github.io/spark-timeseries.
 
-Scaladoc is available at http://cloudera.github.io/spark-timeseries/scaladocs/index.html.
+Scaladoc is available at http://cloudera.github.io/spark-timeseries/0.1.0/scaladocs/index.html.
 
-Python doc is available at http://cloudera.github.io/spark-timeseries/pydoc/py-modindex.html.
+Python doc is available at http://cloudera.github.io/spark-timeseries/0.1.0/pydoc/py-modindex.html.
 
 The aim here is to provide
 * A set of abstractions for manipulating large time series data sets, similar to
