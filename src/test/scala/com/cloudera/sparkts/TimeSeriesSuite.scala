@@ -16,9 +16,12 @@
 package com.cloudera.sparkts
 
 import breeze.linalg.DenseMatrix
+import com.cloudera.sparkts.DateTimeIndex._
 import com.cloudera.sparkts.TimeSeries._
 
 import com.github.nscala_time.time.Imports._
+import org.joda.time.DateTime
+import org.joda.time.DateTimeZone._
 
 import org.scalatest.{FunSuite, ShouldMatchers}
 
@@ -84,4 +87,29 @@ class TimeSeriesSuite extends FunSuite with ShouldMatchers {
     laggedTimeSeries.data should be (DenseMatrix((3.0, 7.0, 6.0), (4.0, 8.0, 7.0), (5.0, 9.0, 8.0)))
   }
 
+  test("timeDerivative") {
+    val index = irregular(Array(
+      "2015-04-14", "2015-04-15", "2015-04-17", "2015-04-22", "2015-04-26"
+    ).map(new DateTime(_, UTC)))
+    val data = DenseMatrix((1.0, 6.0), (2.0, 7.0), (3.0, 9.0), (8.0, 9.0), (5.0, 10.0))
+
+    val originalTimeSeries = new TimeSeries(index, data, Array("a", "b"))
+
+    val differencedTimeSeries = originalTimeSeries.timeDerivative(new DayFrequency(1))
+
+    differencedTimeSeries.index.first.year().get() should be (2015)
+    differencedTimeSeries.index.first.monthOfYear().get() should be (4)
+    differencedTimeSeries.index.first.dayOfMonth().get() should be (15)
+    differencedTimeSeries.index.last.year().get() should be (2015)
+    differencedTimeSeries.index.last.monthOfYear().get() should be (4)
+    differencedTimeSeries.index.last.dayOfMonth().get() should be (26)
+    differencedTimeSeries.index.size should be (4)
+
+    differencedTimeSeries.data should be (DenseMatrix(
+      (1.0, 1.0),
+      (0.5, 1.0),
+      (1.0, 0.0),
+      (-0.75, 0.25)
+    ))
+  }
 }
