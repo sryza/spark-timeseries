@@ -15,13 +15,12 @@
 
 package com.cloudera.sparkts
 
+import java.time.DayOfWeek
+
 import com.cloudera.sparkts.DateTimeIndex._
+import codes.reactive.scalatime._
 
-import com.github.nscala_time.time.Imports._
-
-import org.joda.time.{DateTimeConstants, Days, Hours}
-
-class BusinessDayRichInt(n: Int, firstDayOfWeek: Int = DateTimeConstants.MONDAY) {
+class BusinessDayRichInt(n: Int, firstDayOfWeek: Int = DayOfWeek.MONDAY.getValue) {
   def businessDays: BusinessDayFrequency = new BusinessDayFrequency(n, firstDayOfWeek)
 }
 
@@ -32,17 +31,19 @@ trait Frequency extends Serializable {
   /**
    * Advances the given DateTime by this frequency n times.
    */
-  def advance(dt: DateTime, n: Int): DateTime
+  def advance(dt: ZonedDateTime, n: Int): ZonedDateTime
 
   /**
    * The number of times this frequency occurs between the two DateTimes, rounded down.
    */
-  def difference(dt1: DateTime, dt2: DateTime): Int
+  def difference(dt1: ZonedDateTime, dt2: ZonedDateTime): Int
 }
 
+// Warning: this is not DST-aware. If you need DST-awareness, derive a new class from this one and override the
+// appropriate methods with your DST-aware implementation.
+abstract class PeriodFrequency(val period: Duration) extends Frequency {
 
-abstract class PeriodFrequency(val period: Period) extends Frequency {
-  def advance(dt: DateTime, n: Int): DateTime = dt + (n * period)
+  def advance(dt: ZonedDateTime, n: Int): ZonedDateTime = dt.plus(period.multipliedBy(n))
 
   override def equals(other: Any): Boolean = {
     other match {
@@ -52,30 +53,104 @@ abstract class PeriodFrequency(val period: Period) extends Frequency {
   }
 }
 
-class DayFrequency(val days: Int) extends PeriodFrequency(days.days) {
+class MillisecondFrequency(val ms: Int)
+  extends PeriodFrequency(ChronoUnit.Millis.getDuration.multipliedBy(ms)) {
 
-  def difference(dt1: DateTime, dt2: DateTime): Int = Days.daysBetween(dt1, dt2).getDays / days
+  override def difference(dt1: ZonedDateTime, dt2: ZonedDateTime): Int = {
+    val duration = codes.reactive.scalatime.Duration.between(dt1.toLocalDateTime, dt2.toLocalDateTime)
+    (duration.toMillis() / ms).toInt
+  }
+
+  override def toString: String = s"milliseconds $ms"
+}
+
+class MicrosecondFrequency(val us: Int)
+  extends PeriodFrequency(ChronoUnit.Micros.getDuration.multipliedBy(us)) {
+
+  override def difference(dt1: ZonedDateTime, dt2: ZonedDateTime): Int = {
+    val duration = codes.reactive.scalatime.Duration.between(dt1.toLocalDateTime, dt2.toLocalDateTime)
+    ((duration.toNanos() * 1000.0) / us).toInt
+  }
+
+  override def toString: String = s"microseconds $us"
+}
+
+class MonthFrequency(val months: Int)
+  extends PeriodFrequency(ChronoUnit.Months.getDuration.multipliedBy(months)) {
+
+  override def difference(dt1: ZonedDateTime, dt2: ZonedDateTime): Int = {
+    val period = Period.between(dt1.toLocalDate, dt2.toLocalDate)
+    period.getMonths / months
+  }
+
+  override def toString: String = s"months $months"
+}
+
+class YearFrequency(val years: Int)
+  extends PeriodFrequency(ChronoUnit.Years.getDuration.multipliedBy(years)) {
+
+  override def difference(dt1: ZonedDateTime, dt2: ZonedDateTime): Int = {
+    val period = Period.between(dt1.toLocalDate, dt2.toLocalDate)
+    period.getYears / years
+  }
+
+  override def toString: String = s"years $years"
+}
+
+class DayFrequency(val days: Int)
+  extends PeriodFrequency(ChronoUnit.Days.getDuration.multipliedBy(days)) {
+
+  override def difference(dt1: ZonedDateTime, dt2: ZonedDateTime): Int = {
+    val period = Period.between(dt1.toLocalDate, dt2.toLocalDate)
+    period.getDays / days
+  }
 
   override def toString: String = s"days $days"
 }
 
-class HourFrequency(val hours: Int) extends PeriodFrequency(hours.hours) {
+class HourFrequency(val hours: Int)
+  extends PeriodFrequency(ChronoUnit.Hours.getDuration.multipliedBy(hours)) {
 
-  def difference(dt1: DateTime, dt2: DateTime): Int = Hours.hoursBetween(dt1, dt2).getHours / hours
+  override def difference(dt1: ZonedDateTime, dt2: ZonedDateTime): Int = {
+    val duration = codes.reactive.scalatime.Duration.between(dt1.toLocalDateTime, dt2.toLocalDateTime)
+    (duration.getSeconds / (hours * 3600)).toInt
+  }
 
   override def toString: String = s"hours $hours"
 }
 
+class MinuteFrequency(val minutes: Int)
+  extends PeriodFrequency(ChronoUnit.Minutes.getDuration.multipliedBy(minutes)) {
+
+  override def difference(dt1: ZonedDateTime, dt2: ZonedDateTime): Int = {
+    val duration = codes.reactive.scalatime.Duration.between(dt1.toLocalDateTime, dt2.toLocalDateTime)
+    (duration.getSeconds / (minutes * 60)).toInt
+  }
+
+  override def toString: String = s"minutes $minutes"
+}
+
+class SecondFrequency(val seconds: Int)
+  extends PeriodFrequency(ChronoUnit.Seconds.getDuration.multipliedBy(seconds)) {
+
+  override def difference(dt1: ZonedDateTime, dt2: ZonedDateTime): Int = {
+    val duration = codes.reactive.scalatime.Duration.between(dt1.toLocalDateTime, dt2.toLocalDateTime)
+    (duration.getSeconds / seconds).toInt
+  }
+
+  override def toString: String = s"seconds $seconds"
+}
+
 class BusinessDayFrequency(
   val days: Int,
-  val firstDayOfWeek: Int = DateTimeConstants.MONDAY)
+  val firstDayOfWeek: Int = DayOfWeek.MONDAY.getValue)
   extends Frequency {
   /**
    * Advances the given DateTime by (n * days) business days.
    */
-  def advance(dt: DateTime, n: Int): DateTime = {
+  def advance(dt: ZonedDateTime, n: Int): ZonedDateTime = {
     val dayOfWeek = dt.getDayOfWeek
-    val alignedDayOfWeek = rebaseDayOfWeek(dayOfWeek, firstDayOfWeek)
+    val alignedDayOfWeek = rebaseDayOfWeek(dayOfWeek.getValue, firstDayOfWeek)
     if (alignedDayOfWeek > 5) {
       throw new IllegalArgumentException(s"$dt is not a business day")
     }
@@ -83,23 +158,23 @@ class BusinessDayFrequency(
     val standardWeekendDays = (totalDays / 5) * 2
     val remaining = totalDays % 5
     val extraWeekendDays = if (alignedDayOfWeek + remaining > 5) 2 else 0
-    dt + (totalDays + standardWeekendDays + extraWeekendDays).days
+    dt.plusDays(totalDays + standardWeekendDays + extraWeekendDays)
   }
 
-  def difference(dt1: DateTime, dt2: DateTime): Int = {
-    if (dt2 < dt1) {
+  def difference(dt1: ZonedDateTime, dt2: ZonedDateTime): Int = {
+    if (dt2.isBefore(dt1)) {
       return -difference(dt2, dt1)
     }
-    val daysBetween = Days.daysBetween(dt1, dt2).getDays
+    val daysBetween = ChronoUnit.Days.between(dt1, dt2)
     val dayOfWeek1 = dt1.getDayOfWeek
-    val alignedDayOfWeek1 = rebaseDayOfWeek(dayOfWeek1, firstDayOfWeek)
+    val alignedDayOfWeek1 = rebaseDayOfWeek(dayOfWeek1.getValue, firstDayOfWeek)
     if (alignedDayOfWeek1 > 5) {
       throw new IllegalArgumentException(s"$dt1 is not a business day")
     }
     val standardWeekendDays = (daysBetween / 7) * 2
     val remaining  = daysBetween % 7
     val extraWeekendDays = if (alignedDayOfWeek1 + remaining > 5) 2 else 0
-    (daysBetween - standardWeekendDays - extraWeekendDays) / days
+    ((daysBetween - standardWeekendDays - extraWeekendDays) / days).toInt
   }
 
   override def equals(other: Any): Boolean = {

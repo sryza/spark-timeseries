@@ -19,13 +19,14 @@ import java.io.File
 import java.nio.file.Files
 import java.sql.Timestamp
 
+import codes.reactive.scalatime.{ZoneId, ZonedDateTime}
+
 import scala.Double.NaN
 
 import breeze.linalg._
 
 import com.cloudera.sparkts.DateTimeIndex._
 
-import com.github.nscala_time.time.Imports._
 import org.apache.spark.sql.{Row, SQLContext}
 
 import org.apache.spark.{SparkConf, SparkContext}
@@ -42,11 +43,11 @@ class TimeSeriesRDDSuite extends FunSuite with LocalSparkContext with ShouldMatc
       .map(_.map(x => x.toDouble).toArray)
       .map(new DenseVector(_))
       .map(x => (x(0).toString, x))
-    val start = new DateTime("2015-4-9")
-    val index = uniform(start, 10, 1.days)
+    val start = ZonedDateTime.of(2015, 4, 9, 0, 0, 0, 0, ZoneId.UTC)
+    val index = uniform(start, 10, new DayFrequency(1))
     val rdd = new TimeSeriesRDD[String](index, sc.parallelize(vecs))
-    val slice = rdd.slice(start + 1.days, start + 6.days)
-    slice.index should be (uniform(start + 1.days, 6, 1.days))
+    val slice = rdd.slice(start.plusDays(1), start.plusDays(6))
+    slice.index should be (uniform(start.plusDays(1), 6, new DayFrequency(1)))
     val contents = slice.collectAsMap()
     contents.size should be (3)
     contents("0.0") should be (new DenseVector((1 until 7).map(_.toDouble).toArray))
@@ -62,8 +63,8 @@ class TimeSeriesRDDSuite extends FunSuite with LocalSparkContext with ShouldMatc
       .map(_.map(x => x.toDouble).toArray)
       .map(new DenseVector(_))
       .map(x => (x(0).toString, x))
-    val start = new DateTime("2015-4-9")
-    val index = uniform(start, 10, 1.days)
+    val start = ZonedDateTime.of(2015, 4, 9, 0, 0, 0, 0, ZoneId.UTC)
+    val index = uniform(start, 10, 1.businessDays)
     val rdd = new TimeSeriesRDD[String](index, sc.parallelize(vecs))
     rdd.filterEndingAfter(start).count() should be (3)
   }
@@ -75,16 +76,16 @@ class TimeSeriesRDDSuite extends FunSuite with LocalSparkContext with ShouldMatc
     val seriesVecs = (0 until 20 by 4).map(
       x => new DenseVector((x until x + 4).map(_.toDouble).toArray))
     val labels = Array("a", "b", "c", "d", "e")
-    val start = new DateTime("2015-4-9")
-    val index = uniform(start, 4, 1.days)
+    val start = ZonedDateTime.of(2015, 4, 9, 0, 0, 0, 0, ZoneId.system)
+    val index = uniform(start, 4, new DayFrequency(1))
     val rdd = sc.parallelize(labels.zip(seriesVecs.map(_.asInstanceOf[Vector[Double]])), 3)
     val tsRdd = new TimeSeriesRDD[String](index, rdd)
     val samples = tsRdd.toInstants().collect()
     samples should be (Array(
       (start, new DenseVector((0.0 until 20.0 by 4.0).toArray)),
-      (start + 1.days, new DenseVector((1.0 until 20.0 by 4.0).toArray)),
-      (start + 2.days, new DenseVector((2.0 until 20.0 by 4.0).toArray)),
-      (start + 3.days, new DenseVector((3.0 until 20.0 by 4.0).toArray)))
+      (start.plusDays(1), new DenseVector((1.0 until 20.0 by 4.0).toArray)),
+      (start.plusDays(2), new DenseVector((2.0 until 20.0 by 4.0).toArray)),
+      (start.plusDays(3), new DenseVector((3.0 until 20.0 by 4.0).toArray)))
     )
   }
 
@@ -97,8 +98,8 @@ class TimeSeriesRDDSuite extends FunSuite with LocalSparkContext with ShouldMatc
     val seriesVecs = (0 until 20 by 4).map(
       x => new DenseVector((x until x + 4).map(_.toDouble).toArray))
     val labels = Array("a", "b", "c", "d", "e")
-    val start = new DateTime("2015-4-9")
-    val index = uniform(start, 4, 1.days)
+    val start = ZonedDateTime.of(2015, 4, 9, 0, 0, 0, 0, ZoneId.UTC)
+    val index = uniform(start, 4, new DayFrequency(1))
 
     val rdd = sc.parallelize(labels.zip(seriesVecs.map(_.asInstanceOf[Vector[Double]])), 3)
     val tsRdd = new TimeSeriesRDD[String](index, rdd)
@@ -112,10 +113,13 @@ class TimeSeriesRDDSuite extends FunSuite with LocalSparkContext with ShouldMatc
     columnNames.tail should be (labels)
 
     sampleRows should be (Array(
-      Row.fromSeq(new Timestamp(start.getMillis) :: (0.0 until 20.0 by 4.0).toList),
-      Row.fromSeq(new Timestamp((start + 1.days).getMillis) :: (1.0 until 20.0 by 4.0).toList),
-      Row.fromSeq(new Timestamp((start + 2.days).getMillis) :: (2.0 until 20.0 by 4.0).toList),
-      Row.fromSeq(new Timestamp((start + 3.days).getMillis) :: (3.0 until 20.0 by 4.0).toList)
+      Row.fromSeq(new Timestamp(start.toInstant.toEpochMilli) :: (0.0 until 20.0 by 4.0).toList),
+      Row.fromSeq(new Timestamp((start.plusDays(1)).toInstant.toEpochMilli) ::
+        (1.0 until 20.0 by 4.0).toList),
+      Row.fromSeq(new Timestamp((start.plusDays(2)).toInstant.toEpochMilli) ::
+        (2.0 until 20.0 by 4.0).toList),
+      Row.fromSeq(new Timestamp((start.plusDays(3)).toInstant.toEpochMilli) ::
+        (3.0 until 20.0 by 4.0).toList)
     ))
   }
 
@@ -127,8 +131,8 @@ class TimeSeriesRDDSuite extends FunSuite with LocalSparkContext with ShouldMatc
       .map(_.map(x => x.toDouble).toArray)
       .map(new DenseVector(_))
       .map(x => (x(0).toString, x))
-    val start = new DateTime("2015-4-9")
-    val index = uniform(start, 10, 1.days)
+    val start = ZonedDateTime.of(2015, 4, 9, 0, 0, 0, 0, ZoneId.UTC)
+    val index = uniform(start, 10, 1.businessDays)
     val rdd = new TimeSeriesRDD[String](index, sc.parallelize(vecs))
 
     val tempDir = Files.createTempDirectory("saveload")
@@ -151,8 +155,8 @@ class TimeSeriesRDDSuite extends FunSuite with LocalSparkContext with ShouldMatc
     val seriesVecs = (0 until 20 by 4).map(
       x => new DenseVector((x until x + 4).map(_.toDouble).toArray))
     val labels = Array("a", "b", "c", "d", "e")
-    val start = new DateTime("2015-4-9")
-    val index = uniform(start, 4, 1.days)
+    val start = ZonedDateTime.of(2015, 4, 9, 0, 0, 0, 0, ZoneId.UTC)
+    val index = uniform(start, 4, 1.businessDays)
     val rdd = sc.parallelize(labels.zip(seriesVecs.map(_.asInstanceOf[Vector[Double]])), 3)
     val tsRdd = new TimeSeriesRDD[String](index, rdd)
     val indexedMatrix = tsRdd.toIndexedRowMatrix()
@@ -170,8 +174,8 @@ class TimeSeriesRDDSuite extends FunSuite with LocalSparkContext with ShouldMatc
     val seriesVecs = (0 until 20 by 4).map(
       x => new DenseVector((x until x + 4).map(_.toDouble).toArray))
     val labels = Array("a", "b", "c", "d", "e")
-    val start = new DateTime("2015-4-9")
-    val index = uniform(start, 4, 1.days)
+    val start = ZonedDateTime.of(2015, 4, 9, 0, 0, 0, 0, ZoneId.UTC)
+    val index = uniform(start, 4, 1.businessDays)
     val rdd = sc.parallelize(labels.zip(seriesVecs.map(_.asInstanceOf[Vector[Double]])), 3)
     val tsRdd = new TimeSeriesRDD[String](index, rdd)
     val matrix = tsRdd.toRowMatrix()
@@ -188,8 +192,8 @@ class TimeSeriesRDDSuite extends FunSuite with LocalSparkContext with ShouldMatc
     val seriesVecs = (0 until 20 by 4).map(
       x => new DenseVector((x until x + 4).map(_.toDouble).toArray))
     val labels = Array("a", "b", "c", "d", "e")
-    val start = new DateTime("2015-4-9", DateTimeZone.UTC)
-    val index = uniform(start, 4, 1.days)
+    val start = ZonedDateTime.of(2015, 4, 9, 0, 0, 0, 0, ZoneId.UTC)
+    val index = uniform(start, 4, 1.businessDays)
     val rdd = sc.parallelize(labels.zip(seriesVecs.map(_.asInstanceOf[Vector[Double]])), 3)
     val tsRdd = new TimeSeriesRDD[String](index, rdd)
 
@@ -216,11 +220,12 @@ class TimeSeriesRDDSuite extends FunSuite with LocalSparkContext with ShouldMatc
       Array(1.0, 2.0, 3.0, 4.0), Array(5.0, NaN, 7.0, 8.0), Array(9.0, 10.0, 11.0, NaN))
       .map(new DenseVector(_))
       .map(x => (x(0).toString, x))
-    val start = new DateTime("2015-4-9")
-    val index = uniform(start, 4, 1.days)
+    val start = ZonedDateTime.of(2015, 4, 9, 0, 0, 0, 0, ZoneId.UTC)
+    val index = uniform(start, 4, new DayFrequency(1))
     val rdd = new TimeSeriesRDD[String](index, sc.parallelize(vecs))
     val rdd2 = rdd.removeInstantsWithNaNs()
-    rdd2.index should be (irregular(Array(new DateTime("2015-4-9"), new DateTime("2015-4-11"))))
+    rdd2.index should be (irregular(Array(ZonedDateTime.of(2015, 4, 9, 0, 0, 0, 0, ZoneId.UTC),
+      ZonedDateTime.of(2015, 4, 11, 0, 0, 0, 0, ZoneId.UTC))))
     rdd2.map(_._2).collect() should be (Array(
       new DenseVector(Array(1.0, 3.0)),
       new DenseVector(Array(5.0, 7.0)),

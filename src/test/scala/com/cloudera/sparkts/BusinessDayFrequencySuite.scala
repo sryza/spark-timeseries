@@ -15,70 +15,70 @@
 
 package com.cloudera.sparkts
 
-import com.cloudera.sparkts.DateTimeIndex._
+import java.time.{DayOfWeek, ZonedDateTime}
 
-import com.github.nscala_time.time.Imports._
-import org.joda.time.DateTimeConstants
+import codes.reactive.scalatime.ZoneId
+import com.cloudera.sparkts.DateTimeIndex._
 
 import org.scalatest.{FunSuite, ShouldMatchers}
 
 class BusinessDayFrequencySuite extends FunSuite with ShouldMatchers {
   test("business days") {
-    def caseOf(aDay: DateTime, firstDayOfWeek: Int) {
+    def caseOf(aDay: ZonedDateTime, firstDayOfWeek: Int) {
       // don't cross a weekend
-      (1, firstDayOfWeek).businessDays.advance(aDay, 1) should be(aDay + 1.days)
-      (1, firstDayOfWeek).businessDays.difference(aDay, aDay + 1.days) should be(1)
-      (2, firstDayOfWeek).businessDays.advance(aDay, 1) should be(aDay + 2.days)
-      (1, firstDayOfWeek).businessDays.advance(aDay, 2) should be(aDay + 2.days)
-      (2, firstDayOfWeek).businessDays.difference(aDay, aDay + 2.days) should be(1)
-      (1, firstDayOfWeek).businessDays.difference(aDay, aDay + 2.days) should be(2)
+      (1, firstDayOfWeek).businessDays.advance(aDay, 1) should be(aDay.plusDays(1))
+      (1, firstDayOfWeek).businessDays.difference(aDay, aDay.plusDays(1)) should be(1)
+      (2, firstDayOfWeek).businessDays.advance(aDay, 1) should be(aDay.plusDays(2))
+      (1, firstDayOfWeek).businessDays.advance(aDay, 2) should be(aDay.plusDays(2))
+      (2, firstDayOfWeek).businessDays.difference(aDay, aDay.plusDays(2)) should be(1)
+      (1, firstDayOfWeek).businessDays.difference(aDay, aDay.plusDays(2)) should be(2)
       // go exactly a week ahead
-      (5, firstDayOfWeek).businessDays.advance(aDay, 1) should be(aDay + 7.days)
-      (1, firstDayOfWeek).businessDays.advance(aDay, 5) should be(aDay + 7.days)
-      (5, firstDayOfWeek).businessDays.difference(aDay, aDay + 7.days) should be(1)
-      (1, firstDayOfWeek).businessDays.difference(aDay, aDay + 7.days) should be(5)
+      (5, firstDayOfWeek).businessDays.advance(aDay, 1) should be(aDay.plusDays(7))
+      (1, firstDayOfWeek).businessDays.advance(aDay, 5) should be(aDay.plusDays(7))
+      (5, firstDayOfWeek).businessDays.difference(aDay, aDay.plusDays(7)) should be(1)
+      (1, firstDayOfWeek).businessDays.difference(aDay, aDay.plusDays(7)) should be(5)
       // cross a weekend but go less than a week ahead
-      (4, firstDayOfWeek).businessDays.advance(aDay, 1) should be(aDay + 6.days)
-      (1, firstDayOfWeek).businessDays.advance(aDay, 4) should be(aDay + 6.days)
-      (4, firstDayOfWeek).businessDays.difference(aDay, aDay + 6.days) should be(1)
-      (1, firstDayOfWeek).businessDays.difference(aDay, aDay + 6.days) should be(4)
+      (4, firstDayOfWeek).businessDays.advance(aDay, 1) should be(aDay.plusDays(6))
+      (1, firstDayOfWeek).businessDays.advance(aDay, 4) should be(aDay.plusDays(6))
+      (4, firstDayOfWeek).businessDays.difference(aDay, aDay.plusDays(6)) should be(1)
+      (1, firstDayOfWeek).businessDays.difference(aDay, aDay.plusDays(6)) should be(4)
       // go more than a week ahead
-      (6, firstDayOfWeek).businessDays.advance(aDay, 1) should be(aDay + 8.days)
-      (1, firstDayOfWeek).businessDays.advance(aDay, 6) should be(aDay + 8.days)
-      (6, firstDayOfWeek).businessDays.difference(aDay, aDay + 8.days) should be(1)
-      (1, firstDayOfWeek).businessDays.difference(aDay, aDay + 8.days) should be(6)
+      (6, firstDayOfWeek).businessDays.advance(aDay, 1) should be(aDay.plusDays(8))
+      (1, firstDayOfWeek).businessDays.advance(aDay, 6) should be(aDay.plusDays(8))
+      (6, firstDayOfWeek).businessDays.difference(aDay, aDay.plusDays(8)) should be(1)
+      (1, firstDayOfWeek).businessDays.difference(aDay, aDay.plusDays(8)) should be(6)
       // go exactly two weeks ahead
-      (10, firstDayOfWeek).businessDays.advance(aDay, 1) should be(aDay + 14.days)
-      (1, firstDayOfWeek).businessDays.advance(aDay, 10) should be(aDay + 14.days)
-      (10, firstDayOfWeek).businessDays.difference(aDay, aDay + 14.days) should be(1)
-      (1, firstDayOfWeek).businessDays.difference(aDay, aDay + 14.days) should be(10)
+      (10, firstDayOfWeek).businessDays.advance(aDay, 1) should be(aDay.plusDays(14))
+      (1, firstDayOfWeek).businessDays.advance(aDay, 10) should be(aDay.plusDays(14))
+      (10, firstDayOfWeek).businessDays.difference(aDay, aDay.plusDays(14)) should be(1)
+      (1, firstDayOfWeek).businessDays.difference(aDay, aDay.plusDays(14)) should be(10)
       // go more than two weeks ahead
-      (12, firstDayOfWeek).businessDays.advance(aDay, 1) should be(aDay + 16.days)
-      (1, firstDayOfWeek).businessDays.advance(aDay, 12) should be(aDay + 16.days)
-      (12, firstDayOfWeek).businessDays.difference(aDay, aDay + 16.days) should be(1)
-      (1, firstDayOfWeek).businessDays.difference(aDay, aDay + 16.days) should be(12)
+      (12, firstDayOfWeek).businessDays.advance(aDay, 1) should be(aDay.plusDays(16))
+      (1, firstDayOfWeek).businessDays.advance(aDay, 12) should be(aDay.plusDays(16))
+      (12, firstDayOfWeek).businessDays.difference(aDay, aDay.plusDays(16)) should be(1)
+      (1, firstDayOfWeek).businessDays.difference(aDay, aDay.plusDays(16)) should be(12)
     }
 
     // got the club goin' up, on
-    val aTuesday = new DateTime("2015-4-7")
-    caseOf(aTuesday, DateTimeConstants.MONDAY)
+    val aTuesday = ZonedDateTime.of(2015, 4, 7, 0, 0, 0, 0, ZoneId.UTC)
+    caseOf(aTuesday, DayOfWeek.MONDAY.getValue)
 
-    val aWednesday = new DateTime("2015-4-8")
-    caseOf(aWednesday, DateTimeConstants.TUESDAY)
+    val aWednesday = ZonedDateTime.of(2015, 4, 8, 0, 0, 0, 0, ZoneId.UTC)
+    caseOf(aWednesday, DayOfWeek.TUESDAY.getValue)
 
-    val aThursday = new DateTime("2015-4-9")
-    caseOf(aThursday, DateTimeConstants.WEDNESDAY)
+    val aThursday = ZonedDateTime.of(2015, 4, 9, 0, 0, 0, 0, ZoneId.UTC)
+    caseOf(aThursday, DayOfWeek.WEDNESDAY.getValue)
 
-    val aFriday = new DateTime("2015-4-10")
-    caseOf(aFriday, DateTimeConstants.THURSDAY)
+    val aFriday = ZonedDateTime.of(2015, 4, 10, 0, 0, 0, 0, ZoneId.UTC)
+    caseOf(aFriday, DayOfWeek.THURSDAY.getValue)
 
-    val aSaturday = new DateTime("2015-4-11")
-    caseOf(aSaturday, DateTimeConstants.FRIDAY)
+    val aSaturday = ZonedDateTime.of(2015, 4, 11, 0, 0, 0, 0, ZoneId.UTC)
+    caseOf(aSaturday, DayOfWeek.FRIDAY.getValue)
 
-    val aSunday = new DateTime("2015-4-12")
-    caseOf(aSunday, DateTimeConstants.SATURDAY)
+    val aSunday = ZonedDateTime.of(2015, 4, 12, 0, 0, 0, 0, ZoneId.UTC)
+    caseOf(aSunday, DayOfWeek.SATURDAY.getValue)
 
-    val aMonday = new DateTime("2015-4-13")
-    caseOf(aMonday, DateTimeConstants.SUNDAY)
+    val aMonday = ZonedDateTime.of(2015, 4, 13, 0, 0, 0, 0, ZoneId.UTC)
+    caseOf(aMonday, DayOfWeek.SUNDAY.getValue)
   }
 }

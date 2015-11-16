@@ -19,9 +19,7 @@ import scala.collection.mutable.ArrayBuffer
 
 import breeze.linalg._
 
-import com.github.nscala_time.time.Imports._
-
-import org.joda.time.DateTime
+import codes.reactive.scalatime._
 
 /**
  * Internal utilities for dealing with 1-D time series.
@@ -111,10 +109,8 @@ private[sparkts] object TimeSeriesUtils {
       sourceIndex: UniformDateTimeIndex,
       targetIndex: UniformDateTimeIndex,
       defaultValue: Double): Vector[Double] => Vector[Double] = {
-    val startLoc = sourceIndex.frequency.difference(
-      new DateTime(sourceIndex.first), targetIndex.first)
-    val endLoc = sourceIndex.frequency.difference(
-      new DateTime(sourceIndex.first), targetIndex.last) + 1
+    val startLoc = sourceIndex.frequency.difference(sourceIndex.first, targetIndex.first)
+    val endLoc = sourceIndex.frequency.difference(sourceIndex.first, targetIndex.last) + 1
 
     val safeStartLoc = math.max(startLoc, 0)
     val resultStartLoc = if (startLoc < 0) -startLoc else 0
@@ -142,7 +138,7 @@ private[sparkts] object TimeSeriesUtils {
     val startLoc = -targetIndex.locAtDateTime(sourceIndex.first)
     val startLocInSourceVec = math.max(0, startLoc)
     val dtsRelevant = sourceIndex.instants.iterator.drop(startLocInSourceVec)
-      .map(new DateTime(_, targetIndex.dateTimeZone))
+      .map(l => java.time.ZonedDateTime.ofInstant(java.time.Instant.ofEpochMilli(l), targetIndex.dateTimeZone))
 
     vec: Vector[Double] => {
       val vecRelevant = vec(startLocInSourceVec until vec.length).valuesIterator
@@ -203,7 +199,7 @@ private[sparkts] object TimeSeriesUtils {
     }
   }
 
-  def samplesToTimeSeries(samples: Iterator[(DateTime, Double)], frequency: Frequency)
+  def samplesToTimeSeries(samples: Iterator[(ZonedDateTime, Double)], frequency: Frequency)
     : (UniformDateTimeIndex, DenseVector[Double]) = {
     val arr = new ArrayBuffer[Double]()
     val iter = iterateWithUniformFrequency(samples, frequency)
@@ -216,7 +212,7 @@ private[sparkts] object TimeSeriesUtils {
     (index, new DenseVector[Double](arr.toArray))
   }
 
-  def samplesToTimeSeries(samples: Iterator[(DateTime, Double)], index: UniformDateTimeIndex)
+  def samplesToTimeSeries(samples: Iterator[(ZonedDateTime, Double)], index: UniformDateTimeIndex)
     : (DenseVector[Double]) = {
     val arr = new Array[Double](index.size)
     val iter = iterateWithUniformFrequency(samples, index.frequency)
@@ -235,22 +231,22 @@ private[sparkts] object TimeSeriesUtils {
    *
    * The input samples must be aligned on the given frequency.
    */
-  def iterateWithUniformFrequency(samples: Iterator[(DateTime, Double)], frequency: Frequency,
-      defaultValue: Double = Double.NaN): Iterator[(DateTime, Double)] = {
+  def iterateWithUniformFrequency(samples: Iterator[(ZonedDateTime, Double)], frequency: Frequency,
+      defaultValue: Double = Double.NaN): Iterator[(ZonedDateTime, Double)] = {
     // TODO: throw exceptions for points with non-aligned frequencies
-    new Iterator[(DateTime, Double)]() {
+    new Iterator[(ZonedDateTime, Double)]() {
       var curTup = if (samples.hasNext) samples.next() else null
       var curUniformDT = if (curTup != null) curTup._1 else null
 
       def hasNext: Boolean = curTup != null
 
-      def next(): (DateTime, Double) = {
+      def next(): (ZonedDateTime, Double) = {
         val retValue = if (curTup._1 == curUniformDT) {
           val value = curTup._2
           curTup = if (samples.hasNext) samples.next() else null
           value
         } else {
-          assert(curTup._1 > curUniformDT)
+          assert(curTup._1.isAfter(curUniformDT))
           defaultValue
         }
         val dt = curUniformDT
@@ -260,11 +256,11 @@ private[sparkts] object TimeSeriesUtils {
     }
   }
 
-  def minMaxDateTimes(index: UniformDateTimeIndex, series: Array[Double]): (DateTime, DateTime) = {
+  def minMaxDateTimes(index: UniformDateTimeIndex, series: Array[Double]): (ZonedDateTime, ZonedDateTime) = {
     var min = Double.MaxValue
-    var minDt: DateTime = null
+    var minDt: ZonedDateTime = null
     var max = Double.MinValue
-    var maxDt: DateTime = null
+    var maxDt: ZonedDateTime = null
 
     var i = 0
     while (i < series.length) {

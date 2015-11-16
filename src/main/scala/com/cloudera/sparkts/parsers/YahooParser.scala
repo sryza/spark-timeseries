@@ -17,23 +17,21 @@ package com.cloudera.sparkts.parsers
 
 import com.cloudera.sparkts.TimeSeries
 import com.cloudera.sparkts.TimeSeries._
-
+import codes.reactive.scalatime._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
-
-import org.joda.time.{DateTimeZone, DateTime}
 
 object YahooParser {
   def yahooStringToTimeSeries(
     text: String,
     keyPrefix: String = "",
-    zone: DateTimeZone = DateTimeZone.getDefault)
+    zone: ZoneId = ZoneId.system)
     : TimeSeries[String] = {
     val lines = text.split('\n')
     val labels = lines(0).split(',').tail.map(keyPrefix + _)
     val samples = lines.tail.map { line =>
       val tokens = line.split(',')
-      val dt = new DateTime(tokens.head, zone)
+      val dt = java.time.LocalDateTime.parse(tokens.head).atZone(zone)
       (dt, tokens.tail.map(_.toDouble))
     }.reverse
     timeSeriesFromIrregularSamples(samples, labels, zone)
@@ -42,7 +40,7 @@ object YahooParser {
   def yahooFiles(
     dir: String,
     sc: SparkContext,
-    zone: DateTimeZone = DateTimeZone.getDefault)
+    zone: ZoneId = ZoneId.system)
     : RDD[TimeSeries[String]] = {
     sc.wholeTextFiles(dir).map { case (path, text) =>
       YahooParser.yahooStringToTimeSeries(text, path.split('/').last, zone)

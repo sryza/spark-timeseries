@@ -15,8 +15,9 @@
 
 package com.cloudera.sparkts
 
+import codes.reactive.scalatime._
+
 import breeze.linalg._
-import com.github.nscala_time.time.Imports._
 import TimeSeries._
 
 import scala.reflect.ClassTag
@@ -154,27 +155,6 @@ class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix[Double],
     mapSeries(index.islice(lag, index.size), vec => diff(vec.toDenseVector, lag))
   }
 
-  def timeDerivative(baseFrequency: Frequency): TimeSeries[K] = {
-    val instants = toInstants()
-
-    val pairs = instants.drop(1).zip(instants)
-
-    val diffedData = new DenseMatrix[Double](instants.length - 1, instants.head._2.length)
-    for (rowIndex <- 0 until instants.length - 1) {
-      val pair = pairs(rowIndex)
-      val timeDiff = baseFrequency.difference(pair._2._1, pair._1._1)
-
-      for (i <- 0 until pair._1._2.size) {
-        val tmp = pair._1._2(i) - pair._2._2(i)
-        val diffValue = tmp / timeDiff
-
-        diffedData(rowIndex, i) = diffValue
-      }
-    }
-
-    new TimeSeries[K](index.islice(1, index.size), diffedData, keys)
-  }
-
   /**
    * Returns a TimeSeries where each time series is differenced with order 1. The new TimeSeries
    * will be missing the first date-time.
@@ -225,7 +205,7 @@ class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix[Double],
     }
   }
 
-  def toInstants(): IndexedSeq[(DateTime, Vector[Double])] = {
+  def toInstants(): IndexedSeq[(ZonedDateTime, Vector[Double])] = {
     (0 until data.rows).map(rowIndex => (index.dateTimeAtLoc(rowIndex), data(rowIndex, ::)
       .inner.toVector))
   }
@@ -279,16 +259,16 @@ object TimeSeries {
   def laggedPairKey[K](key: K, lagOrder: Int): (K, Int) = (key, lagOrder)
 
   def timeSeriesFromIrregularSamples[K](
-      samples: Seq[(DateTime, Array[Double])],
+      samples: Seq[(ZonedDateTime, Array[Double])],
       keys: Array[K],
-      zone: DateTimeZone = DateTimeZone.getDefault())
+      zone: ZoneId = ZoneId.system)
       (implicit kClassTag: ClassTag[K])
     : TimeSeries[K] = {
     val mat = new DenseMatrix[Double](samples.length, samples.head._2.length)
     val dts = new Array[Long](samples.length)
     for (i <- samples.indices) {
       val (dt, values) = samples(i)
-      dts(i) = dt.getMillis
+      dts(i) = dt.toInstant().toEpochMilli
       mat(i to i, ::) := new DenseVector[Double](values)
     }
     new TimeSeries[K](new IrregularDateTimeIndex(dts, zone), mat, keys)

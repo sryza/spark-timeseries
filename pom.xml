@@ -320,6 +320,11 @@
       <version>${scala.complete.version}</version>
     </dependency>
     <dependency>
+      <groupId>codes.reactive</groupId>
+      <artifactId>scala-time_2.11</artifactId>
+      <version>0.1.0-RC1</version>
+    </dependency>
+    <dependency>
       <groupId>org.scala-lang</groupId>
       <artifactId>scala-compiler</artifactId>
       <version>${scala.complete.version}</version>
