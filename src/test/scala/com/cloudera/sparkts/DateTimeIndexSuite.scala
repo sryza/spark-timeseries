@@ -25,7 +25,7 @@ class DateTimeIndexSuite extends FunSuite with ShouldMatchers {
 
   test("to / from string") {
     val uniformIndex = uniform(
-      java.time.ZonedDateTime.of(1990, 4, 10, 0, 0, 0, 0, ZoneId.systemDefault()),
+      ZonedDateTime.of(1990, 4, 10, 0, 0, 0, 0, ZoneId.systemDefault()),
       5,
       new BusinessDayFrequency(2))
     val uniformStr = uniformIndex.toString

@@ -40,8 +40,7 @@ class DateTimeSerializer extends Serializer[ZonedDateTime] {
   }
 
   def read(kryo: Kryo, in: Input, clazz: Class[ZonedDateTime]): ZonedDateTime = {
-    java.time.ZonedDateTime.ofInstant(
-      java.time.Instant.ofEpochMilli(in.readLong(true)),
+    ZonedDateTime.ofInstant(Instant.ofEpochMilli(in.readLong(true)),
       ZoneId.systemDefault())
   }
 }

@@ -15,8 +15,6 @@
 
 package com.cloudera.sparkts
 
-import java.time.{DayOfWeek, ZonedDateTime}
-
 import java.time._
 import com.cloudera.sparkts.DateTimeIndex._
 

@@ -167,8 +167,8 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector[Double])
    * @param end The end date for the slice (inclusive).
    */
   def slice(start: Long, end: Long): TimeSeriesRDD[K] = {
-    slice(java.time.ZonedDateTime.ofInstant(java.time.Instant.ofEpochMilli(start), ZoneId.systemDefault()),
-          java.time.ZonedDateTime.ofInstant(java.time.Instant.ofEpochMilli(end), ZoneId.systemDefault()))
+    slice(ZonedDateTime.ofInstant(Instant.ofEpochMilli(start), ZoneId.systemDefault()),
+          ZonedDateTime.ofInstant(Instant.ofEpochMilli(end), ZoneId.systemDefault()))
   }
 
   /**
@@ -525,14 +525,14 @@ object TimeSeriesRDD {
           val series = new Array[Double](targetIndex.size)
           Arrays.fill(series, Double.NaN)
           val first = bufferedIter.next()
-          val firstLoc = targetIndex.locAtDateTime(java.time.ZonedDateTime.ofInstant(first._1._2.toInstant, targetIndex.zone))
+          val firstLoc = targetIndex.locAtDateTime(ZonedDateTime.ofInstant(first._1._2.toInstant, targetIndex.zone))
           if (firstLoc >= 0) {
             series(firstLoc) = first._2
           }
           val key = first._1._1
           while (bufferedIter.hasNext && bufferedIter.head._1._1 == key) {
             val sample = bufferedIter.next()
-            val sampleLoc = targetIndex.locAtDateTime(java.time.ZonedDateTime.ofInstant(sample._1._2.toInstant, targetIndex.zone))
+            val sampleLoc = targetIndex.locAtDateTime(ZonedDateTime.ofInstant(sample._1._2.toInstant, targetIndex.zone))
             if (sampleLoc >= 0) {
               series(sampleLoc) = sample._2
             }
