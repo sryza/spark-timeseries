@@ -19,7 +19,7 @@ import scala.collection.mutable.ArrayBuffer
 
 import breeze.linalg._
 
-import codes.reactive.scalatime._
+import java.time._
 
 /**
  * Internal utilities for dealing with 1-D time series.

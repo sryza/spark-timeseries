@@ -19,7 +19,7 @@ import java.io.{BufferedReader, InputStreamReader, PrintStream}
 import java.nio.ByteBuffer
 import java.sql.Timestamp
 import java.util.Arrays
-import codes.reactive.scalatime._
+import java.time._
 import scala.collection.mutable.ArrayBuffer
 
 import breeze.linalg._
@@ -167,8 +167,8 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector[Double])
    * @param end The end date for the slice (inclusive).
    */
   def slice(start: Long, end: Long): TimeSeriesRDD[K] = {
-    slice(java.time.ZonedDateTime.ofInstant(java.time.Instant.ofEpochMilli(start), ZoneId.system),
-          java.time.ZonedDateTime.ofInstant(java.time.Instant.ofEpochMilli(end), ZoneId.system))
+    slice(java.time.ZonedDateTime.ofInstant(java.time.Instant.ofEpochMilli(start), ZoneId.systemDefault()),
+          java.time.ZonedDateTime.ofInstant(java.time.Instant.ofEpochMilli(end), ZoneId.systemDefault()))
   }
 
   /**

@@ -17,7 +17,7 @@ package com.cloudera.sparkts
 
 import java.time.{DayOfWeek, ZonedDateTime}
 
-import codes.reactive.scalatime.ZoneId
+import java.time._
 import com.cloudera.sparkts.DateTimeIndex._
 
 import org.scalatest.{FunSuite, ShouldMatchers}
@@ -60,25 +60,25 @@ class BusinessDayFrequencySuite extends FunSuite with ShouldMatchers {
     }
 
     // got the club goin' up, on
-    val aTuesday = ZonedDateTime.of(2015, 4, 7, 0, 0, 0, 0, ZoneId.UTC)
+    val aTuesday = ZonedDateTime.of(2015, 4, 7, 0, 0, 0, 0, ZoneId.of("Z"))
     caseOf(aTuesday, DayOfWeek.MONDAY.getValue)
 
-    val aWednesday = ZonedDateTime.of(2015, 4, 8, 0, 0, 0, 0, ZoneId.UTC)
+    val aWednesday = ZonedDateTime.of(2015, 4, 8, 0, 0, 0, 0, ZoneId.of("Z"))
     caseOf(aWednesday, DayOfWeek.TUESDAY.getValue)
 
-    val aThursday = ZonedDateTime.of(2015, 4, 9, 0, 0, 0, 0, ZoneId.UTC)
+    val aThursday = ZonedDateTime.of(2015, 4, 9, 0, 0, 0, 0, ZoneId.of("Z"))
     caseOf(aThursday, DayOfWeek.WEDNESDAY.getValue)
 
-    val aFriday = ZonedDateTime.of(2015, 4, 10, 0, 0, 0, 0, ZoneId.UTC)
+    val aFriday = ZonedDateTime.of(2015, 4, 10, 0, 0, 0, 0, ZoneId.of("Z"))
     caseOf(aFriday, DayOfWeek.THURSDAY.getValue)
 
-    val aSaturday = ZonedDateTime.of(2015, 4, 11, 0, 0, 0, 0, ZoneId.UTC)
+    val aSaturday = ZonedDateTime.of(2015, 4, 11, 0, 0, 0, 0, ZoneId.of("Z"))
     caseOf(aSaturday, DayOfWeek.FRIDAY.getValue)
 
-    val aSunday = ZonedDateTime.of(2015, 4, 12, 0, 0, 0, 0, ZoneId.UTC)
+    val aSunday = ZonedDateTime.of(2015, 4, 12, 0, 0, 0, 0, ZoneId.of("Z"))
     caseOf(aSunday, DayOfWeek.SATURDAY.getValue)
 
-    val aMonday = ZonedDateTime.of(2015, 4, 13, 0, 0, 0, 0, ZoneId.UTC)
+    val aMonday = ZonedDateTime.of(2015, 4, 13, 0, 0, 0, 0, ZoneId.of("Z"))
     caseOf(aMonday, DayOfWeek.SUNDAY.getValue)
   }
 }

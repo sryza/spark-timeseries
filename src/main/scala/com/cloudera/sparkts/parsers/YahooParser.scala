@@ -17,7 +17,7 @@ package com.cloudera.sparkts.parsers
 
 import com.cloudera.sparkts.TimeSeries
 import com.cloudera.sparkts.TimeSeries._
-import codes.reactive.scalatime._
+import java.time._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
@@ -25,7 +25,7 @@ object YahooParser {
   def yahooStringToTimeSeries(
     text: String,
     keyPrefix: String = "",
-    zone: ZoneId = ZoneId.system)
+    zone: ZoneId = ZoneId.systemDefault())
     : TimeSeries[String] = {
     val lines = text.split('\n')
     val labels = lines(0).split(',').tail.map(keyPrefix + _)
@@ -40,7 +40,7 @@ object YahooParser {
   def yahooFiles(
     dir: String,
     sc: SparkContext,
-    zone: ZoneId = ZoneId.system)
+    zone: ZoneId = ZoneId.systemDefault())
     : RDD[TimeSeries[String]] = {
     sc.wholeTextFiles(dir).map { case (path, text) =>
       YahooParser.yahooStringToTimeSeries(text, path.split('/').last, zone)

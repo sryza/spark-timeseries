@@ -19,7 +19,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.cloudera.sparkts</groupId>
   <artifactId>sparkts</artifactId>
-  <version>0.1.0-SNAPSHOT</version>
+  <version>0.2.0-SNAPSHOT</version>
   <packaging>jar</packaging>
   <name>Spark TS</name>
 
@@ -347,11 +347,6 @@
       <artifactId>spark-mllib_${scala.minor.version}</artifactId>
       <version>${spark.version}</version>
       <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>codes.reactive</groupId>
-      <artifactId>scala-time_2.11</artifactId>
-      <version>0.1.0-RC1</version>
     </dependency>
     <dependency>
       <groupId>org.threeten</groupId>

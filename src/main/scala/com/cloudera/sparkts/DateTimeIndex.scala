@@ -15,11 +15,9 @@
 
 package com.cloudera.sparkts
 
-import java.time.DayOfWeek
-
 import org.threeten.extra._
 import scala.language.implicitConversions
-import codes.reactive.scalatime._
+import java.time._
 import com.cloudera.sparkts.DateTimeIndex._
 
 /**
@@ -104,13 +102,6 @@ trait DateTimeIndex extends Serializable {
   def locAtDateTime(dt: Long): Int
 
   /**
-   * The location of the given date-time. If the index contains the date-time more than once,
-   * returns its first appearance. If the given date-time does not appear in the index, returns the
-   * location of the closest anterior DateTime that exists.
-   */
-  def locAtOrBeforeDateTime(dt: ZonedDateTime): Int
-
-  /**
    * Returns the contents of the DateTimeIndex as an array of millisecond values from the epoch.
    */
   def toMillisArray(): Array[Long]
@@ -124,10 +115,11 @@ class UniformDateTimeIndex(
     val start: Long,
     val periods: Int,
     val frequency: Frequency,
-    val dateTimeZone: ZoneId = ZoneId.system)
+    val dateTimeZone: ZoneId = ZoneId.systemDefault())
   extends DateTimeIndex {
 
-  override def first: ZonedDateTime = java.time.ZonedDateTime.ofInstant(java.time.Instant.ofEpochMilli(start), dateTimeZone)
+  override def first: ZonedDateTime = java.time.ZonedDateTime.ofInstant(
+    java.time.Instant.ofEpochMilli(start), dateTimeZone)
 
   override def last: ZonedDateTime = frequency.advance(first, periods - 1)
 
@@ -174,11 +166,6 @@ class UniformDateTimeIndex(
       dateTimeZone))
   }
 
-  override def locAtOrBeforeDateTime(dt: ZonedDateTime): Int = {
-    val loc = locAtDateTime(dt)
-    if (loc == -1 && dt.isAfter(last)) size - 1 else loc
-  }
-
   override def toMillisArray(): Array[Long] = {
     val arr = new Array[Long](periods)
     for (i <- 0 until periods) {
@@ -207,7 +194,7 @@ class UniformDateTimeIndex(
  */
 class IrregularDateTimeIndex(
     val instants: Array[Long],
-    val dateTimeZone: ZoneId = ZoneId.system)
+    val dateTimeZone: ZoneId = ZoneId.systemDefault())
   extends DateTimeIndex {
 
   override def slice(interval: Interval): IrregularDateTimeIndex = {
@@ -258,11 +245,6 @@ class IrregularDateTimeIndex(
   override def locAtDateTime(dt: Long): Int = {
     val loc = java.util.Arrays.binarySearch(instants, dt)
     if (loc < 0) -1 else loc
-  }
-
-  override def locAtOrBeforeDateTime(dt: ZonedDateTime): Int = {
-    val loc = java.util.Arrays.binarySearch(instants, dt.toInstant().toEpochMilli())
-    if (loc < 0) (-loc) - 2 else loc
   }
 
   override def toMillisArray(): Array[Long] = {
@@ -319,7 +301,7 @@ object DateTimeIndex {
    * Create a UniformDateTimeIndex with the given start time and end time (inclusive) and frequency.
    */
   def uniform(start: Long, end: Long, frequency: Frequency): UniformDateTimeIndex = {
-    val tz = ZoneId.system
+    val tz = ZoneId.systemDefault()
     uniform(start, frequency.difference(java.time.ZonedDateTime.ofInstant(
       java.time.Instant.ofEpochMilli(start), tz),
       java.time.ZonedDateTime.ofInstant(
@@ -459,7 +441,7 @@ object DateTimeIndex {
         }
         uniform(start, periods, freq)
       case "irregular" =>
-        val zone = ZoneId(tokens(1))
+        val zone = ZoneId.of(tokens(1))
         val dts = new Array[ZonedDateTime](tokens.length - 2)
         for (i <- 2 until tokens.length) {
           dts(i - 2) = java.time.ZonedDateTime.parse(tokens(i))

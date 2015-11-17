@@ -15,11 +15,9 @@
 
 package com.cloudera.sparkts
 
-import java.time.DayOfWeek
-
-import codes.reactive.scalatime.format.DateTimeFormatter
 import org.scalatest.{FunSuite, ShouldMatchers}
-import codes.reactive.scalatime._
+import java.time._
+import java.time.format._
 import com.cloudera.sparkts.DateTimeIndex._
 import org.threeten.extra.Interval
 
@@ -27,22 +25,22 @@ class DateTimeIndexSuite extends FunSuite with ShouldMatchers {
 
   test("to / from string") {
     val uniformIndex = uniform(
-      java.time.ZonedDateTime.of(1990, 4, 10, 0, 0, 0, 0, ZoneId.system),
+      java.time.ZonedDateTime.of(1990, 4, 10, 0, 0, 0, 0, ZoneId.systemDefault()),
       5,
       new BusinessDayFrequency(2))
     val uniformStr = uniformIndex.toString
     fromString(uniformStr) should be (uniformIndex)
 
     val irregularIndex = irregular(
-      Array(ZonedDateTime.of(1990, 4, 10, 0, 0, 0, 0, ZoneId.UTC),
-        ZonedDateTime.of(1990, 4, 12, 0, 0, 0, 0, ZoneId.UTC),
-        ZonedDateTime.of(1990, 4, 13, 0, 0, 0, 0, ZoneId.UTC)))
+      Array(ZonedDateTime.of(1990, 4, 10, 0, 0, 0, 0, ZoneId.of("Z")),
+        ZonedDateTime.of(1990, 4, 12, 0, 0, 0, 0, ZoneId.of("Z")),
+        ZonedDateTime.of(1990, 4, 13, 0, 0, 0, 0, ZoneId.of("Z"))))
     val irregularStr = irregularIndex.toString
     fromString(irregularStr) should be (irregularIndex)
   }
 
   test("to / from string with time zone") {
-    val zone = ZoneId("", ZoneOffset(4))
+    val zone = ZoneId.ofOffset("", ZoneOffset.ofHours(4))
     val uniformIndex = uniform(ZonedDateTime.of(1990, 4, 10, 0, 0, 0, 0, zone), 5, 2.businessDays)
     val uniformStr = uniformIndex.toString
     fromString(uniformStr) should be (uniformIndex)
@@ -57,53 +55,53 @@ class DateTimeIndexSuite extends FunSuite with ShouldMatchers {
 
   test("uniform") {
     val index: DateTimeIndex = uniform(
-      ZonedDateTime.of(2015, 4, 10, 0, 0, 0, 0, ZoneId.UTC),
+      ZonedDateTime.of(2015, 4, 10, 0, 0, 0, 0, ZoneId.of("Z")),
       5,
       new DayFrequency(2))
     index.size should be (5)
-    index.first should be (ZonedDateTime.of(2015, 4, 10, 0, 0, 0, 0, ZoneId.UTC))
-    index.last should be (ZonedDateTime.of(2015, 4, 18, 0, 0, 0, 0, ZoneId.UTC))
+    index.first should be (ZonedDateTime.of(2015, 4, 10, 0, 0, 0, 0, ZoneId.of("Z")))
+    index.last should be (ZonedDateTime.of(2015, 4, 18, 0, 0, 0, 0, ZoneId.of("Z")))
 
     def verifySlice(index: DateTimeIndex) = {
       index.size should be (2)
-      index.first should be (ZonedDateTime.of(2015, 4, 14, 0, 0, 0, 0, ZoneId.UTC))
-      index.last should be (ZonedDateTime.of(2015, 4, 16, 0, 0, 0, 0, ZoneId.UTC))
+      index.first should be (ZonedDateTime.of(2015, 4, 14, 0, 0, 0, 0, ZoneId.of("Z")))
+      index.last should be (ZonedDateTime.of(2015, 4, 16, 0, 0, 0, 0, ZoneId.of("Z")))
     }
 
-    verifySlice(index.slice(ZonedDateTime.of(2015, 4, 14, 0, 0, 0, 0, ZoneId.UTC),
-      ZonedDateTime.of(2015, 4, 16, 0, 0, 0, 0, ZoneId.UTC)))
+    verifySlice(index.slice(ZonedDateTime.of(2015, 4, 14, 0, 0, 0, 0, ZoneId.of("Z")),
+      ZonedDateTime.of(2015, 4, 16, 0, 0, 0, 0, ZoneId.of("Z"))))
     verifySlice(index.slice(Interval.of(
-      ZonedDateTime.of(2015, 4, 14, 0, 0, 0, 0, ZoneId.UTC).toInstant(),
-      ZonedDateTime.of(2015, 4, 16, 0, 0, 0, 0, ZoneId.UTC).toInstant())))
+      ZonedDateTime.of(2015, 4, 14, 0, 0, 0, 0, ZoneId.of("Z")).toInstant(),
+      ZonedDateTime.of(2015, 4, 16, 0, 0, 0, 0, ZoneId.of("Z")).toInstant())))
     verifySlice(index.islice(2, 4))
     verifySlice(index.islice(2 until 4))
     verifySlice(index.islice(2 to 3))
   }
 
   test("irregular") {
-    val formatter = DateTimeFormatter("yyyy-MM-dd HH:mm:ss")
+    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
     val index = irregular(Array(
       "2015-04-14 00:00:00",
       "2015-04-15 00:00:00",
       "2015-04-17 00:00:00",
       "2015-04-22 00:00:00",
       "2015-04-25 00:00:00"
-    ).map(text => LocalDateTime.parse(text, formatter).atZone(ZoneId.UTC)))
+    ).map(text => LocalDateTime.parse(text, formatter).atZone(ZoneId.of("Z"))))
     index.size should be (5)
-    index.first should be (ZonedDateTime.of(2015, 4, 14, 0, 0, 0, 0, ZoneId.UTC))
-    index.last should be (ZonedDateTime.of(2015, 4, 25, 0, 0, 0, 0, ZoneId.UTC))
+    index.first should be (ZonedDateTime.of(2015, 4, 14, 0, 0, 0, 0, ZoneId.of("Z")))
+    index.last should be (ZonedDateTime.of(2015, 4, 25, 0, 0, 0, 0, ZoneId.of("Z")))
 
     def verifySlice(index: DateTimeIndex) = {
       index.size should be (3)
-      index.first should be (ZonedDateTime.of(2015, 4, 15, 0, 0, 0, 0, ZoneId.UTC))
-      index.last should be (ZonedDateTime.of(2015, 4, 22, 0, 0, 0, 0, ZoneId.UTC))
+      index.first should be (ZonedDateTime.of(2015, 4, 15, 0, 0, 0, 0, ZoneId.of("Z")))
+      index.last should be (ZonedDateTime.of(2015, 4, 22, 0, 0, 0, 0, ZoneId.of("Z")))
     }
 
-    verifySlice(index.slice(ZonedDateTime.of(2015, 4, 15, 0, 0, 0, 0, ZoneId.UTC),
-      ZonedDateTime.of(2015, 4, 22, 0, 0, 0, 0, ZoneId.UTC)))
+    verifySlice(index.slice(ZonedDateTime.of(2015, 4, 15, 0, 0, 0, 0, ZoneId.of("Z")),
+      ZonedDateTime.of(2015, 4, 22, 0, 0, 0, 0, ZoneId.of("Z"))))
     verifySlice(index.slice(Interval.of(
-      ZonedDateTime.of(2015, 4, 15, 0, 0, 0, 0, ZoneId.UTC).toInstant(),
-      ZonedDateTime.of(2015, 4, 22, 0, 0, 0, 0, ZoneId.UTC).toInstant())))
+      ZonedDateTime.of(2015, 4, 15, 0, 0, 0, 0, ZoneId.of("Z")).toInstant(),
+      ZonedDateTime.of(2015, 4, 22, 0, 0, 0, 0, ZoneId.of("Z")).toInstant())))
     verifySlice(index.islice(1, 4))
     verifySlice(index.islice(1 until 4))
     verifySlice(index.islice(1 to 3))
@@ -132,54 +130,29 @@ class DateTimeIndexSuite extends FunSuite with ShouldMatchers {
   }
 
   test("locAtDatetime returns -1") {
-    val formatter = DateTimeFormatter("yyyy-MM-dd HH:mm:ss")
+    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
     val index = irregular(Array(
       "2015-04-14 00:00:00",
       "2015-04-15 00:00:00",
       "2015-04-17 00:00:00",
       "2015-04-22 00:00:00",
       "2015-04-25 00:00:00"
-    ).map(text => LocalDateTime.parse(text, formatter).atZone(ZoneId.UTC)))
+    ).map(text => LocalDateTime.parse(text, formatter).atZone(ZoneId.of("Z"))))
     index.size should be (5)
-    index.first should be (ZonedDateTime.of(2015, 4, 14, 0, 0, 0, 0, ZoneId.UTC))
-    index.last should be (ZonedDateTime.of(2015, 4, 25, 0, 0, 0, 0, ZoneId.UTC))
+    index.first should be (ZonedDateTime.of(2015, 4, 14, 0, 0, 0, 0, ZoneId.of("Z")))
+    index.last should be (ZonedDateTime.of(2015, 4, 25, 0, 0, 0, 0, ZoneId.of("Z")))
 
-    val loc1 = index.locAtDateTime(ZonedDateTime.of(2015, 4, 15, 0, 0, 0, 0, ZoneId.UTC))
+    val loc1 = index.locAtDateTime(ZonedDateTime.of(2015, 4, 15, 0, 0, 0, 0, ZoneId.of("Z")))
     loc1 should be (1)
 
-    val loc2 = index.locAtDateTime(ZonedDateTime.of(2015, 4, 16, 0, 0, 0, 0, ZoneId.UTC))
+    val loc2 = index.locAtDateTime(ZonedDateTime.of(2015, 4, 16, 0, 0, 0, 0, ZoneId.of("Z")))
     loc2 should be (-1)
 
-    val loc3 = index.locAtDateTime(ZonedDateTime.of(2015, 4, 25, 0, 0, 0, 0, ZoneId.UTC))
+    val loc3 = index.locAtDateTime(ZonedDateTime.of(2015, 4, 25, 0, 0, 0, 0, ZoneId.of("Z")))
     loc3 should be (4)
 
-    val loc4 = index.locAtDateTime(ZonedDateTime.of(2015, 4, 24, 0, 0, 0, 0, ZoneId.UTC))
+    val loc4 = index.locAtDateTime(ZonedDateTime.of(2015, 4, 24, 0, 0, 0, 0, ZoneId.of("Z")))
     loc4 should be (-1)
   }
 
-  test("locAtOrBeforeDatetime returns previous loc") {
-    val formatter = DateTimeFormatter("yyyy-MM-dd HH:mm:ss")
-    val index = irregular(Array(
-      "2015-04-14 00:00:00",
-      "2015-04-15 00:00:00",
-      "2015-04-17 00:00:00",
-      "2015-04-22 00:00:00",
-      "2015-04-25 00:00:00"
-    ).map(text => LocalDateTime.parse(text, formatter).atZone(ZoneId.UTC)))
-    index.size should be (5)
-    index.first should be (ZonedDateTime.of(2015, 4, 14, 0, 0, 0, 0, ZoneId.UTC))
-    index.last should be (ZonedDateTime.of(2015, 4, 25, 0, 0, 0, 0, ZoneId.UTC))
-
-    val loc1 = index.locAtOrBeforeDateTime(ZonedDateTime.of(2015, 4, 15, 0, 0, 0, 0, ZoneId.UTC))
-    loc1 should be (1)
-
-    val loc2 = index.locAtOrBeforeDateTime(ZonedDateTime.of(2015, 4, 16, 0, 0, 0, 0, ZoneId.UTC))
-    loc2 should be (1)
-
-    val loc3 = index.locAtOrBeforeDateTime(ZonedDateTime.of(2015, 4, 25, 0, 0, 0, 0, ZoneId.UTC))
-    loc3 should be (4)
-
-    val loc4 = index.locAtOrBeforeDateTime(ZonedDateTime.of(2015, 4, 24, 0, 0, 0, 0, ZoneId.UTC))
-    loc4 should be (3)
-  }
 }

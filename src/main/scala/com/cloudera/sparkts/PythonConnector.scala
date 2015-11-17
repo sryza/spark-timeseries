@@ -21,7 +21,7 @@ import breeze.linalg.{DenseVector, Vector}
 
 import org.apache.spark.api.java.function.Function
 
-import codes.reactive.scalatime._
+import java.time._
 
 /**
  * This file contains utilities used by the spark-timeseries Python bindings to communicate with

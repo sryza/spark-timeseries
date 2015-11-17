@@ -21,7 +21,7 @@ import com.esotericsoftware.kryo.io.{Output, Input}
 import org.apache.spark.SparkConf
 import org.apache.spark.serializer.{KryoRegistrator, KryoSerializer}
 
-import codes.reactive.scalatime._
+import java.time._
 
 class TimeSeriesKryoRegistrator extends KryoRegistrator {
   def registerClasses(kryo: Kryo): Unit = {
@@ -42,7 +42,7 @@ class DateTimeSerializer extends Serializer[ZonedDateTime] {
   def read(kryo: Kryo, in: Input, clazz: Class[ZonedDateTime]): ZonedDateTime = {
     java.time.ZonedDateTime.ofInstant(
       java.time.Instant.ofEpochMilli(in.readLong(true)),
-      ZoneId.system)
+      ZoneId.systemDefault())
   }
 }
 

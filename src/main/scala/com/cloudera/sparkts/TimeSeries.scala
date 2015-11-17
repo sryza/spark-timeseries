@@ -15,7 +15,7 @@
 
 package com.cloudera.sparkts
 
-import codes.reactive.scalatime._
+import java.time._
 
 import breeze.linalg._
 import TimeSeries._
@@ -261,7 +261,7 @@ object TimeSeries {
   def timeSeriesFromIrregularSamples[K](
       samples: Seq[(ZonedDateTime, Array[Double])],
       keys: Array[K],
-      zone: ZoneId = ZoneId.system)
+      zone: ZoneId = ZoneId.systemDefault())
       (implicit kClassTag: ClassTag[K])
     : TimeSeries[K] = {
     val mat = new DenseMatrix[Double](samples.length, samples.head._2.length)

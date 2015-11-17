@@ -15,10 +15,9 @@
 
 package com.cloudera.sparkts
 
-import java.time.DayOfWeek
-
 import com.cloudera.sparkts.DateTimeIndex._
-import codes.reactive.scalatime._
+import java.time._
+import java.time.temporal._
 
 class BusinessDayRichInt(n: Int, firstDayOfWeek: Int = DayOfWeek.MONDAY.getValue) {
   def businessDays: BusinessDayFrequency = new BusinessDayFrequency(n, firstDayOfWeek)
@@ -54,10 +53,10 @@ abstract class PeriodFrequency(val period: Duration) extends Frequency {
 }
 
 class MillisecondFrequency(val ms: Int)
-  extends PeriodFrequency(ChronoUnit.Millis.getDuration.multipliedBy(ms)) {
+  extends PeriodFrequency(ChronoUnit.MILLIS.getDuration.multipliedBy(ms)) {
 
   override def difference(dt1: ZonedDateTime, dt2: ZonedDateTime): Int = {
-    val duration = codes.reactive.scalatime.Duration.between(dt1.toLocalDateTime, dt2.toLocalDateTime)
+    val duration = Duration.between(dt1.toLocalDateTime, dt2.toLocalDateTime)
     (duration.toMillis() / ms).toInt
   }
 
@@ -65,10 +64,10 @@ class MillisecondFrequency(val ms: Int)
 }
 
 class MicrosecondFrequency(val us: Int)
-  extends PeriodFrequency(ChronoUnit.Micros.getDuration.multipliedBy(us)) {
+  extends PeriodFrequency(ChronoUnit.MICROS.getDuration.multipliedBy(us)) {
 
   override def difference(dt1: ZonedDateTime, dt2: ZonedDateTime): Int = {
-    val duration = codes.reactive.scalatime.Duration.between(dt1.toLocalDateTime, dt2.toLocalDateTime)
+    val duration = Duration.between(dt1.toLocalDateTime, dt2.toLocalDateTime)
     ((duration.toNanos() * 1000.0) / us).toInt
   }
 
@@ -76,7 +75,7 @@ class MicrosecondFrequency(val us: Int)
 }
 
 class MonthFrequency(val months: Int)
-  extends PeriodFrequency(ChronoUnit.Months.getDuration.multipliedBy(months)) {
+  extends PeriodFrequency(ChronoUnit.MONTHS.getDuration.multipliedBy(months)) {
 
   override def difference(dt1: ZonedDateTime, dt2: ZonedDateTime): Int = {
     val period = Period.between(dt1.toLocalDate, dt2.toLocalDate)
@@ -87,7 +86,7 @@ class MonthFrequency(val months: Int)
 }
 
 class YearFrequency(val years: Int)
-  extends PeriodFrequency(ChronoUnit.Years.getDuration.multipliedBy(years)) {
+  extends PeriodFrequency(ChronoUnit.YEARS.getDuration.multipliedBy(years)) {
 
   override def difference(dt1: ZonedDateTime, dt2: ZonedDateTime): Int = {
     val period = Period.between(dt1.toLocalDate, dt2.toLocalDate)
@@ -98,7 +97,7 @@ class YearFrequency(val years: Int)
 }
 
 class DayFrequency(val days: Int)
-  extends PeriodFrequency(ChronoUnit.Days.getDuration.multipliedBy(days)) {
+  extends PeriodFrequency(ChronoUnit.DAYS.getDuration.multipliedBy(days)) {
 
   override def difference(dt1: ZonedDateTime, dt2: ZonedDateTime): Int = {
     val period = Period.between(dt1.toLocalDate, dt2.toLocalDate)
@@ -109,10 +108,10 @@ class DayFrequency(val days: Int)
 }
 
 class HourFrequency(val hours: Int)
-  extends PeriodFrequency(ChronoUnit.Hours.getDuration.multipliedBy(hours)) {
+  extends PeriodFrequency(ChronoUnit.HOURS.getDuration.multipliedBy(hours)) {
 
   override def difference(dt1: ZonedDateTime, dt2: ZonedDateTime): Int = {
-    val duration = codes.reactive.scalatime.Duration.between(dt1.toLocalDateTime, dt2.toLocalDateTime)
+    val duration = Duration.between(dt1.toLocalDateTime, dt2.toLocalDateTime)
     (duration.getSeconds / (hours * 3600)).toInt
   }
 
@@ -120,10 +119,10 @@ class HourFrequency(val hours: Int)
 }
 
 class MinuteFrequency(val minutes: Int)
-  extends PeriodFrequency(ChronoUnit.Minutes.getDuration.multipliedBy(minutes)) {
+  extends PeriodFrequency(ChronoUnit.MINUTES.getDuration.multipliedBy(minutes)) {
 
   override def difference(dt1: ZonedDateTime, dt2: ZonedDateTime): Int = {
-    val duration = codes.reactive.scalatime.Duration.between(dt1.toLocalDateTime, dt2.toLocalDateTime)
+    val duration = Duration.between(dt1.toLocalDateTime, dt2.toLocalDateTime)
     (duration.getSeconds / (minutes * 60)).toInt
   }
 
@@ -131,10 +130,10 @@ class MinuteFrequency(val minutes: Int)
 }
 
 class SecondFrequency(val seconds: Int)
-  extends PeriodFrequency(ChronoUnit.Seconds.getDuration.multipliedBy(seconds)) {
+  extends PeriodFrequency(ChronoUnit.SECONDS.getDuration.multipliedBy(seconds)) {
 
   override def difference(dt1: ZonedDateTime, dt2: ZonedDateTime): Int = {
-    val duration = codes.reactive.scalatime.Duration.between(dt1.toLocalDateTime, dt2.toLocalDateTime)
+    val duration = Duration.between(dt1.toLocalDateTime, dt2.toLocalDateTime)
     (duration.getSeconds / seconds).toInt
   }
 
@@ -165,7 +164,7 @@ class BusinessDayFrequency(
     if (dt2.isBefore(dt1)) {
       return -difference(dt2, dt1)
     }
-    val daysBetween = ChronoUnit.Days.between(dt1, dt2)
+    val daysBetween = ChronoUnit.DAYS.between(dt1, dt2)
     val dayOfWeek1 = dt1.getDayOfWeek
     val alignedDayOfWeek1 = rebaseDayOfWeek(dayOfWeek1.getValue, firstDayOfWeek)
     if (alignedDayOfWeek1 > 5) {

@@ -16,8 +16,7 @@
 package com.cloudera.sparkts
 
 import breeze.linalg.DenseMatrix
-import codes.reactive.scalatime.format.DateTimeFormatter
-import codes.reactive.scalatime.{LocalDateTime, ZonedDateTime, ZoneId}
+import java.time._
 import com.cloudera.sparkts.DateTimeIndex._
 import com.cloudera.sparkts.TimeSeries._
 
@@ -25,7 +24,7 @@ import org.scalatest.{FunSuite, ShouldMatchers}
 
 class TimeSeriesSuite extends FunSuite with ShouldMatchers {
   test("timeSeriesFromIrregularSamples") {
-    val dt = ZonedDateTime.of(2015, 4, 8, 0, 0, 0, 0, ZoneId.UTC)
+    val dt = ZonedDateTime.of(2015, 4, 8, 0, 0, 0, 0, ZoneId.of("Z"))
     val samples = Array(
       ((dt, Array(1.0, 2.0, 3.0))),
       ((dt.plusDays(1), Array(4.0, 5.0, 6.0))),
