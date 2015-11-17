@@ -31,7 +31,7 @@ object YahooParser {
     val labels = lines(0).split(',').tail.map(keyPrefix + _)
     val samples = lines.tail.map { line =>
       val tokens = line.split(',')
-      val dt = java.time.LocalDateTime.parse(tokens.head).atZone(zone)
+      val dt = java.time.LocalDate.parse(tokens.head).atStartOfDay(zone)
       (dt, tokens.tail.map(_.toDouble))
     }.reverse
     timeSeriesFromIrregularSamples(samples, labels, zone)
