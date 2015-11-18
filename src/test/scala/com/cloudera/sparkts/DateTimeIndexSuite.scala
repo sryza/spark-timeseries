@@ -23,6 +23,15 @@ import org.threeten.extra.Interval
 
 class DateTimeIndexSuite extends FunSuite with ShouldMatchers {
 
+  test("LongToDateTimeZone and vice versa") {
+    val zdt = ZonedDateTime.of(1990, 4, 10, 0, 0, 0, 0, ZoneId.systemDefault())
+
+    val longFromZdt = TimeSeriesUtils.ZonedDateTimeToLong(zdt)
+    val zdtFromLong = TimeSeriesUtils.LongToZonedDateTime(longFromZdt)
+
+    zdtFromLong should be (zdt)
+  }
+
   test("to / from string") {
     val uniformIndex = uniform(
       ZonedDateTime.of(1990, 4, 10, 0, 0, 0, 0, ZoneId.systemDefault()),

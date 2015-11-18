@@ -68,7 +68,7 @@ class MicrosecondFrequency(val us: Int)
 
   override def difference(dt1: ZonedDateTime, dt2: ZonedDateTime): Int = {
     val duration = Duration.between(dt1.toLocalDateTime, dt2.toLocalDateTime)
-    ((duration.toNanos() * 1000.0) / us).toInt
+    ((duration.toNanos() / 1000.0) / us).toInt
   }
 
   override def toString: String = s"microseconds $us"

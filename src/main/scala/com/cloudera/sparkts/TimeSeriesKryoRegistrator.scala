@@ -20,6 +20,7 @@ import com.esotericsoftware.kryo.io.{Output, Input}
 
 import org.apache.spark.SparkConf
 import org.apache.spark.serializer.{KryoRegistrator, KryoSerializer}
+import com.cloudera.sparkts.TimeSeriesUtils._
 
 import java.time._
 
@@ -36,12 +37,11 @@ class TimeSeriesKryoRegistrator extends KryoRegistrator {
 
 class DateTimeSerializer extends Serializer[ZonedDateTime] {
   def write(kryo: Kryo, out: Output, dt: ZonedDateTime) = {
-    out.writeLong(dt.toInstant.toEpochMilli, true)
+    out.writeLong(ZonedDateTimeToLong(dt), true)
   }
 
   def read(kryo: Kryo, in: Input, clazz: Class[ZonedDateTime]): ZonedDateTime = {
-    ZonedDateTime.ofInstant(Instant.ofEpochMilli(in.readLong(true)),
-      ZoneId.systemDefault())
+    LongToZonedDateTime(in.readLong(true), ZoneId.systemDefault())
   }
 }
 

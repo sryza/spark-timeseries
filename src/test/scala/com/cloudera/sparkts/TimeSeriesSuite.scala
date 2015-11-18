@@ -38,7 +38,7 @@ class TimeSeriesSuite extends FunSuite with ShouldMatchers {
   }
 
   test("lagsIncludingOriginals") {
-    val originalIndex = new UniformDateTimeIndex(0, 5, new DayFrequency(1))
+    val originalIndex = new UniformDateTimeIndex(ZonedDateTime.now(), 5, new DayFrequency(1))
 
     val data = DenseMatrix((1.0, 6.0), (2.0, 7.0), (3.0, 8.0), (4.0, 9.0), (5.0, 10.0))
 
@@ -53,7 +53,7 @@ class TimeSeriesSuite extends FunSuite with ShouldMatchers {
   }
 
   test("lagsExcludingOriginals") {
-    val originalIndex = new UniformDateTimeIndex(0, 5, new DayFrequency(1))
+    val originalIndex = new UniformDateTimeIndex(ZonedDateTime.now(), 5, new DayFrequency(1))
 
     val data = DenseMatrix((1.0, 6.0), (2.0, 7.0), (3.0, 8.0), (4.0, 9.0), (5.0, 10.0))
 
@@ -68,7 +68,7 @@ class TimeSeriesSuite extends FunSuite with ShouldMatchers {
   }
 
   test("customLags") {
-    val originalIndex = new UniformDateTimeIndex(0, 5, new DayFrequency(1))
+    val originalIndex = new UniformDateTimeIndex(ZonedDateTime.now(), 5, new DayFrequency(1))
 
     val data = DenseMatrix((1.0, 6.0), (2.0, 7.0), (3.0, 8.0), (4.0, 9.0), (5.0, 10.0))
 

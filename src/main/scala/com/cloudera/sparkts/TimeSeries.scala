@@ -265,10 +265,9 @@ object TimeSeries {
       (implicit kClassTag: ClassTag[K])
     : TimeSeries[K] = {
     val mat = new DenseMatrix[Double](samples.length, samples.head._2.length)
-    val dts = new Array[Long](samples.length)
+    val dts: Array[Long] = samples.map(pair => TimeSeriesUtils.ZonedDateTimeToLong(pair._1)).toArray
     for (i <- samples.indices) {
-      val (dt, values) = samples(i)
-      dts(i) = dt.toInstant().toEpochMilli
+      val (_, values) = samples(i)
       mat(i to i, ::) := new DenseVector[Double](values)
     }
     new TimeSeries[K](new IrregularDateTimeIndex(dts, zone), mat, keys)

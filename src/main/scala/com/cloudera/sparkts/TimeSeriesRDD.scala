@@ -21,7 +21,7 @@ import java.sql.Timestamp
 import java.util.Arrays
 import java.time._
 import scala.collection.mutable.ArrayBuffer
-
+import com.cloudera.sparkts.TimeSeriesUtils._
 import breeze.linalg._
 
 import org.apache.hadoop.conf.Configuration
@@ -157,8 +157,8 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector[Double])
    */
   def slice(start: ZonedDateTime, end: ZonedDateTime): TimeSeriesRDD[K] = {
     val targetIndex = index.slice(start, end)
-    val rebaser = TimeSeriesUtils.rebaser(index, targetIndex, Double.NaN)
-    new TimeSeriesRDD[K](targetIndex, mapSeries(rebaser))
+    val rebaserFunction = rebaser(index, targetIndex, Double.NaN)
+    new TimeSeriesRDD[K](targetIndex, mapSeries(rebaserFunction))
   }
 
   /**
@@ -167,8 +167,8 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector[Double])
    * @param end The end date for the slice (inclusive).
    */
   def slice(start: Long, end: Long): TimeSeriesRDD[K] = {
-    slice(ZonedDateTime.ofInstant(Instant.ofEpochMilli(start), ZoneId.systemDefault()),
-          ZonedDateTime.ofInstant(Instant.ofEpochMilli(end), ZoneId.systemDefault()))
+    slice(LongToZonedDateTime(start, ZoneId.systemDefault()),
+          LongToZonedDateTime(end, ZoneId.systemDefault()))
   }
 
   /**
@@ -335,7 +335,7 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector[Double])
     import sqlContext.implicits._
 
     val result = instantsRDD.map { case (dt, v) =>
-      val timestamp = new Timestamp(dt.toInstant().toEpochMilli)
+      val timestamp = Timestamp.from(dt.toInstant)
       (timestamp, v.toArray)
     }.toDF()
 
@@ -354,12 +354,14 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector[Double])
       tsCol: String = "timestamp",
       keyCol: String = "key",
       valueCol: String = "value"): DataFrame = {
+
     val rowRdd = flatMap { case (key, series) =>
       series.iterator.flatMap { case (i, value) =>
         if (value.isNaN) {
           None
         } else {
-          Some(Row(new Timestamp(index.dateTimeAtLoc(i).toInstant.toEpochMilli), key.toString, value))
+          val inst = index.dateTimeAtLoc(i).toInstant()
+          Some(Row(Timestamp.from(inst), key.toString, value))
         }
       }
     }
@@ -369,6 +371,7 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector[Double])
       new StructField(keyCol, StringType),
       new StructField(valueCol, DoubleType)
     ))
+
     sqlContext.createDataFrame(rowRdd, schema)
   }
 

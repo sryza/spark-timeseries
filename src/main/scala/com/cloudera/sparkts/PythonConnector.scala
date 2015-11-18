@@ -83,7 +83,7 @@ private class InstantToBytes extends Function[(ZonedDateTime, Vector[Double]), A
   override def call(instant: (ZonedDateTime, Vector[Double])): Array[Byte] = {
     val arr = new Array[Byte](LONG_SIZE + INT_SIZE + DOUBLE_SIZE * instant._2.length)
     val buf = ByteBuffer.wrap(arr)
-    buf.putLong(instant._1.toInstant().toEpochMilli)
+    buf.putLong(TimeSeriesUtils.ZonedDateTimeToLong(instant._1))
     putVector(buf, instant._2)
     arr
   }

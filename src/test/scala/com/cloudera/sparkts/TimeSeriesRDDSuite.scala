@@ -113,13 +113,10 @@ class TimeSeriesRDDSuite extends FunSuite with LocalSparkContext with ShouldMatc
     columnNames.tail should be (labels)
 
     sampleRows should be (Array(
-      Row.fromSeq(new Timestamp(start.toInstant.toEpochMilli) :: (0.0 until 20.0 by 4.0).toList),
-      Row.fromSeq(new Timestamp((start.plusDays(1)).toInstant.toEpochMilli) ::
-        (1.0 until 20.0 by 4.0).toList),
-      Row.fromSeq(new Timestamp((start.plusDays(2)).toInstant.toEpochMilli) ::
-        (2.0 until 20.0 by 4.0).toList),
-      Row.fromSeq(new Timestamp((start.plusDays(3)).toInstant.toEpochMilli) ::
-        (3.0 until 20.0 by 4.0).toList)
+      Row.fromSeq(Timestamp.from(start.toInstant) :: (0.0 until 20.0 by 4.0).toList),
+      Row.fromSeq(Timestamp.from(start.plusDays(1).toInstant) :: (1.0 until 20.0 by 4.0).toList),
+      Row.fromSeq(Timestamp.from(start.plusDays(2).toInstant) :: (2.0 until 20.0 by 4.0).toList),
+      Row.fromSeq(Timestamp.from(start.plusDays(3).toInstant) :: (3.0 until 20.0 by 4.0).toList)
     ))
   }
 
@@ -193,7 +190,7 @@ class TimeSeriesRDDSuite extends FunSuite with LocalSparkContext with ShouldMatc
       x => new DenseVector((x until x + 4).map(_.toDouble).toArray))
     val labels = Array("a", "b", "c", "d", "e")
     val start = ZonedDateTime.of(2015, 4, 9, 0, 0, 0, 0, ZoneId.of("Z"))
-    val index = uniform(start, 4, 1.businessDays)
+    val index = uniform(start, 4, new DayFrequency(1))
     val rdd = sc.parallelize(labels.zip(seriesVecs.map(_.asInstanceOf[Vector[Double]])), 3)
     val tsRdd = new TimeSeriesRDD[String](index, rdd)
 
