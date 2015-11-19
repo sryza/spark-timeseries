@@ -5,7 +5,7 @@ title: User Guide
 ## Terminology
 
 A variety of terms are used to describe time series data, and many of these apply to conflicting or
-overlapping concepts.  In the interest of clarity, in spark-timeseries, we stick to the following
+overlapping concepts.  In the interest of clarity, in Spark-TS, we stick to the following
 set of definitions:
 
 * **Time Series** - A sequence of floating point values, each linked to a timestamp.
