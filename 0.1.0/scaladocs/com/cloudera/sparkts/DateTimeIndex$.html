@@ -2,9 +2,9 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html>
         <head>
-          <title>DateTimeIndex - Spark Timeseries 0.1.0 API - com.cloudera.sparkts.DateTimeIndex</title>
-          <meta name="description" content="DateTimeIndex - Spark Timeseries 0.1.0 API - com.cloudera.sparkts.DateTimeIndex" />
-          <meta name="keywords" content="DateTimeIndex Spark Timeseries 0.1.0 API com.cloudera.sparkts.DateTimeIndex" />
+          <title>DateTimeIndex - Spark TS 0.1.0 API - com.cloudera.sparkts.DateTimeIndex</title>
+          <meta name="description" content="DateTimeIndex - Spark TS 0.1.0 API - com.cloudera.sparkts.DateTimeIndex" />
+          <meta name="keywords" content="DateTimeIndex Spark TS 0.1.0 API com.cloudera.sparkts.DateTimeIndex" />
           <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
           
       <link href="../../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
@@ -268,6 +268,19 @@
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
     </li><li name="com.cloudera.sparkts.DateTimeIndex#intToBusinessDayRichInt" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="intToBusinessDayRichInt(tuple:(Int,Int)):com.cloudera.sparkts.BusinessDayRichInt"></a>
+      <a id="intToBusinessDayRichInt((Int,Int)):BusinessDayRichInt"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">implicit </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">intToBusinessDayRichInt</span><span class="params">(<span name="tuple">tuple: (<span class="extype" name="scala.Int">Int</span>, <span class="extype" name="scala.Int">Int</span>)</span>)</span><span class="result">: <a href="BusinessDayRichInt.html" class="extype" name="com.cloudera.sparkts.BusinessDayRichInt">BusinessDayRichInt</a></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.cloudera.sparkts.DateTimeIndex#intToBusinessDayRichInt" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="intToBusinessDayRichInt(n:Int):com.cloudera.sparkts.BusinessDayRichInt"></a>
       <a id="intToBusinessDayRichInt(Int):BusinessDayRichInt"></a>
       <h4 class="signature">
@@ -281,6 +294,20 @@
       </h4>
       
     </li><li name="com.cloudera.sparkts.DateTimeIndex#irregular" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="irregular(dts:Array[Long],zone:com.github.nscala_time.time.Imports.DateTimeZone):com.cloudera.sparkts.IrregularDateTimeIndex"></a>
+      <a id="irregular(Array[Long],github.nscala_time.time.Imports.DateTimeZone):IrregularDateTimeIndex"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">irregular</span><span class="params">(<span name="dts">dts: <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Long">Long</span>]</span>, <span name="zone">zone: <span class="extype" name="com.github.nscala_time.time.TypeImports.DateTimeZone">github.nscala_time.time.Imports.DateTimeZone</span></span>)</span><span class="result">: <a href="IrregularDateTimeIndex.html" class="extype" name="com.cloudera.sparkts.IrregularDateTimeIndex">IrregularDateTimeIndex</a></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Create an IrregularDateTimeIndex composed of the given date-times, as millis from the epoch
+using the provided date-time zone.</p>
+    </li><li name="com.cloudera.sparkts.DateTimeIndex#irregular" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="irregular(dts:Array[Long]):com.cloudera.sparkts.IrregularDateTimeIndex"></a>
       <a id="irregular(Array[Long]):IrregularDateTimeIndex"></a>
       <h4 class="signature">
@@ -292,7 +319,22 @@
         <span class="name">irregular</span><span class="params">(<span name="dts">dts: <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Long">Long</span>]</span>)</span><span class="result">: <a href="IrregularDateTimeIndex.html" class="extype" name="com.cloudera.sparkts.IrregularDateTimeIndex">IrregularDateTimeIndex</a></span>
       </span>
       </h4>
-      <p class="shortcomment cmt">Create an IrregularDateTimeIndex composed of the given date-times, as millis from the epoch.</p>
+      <p class="shortcomment cmt">Create an IrregularDateTimeIndex composed of the given date-times, as millis from the epoch
+using the default date-time zone.</p>
+    </li><li name="com.cloudera.sparkts.DateTimeIndex#irregular" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="irregular(dts:Array[com.github.nscala_time.time.Imports.DateTime],zone:com.github.nscala_time.time.Imports.DateTimeZone):com.cloudera.sparkts.IrregularDateTimeIndex"></a>
+      <a id="irregular(Array[github.nscala_time.time.Imports.DateTime],github.nscala_time.time.Imports.DateTimeZone):IrregularDateTimeIndex"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">irregular</span><span class="params">(<span name="dts">dts: <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="com.github.nscala_time.time.TypeImports.DateTime">github.nscala_time.time.Imports.DateTime</span>]</span>, <span name="zone">zone: <span class="extype" name="com.github.nscala_time.time.TypeImports.DateTimeZone">github.nscala_time.time.Imports.DateTimeZone</span></span>)</span><span class="result">: <a href="IrregularDateTimeIndex.html" class="extype" name="com.cloudera.sparkts.IrregularDateTimeIndex">IrregularDateTimeIndex</a></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Create an IrregularDateTimeIndex composed of the given date-times and zone
+</p>
     </li><li name="com.cloudera.sparkts.DateTimeIndex#irregular" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="irregular(dts:Array[com.github.nscala_time.time.Imports.DateTime]):com.cloudera.sparkts.IrregularDateTimeIndex"></a>
       <a id="irregular(Array[github.nscala_time.time.Imports.DateTime]):IrregularDateTimeIndex"></a>
@@ -305,7 +347,8 @@
         <span class="name">irregular</span><span class="params">(<span name="dts">dts: <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="com.github.nscala_time.time.TypeImports.DateTime">github.nscala_time.time.Imports.DateTime</span>]</span>)</span><span class="result">: <a href="IrregularDateTimeIndex.html" class="extype" name="com.cloudera.sparkts.IrregularDateTimeIndex">IrregularDateTimeIndex</a></span>
       </span>
       </h4>
-      <p class="shortcomment cmt">Create an IrregularDateTimeIndex composed of the given date-times.</p>
+      <p class="shortcomment cmt">Create an IrregularDateTimeIndex composed of the given date-times using the time zone
+of the first date-time in dts array.</p>
     </li><li name="scala.Any#isInstanceOf" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="isInstanceOf[T0]:Boolean"></a>
       <a id="isInstanceOf[T0]:Boolean"></a>
@@ -333,15 +376,15 @@
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
     </li><li name="com.cloudera.sparkts.DateTimeIndex#nextBusinessDay" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="nextBusinessDay(dt:com.github.nscala_time.time.Imports.DateTime):com.github.nscala_time.time.Imports.DateTime"></a>
-      <a id="nextBusinessDay(github.nscala_time.time.Imports.DateTime):github.nscala_time.time.Imports.DateTime"></a>
+      <a id="nextBusinessDay(dt:com.github.nscala_time.time.Imports.DateTime,firstDayOfWeek:Int):com.github.nscala_time.time.Imports.DateTime"></a>
+      <a id="nextBusinessDay(github.nscala_time.time.Imports.DateTime,Int):github.nscala_time.time.Imports.DateTime"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">nextBusinessDay</span><span class="params">(<span name="dt">dt: <span class="extype" name="com.github.nscala_time.time.TypeImports.DateTime">github.nscala_time.time.Imports.DateTime</span></span>)</span><span class="result">: <span class="extype" name="com.github.nscala_time.time.TypeImports.DateTime">github.nscala_time.time.Imports.DateTime</span></span>
+        <span class="name">nextBusinessDay</span><span class="params">(<span name="dt">dt: <span class="extype" name="com.github.nscala_time.time.TypeImports.DateTime">github.nscala_time.time.Imports.DateTime</span></span>, <span name="firstDayOfWeek">firstDayOfWeek: <span class="extype" name="scala.Int">Int</span> = <span class="symbol">DateTimeConstants.MONDAY</span></span>)</span><span class="result">: <span class="extype" name="com.github.nscala_time.time.TypeImports.DateTime">github.nscala_time.time.Imports.DateTime</span></span>
       </span>
       </h4>
       <p class="shortcomment cmt">Finds the next business day occurring at or after the given date-time.</p>
@@ -384,6 +427,40 @@
       </span>
       </h4>
       
+    </li><li name="com.cloudera.sparkts.DateTimeIndex#rebaseDayOfWeek" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="rebaseDayOfWeek(dayOfWeek:Int,firstDayOfWeek:Int):Int"></a>
+      <a id="rebaseDayOfWeek(Int,Int):Int"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">rebaseDayOfWeek</span><span class="params">(<span name="dayOfWeek">dayOfWeek: <span class="extype" name="scala.Int">Int</span></span>, <span name="firstDayOfWeek">firstDayOfWeek: <span class="extype" name="scala.Int">Int</span> = <span class="symbol">DateTimeConstants.MONDAY</span></span>)</span><span class="result">: <span class="extype" name="scala.Int">Int</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Given the ISO index of the day of week, the method returns the day
+of week index relative to the first day of week i.</p><div class="fullcomment"><div class="comment cmt"><p>Given the ISO index of the day of week, the method returns the day
+of week index relative to the first day of week i.e. assuming the
+the first day of week is the base index and has the value of 1</p><p>For example, if the first day of week is set to be Sunday,
+the week would be indexed:
+  Sunday   : 1
+  Monday   : 2
+  Tuesday  : 3
+  Wednesday: 4
+  Thursday : 5
+  Friday   : 6 &lt;-- Weekend
+  Saturday : 7 &lt;-- Weekend</p><p>If the first day of week is set to be Monday,
+the week would be indexed:
+  Monday   : 1
+  Tuesday  : 2
+  Wednesday: 3
+  Thursday : 4
+  Friday   : 5
+  Saturday : 6 &lt;-- Weekend
+  Sunday   : 7 &lt;-- Weekend
+</p></div><dl class="paramcmts block"><dt class="param">dayOfWeek</dt><dd class="cmt"><p>the ISO index of the day of week</p></dd><dt>returns</dt><dd class="cmt"><p>the day of week index aligned w.r.t the first day of week
+</p></dd></dl></div>
     </li><li name="scala.AnyRef#synchronized" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="synchronized[T0](x$1:=&gt;T0):T0"></a>
       <a id="synchronized[T0](⇒T0):T0"></a>
@@ -411,6 +488,20 @@
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
     </li><li name="com.cloudera.sparkts.DateTimeIndex#uniform" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="uniform(start:com.github.nscala_time.time.Imports.DateTime,end:com.github.nscala_time.time.Imports.DateTime,frequency:com.cloudera.sparkts.Frequency,zone:com.github.nscala_time.time.Imports.DateTimeZone):com.cloudera.sparkts.UniformDateTimeIndex"></a>
+      <a id="uniform(github.nscala_time.time.Imports.DateTime,github.nscala_time.time.Imports.DateTime,Frequency,github.nscala_time.time.Imports.DateTimeZone):UniformDateTimeIndex"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">uniform</span><span class="params">(<span name="start">start: <span class="extype" name="com.github.nscala_time.time.TypeImports.DateTime">github.nscala_time.time.Imports.DateTime</span></span>, <span name="end">end: <span class="extype" name="com.github.nscala_time.time.TypeImports.DateTime">github.nscala_time.time.Imports.DateTime</span></span>, <span name="frequency">frequency: <a href="Frequency.html" class="extype" name="com.cloudera.sparkts.Frequency">Frequency</a></span>, <span name="zone">zone: <span class="extype" name="com.github.nscala_time.time.TypeImports.DateTimeZone">github.nscala_time.time.Imports.DateTimeZone</span></span>)</span><span class="result">: <a href="UniformDateTimeIndex.html" class="extype" name="com.cloudera.sparkts.UniformDateTimeIndex">UniformDateTimeIndex</a></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Create a UniformDateTimeIndex with the given start time and end time (inclusive) and frequency
+and time zone.</p>
+    </li><li name="com.cloudera.sparkts.DateTimeIndex#uniform" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="uniform(start:com.github.nscala_time.time.Imports.DateTime,end:com.github.nscala_time.time.Imports.DateTime,frequency:com.cloudera.sparkts.Frequency):com.cloudera.sparkts.UniformDateTimeIndex"></a>
       <a id="uniform(github.nscala_time.time.Imports.DateTime,github.nscala_time.time.Imports.DateTime,Frequency):UniformDateTimeIndex"></a>
       <h4 class="signature">
@@ -420,6 +511,20 @@
       </span>
       <span class="symbol">
         <span class="name">uniform</span><span class="params">(<span name="start">start: <span class="extype" name="com.github.nscala_time.time.TypeImports.DateTime">github.nscala_time.time.Imports.DateTime</span></span>, <span name="end">end: <span class="extype" name="com.github.nscala_time.time.TypeImports.DateTime">github.nscala_time.time.Imports.DateTime</span></span>, <span name="frequency">frequency: <a href="Frequency.html" class="extype" name="com.cloudera.sparkts.Frequency">Frequency</a></span>)</span><span class="result">: <a href="UniformDateTimeIndex.html" class="extype" name="com.cloudera.sparkts.UniformDateTimeIndex">UniformDateTimeIndex</a></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Create a UniformDateTimeIndex with the given start time and end time (inclusive) and frequency
+using the time zone of start time.</p>
+    </li><li name="com.cloudera.sparkts.DateTimeIndex#uniform" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="uniform(start:Long,end:Long,frequency:com.cloudera.sparkts.Frequency,zone:com.github.nscala_time.time.Imports.DateTimeZone):com.cloudera.sparkts.UniformDateTimeIndex"></a>
+      <a id="uniform(Long,Long,Frequency,github.nscala_time.time.Imports.DateTimeZone):UniformDateTimeIndex"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">uniform</span><span class="params">(<span name="start">start: <span class="extype" name="scala.Long">Long</span></span>, <span name="end">end: <span class="extype" name="scala.Long">Long</span></span>, <span name="frequency">frequency: <a href="Frequency.html" class="extype" name="com.cloudera.sparkts.Frequency">Frequency</a></span>, <span name="zone">zone: <span class="extype" name="com.github.nscala_time.time.TypeImports.DateTimeZone">github.nscala_time.time.Imports.DateTimeZone</span></span>)</span><span class="result">: <a href="UniformDateTimeIndex.html" class="extype" name="com.cloudera.sparkts.UniformDateTimeIndex">UniformDateTimeIndex</a></span>
       </span>
       </h4>
       <p class="shortcomment cmt">Create a UniformDateTimeIndex with the given start time and end time (inclusive) and frequency.</p>
@@ -437,6 +542,21 @@
       </h4>
       <p class="shortcomment cmt">Create a UniformDateTimeIndex with the given start time and end time (inclusive) and frequency.</p>
     </li><li name="com.cloudera.sparkts.DateTimeIndex#uniform" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="uniform(start:com.github.nscala_time.time.Imports.DateTime,periods:Int,frequency:com.cloudera.sparkts.Frequency,zone:com.github.nscala_time.time.Imports.DateTimeZone):com.cloudera.sparkts.UniformDateTimeIndex"></a>
+      <a id="uniform(github.nscala_time.time.Imports.DateTime,Int,Frequency,github.nscala_time.time.Imports.DateTimeZone):UniformDateTimeIndex"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">uniform</span><span class="params">(<span name="start">start: <span class="extype" name="com.github.nscala_time.time.TypeImports.DateTime">github.nscala_time.time.Imports.DateTime</span></span>, <span name="periods">periods: <span class="extype" name="scala.Int">Int</span></span>, <span name="frequency">frequency: <a href="Frequency.html" class="extype" name="com.cloudera.sparkts.Frequency">Frequency</a></span>, <span name="zone">zone: <span class="extype" name="com.github.nscala_time.time.TypeImports.DateTimeZone">github.nscala_time.time.Imports.DateTimeZone</span></span>)</span><span class="result">: <a href="UniformDateTimeIndex.html" class="extype" name="com.cloudera.sparkts.UniformDateTimeIndex">UniformDateTimeIndex</a></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Create a UniformDateTimeIndex with the given start time, number of periods, frequency
+, and time zone
+</p>
+    </li><li name="com.cloudera.sparkts.DateTimeIndex#uniform" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="uniform(start:com.github.nscala_time.time.Imports.DateTime,periods:Int,frequency:com.cloudera.sparkts.Frequency):com.cloudera.sparkts.UniformDateTimeIndex"></a>
       <a id="uniform(github.nscala_time.time.Imports.DateTime,Int,Frequency):UniformDateTimeIndex"></a>
       <h4 class="signature">
@@ -448,7 +568,22 @@
         <span class="name">uniform</span><span class="params">(<span name="start">start: <span class="extype" name="com.github.nscala_time.time.TypeImports.DateTime">github.nscala_time.time.Imports.DateTime</span></span>, <span name="periods">periods: <span class="extype" name="scala.Int">Int</span></span>, <span name="frequency">frequency: <a href="Frequency.html" class="extype" name="com.cloudera.sparkts.Frequency">Frequency</a></span>)</span><span class="result">: <a href="UniformDateTimeIndex.html" class="extype" name="com.cloudera.sparkts.UniformDateTimeIndex">UniformDateTimeIndex</a></span>
       </span>
       </h4>
-      <p class="shortcomment cmt">Create a UniformDateTimeIndex with the given start time, number of periods, and frequency.</p>
+      <p class="shortcomment cmt">Create a UniformDateTimeIndex with the given start time, number of periods, and frequency
+using the time zone of start time.</p>
+    </li><li name="com.cloudera.sparkts.DateTimeIndex#uniform" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="uniform(start:Long,periods:Int,frequency:com.cloudera.sparkts.Frequency,zone:com.github.nscala_time.time.Imports.DateTimeZone):com.cloudera.sparkts.UniformDateTimeIndex"></a>
+      <a id="uniform(Long,Int,Frequency,github.nscala_time.time.Imports.DateTimeZone):UniformDateTimeIndex"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">uniform</span><span class="params">(<span name="start">start: <span class="extype" name="scala.Long">Long</span></span>, <span name="periods">periods: <span class="extype" name="scala.Int">Int</span></span>, <span name="frequency">frequency: <a href="Frequency.html" class="extype" name="com.cloudera.sparkts.Frequency">Frequency</a></span>, <span name="zone">zone: <span class="extype" name="com.github.nscala_time.time.TypeImports.DateTimeZone">github.nscala_time.time.Imports.DateTimeZone</span></span>)</span><span class="result">: <a href="UniformDateTimeIndex.html" class="extype" name="com.cloudera.sparkts.UniformDateTimeIndex">UniformDateTimeIndex</a></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Create a UniformDateTimeIndex with the given start time, number of periods, frequency
+and time zone.</p>
     </li><li name="com.cloudera.sparkts.DateTimeIndex#uniform" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="uniform(start:Long,periods:Int,frequency:com.cloudera.sparkts.Frequency):com.cloudera.sparkts.UniformDateTimeIndex"></a>
       <a id="uniform(Long,Int,Frequency):UniformDateTimeIndex"></a>

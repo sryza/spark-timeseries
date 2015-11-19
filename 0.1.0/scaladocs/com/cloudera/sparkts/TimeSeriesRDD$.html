@@ -2,9 +2,9 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html>
         <head>
-          <title>TimeSeriesRDD - Spark Timeseries 0.1.0 API - com.cloudera.sparkts.TimeSeriesRDD</title>
-          <meta name="description" content="TimeSeriesRDD - Spark Timeseries 0.1.0 API - com.cloudera.sparkts.TimeSeriesRDD" />
-          <meta name="keywords" content="TimeSeriesRDD Spark Timeseries 0.1.0 API com.cloudera.sparkts.TimeSeriesRDD" />
+          <title>TimeSeriesRDD - Spark TS 0.1.0 API - com.cloudera.sparkts.TimeSeriesRDD</title>
+          <meta name="description" content="TimeSeriesRDD - Spark TS 0.1.0 API - com.cloudera.sparkts.TimeSeriesRDD" />
+          <meta name="keywords" content="TimeSeriesRDD Spark TS 0.1.0 API com.cloudera.sparkts.TimeSeriesRDD" />
           <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
           
       <link href="../../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
@@ -319,73 +319,73 @@
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
     </li><li name="com.cloudera.sparkts.TimeSeriesRDD#timeSeriesRDD" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="timeSeriesRDD(targetIndex:com.cloudera.sparkts.DateTimeIndex,seriesRDD:org.apache.spark.rdd.RDD[com.cloudera.sparkts.TimeSeries]):com.cloudera.sparkts.TimeSeriesRDD"></a>
-      <a id="timeSeriesRDD(DateTimeIndex,RDD[TimeSeries]):TimeSeriesRDD"></a>
+      <a id="timeSeriesRDD[K](targetIndex:com.cloudera.sparkts.DateTimeIndex,seriesRDD:org.apache.spark.rdd.RDD[com.cloudera.sparkts.TimeSeries[K]])(implicitkClassTag:scala.reflect.ClassTag[K]):com.cloudera.sparkts.TimeSeriesRDD[K]"></a>
+      <a id="timeSeriesRDD[K](DateTimeIndex,RDD[TimeSeries[K]])(ClassTag[K]):TimeSeriesRDD[K]"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">timeSeriesRDD</span><span class="params">(<span name="targetIndex">targetIndex: <a href="DateTimeIndex.html" class="extype" name="com.cloudera.sparkts.DateTimeIndex">DateTimeIndex</a></span>, <span name="seriesRDD">seriesRDD: <span class="extype" name="org.apache.spark.rdd.RDD">RDD</span>[<a href="TimeSeries.html" class="extype" name="com.cloudera.sparkts.TimeSeries">TimeSeries</a>]</span>)</span><span class="result">: <a href="TimeSeriesRDD.html" class="extype" name="com.cloudera.sparkts.TimeSeriesRDD">TimeSeriesRDD</a></span>
+        <span class="name">timeSeriesRDD</span><span class="tparams">[<span name="K">K</span>]</span><span class="params">(<span name="targetIndex">targetIndex: <a href="DateTimeIndex.html" class="extype" name="com.cloudera.sparkts.DateTimeIndex">DateTimeIndex</a></span>, <span name="seriesRDD">seriesRDD: <span class="extype" name="org.apache.spark.rdd.RDD">RDD</span>[<a href="TimeSeries.html" class="extype" name="com.cloudera.sparkts.TimeSeries">TimeSeries</a>[<span class="extype" name="com.cloudera.sparkts.TimeSeriesRDD.timeSeriesRDD.K">K</span>]]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="kClassTag">kClassTag: <span class="extype" name="scala.reflect.ClassTag">ClassTag</span>[<span class="extype" name="com.cloudera.sparkts.TimeSeriesRDD.timeSeriesRDD.K">K</span>]</span>)</span><span class="result">: <a href="TimeSeriesRDD.html" class="extype" name="com.cloudera.sparkts.TimeSeriesRDD">TimeSeriesRDD</a>[<span class="extype" name="com.cloudera.sparkts.TimeSeriesRDD.timeSeriesRDD.K">K</span>]</span>
       </span>
       </h4>
       <p class="shortcomment cmt">Instantiates a TimeSeriesRDD from an RDD of TimeSeries.</p><div class="fullcomment"><div class="comment cmt"><p>Instantiates a TimeSeriesRDD from an RDD of TimeSeries.
 </p></div><dl class="paramcmts block"><dt class="param">targetIndex</dt><dd class="cmt"><p>DateTimeIndex to conform all the indices to.</p></dd><dt class="param">seriesRDD</dt><dd class="cmt"><p>RDD of time series, each with their own DateTimeIndex.
 </p></dd></dl></div>
     </li><li name="com.cloudera.sparkts.TimeSeriesRDD#timeSeriesRDD" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="timeSeriesRDD(targetIndex:com.cloudera.sparkts.UniformDateTimeIndex,seriesRDD:org.apache.spark.rdd.RDD[(String,com.cloudera.sparkts.UniformDateTimeIndex,breeze.linalg.Vector[Double])]):com.cloudera.sparkts.TimeSeriesRDD"></a>
-      <a id="timeSeriesRDD(UniformDateTimeIndex,RDD[(String,UniformDateTimeIndex,Vector[Double])]):TimeSeriesRDD"></a>
+      <a id="timeSeriesRDD[K](targetIndex:com.cloudera.sparkts.UniformDateTimeIndex,seriesRDD:org.apache.spark.rdd.RDD[(K,com.cloudera.sparkts.UniformDateTimeIndex,breeze.linalg.Vector[Double])])(implicitkClassTag:scala.reflect.ClassTag[K]):com.cloudera.sparkts.TimeSeriesRDD[K]"></a>
+      <a id="timeSeriesRDD[K](UniformDateTimeIndex,RDD[(K,UniformDateTimeIndex,Vector[Double])])(ClassTag[K]):TimeSeriesRDD[K]"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">timeSeriesRDD</span><span class="params">(<span name="targetIndex">targetIndex: <a href="UniformDateTimeIndex.html" class="extype" name="com.cloudera.sparkts.UniformDateTimeIndex">UniformDateTimeIndex</a></span>, <span name="seriesRDD">seriesRDD: <span class="extype" name="org.apache.spark.rdd.RDD">RDD</span>[(<span class="extype" name="scala.Predef.String">String</span>, <a href="UniformDateTimeIndex.html" class="extype" name="com.cloudera.sparkts.UniformDateTimeIndex">UniformDateTimeIndex</a>, <span class="extype" name="breeze.linalg.Vector">Vector</span>[<span class="extype" name="scala.Double">Double</span>])]</span>)</span><span class="result">: <a href="TimeSeriesRDD.html" class="extype" name="com.cloudera.sparkts.TimeSeriesRDD">TimeSeriesRDD</a></span>
+        <span class="name">timeSeriesRDD</span><span class="tparams">[<span name="K">K</span>]</span><span class="params">(<span name="targetIndex">targetIndex: <a href="UniformDateTimeIndex.html" class="extype" name="com.cloudera.sparkts.UniformDateTimeIndex">UniformDateTimeIndex</a></span>, <span name="seriesRDD">seriesRDD: <span class="extype" name="org.apache.spark.rdd.RDD">RDD</span>[(<span class="extype" name="com.cloudera.sparkts.TimeSeriesRDD.timeSeriesRDD.K">K</span>, <a href="UniformDateTimeIndex.html" class="extype" name="com.cloudera.sparkts.UniformDateTimeIndex">UniformDateTimeIndex</a>, <span class="extype" name="breeze.linalg.Vector">Vector</span>[<span class="extype" name="scala.Double">Double</span>])]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="kClassTag">kClassTag: <span class="extype" name="scala.reflect.ClassTag">ClassTag</span>[<span class="extype" name="com.cloudera.sparkts.TimeSeriesRDD.timeSeriesRDD.K">K</span>]</span>)</span><span class="result">: <a href="TimeSeriesRDD.html" class="extype" name="com.cloudera.sparkts.TimeSeriesRDD">TimeSeriesRDD</a>[<span class="extype" name="com.cloudera.sparkts.TimeSeriesRDD.timeSeriesRDD.K">K</span>]</span>
       </span>
       </h4>
       <p class="shortcomment cmt">Instantiates a TimeSeriesRDD.</p><div class="fullcomment"><div class="comment cmt"><p>Instantiates a TimeSeriesRDD.
 </p></div><dl class="paramcmts block"><dt class="param">targetIndex</dt><dd class="cmt"><p>DateTimeIndex to conform all the indices to.</p></dd><dt class="param">seriesRDD</dt><dd class="cmt"><p>RDD of time series, each with their own DateTimeIndex.
 </p></dd></dl></div>
     </li><li name="com.cloudera.sparkts.TimeSeriesRDD#timeSeriesRDDFromCsv" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="timeSeriesRDDFromCsv(path:String,sc:org.apache.spark.SparkContext):com.cloudera.sparkts.TimeSeriesRDD"></a>
-      <a id="timeSeriesRDDFromCsv(String,SparkContext):TimeSeriesRDD"></a>
+      <a id="timeSeriesRDDFromCsv(path:String,sc:org.apache.spark.SparkContext):com.cloudera.sparkts.TimeSeriesRDD[String]"></a>
+      <a id="timeSeriesRDDFromCsv(String,SparkContext):TimeSeriesRDD[String]"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">timeSeriesRDDFromCsv</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="sc">sc: <span class="extype" name="org.apache.spark.SparkContext">SparkContext</span></span>)</span><span class="result">: <a href="TimeSeriesRDD.html" class="extype" name="com.cloudera.sparkts.TimeSeriesRDD">TimeSeriesRDD</a></span>
+        <span class="name">timeSeriesRDDFromCsv</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="sc">sc: <span class="extype" name="org.apache.spark.SparkContext">SparkContext</span></span>)</span><span class="result">: <a href="TimeSeriesRDD.html" class="extype" name="com.cloudera.sparkts.TimeSeriesRDD">TimeSeriesRDD</a>[<span class="extype" name="scala.Predef.String">String</span>]</span>
       </span>
       </h4>
       <p class="shortcomment cmt">Loads a TimeSeriesRDD from a directory containing a set of CSV files and a date-time index.</p>
     </li><li name="com.cloudera.sparkts.TimeSeriesRDD#timeSeriesRDDFromObservations" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="timeSeriesRDDFromObservations(targetIndex:com.cloudera.sparkts.DateTimeIndex,df:org.apache.spark.sql.DataFrame,tsCol:String,keyCol:String,valueCol:String):com.cloudera.sparkts.TimeSeriesRDD"></a>
-      <a id="timeSeriesRDDFromObservations(DateTimeIndex,DataFrame,String,String,String):TimeSeriesRDD"></a>
+      <a id="timeSeriesRDDFromObservations(targetIndex:com.cloudera.sparkts.DateTimeIndex,df:org.apache.spark.sql.DataFrame,tsCol:String,keyCol:String,valueCol:String):com.cloudera.sparkts.TimeSeriesRDD[String]"></a>
+      <a id="timeSeriesRDDFromObservations(DateTimeIndex,DataFrame,String,String,String):TimeSeriesRDD[String]"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">timeSeriesRDDFromObservations</span><span class="params">(<span name="targetIndex">targetIndex: <a href="DateTimeIndex.html" class="extype" name="com.cloudera.sparkts.DateTimeIndex">DateTimeIndex</a></span>, <span name="df">df: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>, <span name="tsCol">tsCol: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="keyCol">keyCol: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="valueCol">valueCol: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <a href="TimeSeriesRDD.html" class="extype" name="com.cloudera.sparkts.TimeSeriesRDD">TimeSeriesRDD</a></span>
+        <span class="name">timeSeriesRDDFromObservations</span><span class="params">(<span name="targetIndex">targetIndex: <a href="DateTimeIndex.html" class="extype" name="com.cloudera.sparkts.DateTimeIndex">DateTimeIndex</a></span>, <span name="df">df: <span class="extype" name="org.apache.spark.sql.DataFrame">DataFrame</span></span>, <span name="tsCol">tsCol: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="keyCol">keyCol: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="valueCol">valueCol: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <a href="TimeSeriesRDD.html" class="extype" name="com.cloudera.sparkts.TimeSeriesRDD">TimeSeriesRDD</a>[<span class="extype" name="scala.Predef.String">String</span>]</span>
       </span>
       </h4>
       <p class="shortcomment cmt">Instantiates a TimeSeriesRDD from a DataFrame of observations.</p><div class="fullcomment"><div class="comment cmt"><p>Instantiates a TimeSeriesRDD from a DataFrame of observations.
 </p></div><dl class="paramcmts block"><dt class="param">targetIndex</dt><dd class="cmt"><p>DateTimeIndex to conform all the series to.</p></dd><dt class="param">df</dt><dd class="cmt"><p>The DataFrame.</p></dd><dt class="param">tsCol</dt><dd class="cmt"><p>The Timestamp column telling when the observation occurred.</p></dd><dt class="param">keyCol</dt><dd class="cmt"><p>The string column labeling which string key the observation belongs to..</p></dd><dt class="param">valueCol</dt><dd class="cmt"><p>The observed value..
 </p></dd></dl></div>
     </li><li name="com.cloudera.sparkts.TimeSeriesRDD#timeSeriesRDDFromPython" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="timeSeriesRDDFromPython(index:com.cloudera.sparkts.DateTimeIndex,pyRdd:org.apache.spark.rdd.RDD[Array[Byte]]):com.cloudera.sparkts.TimeSeriesRDD"></a>
-      <a id="timeSeriesRDDFromPython(DateTimeIndex,RDD[Array[Byte]]):TimeSeriesRDD"></a>
+      <a id="timeSeriesRDDFromPython(index:com.cloudera.sparkts.DateTimeIndex,pyRdd:org.apache.spark.rdd.RDD[Array[Byte]]):com.cloudera.sparkts.TimeSeriesRDD[String]"></a>
+      <a id="timeSeriesRDDFromPython(DateTimeIndex,RDD[Array[Byte]]):TimeSeriesRDD[String]"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">timeSeriesRDDFromPython</span><span class="params">(<span name="index">index: <a href="DateTimeIndex.html" class="extype" name="com.cloudera.sparkts.DateTimeIndex">DateTimeIndex</a></span>, <span name="pyRdd">pyRdd: <span class="extype" name="org.apache.spark.rdd.RDD">RDD</span>[<span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Byte">Byte</span>]]</span>)</span><span class="result">: <a href="TimeSeriesRDD.html" class="extype" name="com.cloudera.sparkts.TimeSeriesRDD">TimeSeriesRDD</a></span>
+        <span class="name">timeSeriesRDDFromPython</span><span class="params">(<span name="index">index: <a href="DateTimeIndex.html" class="extype" name="com.cloudera.sparkts.DateTimeIndex">DateTimeIndex</a></span>, <span name="pyRdd">pyRdd: <span class="extype" name="org.apache.spark.rdd.RDD">RDD</span>[<span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Byte">Byte</span>]]</span>)</span><span class="result">: <a href="TimeSeriesRDD.html" class="extype" name="com.cloudera.sparkts.TimeSeriesRDD">TimeSeriesRDD</a>[<span class="extype" name="scala.Predef.String">String</span>]</span>
       </span>
       </h4>
       <p class="shortcomment cmt">Creates a TimeSeriesRDD from rows in a binary format that Python can write to.</p><div class="fullcomment"><div class="comment cmt"><p>Creates a TimeSeriesRDD from rows in a binary format that Python can write to.

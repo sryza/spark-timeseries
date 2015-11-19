@@ -2,9 +2,9 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html>
         <head>
-          <title>TimeSeries - Spark Timeseries 0.1.0 API - com.cloudera.sparkts.TimeSeries</title>
-          <meta name="description" content="TimeSeries - Spark Timeseries 0.1.0 API - com.cloudera.sparkts.TimeSeries" />
-          <meta name="keywords" content="TimeSeries Spark Timeseries 0.1.0 API com.cloudera.sparkts.TimeSeries" />
+          <title>TimeSeries - Spark TS 0.1.0 API - com.cloudera.sparkts.TimeSeries</title>
+          <meta name="description" content="TimeSeries - Spark TS 0.1.0 API - com.cloudera.sparkts.TimeSeries" />
+          <meta name="keywords" content="TimeSeries Spark TS 0.1.0 API com.cloudera.sparkts.TimeSeries" />
           <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
           
       <link href="../../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
@@ -35,7 +35,7 @@
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <span class="name">TimeSeries</span><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
+        <span class="name">TimeSeries</span><span class="tparams">[<span name="K">K</span>]</span><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       </h4>
       
@@ -80,15 +80,15 @@
         <div id="constructors" class="members">
               <h3>Instance Constructors</h3>
               <ol><li name="com.cloudera.sparkts.TimeSeries#&lt;init&gt;" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="&lt;init&gt;(index:com.cloudera.sparkts.DateTimeIndex,data:breeze.linalg.DenseMatrix[Double],keys:Array[String]):com.cloudera.sparkts.TimeSeries"></a>
-      <a id="&lt;init&gt;:TimeSeries"></a>
+      <a id="&lt;init&gt;(index:com.cloudera.sparkts.DateTimeIndex,data:breeze.linalg.DenseMatrix[Double],keys:Array[K])(implicitkClassTag:scala.reflect.ClassTag[K]):com.cloudera.sparkts.TimeSeries[K]"></a>
+      <a id="&lt;init&gt;:TimeSeries[K]"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">new</span>
       </span>
       <span class="symbol">
-        <span class="name">TimeSeries</span><span class="params">(<span name="index">index: <a href="DateTimeIndex.html" class="extype" name="com.cloudera.sparkts.DateTimeIndex">DateTimeIndex</a></span>, <span name="data">data: <span class="extype" name="breeze.linalg.DenseMatrix">DenseMatrix</span>[<span class="extype" name="scala.Double">Double</span>]</span>, <span name="keys">keys: <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>)</span>
+        <span class="name">TimeSeries</span><span class="params">(<span name="index">index: <a href="DateTimeIndex.html" class="extype" name="com.cloudera.sparkts.DateTimeIndex">DateTimeIndex</a></span>, <span name="data">data: <span class="extype" name="breeze.linalg.DenseMatrix">DenseMatrix</span>[<span class="extype" name="scala.Double">Double</span>]</span>, <span name="keys">keys: <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="com.cloudera.sparkts.TimeSeries.K">K</span>]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="kClassTag">kClassTag: <span class="extype" name="scala.reflect.ClassTag">ClassTag</span>[<span class="extype" name="com.cloudera.sparkts.TimeSeries.K">K</span>]</span>)</span>
       </span>
       </h4>
       
@@ -212,30 +212,30 @@
       </h4>
       
     </li><li name="com.cloudera.sparkts.TimeSeries#differences" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="differences():com.cloudera.sparkts.TimeSeries"></a>
-      <a id="differences():TimeSeries"></a>
+      <a id="differences():com.cloudera.sparkts.TimeSeries[K]"></a>
+      <a id="differences():TimeSeries[K]"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">differences</span><span class="params">()</span><span class="result">: <a href="" class="extype" name="com.cloudera.sparkts.TimeSeries">TimeSeries</a></span>
+        <span class="name">differences</span><span class="params">()</span><span class="result">: <a href="" class="extype" name="com.cloudera.sparkts.TimeSeries">TimeSeries</a>[<span class="extype" name="com.cloudera.sparkts.TimeSeries.K">K</span>]</span>
       </span>
       </h4>
       <p class="shortcomment cmt">Returns a TimeSeries where each time series is differenced with order 1.</p><div class="fullcomment"><div class="comment cmt"><p>Returns a TimeSeries where each time series is differenced with order 1. The new TimeSeries
 will be missing the first date-time.
 </p></div></div>
     </li><li name="com.cloudera.sparkts.TimeSeries#differences" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="differences(lag:Int):com.cloudera.sparkts.TimeSeries"></a>
-      <a id="differences(Int):TimeSeries"></a>
+      <a id="differences(lag:Int):com.cloudera.sparkts.TimeSeries[K]"></a>
+      <a id="differences(Int):TimeSeries[K]"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">differences</span><span class="params">(<span name="lag">lag: <span class="extype" name="scala.Int">Int</span></span>)</span><span class="result">: <a href="" class="extype" name="com.cloudera.sparkts.TimeSeries">TimeSeries</a></span>
+        <span class="name">differences</span><span class="params">(<span name="lag">lag: <span class="extype" name="scala.Int">Int</span></span>)</span><span class="result">: <a href="" class="extype" name="com.cloudera.sparkts.TimeSeries">TimeSeries</a>[<span class="extype" name="com.cloudera.sparkts.TimeSeries.K">K</span>]</span>
       </span>
       </h4>
       <p class="shortcomment cmt">Returns a TimeSeries where each time series is differenced with the given order.</p><div class="fullcomment"><div class="comment cmt"><p>Returns a TimeSeries where each time series is differenced with the given order. The new
@@ -313,15 +313,15 @@ TimeSeries will be missing the first n date-times.
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
     </li><li name="com.cloudera.sparkts.TimeSeries#head" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="head():(String,breeze.linalg.Vector[Double])"></a>
-      <a id="head():(String,Vector[Double])"></a>
+      <a id="head():(K,breeze.linalg.Vector[Double])"></a>
+      <a id="head():(K,Vector[Double])"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">head</span><span class="params">()</span><span class="result">: (<span class="extype" name="scala.Predef.String">String</span>, <span class="extype" name="breeze.linalg.Vector">Vector</span>[<span class="extype" name="scala.Double">Double</span>])</span>
+        <span class="name">head</span><span class="params">()</span><span class="result">: (<span class="extype" name="com.cloudera.sparkts.TimeSeries.K">K</span>, <span class="extype" name="breeze.linalg.Vector">Vector</span>[<span class="extype" name="scala.Double">Double</span>])</span>
       </span>
       </h4>
       <p class="shortcomment cmt">Gets the first univariate series and its key.</p>
@@ -351,97 +351,134 @@ TimeSeries will be missing the first n date-times.
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
+    </li><li name="com.cloudera.sparkts.TimeSeries#kClassTag" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="kClassTag:scala.reflect.ClassTag[K]"></a>
+      <a id="kClassTag:ClassTag[K]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">implicit </span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">kClassTag</span><span class="result">: <span class="extype" name="scala.reflect.ClassTag">ClassTag</span>[<span class="extype" name="com.cloudera.sparkts.TimeSeries.K">K</span>]</span>
+      </span>
+      </h4>
+      
     </li><li name="com.cloudera.sparkts.TimeSeries#keys" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="keys:Array[String]"></a>
-      <a id="keys:Array[String]"></a>
+      <a id="keys:Array[K]"></a>
+      <a id="keys:Array[K]"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">val</span>
       </span>
       <span class="symbol">
-        <span class="name">keys</span><span class="result">: <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>
+        <span class="name">keys</span><span class="result">: <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="com.cloudera.sparkts.TimeSeries.K">K</span>]</span>
       </span>
       </h4>
       
     </li><li name="com.cloudera.sparkts.TimeSeries#lags" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="lags(maxLag:Int,includeOriginals:Boolean):com.cloudera.sparkts.TimeSeries"></a>
-      <a id="lags(Int,Boolean):TimeSeries"></a>
+      <a id="lags[U](maxLag:Int,includeOriginals:Boolean,laggedKey:(K,Int)=&gt;U)(implicitevidence$1:scala.reflect.ClassTag[U]):com.cloudera.sparkts.TimeSeries[U]"></a>
+      <a id="lags[U](Int,Boolean,(K,Int)⇒U)(ClassTag[U]):TimeSeries[U]"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">lags</span><span class="params">(<span name="maxLag">maxLag: <span class="extype" name="scala.Int">Int</span></span>, <span name="includeOriginals">includeOriginals: <span class="extype" name="scala.Boolean">Boolean</span></span>)</span><span class="result">: <a href="" class="extype" name="com.cloudera.sparkts.TimeSeries">TimeSeries</a></span>
+        <span class="name">lags</span><span class="tparams">[<span name="U">U</span>]</span><span class="params">(<span name="maxLag">maxLag: <span class="extype" name="scala.Int">Int</span></span>, <span name="includeOriginals">includeOriginals: <span class="extype" name="scala.Boolean">Boolean</span></span>, <span name="laggedKey">laggedKey: (<span class="extype" name="com.cloudera.sparkts.TimeSeries.K">K</span>, <span class="extype" name="scala.Int">Int</span>) ⇒ <span class="extype" name="com.cloudera.sparkts.TimeSeries.lags.U">U</span> = <span class="symbol"><span class="name"><a href="TimeSeries$.html">laggedPairKey[K]</a></span></span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <span class="extype" name="scala.reflect.ClassTag">ClassTag</span>[<span class="extype" name="com.cloudera.sparkts.TimeSeries.lags.U">U</span>]</span>)</span><span class="result">: <a href="" class="extype" name="com.cloudera.sparkts.TimeSeries">TimeSeries</a>[<span class="extype" name="com.cloudera.sparkts.TimeSeries.lags.U">U</span>]</span>
       </span>
       </h4>
       <p class="shortcomment cmt">IMPORTANT: currently this assumes that the DateTimeIndex is a UniformDateTimeIndex, not an
 Irregular one.</p><div class="fullcomment"><div class="comment cmt"><p>IMPORTANT: currently this assumes that the DateTimeIndex is a UniformDateTimeIndex, not an
 Irregular one. This means that this function won't work (yet) on TimeSeries built using
-timeSeriesFromIrregularSamples().</p><p>Lags all individual time series of the TimeSeries instance by up to maxLag amount.</p><p>Example input TimeSeries:
+timeSeriesFromIrregularSamples().</p><p>Lags all individual time series of the TimeSeries instance by up to maxLag amount.
+The lagged time series has its keys generated by the laggedKey function which takes
+two input parameters: the original key and the lag order, and should return a
+corresponding lagged key. The default laggedKey function, TimeSeries.laggedPairKey,
+returns a new key that is a pair of (original key, lag order).</p><p>Example input TimeSeries:
   time 	a 	b
   4 pm 	1 	6
   5 pm 	2 	7
   6 pm 	3 	8
   7 pm 	4 	9
-  8 pm 	5 	10</p><p>With maxLag 2 and includeOriginals = true, we would get:
+  8 pm 	5 	10</p><p>With maxLag 2, includeOriginals = true and TimeSeries.laggedStringKey, we would get:
   time 	a 	lag1(a) 	lag2(a)  b 	lag1(b)  lag2(b)
   6 pm 	3 	2 	      1         8 	7 	      6
   7 pm 	4 	3 	      2         9 	8 	      7
   8 pm   5 	4 	      3         10	9 	      8</p></div></div>
-    </li><li name="com.cloudera.sparkts.TimeSeries#mapSeries" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="mapSeries(newIndex:com.cloudera.sparkts.DateTimeIndex,f:breeze.linalg.Vector[Double]=&gt;breeze.linalg.Vector[Double]):com.cloudera.sparkts.TimeSeries"></a>
-      <a id="mapSeries(DateTimeIndex,(Vector[Double])⇒Vector[Double]):TimeSeries"></a>
+    </li><li name="com.cloudera.sparkts.TimeSeries#lagsPerColumn" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="lagsPerColumn[U](lagsPerCol:Map[K,(Boolean,Int)],laggedKey:(K,Int)=&gt;U)(implicitevidence$2:scala.reflect.ClassTag[U]):com.cloudera.sparkts.TimeSeries[U]"></a>
+      <a id="lagsPerColumn[U](Map[K,(Boolean,Int)],(K,Int)⇒U)(ClassTag[U]):TimeSeries[U]"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">mapSeries</span><span class="params">(<span name="newIndex">newIndex: <a href="DateTimeIndex.html" class="extype" name="com.cloudera.sparkts.DateTimeIndex">DateTimeIndex</a></span>, <span name="f">f: (<span class="extype" name="breeze.linalg.Vector">Vector</span>[<span class="extype" name="scala.Double">Double</span>]) ⇒ <span class="extype" name="breeze.linalg.Vector">Vector</span>[<span class="extype" name="scala.Double">Double</span>]</span>)</span><span class="result">: <a href="" class="extype" name="com.cloudera.sparkts.TimeSeries">TimeSeries</a></span>
+        <span class="name">lagsPerColumn</span><span class="tparams">[<span name="U">U</span>]</span><span class="params">(<span name="lagsPerCol">lagsPerCol: <span class="extype" name="scala.Predef.Map">Map</span>[<span class="extype" name="com.cloudera.sparkts.TimeSeries.K">K</span>, (<span class="extype" name="scala.Boolean">Boolean</span>, <span class="extype" name="scala.Int">Int</span>)]</span>, <span name="laggedKey">laggedKey: (<span class="extype" name="com.cloudera.sparkts.TimeSeries.K">K</span>, <span class="extype" name="scala.Int">Int</span>) ⇒ <span class="extype" name="com.cloudera.sparkts.TimeSeries.lagsPerColumn.U">U</span> = <span class="symbol"><span class="name"><a href="TimeSeries$.html">laggedPairKey[K]</a></span></span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <span class="extype" name="scala.reflect.ClassTag">ClassTag</span>[<span class="extype" name="com.cloudera.sparkts.TimeSeries.lagsPerColumn.U">U</span>]</span>)</span><span class="result">: <a href="" class="extype" name="com.cloudera.sparkts.TimeSeries">TimeSeries</a>[<span class="extype" name="com.cloudera.sparkts.TimeSeries.lagsPerColumn.U">U</span>]</span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">IMPORTANT: currently this assumes that the DateTimeIndex is a UniformDateTimeIndex, not an
+Irregular one.</p><div class="fullcomment"><div class="comment cmt"><p>IMPORTANT: currently this assumes that the DateTimeIndex is a UniformDateTimeIndex, not an
+Irregular one. This means that this function won't work (yet) on TimeSeries built using
+timeSeriesFromIrregularSamples().</p><p>Lags the specified individual time series of the TimeSeries instance by up to their matching
+lag amount. Each time series can be indicated to either retain the original value, or drop it.</p><p>In other words, the lagsPerCol has the following structure:</p><p>   (&quot;variableName1&quot; -&gt; (keepOriginalValue, maxLag),
+    &quot;variableName2&quot; -&gt; (keepOriginalValue, maxLag),
+    ...)</p><p>See description of the above lags function for an example of the lagging process.
+</p></div></div>
+    </li><li name="com.cloudera.sparkts.TimeSeries#mapSeries" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="mapSeries(newIndex:com.cloudera.sparkts.DateTimeIndex,f:breeze.linalg.Vector[Double]=&gt;breeze.linalg.Vector[Double]):com.cloudera.sparkts.TimeSeries[K]"></a>
+      <a id="mapSeries(DateTimeIndex,(Vector[Double])⇒Vector[Double]):TimeSeries[K]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">mapSeries</span><span class="params">(<span name="newIndex">newIndex: <a href="DateTimeIndex.html" class="extype" name="com.cloudera.sparkts.DateTimeIndex">DateTimeIndex</a></span>, <span name="f">f: (<span class="extype" name="breeze.linalg.Vector">Vector</span>[<span class="extype" name="scala.Double">Double</span>]) ⇒ <span class="extype" name="breeze.linalg.Vector">Vector</span>[<span class="extype" name="scala.Double">Double</span>]</span>)</span><span class="result">: <a href="" class="extype" name="com.cloudera.sparkts.TimeSeries">TimeSeries</a>[<span class="extype" name="com.cloudera.sparkts.TimeSeries.K">K</span>]</span>
       </span>
       </h4>
       <p class="shortcomment cmt">Applies a transformation to each series such that the resulting series align with the given
 time index.</p>
     </li><li name="com.cloudera.sparkts.TimeSeries#mapSeries" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="mapSeries(f:breeze.linalg.Vector[Double]=&gt;breeze.linalg.Vector[Double]):com.cloudera.sparkts.TimeSeries"></a>
-      <a id="mapSeries((Vector[Double])⇒Vector[Double]):TimeSeries"></a>
+      <a id="mapSeries(f:breeze.linalg.Vector[Double]=&gt;breeze.linalg.Vector[Double]):com.cloudera.sparkts.TimeSeries[K]"></a>
+      <a id="mapSeries((Vector[Double])⇒Vector[Double]):TimeSeries[K]"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">mapSeries</span><span class="params">(<span name="f">f: (<span class="extype" name="breeze.linalg.Vector">Vector</span>[<span class="extype" name="scala.Double">Double</span>]) ⇒ <span class="extype" name="breeze.linalg.Vector">Vector</span>[<span class="extype" name="scala.Double">Double</span>]</span>)</span><span class="result">: <a href="" class="extype" name="com.cloudera.sparkts.TimeSeries">TimeSeries</a></span>
+        <span class="name">mapSeries</span><span class="params">(<span name="f">f: (<span class="extype" name="breeze.linalg.Vector">Vector</span>[<span class="extype" name="scala.Double">Double</span>]) ⇒ <span class="extype" name="breeze.linalg.Vector">Vector</span>[<span class="extype" name="scala.Double">Double</span>]</span>)</span><span class="result">: <a href="" class="extype" name="com.cloudera.sparkts.TimeSeries">TimeSeries</a>[<span class="extype" name="com.cloudera.sparkts.TimeSeries.K">K</span>]</span>
       </span>
       </h4>
       <p class="shortcomment cmt">Applies a transformation to each series that preserves the time index.</p>
     </li><li name="com.cloudera.sparkts.TimeSeries#mapSeriesWithKey" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="mapSeriesWithKey(f:(String,breeze.linalg.Vector[Double])=&gt;breeze.linalg.Vector[Double]):com.cloudera.sparkts.TimeSeries"></a>
-      <a id="mapSeriesWithKey((String,Vector[Double])⇒Vector[Double]):TimeSeries"></a>
+      <a id="mapSeriesWithKey(f:(K,breeze.linalg.Vector[Double])=&gt;breeze.linalg.Vector[Double]):com.cloudera.sparkts.TimeSeries[K]"></a>
+      <a id="mapSeriesWithKey((K,Vector[Double])⇒Vector[Double]):TimeSeries[K]"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">mapSeriesWithKey</span><span class="params">(<span name="f">f: (<span class="extype" name="scala.Predef.String">String</span>, <span class="extype" name="breeze.linalg.Vector">Vector</span>[<span class="extype" name="scala.Double">Double</span>]) ⇒ <span class="extype" name="breeze.linalg.Vector">Vector</span>[<span class="extype" name="scala.Double">Double</span>]</span>)</span><span class="result">: <a href="" class="extype" name="com.cloudera.sparkts.TimeSeries">TimeSeries</a></span>
+        <span class="name">mapSeriesWithKey</span><span class="params">(<span name="f">f: (<span class="extype" name="com.cloudera.sparkts.TimeSeries.K">K</span>, <span class="extype" name="breeze.linalg.Vector">Vector</span>[<span class="extype" name="scala.Double">Double</span>]) ⇒ <span class="extype" name="breeze.linalg.Vector">Vector</span>[<span class="extype" name="scala.Double">Double</span>]</span>)</span><span class="result">: <a href="" class="extype" name="com.cloudera.sparkts.TimeSeries">TimeSeries</a>[<span class="extype" name="com.cloudera.sparkts.TimeSeries.K">K</span>]</span>
       </span>
       </h4>
       <p class="shortcomment cmt">Applies a transformation to each series that preserves the time index.</p><div class="fullcomment"><div class="comment cmt"><p>Applies a transformation to each series that preserves the time index. Passes the key along
 with each series.
 </p></div></div>
     </li><li name="com.cloudera.sparkts.TimeSeries#mapValues" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="mapValues[U](f:breeze.linalg.Vector[Double]=&gt;U):Seq[(String,U)]"></a>
-      <a id="mapValues[U]((Vector[Double])⇒U):Seq[(String,U)]"></a>
+      <a id="mapValues[U](f:breeze.linalg.Vector[Double]=&gt;U):Seq[(K,U)]"></a>
+      <a id="mapValues[U]((Vector[Double])⇒U):Seq[(K,U)]"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">mapValues</span><span class="tparams">[<span name="U">U</span>]</span><span class="params">(<span name="f">f: (<span class="extype" name="breeze.linalg.Vector">Vector</span>[<span class="extype" name="scala.Double">Double</span>]) ⇒ <span class="extype" name="com.cloudera.sparkts.TimeSeries.mapValues.U">U</span></span>)</span><span class="result">: <span class="extype" name="scala.Seq">Seq</span>[(<span class="extype" name="scala.Predef.String">String</span>, <span class="extype" name="com.cloudera.sparkts.TimeSeries.mapValues.U">U</span>)]</span>
+        <span class="name">mapValues</span><span class="tparams">[<span name="U">U</span>]</span><span class="params">(<span name="f">f: (<span class="extype" name="breeze.linalg.Vector">Vector</span>[<span class="extype" name="scala.Double">Double</span>]) ⇒ <span class="extype" name="com.cloudera.sparkts.TimeSeries.mapValues.U">U</span></span>)</span><span class="result">: <span class="extype" name="scala.Seq">Seq</span>[(<span class="extype" name="com.cloudera.sparkts.TimeSeries.K">K</span>, <span class="extype" name="com.cloudera.sparkts.TimeSeries.mapValues.U">U</span>)]</span>
       </span>
       </h4>
       
@@ -485,60 +522,60 @@ with each series.
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
     </li><li name="com.cloudera.sparkts.TimeSeries#price2ret" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="price2ret():com.cloudera.sparkts.TimeSeries"></a>
-      <a id="price2ret():TimeSeries"></a>
+      <a id="price2ret():com.cloudera.sparkts.TimeSeries[K]"></a>
+      <a id="price2ret():TimeSeries[K]"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">price2ret</span><span class="params">()</span><span class="result">: <a href="" class="extype" name="com.cloudera.sparkts.TimeSeries">TimeSeries</a></span>
+        <span class="name">price2ret</span><span class="params">()</span><span class="result">: <a href="" class="extype" name="com.cloudera.sparkts.TimeSeries">TimeSeries</a>[<span class="extype" name="com.cloudera.sparkts.TimeSeries.K">K</span>]</span>
       </span>
       </h4>
       <p class="shortcomment cmt">Returns a return series for each time series.</p><div class="fullcomment"><div class="comment cmt"><p>Returns a return series for each time series. Assumes periodic (as opposed to continuously
 compounded) returns.
 </p></div></div>
     </li><li name="com.cloudera.sparkts.TimeSeries#quotients" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="quotients():com.cloudera.sparkts.TimeSeries"></a>
-      <a id="quotients():TimeSeries"></a>
+      <a id="quotients():com.cloudera.sparkts.TimeSeries[K]"></a>
+      <a id="quotients():TimeSeries[K]"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">quotients</span><span class="params">()</span><span class="result">: <a href="" class="extype" name="com.cloudera.sparkts.TimeSeries">TimeSeries</a></span>
+        <span class="name">quotients</span><span class="params">()</span><span class="result">: <a href="" class="extype" name="com.cloudera.sparkts.TimeSeries">TimeSeries</a>[<span class="extype" name="com.cloudera.sparkts.TimeSeries.K">K</span>]</span>
       </span>
       </h4>
       <p class="shortcomment cmt">Returns a TimeSeries where each time series is quotiented with order 1.</p><div class="fullcomment"><div class="comment cmt"><p>Returns a TimeSeries where each time series is quotiented with order 1. The new TimeSeries will
 be missing the first date-time.
 </p></div></div>
     </li><li name="com.cloudera.sparkts.TimeSeries#quotients" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="quotients(lag:Int):com.cloudera.sparkts.TimeSeries"></a>
-      <a id="quotients(Int):TimeSeries"></a>
+      <a id="quotients(lag:Int):com.cloudera.sparkts.TimeSeries[K]"></a>
+      <a id="quotients(Int):TimeSeries[K]"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">quotients</span><span class="params">(<span name="lag">lag: <span class="extype" name="scala.Int">Int</span></span>)</span><span class="result">: <a href="" class="extype" name="com.cloudera.sparkts.TimeSeries">TimeSeries</a></span>
+        <span class="name">quotients</span><span class="params">(<span name="lag">lag: <span class="extype" name="scala.Int">Int</span></span>)</span><span class="result">: <a href="" class="extype" name="com.cloudera.sparkts.TimeSeries">TimeSeries</a>[<span class="extype" name="com.cloudera.sparkts.TimeSeries.K">K</span>]</span>
       </span>
       </h4>
       <p class="shortcomment cmt">Returns a TimeSeries where each time series is quotiented with the given order.</p><div class="fullcomment"><div class="comment cmt"><p>Returns a TimeSeries where each time series is quotiented with the given order. The new
 TimeSeries will be missing the first n date-times.
 </p></div></div>
     </li><li name="com.cloudera.sparkts.TimeSeries#slice" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="slice(range:Range):com.cloudera.sparkts.TimeSeries"></a>
-      <a id="slice(Range):TimeSeries"></a>
+      <a id="slice(range:Range):com.cloudera.sparkts.TimeSeries[K]"></a>
+      <a id="slice(Range):TimeSeries[K]"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">slice</span><span class="params">(<span name="range">range: <span class="extype" name="scala.Range">Range</span></span>)</span><span class="result">: <a href="" class="extype" name="com.cloudera.sparkts.TimeSeries">TimeSeries</a></span>
+        <span class="name">slice</span><span class="params">(<span name="range">range: <span class="extype" name="scala.Range">Range</span></span>)</span><span class="result">: <a href="" class="extype" name="com.cloudera.sparkts.TimeSeries">TimeSeries</a>[<span class="extype" name="com.cloudera.sparkts.TimeSeries.K">K</span>]</span>
       </span>
       </h4>
       
@@ -569,28 +606,28 @@ TimeSeries will be missing the first n date-times.
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
     </li><li name="com.cloudera.sparkts.TimeSeries#union" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="union(vec:breeze.linalg.Vector[Double],key:String):com.cloudera.sparkts.TimeSeries"></a>
-      <a id="union(Vector[Double],String):TimeSeries"></a>
+      <a id="union(vec:breeze.linalg.Vector[Double],key:K):com.cloudera.sparkts.TimeSeries[K]"></a>
+      <a id="union(Vector[Double],K):TimeSeries[K]"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">union</span><span class="params">(<span name="vec">vec: <span class="extype" name="breeze.linalg.Vector">Vector</span>[<span class="extype" name="scala.Double">Double</span>]</span>, <span name="key">key: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <a href="" class="extype" name="com.cloudera.sparkts.TimeSeries">TimeSeries</a></span>
+        <span class="name">union</span><span class="params">(<span name="vec">vec: <span class="extype" name="breeze.linalg.Vector">Vector</span>[<span class="extype" name="scala.Double">Double</span>]</span>, <span name="key">key: <span class="extype" name="com.cloudera.sparkts.TimeSeries.K">K</span></span>)</span><span class="result">: <a href="" class="extype" name="com.cloudera.sparkts.TimeSeries">TimeSeries</a>[<span class="extype" name="com.cloudera.sparkts.TimeSeries.K">K</span>]</span>
       </span>
       </h4>
       
     </li><li name="com.cloudera.sparkts.TimeSeries#univariateKeyAndSeriesIterator" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="univariateKeyAndSeriesIterator():Iterator[(String,breeze.linalg.Vector[Double])]"></a>
-      <a id="univariateKeyAndSeriesIterator():Iterator[(String,Vector[Double])]"></a>
+      <a id="univariateKeyAndSeriesIterator():Iterator[(K,breeze.linalg.Vector[Double])]"></a>
+      <a id="univariateKeyAndSeriesIterator():Iterator[(K,Vector[Double])]"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">univariateKeyAndSeriesIterator</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Iterator">Iterator</span>[(<span class="extype" name="scala.Predef.String">String</span>, <span class="extype" name="breeze.linalg.Vector">Vector</span>[<span class="extype" name="scala.Double">Double</span>])]</span>
+        <span class="name">univariateKeyAndSeriesIterator</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Iterator">Iterator</span>[(<span class="extype" name="com.cloudera.sparkts.TimeSeries.K">K</span>, <span class="extype" name="breeze.linalg.Vector">Vector</span>[<span class="extype" name="scala.Double">Double</span>])]</span>
       </span>
       </h4>
       

@@ -2,9 +2,9 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html>
         <head>
-          <title>BusinessDayFrequency - Spark Timeseries 0.1.0 API - com.cloudera.sparkts.BusinessDayFrequency</title>
-          <meta name="description" content="BusinessDayFrequency - Spark Timeseries 0.1.0 API - com.cloudera.sparkts.BusinessDayFrequency" />
-          <meta name="keywords" content="BusinessDayFrequency Spark Timeseries 0.1.0 API com.cloudera.sparkts.BusinessDayFrequency" />
+          <title>BusinessDayFrequency - Spark TS 0.1.0 API - com.cloudera.sparkts.BusinessDayFrequency</title>
+          <meta name="description" content="BusinessDayFrequency - Spark TS 0.1.0 API - com.cloudera.sparkts.BusinessDayFrequency" />
+          <meta name="keywords" content="BusinessDayFrequency Spark TS 0.1.0 API com.cloudera.sparkts.BusinessDayFrequency" />
           <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
           
       <link href="../../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
@@ -80,7 +80,7 @@
         <div id="constructors" class="members">
               <h3>Instance Constructors</h3>
               <ol><li name="com.cloudera.sparkts.BusinessDayFrequency#&lt;init&gt;" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="&lt;init&gt;(days:Int):com.cloudera.sparkts.BusinessDayFrequency"></a>
+      <a id="&lt;init&gt;(days:Int,firstDayOfWeek:Int):com.cloudera.sparkts.BusinessDayFrequency"></a>
       <a id="&lt;init&gt;:BusinessDayFrequency"></a>
       <h4 class="signature">
       <span class="modifier_kind">
@@ -88,7 +88,7 @@
         <span class="kind">new</span>
       </span>
       <span class="symbol">
-        <span class="name">BusinessDayFrequency</span><span class="params">(<span name="days">days: <span class="extype" name="scala.Int">Int</span></span>)</span>
+        <span class="name">BusinessDayFrequency</span><span class="params">(<span name="days">days: <span class="extype" name="scala.Int">Int</span></span>, <span name="firstDayOfWeek">firstDayOfWeek: <span class="extype" name="scala.Int">Int</span> = <span class="defval" name="org.joda.time.DateTimeConstants.MONDAY">...</span></span>)</span>
       </span>
       </h4>
       
@@ -178,7 +178,7 @@
         <span class="name">advance</span><span class="params">(<span name="dt">dt: <span class="extype" name="com.github.nscala_time.time.TypeImports.DateTime">github.nscala_time.time.Imports.DateTime</span></span>, <span name="n">n: <span class="extype" name="scala.Int">Int</span></span>)</span><span class="result">: <span class="extype" name="com.github.nscala_time.time.TypeImports.DateTime">github.nscala_time.time.Imports.DateTime</span></span>
       </span>
       </h4>
-      <p class="shortcomment cmt">Advances the given DateTime by n business days.</p><div class="fullcomment"><div class="comment cmt"><p>Advances the given DateTime by n business days.
+      <p class="shortcomment cmt">Advances the given DateTime by (n * days) business days.</p><div class="fullcomment"><div class="comment cmt"><p>Advances the given DateTime by (n * days) business days.
 </p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.cloudera.sparkts.BusinessDayFrequency">BusinessDayFrequency</a> → <a href="Frequency.html" class="extype" name="com.cloudera.sparkts.Frequency">Frequency</a></dd></dl></div>
     </li><li name="scala.Any#asInstanceOf" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="asInstanceOf[T0]:T0"></a>
@@ -284,6 +284,19 @@
     </span>)</span>
               
         </dd></dl></div>
+    </li><li name="com.cloudera.sparkts.BusinessDayFrequency#firstDayOfWeek" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="firstDayOfWeek:Int"></a>
+      <a id="firstDayOfWeek:Int"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">firstDayOfWeek</span><span class="result">: <span class="extype" name="scala.Int">Int</span></span>
+      </span>
+      </h4>
+      
     </li><li name="scala.AnyRef#getClass" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="getClass():Class[_]"></a>
       <a id="getClass():Class[_]"></a>

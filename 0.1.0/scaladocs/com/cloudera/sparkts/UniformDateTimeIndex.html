@@ -2,9 +2,9 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html>
         <head>
-          <title>UniformDateTimeIndex - Spark Timeseries 0.1.0 API - com.cloudera.sparkts.UniformDateTimeIndex</title>
-          <meta name="description" content="UniformDateTimeIndex - Spark Timeseries 0.1.0 API - com.cloudera.sparkts.UniformDateTimeIndex" />
-          <meta name="keywords" content="UniformDateTimeIndex Spark Timeseries 0.1.0 API com.cloudera.sparkts.UniformDateTimeIndex" />
+          <title>UniformDateTimeIndex - Spark TS 0.1.0 API - com.cloudera.sparkts.UniformDateTimeIndex</title>
+          <meta name="description" content="UniformDateTimeIndex - Spark TS 0.1.0 API - com.cloudera.sparkts.UniformDateTimeIndex" />
+          <meta name="keywords" content="UniformDateTimeIndex Spark TS 0.1.0 API com.cloudera.sparkts.UniformDateTimeIndex" />
           <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
           
       <link href="../../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
@@ -82,7 +82,7 @@ for constant space storage and constant time operations.
         <div id="constructors" class="members">
               <h3>Instance Constructors</h3>
               <ol><li name="com.cloudera.sparkts.UniformDateTimeIndex#&lt;init&gt;" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="&lt;init&gt;(start:Long,periods:Int,frequency:com.cloudera.sparkts.Frequency):com.cloudera.sparkts.UniformDateTimeIndex"></a>
+      <a id="&lt;init&gt;(start:Long,periods:Int,frequency:com.cloudera.sparkts.Frequency,dateTimeZone:com.github.nscala_time.time.Imports.DateTimeZone):com.cloudera.sparkts.UniformDateTimeIndex"></a>
       <a id="&lt;init&gt;:UniformDateTimeIndex"></a>
       <h4 class="signature">
       <span class="modifier_kind">
@@ -90,7 +90,7 @@ for constant space storage and constant time operations.
         <span class="kind">new</span>
       </span>
       <span class="symbol">
-        <span class="name">UniformDateTimeIndex</span><span class="params">(<span name="start">start: <span class="extype" name="scala.Long">Long</span></span>, <span name="periods">periods: <span class="extype" name="scala.Int">Int</span></span>, <span name="frequency">frequency: <a href="Frequency.html" class="extype" name="com.cloudera.sparkts.Frequency">Frequency</a></span>)</span>
+        <span class="name">UniformDateTimeIndex</span><span class="params">(<span name="start">start: <span class="extype" name="scala.Long">Long</span></span>, <span name="periods">periods: <span class="extype" name="scala.Int">Int</span></span>, <span name="frequency">frequency: <a href="Frequency.html" class="extype" name="com.cloudera.sparkts.Frequency">Frequency</a></span>, <span name="dateTimeZone">dateTimeZone: <span class="extype" name="com.github.nscala_time.time.TypeImports.DateTimeZone">github.nscala_time.time.Imports.DateTimeZone</span> = <span class="defval" name="com.github.nscala_time.time.Imports.DateTimeZone.getDefault()">...</span></span>)</span>
       </span>
       </h4>
       
@@ -214,6 +214,19 @@ for constant space storage and constant time operations.
       </h4>
       <p class="shortcomment cmt">The i-th date-time in the index.</p><div class="fullcomment"><div class="comment cmt"><p>The i-th date-time in the index.
 </p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.cloudera.sparkts.UniformDateTimeIndex">UniformDateTimeIndex</a> → <a href="DateTimeIndex.html" class="extype" name="com.cloudera.sparkts.DateTimeIndex">DateTimeIndex</a></dd></dl></div>
+    </li><li name="com.cloudera.sparkts.UniformDateTimeIndex#dateTimeZone" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="dateTimeZone:com.github.nscala_time.time.Imports.DateTimeZone"></a>
+      <a id="dateTimeZone:github.nscala_time.time.Imports.DateTimeZone"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">dateTimeZone</span><span class="result">: <span class="extype" name="com.github.nscala_time.time.TypeImports.DateTimeZone">github.nscala_time.time.Imports.DateTimeZone</span></span>
+      </span>
+      </h4>
+      
     </li><li name="scala.AnyRef#eq" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="eq(x$1:AnyRef):Boolean"></a>
       <a id="eq(AnyRef):Boolean"></a>
@@ -620,6 +633,20 @@ since the epoch (inclusive).
     </span>)</span>
               
         </dd></dl></div>
+    </li><li name="com.cloudera.sparkts.UniformDateTimeIndex#zone" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="zone:com.github.nscala_time.time.Imports.DateTimeZone"></a>
+      <a id="zone:github.nscala_time.time.Imports.DateTimeZone"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">zone</span><span class="result">: <span class="extype" name="com.github.nscala_time.time.TypeImports.DateTimeZone">github.nscala_time.time.Imports.DateTimeZone</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">The time zone of date-times in the index.</p><div class="fullcomment"><div class="comment cmt"><p>The time zone of date-times in the index.
+</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.cloudera.sparkts.UniformDateTimeIndex">UniformDateTimeIndex</a> → <a href="DateTimeIndex.html" class="extype" name="com.cloudera.sparkts.DateTimeIndex">DateTimeIndex</a></dd></dl></div>
     </li></ol>
             </div>
 

@@ -2,9 +2,9 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html>
         <head>
-          <title>TimeSeries - Spark Timeseries 0.1.0 API - com.cloudera.sparkts.TimeSeries</title>
-          <meta name="description" content="TimeSeries - Spark Timeseries 0.1.0 API - com.cloudera.sparkts.TimeSeries" />
-          <meta name="keywords" content="TimeSeries Spark Timeseries 0.1.0 API com.cloudera.sparkts.TimeSeries" />
+          <title>TimeSeries - Spark TS 0.1.0 API - com.cloudera.sparkts.TimeSeries</title>
+          <meta name="description" content="TimeSeries - Spark TS 0.1.0 API - com.cloudera.sparkts.TimeSeries" />
+          <meta name="keywords" content="TimeSeries Spark TS 0.1.0 API com.cloudera.sparkts.TimeSeries" />
           <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
           
       <link href="../../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
@@ -266,6 +266,32 @@
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
+    </li><li name="com.cloudera.sparkts.TimeSeries#laggedPairKey" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="laggedPairKey[K](key:K,lagOrder:Int):(K,Int)"></a>
+      <a id="laggedPairKey[K](K,Int):(K,Int)"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">laggedPairKey</span><span class="tparams">[<span name="K">K</span>]</span><span class="params">(<span name="key">key: <span class="extype" name="com.cloudera.sparkts.TimeSeries.laggedPairKey.K">K</span></span>, <span name="lagOrder">lagOrder: <span class="extype" name="scala.Int">Int</span></span>)</span><span class="result">: (<span class="extype" name="com.cloudera.sparkts.TimeSeries.laggedPairKey.K">K</span>, <span class="extype" name="scala.Int">Int</span>)</span>
+      </span>
+      </h4>
+      
+    </li><li name="com.cloudera.sparkts.TimeSeries#laggedStringKey" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="laggedStringKey(key:String,lagOrder:Int):String"></a>
+      <a id="laggedStringKey(String,Int):String"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">laggedStringKey</span><span class="params">(<span name="key">key: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="lagOrder">lagOrder: <span class="extype" name="scala.Int">Int</span></span>)</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
+      </span>
+      </h4>
+      
     </li><li name="scala.AnyRef#ne" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="ne(x$1:AnyRef):Boolean"></a>
       <a id="ne(AnyRef):Boolean"></a>
@@ -319,28 +345,28 @@
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
     </li><li name="com.cloudera.sparkts.TimeSeries#timeSeriesFromIrregularSamples" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="timeSeriesFromIrregularSamples(samples:Seq[(com.github.nscala_time.time.Imports.DateTime,Array[Double])],keys:Array[String]):com.cloudera.sparkts.TimeSeries"></a>
-      <a id="timeSeriesFromIrregularSamples(Seq[(github.nscala_time.time.Imports.DateTime,Array[Double])],Array[String]):TimeSeries"></a>
+      <a id="timeSeriesFromIrregularSamples[K](samples:Seq[(com.github.nscala_time.time.Imports.DateTime,Array[Double])],keys:Array[K],zone:com.github.nscala_time.time.Imports.DateTimeZone)(implicitkClassTag:scala.reflect.ClassTag[K]):com.cloudera.sparkts.TimeSeries[K]"></a>
+      <a id="timeSeriesFromIrregularSamples[K](Seq[(github.nscala_time.time.Imports.DateTime,Array[Double])],Array[K],github.nscala_time.time.Imports.DateTimeZone)(ClassTag[K]):TimeSeries[K]"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">timeSeriesFromIrregularSamples</span><span class="params">(<span name="samples">samples: <span class="extype" name="scala.Seq">Seq</span>[(<span class="extype" name="com.github.nscala_time.time.TypeImports.DateTime">github.nscala_time.time.Imports.DateTime</span>, <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Double">Double</span>])]</span>, <span name="keys">keys: <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>)</span><span class="result">: <a href="TimeSeries.html" class="extype" name="com.cloudera.sparkts.TimeSeries">TimeSeries</a></span>
+        <span class="name">timeSeriesFromIrregularSamples</span><span class="tparams">[<span name="K">K</span>]</span><span class="params">(<span name="samples">samples: <span class="extype" name="scala.Seq">Seq</span>[(<span class="extype" name="com.github.nscala_time.time.TypeImports.DateTime">github.nscala_time.time.Imports.DateTime</span>, <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Double">Double</span>])]</span>, <span name="keys">keys: <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="com.cloudera.sparkts.TimeSeries.timeSeriesFromIrregularSamples.K">K</span>]</span>, <span name="zone">zone: <span class="extype" name="com.github.nscala_time.time.TypeImports.DateTimeZone">github.nscala_time.time.Imports.DateTimeZone</span> = <span class="symbol"><span class="name"><a href="../../package.html">DateTimeZone.getDefault()</a></span></span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="kClassTag">kClassTag: <span class="extype" name="scala.reflect.ClassTag">ClassTag</span>[<span class="extype" name="com.cloudera.sparkts.TimeSeries.timeSeriesFromIrregularSamples.K">K</span>]</span>)</span><span class="result">: <a href="TimeSeries.html" class="extype" name="com.cloudera.sparkts.TimeSeries">TimeSeries</a>[<span class="extype" name="com.cloudera.sparkts.TimeSeries.timeSeriesFromIrregularSamples.K">K</span>]</span>
       </span>
       </h4>
       
     </li><li name="com.cloudera.sparkts.TimeSeries#timeSeriesFromUniformSamples" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="timeSeriesFromUniformSamples(samples:Seq[Array[Double]],index:com.cloudera.sparkts.UniformDateTimeIndex,keys:Array[String]):com.cloudera.sparkts.TimeSeries"></a>
-      <a id="timeSeriesFromUniformSamples(Seq[Array[Double]],UniformDateTimeIndex,Array[String]):TimeSeries"></a>
+      <a id="timeSeriesFromUniformSamples[K](samples:Seq[Array[Double]],index:com.cloudera.sparkts.UniformDateTimeIndex,keys:Array[K])(implicitkClassTag:scala.reflect.ClassTag[K]):com.cloudera.sparkts.TimeSeries[K]"></a>
+      <a id="timeSeriesFromUniformSamples[K](Seq[Array[Double]],UniformDateTimeIndex,Array[K])(ClassTag[K]):TimeSeries[K]"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">timeSeriesFromUniformSamples</span><span class="params">(<span name="samples">samples: <span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Double">Double</span>]]</span>, <span name="index">index: <a href="UniformDateTimeIndex.html" class="extype" name="com.cloudera.sparkts.UniformDateTimeIndex">UniformDateTimeIndex</a></span>, <span name="keys">keys: <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>)</span><span class="result">: <a href="TimeSeries.html" class="extype" name="com.cloudera.sparkts.TimeSeries">TimeSeries</a></span>
+        <span class="name">timeSeriesFromUniformSamples</span><span class="tparams">[<span name="K">K</span>]</span><span class="params">(<span name="samples">samples: <span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Double">Double</span>]]</span>, <span name="index">index: <a href="UniformDateTimeIndex.html" class="extype" name="com.cloudera.sparkts.UniformDateTimeIndex">UniformDateTimeIndex</a></span>, <span name="keys">keys: <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="com.cloudera.sparkts.TimeSeries.timeSeriesFromUniformSamples.K">K</span>]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="kClassTag">kClassTag: <span class="extype" name="scala.reflect.ClassTag">ClassTag</span>[<span class="extype" name="com.cloudera.sparkts.TimeSeries.timeSeriesFromUniformSamples.K">K</span>]</span>)</span><span class="result">: <a href="TimeSeries.html" class="extype" name="com.cloudera.sparkts.TimeSeries">TimeSeries</a>[<span class="extype" name="com.cloudera.sparkts.TimeSeries.timeSeriesFromUniformSamples.K">K</span>]</span>
       </span>
       </h4>
       <p class="shortcomment cmt">This function should only be called when you can safely make the assumption that the time

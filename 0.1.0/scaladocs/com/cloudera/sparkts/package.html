@@ -2,9 +2,9 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html>
         <head>
-          <title>sparkts - Spark Timeseries 0.1.0 API - com.cloudera.sparkts</title>
-          <meta name="description" content="sparkts - Spark Timeseries 0.1.0 API - com.cloudera.sparkts" />
-          <meta name="keywords" content="sparkts Spark Timeseries 0.1.0 API com.cloudera.sparkts" />
+          <title>sparkts - Spark TS 0.1.0 API - com.cloudera.sparkts</title>
+          <meta name="description" content="sparkts - Spark TS 0.1.0 API - com.cloudera.sparkts" />
+          <meta name="keywords" content="sparkts Spark TS 0.1.0 API com.cloudera.sparkts" />
           <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
           
       <link href="../../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
@@ -177,15 +177,15 @@ date-times.</p>
       </h4>
       
     </li><li name="com.cloudera.sparkts.TimeSeries" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="TimeSeriesextendsSerializable"></a>
-      <a id="TimeSeries:TimeSeries"></a>
+      <a id="TimeSeries[K]extendsSerializable"></a>
+      <a id="TimeSeries[K]:TimeSeries[K]"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a href="TimeSeries.html"><span class="name">TimeSeries</span></a><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
+        <a href="TimeSeries.html"><span class="name">TimeSeries</span></a><span class="tparams">[<span name="K">K</span>]</span><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       </h4>
       
@@ -216,15 +216,15 @@ date-times.</p>
       </h4>
       
     </li><li name="com.cloudera.sparkts.TimeSeriesRDD" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="TimeSeriesRDDextendsRDD[(String,breeze.linalg.Vector[Double])]"></a>
-      <a id="TimeSeriesRDD:TimeSeriesRDD"></a>
+      <a id="TimeSeriesRDD[K]extendsRDD[(K,breeze.linalg.Vector[Double])]"></a>
+      <a id="TimeSeriesRDD[K]:TimeSeriesRDD[K]"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a href="TimeSeriesRDD.html"><span class="name">TimeSeriesRDD</span></a><span class="result"> extends <span class="extype" name="org.apache.spark.rdd.RDD">RDD</span>[(<span class="extype" name="scala.Predef.String">String</span>, <span class="extype" name="breeze.linalg.Vector">Vector</span>[<span class="extype" name="scala.Double">Double</span>])]</span>
+        <a href="TimeSeriesRDD.html"><span class="name">TimeSeriesRDD</span></a><span class="tparams">[<span name="K">K</span>]</span><span class="result"> extends <span class="extype" name="org.apache.spark.rdd.RDD">RDD</span>[(<span class="extype" name="com.cloudera.sparkts.TimeSeriesRDD.K">K</span>, <span class="extype" name="breeze.linalg.Vector">Vector</span>[<span class="extype" name="scala.Double">Double</span>])]</span>
       </span>
       </h4>
       <p class="comment cmt">A lazy distributed collection of univariate series with a conformed time dimension.</p>

@@ -2,9 +2,9 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html>
         <head>
-          <title>IrregularDateTimeIndex - Spark Timeseries 0.1.0 API - com.cloudera.sparkts.IrregularDateTimeIndex</title>
-          <meta name="description" content="IrregularDateTimeIndex - Spark Timeseries 0.1.0 API - com.cloudera.sparkts.IrregularDateTimeIndex" />
-          <meta name="keywords" content="IrregularDateTimeIndex Spark Timeseries 0.1.0 API com.cloudera.sparkts.IrregularDateTimeIndex" />
+          <title>IrregularDateTimeIndex - Spark TS 0.1.0 API - com.cloudera.sparkts.IrregularDateTimeIndex</title>
+          <meta name="description" content="IrregularDateTimeIndex - Spark TS 0.1.0 API - com.cloudera.sparkts.IrregularDateTimeIndex" />
+          <meta name="keywords" content="IrregularDateTimeIndex Spark TS 0.1.0 API com.cloudera.sparkts.IrregularDateTimeIndex" />
           <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
           
       <link href="../../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
@@ -82,7 +82,7 @@ Lookups or slicing by date-time are O(log n) operations.
         <div id="constructors" class="members">
               <h3>Instance Constructors</h3>
               <ol><li name="com.cloudera.sparkts.IrregularDateTimeIndex#&lt;init&gt;" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="&lt;init&gt;(instants:Array[Long]):com.cloudera.sparkts.IrregularDateTimeIndex"></a>
+      <a id="&lt;init&gt;(instants:Array[Long],dateTimeZone:com.github.nscala_time.time.Imports.DateTimeZone):com.cloudera.sparkts.IrregularDateTimeIndex"></a>
       <a id="&lt;init&gt;:IrregularDateTimeIndex"></a>
       <h4 class="signature">
       <span class="modifier_kind">
@@ -90,7 +90,7 @@ Lookups or slicing by date-time are O(log n) operations.
         <span class="kind">new</span>
       </span>
       <span class="symbol">
-        <span class="name">IrregularDateTimeIndex</span><span class="params">(<span name="instants">instants: <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Long">Long</span>]</span>)</span>
+        <span class="name">IrregularDateTimeIndex</span><span class="params">(<span name="instants">instants: <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Long">Long</span>]</span>, <span name="dateTimeZone">dateTimeZone: <span class="extype" name="com.github.nscala_time.time.TypeImports.DateTimeZone">github.nscala_time.time.Imports.DateTimeZone</span> = <span class="defval" name="com.github.nscala_time.time.Imports.DateTimeZone.getDefault()">...</span></span>)</span>
       </span>
       </h4>
       
@@ -214,6 +214,19 @@ Lookups or slicing by date-time are O(log n) operations.
       </h4>
       <p class="shortcomment cmt">The i-th date-time in the index.</p><div class="fullcomment"><div class="comment cmt"><p>The i-th date-time in the index.
 </p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.cloudera.sparkts.IrregularDateTimeIndex">IrregularDateTimeIndex</a> → <a href="DateTimeIndex.html" class="extype" name="com.cloudera.sparkts.DateTimeIndex">DateTimeIndex</a></dd></dl></div>
+    </li><li name="com.cloudera.sparkts.IrregularDateTimeIndex#dateTimeZone" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="dateTimeZone:com.github.nscala_time.time.Imports.DateTimeZone"></a>
+      <a id="dateTimeZone:github.nscala_time.time.Imports.DateTimeZone"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">dateTimeZone</span><span class="result">: <span class="extype" name="com.github.nscala_time.time.TypeImports.DateTimeZone">github.nscala_time.time.Imports.DateTimeZone</span></span>
+      </span>
+      </h4>
+      
     </li><li name="scala.AnyRef#eq" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="eq(x$1:AnyRef):Boolean"></a>
       <a id="eq(AnyRef):Boolean"></a>
@@ -594,6 +607,20 @@ since the epoch (inclusive).
     </span>)</span>
               
         </dd></dl></div>
+    </li><li name="com.cloudera.sparkts.IrregularDateTimeIndex#zone" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="zone:com.github.nscala_time.time.Imports.DateTimeZone"></a>
+      <a id="zone:github.nscala_time.time.Imports.DateTimeZone"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">zone</span><span class="result">: <span class="extype" name="com.github.nscala_time.time.TypeImports.DateTimeZone">github.nscala_time.time.Imports.DateTimeZone</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">The time zone of date-times in the index.</p><div class="fullcomment"><div class="comment cmt"><p>The time zone of date-times in the index.
+</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.cloudera.sparkts.IrregularDateTimeIndex">IrregularDateTimeIndex</a> → <a href="DateTimeIndex.html" class="extype" name="com.cloudera.sparkts.DateTimeIndex">DateTimeIndex</a></dd></dl></div>
     </li></ol>
             </div>
 

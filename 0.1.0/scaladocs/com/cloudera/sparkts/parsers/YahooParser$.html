@@ -2,9 +2,9 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html>
         <head>
-          <title>YahooParser - Spark Timeseries 0.1.0 API - com.cloudera.sparkts.parsers.YahooParser</title>
-          <meta name="description" content="YahooParser - Spark Timeseries 0.1.0 API - com.cloudera.sparkts.parsers.YahooParser" />
-          <meta name="keywords" content="YahooParser Spark Timeseries 0.1.0 API com.cloudera.sparkts.parsers.YahooParser" />
+          <title>YahooParser - Spark TS 0.1.0 API - com.cloudera.sparkts.parsers.YahooParser</title>
+          <meta name="description" content="YahooParser - Spark TS 0.1.0 API - com.cloudera.sparkts.parsers.YahooParser" />
+          <meta name="keywords" content="YahooParser Spark TS 0.1.0 API com.cloudera.sparkts.parsers.YahooParser" />
           <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
           
       <link href="../../../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
@@ -389,28 +389,28 @@
               
         </dd></dl></div>
     </li><li name="com.cloudera.sparkts.parsers.YahooParser#yahooFiles" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="yahooFiles(dir:String,sc:org.apache.spark.SparkContext):org.apache.spark.rdd.RDD[com.cloudera.sparkts.TimeSeries]"></a>
-      <a id="yahooFiles(String,SparkContext):RDD[TimeSeries]"></a>
+      <a id="yahooFiles(dir:String,sc:org.apache.spark.SparkContext,zone:org.joda.time.DateTimeZone):org.apache.spark.rdd.RDD[com.cloudera.sparkts.TimeSeries[String]]"></a>
+      <a id="yahooFiles(String,SparkContext,DateTimeZone):RDD[TimeSeries[String]]"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">yahooFiles</span><span class="params">(<span name="dir">dir: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="sc">sc: <span class="extype" name="org.apache.spark.SparkContext">SparkContext</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.rdd.RDD">RDD</span>[<a href="../TimeSeries.html" class="extype" name="com.cloudera.sparkts.TimeSeries">TimeSeries</a>]</span>
+        <span class="name">yahooFiles</span><span class="params">(<span name="dir">dir: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="sc">sc: <span class="extype" name="org.apache.spark.SparkContext">SparkContext</span></span>, <span name="zone">zone: <span class="extype" name="org.joda.time.DateTimeZone">DateTimeZone</span> = <span class="symbol">DateTimeZone.getDefault</span></span>)</span><span class="result">: <span class="extype" name="org.apache.spark.rdd.RDD">RDD</span>[<a href="../TimeSeries.html" class="extype" name="com.cloudera.sparkts.TimeSeries">TimeSeries</a>[<span class="extype" name="scala.Predef.String">String</span>]]</span>
       </span>
       </h4>
       
     </li><li name="com.cloudera.sparkts.parsers.YahooParser#yahooStringToTimeSeries" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="yahooStringToTimeSeries(text:String,keyPrefix:String):com.cloudera.sparkts.TimeSeries"></a>
-      <a id="yahooStringToTimeSeries(String,String):TimeSeries"></a>
+      <a id="yahooStringToTimeSeries(text:String,keyPrefix:String,zone:org.joda.time.DateTimeZone):com.cloudera.sparkts.TimeSeries[String]"></a>
+      <a id="yahooStringToTimeSeries(String,String,DateTimeZone):TimeSeries[String]"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">yahooStringToTimeSeries</span><span class="params">(<span name="text">text: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="keyPrefix">keyPrefix: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">&quot;&quot;</span></span>)</span><span class="result">: <a href="../TimeSeries.html" class="extype" name="com.cloudera.sparkts.TimeSeries">TimeSeries</a></span>
+        <span class="name">yahooStringToTimeSeries</span><span class="params">(<span name="text">text: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="keyPrefix">keyPrefix: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">&quot;&quot;</span></span>, <span name="zone">zone: <span class="extype" name="org.joda.time.DateTimeZone">DateTimeZone</span> = <span class="symbol">DateTimeZone.getDefault</span></span>)</span><span class="result">: <a href="../TimeSeries.html" class="extype" name="com.cloudera.sparkts.TimeSeries">TimeSeries</a>[<span class="extype" name="scala.Predef.String">String</span>]</span>
       </span>
       </h4>
       
