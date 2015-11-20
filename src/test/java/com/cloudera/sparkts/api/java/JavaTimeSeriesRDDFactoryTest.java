@@ -341,8 +341,9 @@ public class JavaTimeSeriesRDDFactoryTest implements Serializable {
                 index, rdd);
 
         DataFrame obsDF = tsRdd.toObservationsDataFrame(sqlContext, "timestamp", "key", "value");
-        JavaTimeSeriesRDD<String> tsRddFromDF = JavaTimeSeriesRDDFactory.javaTimeSeriesRDDFromObservations(
-                index, obsDF, "timestamp", "key", "value");
+        JavaTimeSeriesRDD<String> tsRddFromDF = JavaTimeSeriesRDDFactory
+                .javaTimeSeriesRDDFromObservations(
+                    index, obsDF, "timestamp", "key", "value");
 
 
         assertArrayEquals(
@@ -351,7 +352,8 @@ public class JavaTimeSeriesRDDFactoryTest implements Serializable {
         );
 
         Row[] df1 = obsDF.collect();
-        Row[] df2 = tsRddFromDF.toObservationsDataFrame(sqlContext, "timestamp", "key", "value").collect();
+        Row[] df2 = tsRddFromDF.toObservationsDataFrame(
+                sqlContext, "timestamp", "key", "value").collect();
 
         Comparator<Row> comparator = new Comparator<Row>() {
             @Override
@@ -396,7 +398,8 @@ public class JavaTimeSeriesRDDFactoryTest implements Serializable {
 
         JavaTimeSeriesRDD<String> rdd2 = rdd.removeInstantsWithNaNs();
 
-        assertEquals(DateTimeIndexFactory.irregular(new DateTime[] { new DateTime("2015-4-9"), new DateTime("2015-4-11") }),
+        assertEquals(DateTimeIndexFactory.irregular(new DateTime[] {
+                        new DateTime("2015-4-9"), new DateTime("2015-4-11") }),
                 rdd2.index());
 
         assertArrayEquals(new Vector[]{ new DenseVector(new double[] { 1.0, 3.0 }),

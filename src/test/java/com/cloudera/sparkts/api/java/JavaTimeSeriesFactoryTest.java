@@ -43,8 +43,9 @@ public class JavaTimeSeriesFactoryTest {
         samples.add(new double[] { 4.0, 9.0 });
         samples.add(new double[] { 5.0, 10.0 });
 
-        JavaTimeSeries<String> originalTimeSeries = JavaTimeSeriesFactory.javaTimeSeriesFromUniformSamples(
-                samples, originalIndex, new String[]{"a", "b"});
+        JavaTimeSeries<String> originalTimeSeries = JavaTimeSeriesFactory
+                .javaTimeSeriesFromUniformSamples(
+                    samples, originalIndex, new String[]{"a", "b"});
 
         JavaTimeSeries<String> laggedTimeSeries = originalTimeSeries.lags(
                 2, true, new JavaTimeSeries.laggedStringKey());
@@ -73,10 +74,12 @@ public class JavaTimeSeriesFactoryTest {
         samples.add(new double[] { 4.0, 9.0 });
         samples.add(new double[] { 5.0, 10.0 });
 
-        JavaTimeSeries<String> originalTimeSeries = JavaTimeSeriesFactory.javaTimeSeriesFromUniformSamples(
-                samples, originalIndex, new String[]{"a", "b"});
+        JavaTimeSeries<String> originalTimeSeries = JavaTimeSeriesFactory
+                .javaTimeSeriesFromUniformSamples(
+                    samples, originalIndex, new String[]{"a", "b"});
 
-        JavaTimeSeries<Tuple2<String, Integer>> laggedTimeSeries = originalTimeSeries.lags(2, false);
+        JavaTimeSeries<Tuple2<String, Integer>> laggedTimeSeries =
+                originalTimeSeries.lags(2, false);
 
         Tuple2<String, Integer> laggedKeysExpected[] = new Tuple2[4];
         laggedKeysExpected[0] = new Tuple2<>("a", 1);
@@ -84,7 +87,8 @@ public class JavaTimeSeriesFactoryTest {
         laggedKeysExpected[2] = new Tuple2<>("b", 1);
         laggedKeysExpected[3] = new Tuple2<>("b", 2);
 
-        assertArrayEquals(laggedKeysExpected, (Tuple2<String, Integer>[]) laggedTimeSeries.keys());
+        assertArrayEquals(laggedKeysExpected,
+                (Tuple2<String, Integer>[]) laggedTimeSeries.keys());
         assertEquals(3, laggedTimeSeries.index().size());
 
         assertArrayEquals(new double[]{2.0, 1.0, 7.0, 6.0,
@@ -105,8 +109,9 @@ public class JavaTimeSeriesFactoryTest {
         samples.add(new double[] { 4.0, 9.0 });
         samples.add(new double[] { 5.0, 10.0 });
 
-        JavaTimeSeries<String> originalTimeSeries = JavaTimeSeriesFactory.javaTimeSeriesFromUniformSamples(
-                samples, originalIndex, new String[]{"a", "b"});
+        JavaTimeSeries<String> originalTimeSeries = JavaTimeSeriesFactory
+                .javaTimeSeriesFromUniformSamples(
+                    samples, originalIndex, new String[]{"a", "b"});
 
         Map<String, Tuple2<Boolean, Integer>> lagMap = new HashMap<>();
         lagMap.put("a", new Tuple2<>(true, 0));

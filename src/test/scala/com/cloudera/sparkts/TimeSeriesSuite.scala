@@ -26,7 +26,7 @@ import MatrixUtil._
 import TimeSeries._
 
 class TimeSeriesSuite extends FunSuite with ShouldMatchers {
-  test("javaTimeSeriesFromIrregularSamples") {
+  test("timeSeriesFromIrregularSamples") {
     val dt = new DateTime("2015-4-8")
     val samples = Array(
       ((dt, Array(1.0, 2.0, 3.0))),

@@ -21,7 +21,9 @@ public class DateTimeIndexFactoryTest {
         assertEquals(DateTimeIndexFactory.fromString(uniformStr), uniformIndex);
 
         DateTimeIndex irregularIndex = DateTimeIndexFactory.irregular(new DateTime[]{
-                new DateTime("1990-04-10"), new DateTime("1990-04-12"), new DateTime("1990-04-13")});
+                new DateTime("1990-04-10"),
+                new DateTime("1990-04-12"),
+                new DateTime("1990-04-13")});
         String irregularStr = irregularIndex.toString();
         assertEquals(DateTimeIndexFactory.fromString(irregularStr), irregularIndex);
     }
@@ -34,8 +36,10 @@ public class DateTimeIndexFactoryTest {
         assertEquals(index.first(), new DateTime("2015-04-10", DateTimeZone.UTC));
         assertEquals(index.last(), new DateTime("2015-04-18", DateTimeZone.UTC));
 
-        verifySliceUniform(index.slice(new DateTime("2015-04-14", DateTimeZone.UTC), new DateTime("2015-04-16", DateTimeZone.UTC)));
-        verifySliceUniform(index.slice(new RichReadableInstant(new DateTime("2015-04-14", DateTimeZone.UTC))
+        verifySliceUniform(index.slice(new DateTime("2015-04-14", DateTimeZone.UTC),
+                new DateTime("2015-04-16", DateTimeZone.UTC)));
+        verifySliceUniform(index.slice(
+                new RichReadableInstant(new DateTime("2015-04-14", DateTimeZone.UTC))
                 .to(new DateTime("2015-04-16", DateTimeZone.UTC))));
         verifySliceUniform(index.islice(2, 4));
         verifySliceUniform(index.islice(new RichInt(2).until(4)));
@@ -61,8 +65,10 @@ public class DateTimeIndexFactoryTest {
         assertEquals(index.first(), new DateTime("2015-04-14", DateTimeZone.UTC));
         assertEquals(index.last(), new DateTime("2015-04-25", DateTimeZone.UTC));
 
-        verifySliceIrregular(index.slice(new DateTime("2015-04-15", DateTimeZone.UTC), new DateTime("2015-04-22", DateTimeZone.UTC)));
-        verifySliceIrregular(index.slice(new RichReadableInstant(new DateTime("2015-04-15", DateTimeZone.UTC))
+        verifySliceIrregular(index.slice(new DateTime("2015-04-15", DateTimeZone.UTC),
+                new DateTime("2015-04-22", DateTimeZone.UTC)));
+        verifySliceIrregular(index.slice(
+                new RichReadableInstant(new DateTime("2015-04-15", DateTimeZone.UTC))
                 .to(new DateTime("2015-04-22", DateTimeZone.UTC))));
         verifySliceIrregular(index.islice(1, 4));
         verifySliceIrregular(index.islice(new RichInt(1).until(4)));

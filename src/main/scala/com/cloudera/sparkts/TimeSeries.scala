@@ -96,8 +96,8 @@ class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix,
    * IMPORTANT: this function assumes that the DateTimeIndex is a UniformDateTimeIndex, not an
    * Irregular one.
    *
-   * Lags the specified individual time series of the TimeSeries instance by up to their matching lag amount.
-   * Each time series can be indicated to either retain the original value, or drop it.
+   * Lags the specified individual time series of the TimeSeries instance by up to their matching
+   * lag amount. Each time series can be indicated to either retain the original value, or drop it.
    *
    * In other words, the lagsPerCol has the following structure:
    *
@@ -109,7 +109,7 @@ class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix,
    */
   def lags[U: ClassTag](lagsPerCol: Map[K, (Boolean, Int)], laggedKey: (K, Int) => U)
     : TimeSeries[U] = {
-    val maxLag = lagsPerCol.map(pair => pair._2._2).max
+    val maxLag = lagsPerCol.map(_._2._2).max
     val numCols = lagsPerCol.map(pair => pair._2._2 + (if (pair._2._1) 1 else 0)).sum
     val numRows = data.rows - maxLag
 
@@ -146,9 +146,9 @@ class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix,
     }).reduce(_ ++ _)
 
     // This assumes the datetimeindex's 0 index represents the oldest data point
-    val newDatetimeIndex = index.islice(maxLag, data.rows)
+    val newIndex = index.islice(maxLag, data.rows)
 
-    new TimeSeries[U](newDatetimeIndex, laggedDataBreeze, newKeys.asInstanceOf[Array[U]])
+    new TimeSeries[U](newIndex, laggedDataBreeze, newKeys.asInstanceOf[Array[U]])
   }
 
   /**
