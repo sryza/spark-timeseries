@@ -19,9 +19,9 @@ import java.io.File
 import java.nio.file.Files
 import java.sql.Timestamp
 
-import scala.Double.NaN
+import org.apache.spark.mllib.linalg.{Vector, DenseVector}
 
-import breeze.linalg._
+import scala.Double.NaN
 
 import com.cloudera.sparkts.DateTimeIndex._
 
@@ -77,7 +77,7 @@ class TimeSeriesRDDSuite extends FunSuite with LocalSparkContext with ShouldMatc
     val labels = Array("a", "b", "c", "d", "e")
     val start = new DateTime("2015-4-9")
     val index = uniform(start, 4, 1.days)
-    val rdd = sc.parallelize(labels.zip(seriesVecs.map(_.asInstanceOf[Vector[Double]])), 3)
+    val rdd = sc.parallelize(labels.zip(seriesVecs.map(_.asInstanceOf[Vector])), 3)
     val tsRdd = new TimeSeriesRDD[String](index, rdd)
     val samples = tsRdd.toInstants().collect()
     samples should be (Array(
@@ -100,7 +100,7 @@ class TimeSeriesRDDSuite extends FunSuite with LocalSparkContext with ShouldMatc
     val start = new DateTime("2015-4-9")
     val index = uniform(start, 4, 1.days)
 
-    val rdd = sc.parallelize(labels.zip(seriesVecs.map(_.asInstanceOf[Vector[Double]])), 3)
+    val rdd = sc.parallelize(labels.zip(seriesVecs.map(_.asInstanceOf[Vector])), 3)
     val tsRdd = new TimeSeriesRDD[String](index, rdd)
 
     val samplesDF = tsRdd.toInstantsDataFrame(sqlContext)
@@ -153,7 +153,7 @@ class TimeSeriesRDDSuite extends FunSuite with LocalSparkContext with ShouldMatc
     val labels = Array("a", "b", "c", "d", "e")
     val start = new DateTime("2015-4-9")
     val index = uniform(start, 4, 1.days)
-    val rdd = sc.parallelize(labels.zip(seriesVecs.map(_.asInstanceOf[Vector[Double]])), 3)
+    val rdd = sc.parallelize(labels.zip(seriesVecs.map(_.asInstanceOf[Vector])), 3)
     val tsRdd = new TimeSeriesRDD[String](index, rdd)
     val indexedMatrix = tsRdd.toIndexedRowMatrix()
     val (rowIndices, rowData) = indexedMatrix.rows.collect().map { case IndexedRow(ix, data) =>
@@ -172,7 +172,7 @@ class TimeSeriesRDDSuite extends FunSuite with LocalSparkContext with ShouldMatc
     val labels = Array("a", "b", "c", "d", "e")
     val start = new DateTime("2015-4-9")
     val index = uniform(start, 4, 1.days)
-    val rdd = sc.parallelize(labels.zip(seriesVecs.map(_.asInstanceOf[Vector[Double]])), 3)
+    val rdd = sc.parallelize(labels.zip(seriesVecs.map(_.asInstanceOf[Vector])), 3)
     val tsRdd = new TimeSeriesRDD[String](index, rdd)
     val matrix = tsRdd.toRowMatrix()
     val rowData = matrix.rows.collect().map(_.toArray)
@@ -190,7 +190,7 @@ class TimeSeriesRDDSuite extends FunSuite with LocalSparkContext with ShouldMatc
     val labels = Array("a", "b", "c", "d", "e")
     val start = new DateTime("2015-4-9", DateTimeZone.UTC)
     val index = uniform(start, 4, 1.days)
-    val rdd = sc.parallelize(labels.zip(seriesVecs.map(_.asInstanceOf[Vector[Double]])), 3)
+    val rdd = sc.parallelize(labels.zip(seriesVecs.map(_.asInstanceOf[Vector])), 3)
     val tsRdd = new TimeSeriesRDD[String](index, rdd)
 
     val obsDF = tsRdd.toObservationsDataFrame(sqlContext)
