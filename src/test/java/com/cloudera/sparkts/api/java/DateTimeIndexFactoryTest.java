@@ -4,6 +4,8 @@ import com.cloudera.sparkts.BusinessDayFrequency;
 import com.cloudera.sparkts.DateTimeIndex;
 import com.cloudera.sparkts.DayFrequency;
 import java.time.*;
+
+import org.threeten.extra.Interval;
 import scala.runtime.RichInt;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
@@ -39,9 +41,9 @@ public class DateTimeIndexFactoryTest {
 
         verifySliceUniform(index.slice(ZonedDateTime.of(2015, 4, 14, 0, 0, 0, 0, ZoneId.of("Z")),
           ZonedDateTime.of(2015, 4, 16, 0, 0, 0, 0, ZoneId.of("Z"))));
-        verifySliceUniform(index.slice(
-                new RichReadableInstant(ZonedDateTime.of(2015, 4, 14, 0, 0, 0, 0, ZoneId.of("Z")))
-                .to(ZonedDateTime.of(2015, 4, 16, 0, 0, 0, 0, ZoneId.of("Z")))));
+        verifySliceUniform(index.slice(Interval.of(
+          ZonedDateTime.of(2015, 4, 14, 0, 0, 0, 0, ZoneId.of("Z")).toInstant(),
+          ZonedDateTime.of(2015, 4, 16, 0, 0, 0, 0, ZoneId.of("Z")).toInstant())));
         verifySliceUniform(index.islice(2, 4));
         verifySliceUniform(index.islice(new RichInt(2).until(4)));
         verifySliceUniform(index.islice(new RichInt(2).to(3)));
