@@ -71,8 +71,9 @@ public class DateTimeIndexFactoryTest {
         verifySliceIrregular(index.slice(ZonedDateTime.of(2015, 4, 15, 0, 0, 0, 0, ZoneId.of("Z")),
                 ZonedDateTime.of(2015, 4, 22, 0, 0, 0, 0, ZoneId.of("Z"))));
         verifySliceIrregular(index.slice(
-                new RichReadableInstant(ZonedDateTime.of(2015, 4, 15, 0, 0, 0, 0, ZoneId.of("Z")))
-                .to(ZonedDateTime.of(2015, 4, 22, 0, 0, 0, 0, ZoneId.of("Z")))));
+                Interval.of(
+                        ZonedDateTime.of(2015, 4, 15, 0, 0, 0, 0, ZoneId.of("Z")).toInstant(),
+                        ZonedDateTime.of(2015, 4, 22, 0, 0, 0, 0, ZoneId.of("Z")).toInstant())));
         verifySliceIrregular(index.islice(1, 4));
         verifySliceIrregular(index.islice(new RichInt(1).until(4)));
         verifySliceIrregular(index.islice(new RichInt(1).to(3)));
