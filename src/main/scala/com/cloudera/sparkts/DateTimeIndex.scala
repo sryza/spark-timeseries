@@ -136,7 +136,7 @@ class UniformDateTimeIndex(
 
   override def slice(interval: Interval): UniformDateTimeIndex = {
     slice(ZonedDateTime.ofInstant(interval.getStart(), zone),
-          ZonedDateTime.ofInstant(interval.getEnd(), zone))
+      ZonedDateTime.ofInstant(interval.getEnd(), zone))
   }
 
   override def slice(start: ZonedDateTime, end: ZonedDateTime): UniformDateTimeIndex = {
@@ -145,7 +145,7 @@ class UniformDateTimeIndex(
 
   override def slice(start: Long, end: Long): UniformDateTimeIndex = {
     slice(longToZonedDateTime(start, dateTimeZone),
-          longToZonedDateTime(end, dateTimeZone))
+      longToZonedDateTime(end, dateTimeZone))
   }
 
   override def islice(range: Range): UniformDateTimeIndex = {
@@ -211,7 +211,7 @@ class IrregularDateTimeIndex(
 
   override def slice(interval: Interval): IrregularDateTimeIndex = {
     slice(ZonedDateTime.ofInstant(interval.getStart(), zone),
-          ZonedDateTime.ofInstant(interval.getEnd(), zone))
+      ZonedDateTime.ofInstant(interval.getEnd(), zone))
   }
 
   override def slice(start: ZonedDateTime, end: ZonedDateTime): IrregularDateTimeIndex = {
@@ -267,7 +267,7 @@ class IrregularDateTimeIndex(
 
   override def toString: String = {
     "irregular," + dateTimeZone.toString + "," +
-      instants.map(i => i.toString).mkString(",")
+      instants.map(_.toString).mkString(",")
   }
 }
 
@@ -302,12 +302,39 @@ object DateTimeIndex {
   }
 
   /**
+    * Create a UniformDateTimeIndex with the given start time and end time (inclusive) and frequency.
+    */
+  def uniform(start: ZonedDateTime, end: ZonedDateTime, frequency: Frequency):
+  UniformDateTimeIndex = {
+    val tz = ZoneId.systemDefault()
+    uniform(start, frequency.difference(start, end) + 1, frequency, tz)
+  }
+
+  /**
+    * Create a UniformDateTimeIndex with the given start time and end time (inclusive), frequency
+    * and time zone.
+    */
+  def uniform(start: ZonedDateTime, end: ZonedDateTime, frequency: Frequency, tz: ZoneId):
+    UniformDateTimeIndex = {
+    uniform(start, frequency.difference(start, end) + 1, frequency, tz)
+  }
+
+  /**
    * Create a UniformDateTimeIndex with the given start time and end time (inclusive) and frequency.
    */
   def uniform(start: Long, end: Long, frequency: Frequency): UniformDateTimeIndex = {
     val tz = ZoneId.systemDefault()
     uniform(start, frequency.difference(longToZonedDateTime(start, tz),
-            longToZonedDateTime(end, tz)) + 1, frequency, tz)
+      longToZonedDateTime(end, tz)) + 1, frequency, tz)
+  }
+
+  /**
+    * Create a UniformDateTimeIndex with the given start time and end time (inclusive), frequency
+    * and time zone.
+    */
+  def uniform(start: Long, end: Long, frequency: Frequency, tz: ZoneId): UniformDateTimeIndex = {
+    uniform(start, frequency.difference(longToZonedDateTime(start, tz),
+      longToZonedDateTime(end, tz)) + 1, frequency, tz)
   }
 
   /**
@@ -315,7 +342,7 @@ object DateTimeIndex {
    */
   def uniformFromInterval(start: Long, end: Long, frequency: Frequency, zone: ZoneId): UniformDateTimeIndex = {
     uniform(start, frequency.difference(longToZonedDateTime(start, zone),
-            longToZonedDateTime(end, zone)) + 1, frequency, zone)
+      longToZonedDateTime(end, zone)) + 1, frequency, zone)
   }
 
   /**
