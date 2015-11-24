@@ -168,8 +168,8 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector)])
    * @param end The end date for the slice (inclusive).
    */
   def slice(start: Long, end: Long): TimeSeriesRDD[K] = {
-    slice(LongToZonedDateTime(start, ZoneId.systemDefault()),
-          LongToZonedDateTime(end, ZoneId.systemDefault()))
+    slice(longToZonedDateTime(start, ZoneId.systemDefault()),
+          longToZonedDateTime(end, ZoneId.systemDefault()))
   }
 
   /**

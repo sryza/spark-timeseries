@@ -141,7 +141,7 @@ private[sparkts] object TimeSeriesUtils {
 
     vec: Vector[Double] => {
       val vecRelevant: Iterator[Double] = vec(startLocInSourceVec until vec.length).valuesIterator
-      val iter = iterateWithUniformFrequency(dtsRelevant.map(dts => LongToZonedDateTime(dts)).
+      val iter = iterateWithUniformFrequency(dtsRelevant.map(dts => longToZonedDateTime(dts)).
         zip(vecRelevant), targetIndex.frequency, defaultValue)
 
       val resultArr = new Array[Double](targetIndex.size)
@@ -276,11 +276,11 @@ private[sparkts] object TimeSeriesUtils {
     (minDt, maxDt)
   }
 
-  def LongToZonedDateTime(dt: Long, zone: ZoneId = ZoneId.systemDefault()): ZonedDateTime = {
+  def longToZonedDateTime(dt: Long, zone: ZoneId = ZoneId.systemDefault()): ZonedDateTime = {
     ZonedDateTime.ofInstant(Instant.ofEpochSecond(dt / 1000000000L, dt % 1000000000L), zone)
   }
 
-  def ZonedDateTimeToLong(dt: ZonedDateTime): Long = {
+  def zonedDateTimeToLong(dt: ZonedDateTime): Long = {
     val secondsInNano = dt.toInstant().getEpochSecond() * 1000000000L
     secondsInNano + dt.getNano()
   }

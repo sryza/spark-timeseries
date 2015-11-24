@@ -37,11 +37,11 @@ class TimeSeriesKryoRegistrator extends KryoRegistrator {
 
 class DateTimeSerializer extends Serializer[ZonedDateTime] {
   def write(kryo: Kryo, out: Output, dt: ZonedDateTime) = {
-    out.writeLong(ZonedDateTimeToLong(dt), true)
+    out.writeLong(zonedDateTimeToLong(dt), true)
   }
 
   def read(kryo: Kryo, in: Input, clazz: Class[ZonedDateTime]): ZonedDateTime = {
-    LongToZonedDateTime(in.readLong(true), ZoneId.systemDefault())
+    longToZonedDateTime(in.readLong(true), ZoneId.systemDefault())
   }
 }
 

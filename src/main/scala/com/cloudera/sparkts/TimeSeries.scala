@@ -290,7 +290,7 @@ object TimeSeries {
       (implicit kClassTag: ClassTag[K])
     : TimeSeries[K] = {
     val mat = new BDM[Double](samples.length, samples.head._2.length)
-    val dts: Array[Long] = samples.map(pair => TimeSeriesUtils.ZonedDateTimeToLong(pair._1)).toArray
+    val dts: Array[Long] = samples.map(pair => TimeSeriesUtils.zonedDateTimeToLong(pair._1)).toArray
     for (i <- samples.indices) {
       val (_, values) = samples(i)
       mat(i to i, ::) := new BDV[Double](values)
