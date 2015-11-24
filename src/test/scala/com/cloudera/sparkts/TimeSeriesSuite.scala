@@ -17,10 +17,14 @@ package com.cloudera.sparkts
 
 import breeze.linalg.DenseMatrix
 import java.time._
+import java.time.format._
 import com.cloudera.sparkts.DateTimeIndex._
 import com.cloudera.sparkts.TimeSeries._
 
 import org.scalatest.{FunSuite, ShouldMatchers}
+
+import MatrixUtil._
+import TimeSeries._
 
 class TimeSeriesSuite extends FunSuite with ShouldMatchers {
   test("timeSeriesFromIrregularSamples") {
@@ -44,11 +48,11 @@ class TimeSeriesSuite extends FunSuite with ShouldMatchers {
 
     val originalTimeSeries = new TimeSeries(originalIndex, data, Array("a", "b"))
 
-    val laggedTimeSeries = originalTimeSeries.lags(2, true, TimeSeries.laggedStringKey)
+    val laggedTimeSeries = originalTimeSeries.lags(2, true, laggedStringKey _)
 
     laggedTimeSeries.keys should be (Array("a", "lag1(a)", "lag2(a)", "b", "lag1(b)", "lag2(b)"))
     laggedTimeSeries.index.size should be (3)
-    laggedTimeSeries.data should be (DenseMatrix((3.0, 2.0, 1.0, 8.0, 7.0, 6.0),
+    toBreeze(laggedTimeSeries.data) should be (DenseMatrix((3.0, 2.0, 1.0, 8.0, 7.0, 6.0),
       (4.0, 3.0, 2.0, 9.0, 8.0, 7.0), (5.0, 4.0, 3.0, 10.0, 9.0, 8.0)))
   }
 
@@ -63,7 +67,7 @@ class TimeSeriesSuite extends FunSuite with ShouldMatchers {
 
     laggedTimeSeries.keys should be (Array(("a", 1), ("a", 2), ("b", 1), ("b", 2)))
     laggedTimeSeries.index.size should be (3)
-    laggedTimeSeries.data should be (DenseMatrix((2.0, 1.0, 7.0, 6.0), (3.0, 2.0, 8.0, 7.0),
+    toBreeze(laggedTimeSeries.data) should be (DenseMatrix((2.0, 1.0, 7.0, 6.0), (3.0, 2.0, 8.0, 7.0),
       (4.0, 3.0, 9.0, 8.0)))
   }
 
@@ -75,16 +79,10 @@ class TimeSeriesSuite extends FunSuite with ShouldMatchers {
     val originalTimeSeries = new TimeSeries(originalIndex, data, Array("a", "b"))
 
     val lagMap = Map[String, (Boolean, Int)](("a" -> (true, 0)), ("b" -> (false, 2)))
-    val laggedTimeSeries = originalTimeSeries.lagsPerColumn[String](lagMap.toMap, (key, lagOrder) =>
-      if (lagOrder == 0)
-      {
-        key
-      } else {
-        "lag" + lagOrder.toString() + "(" + key + ")"
-      })
+    val laggedTimeSeries = originalTimeSeries.lags(lagMap.toMap, laggedStringKey _)
 
     laggedTimeSeries.keys should be (Array("a", "lag1(b)", "lag2(b)"))
     laggedTimeSeries.index.size should be (3)
-    laggedTimeSeries.data should be (DenseMatrix((3.0, 7.0, 6.0), (4.0, 8.0, 7.0), (5.0, 9.0, 8.0)))
+    toBreeze(laggedTimeSeries.data) should be (DenseMatrix((3.0, 7.0, 6.0), (4.0, 8.0, 7.0), (5.0, 9.0, 8.0)))
   }
 }

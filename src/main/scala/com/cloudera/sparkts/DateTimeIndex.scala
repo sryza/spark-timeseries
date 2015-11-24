@@ -108,6 +108,11 @@ trait DateTimeIndex extends Serializable {
    * Returns the contents of the DateTimeIndex as an array of millisecond values from the epoch.
    */
   def toMillisArray(): Array[Long]
+
+  /**
+    * Returns the contents of the DateTimeIndex as an array of ZonedDateTime
+    */
+  def toZonedDateTimeArray(): Array[ZonedDateTime]
 }
 
 /**
@@ -171,6 +176,14 @@ class UniformDateTimeIndex(
     val arr = new Array[Long](periods)
     for (i <- 0 until periods) {
       arr(i) = ZonedDateTimeToLong(dateTimeAtLoc(i)) / 1000000L
+    }
+    arr
+  }
+
+  override def toZonedDateTimeArray(): Array[ZonedDateTime] = {
+    val arr = new Array[ZonedDateTime](periods)
+    for (i <- 0 until periods) {
+      arr(i) = dateTimeAtLoc(i)
     }
     arr
   }
@@ -240,7 +253,11 @@ class IrregularDateTimeIndex(
   }
 
   override def toMillisArray(): Array[Long] = {
-    instants.map(zdt => zdt / 1000000L)
+    instants.map(dt => dt / 1000000L)
+  }
+
+  override def toZonedDateTimeArray(): Array[ZonedDateTime] = {
+    instants.map(l => LongToZonedDateTime(l, dateTimeZone))
   }
 
   override def equals(other: Any): Boolean = {

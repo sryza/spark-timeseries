@@ -163,5 +163,4 @@ class DateTimeIndexSuite extends FunSuite with ShouldMatchers {
     val loc4 = index.locAtDateTime(ZonedDateTime.of(2015, 4, 24, 0, 0, 0, 0, ZoneId.of("Z")))
     loc4 should be (-1)
   }
-
 }

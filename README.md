@@ -7,9 +7,9 @@ A Scala / Python library for interacting with time series data on Apache Spark.
 
 Docs are available at http://cloudera.github.io/spark-timeseries.
 
-Scaladoc is available at http://cloudera.github.io/spark-timeseries/scaladocs/index.html.
+Scaladoc is available at http://cloudera.github.io/spark-timeseries/0.1.0/scaladocs/index.html.
 
-Python doc is available at http://cloudera.github.io/spark-timeseries/pydoc/py-modindex.html.
+Python doc is available at http://cloudera.github.io/spark-timeseries/0.1.0/pydoc/py-modindex.html.
 
 The aim here is to provide
 * A set of abstractions for manipulating large time series data sets, similar to
@@ -141,9 +141,9 @@ to as DOCS_REPO.  Then:
     git commit -m "Some message that includes the hash of the relevant commit in master"
     git push origin gh-pages
 
-To release, first follow the directions [here](https://github.com/OryxProject/oryx/wiki/How-To-Release)
-to build and publish Maven packages.  Then, to build and publish Python packages:
+To build a Python source distribution, first build with Maven, then:
 
-    cp target/sparkts-$VERSION-jar-with-dependencies.jar python/
-    
+    cp target/sparkts-$VERSION-jar-with-dependencies.jar python/sparkts/
+    cd python
     python setup.py sdist
+
