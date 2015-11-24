@@ -23,6 +23,6 @@ class YahooParserSuite extends FunSuite with ShouldMatchers {
     val lines = scala.io.Source.fromInputStream(is).getLines().toArray
     val text = lines.mkString("\n")
     val ts = YahooParser.yahooStringToTimeSeries(text, zone = ZoneId.of("Z"))
-    ts.data.rows should be (lines.length - 1)
+    ts.data.numRows should be (lines.length - 1)
   }
 }

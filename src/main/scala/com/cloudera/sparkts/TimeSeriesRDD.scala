@@ -22,18 +22,19 @@ import java.util.Arrays
 import java.time._
 import scala.collection.mutable.ArrayBuffer
 import com.cloudera.sparkts.TimeSeriesUtils._
-import breeze.linalg._
-
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 
 import org.apache.spark._
 import org.apache.spark.mllib.linalg.distributed.{IndexedRow, IndexedRowMatrix, RowMatrix}
-import org.apache.spark.mllib.linalg.Vectors
+import org.apache.spark.mllib.linalg.{Vectors, DenseVector, DenseMatrix, Vector}
+import breeze.linalg.{diff, DenseMatrix => BDM, Vector => BV, DenseVector => BDV}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, Row, SQLContext}
 import org.apache.spark.sql.types._
 import org.apache.spark.util.StatCounter
+
+import MatrixUtil._
 
 import scala.reflect.ClassTag
 
@@ -48,9 +49,9 @@ import scala.reflect.ClassTag
  *
  * @param index The DateTimeIndex shared by all the time series.
  */
-class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector[Double])])
-                      (implicit val kClassTag: ClassTag[K])
-  extends RDD[(K, Vector[Double])](parent) {
+class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector)])
+    (implicit val kClassTag: ClassTag[K])
+  extends RDD[(K, Vector)](parent) {
 
   lazy val keys = parent.map(_._1).collect()
 
@@ -60,13 +61,13 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector[Double])
   def collectAsTimeSeries(): TimeSeries[K] = {
     val elements = collect()
     if (elements.isEmpty) {
-      new TimeSeries[K](index, new DenseMatrix[Double](0, 0), new Array[K](0))
+      new TimeSeries(index, DenseMatrix.zeros(0, 0), new Array[K](0))
     } else {
-      val mat = new DenseMatrix[Double](elements.head._2.length, elements.length)
+      val mat = new BDM[Double](elements.head._2.size, elements.length)
       val labels = new Array[K](elements.length)
       for (i <- elements.indices) {
         val (label, vec) = elements(i)
-        mat(::, i) := vec
+        mat(::, i) := toBreeze(vec)
         labels(i) = label
       }
       new TimeSeries[K](index, mat, labels)
@@ -76,7 +77,7 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector[Double])
   /**
    * Finds a series in the TimeSeriesRDD with the given key.
    */
-  def findSeries(key: K): Vector[Double] = {
+  def findSeries(key: K): Vector = {
     filter(_._1 == key).first()._2
   }
 
@@ -85,7 +86,7 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector[Double])
    * RDD will be missing the first n date-times.
    */
   def differences(n: Int): TimeSeriesRDD[K] = {
-    mapSeries(vec => diff(vec.toDenseVector, n), index.islice(n, index.size))
+    mapSeries(vec => diff(toBreeze(vec).toDenseVector, n), index.islice(n, index.size))
   }
 
   /**
@@ -104,7 +105,7 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector[Double])
     mapSeries(vec => UnivariateTimeSeries.price2ret(vec, 1), index.islice(1, index.size))
   }
 
-  override def filter(f: ((K, Vector[Double])) => Boolean): TimeSeriesRDD[K] = {
+  override def filter(f: ((K, Vector)) => Boolean): TimeSeriesRDD[K] = {
     new TimeSeriesRDD[K](index, super.filter(f))
   }
 
@@ -129,7 +130,7 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector[Double])
    */
   def removeInstantsWithNaNs(): TimeSeriesRDD[K] = {
     val zero = new Array[Boolean](index.size)
-    def merge(arr: Array[Boolean], rec: (K, Vector[Double])): Array[Boolean] = {
+    def merge(arr: Array[Boolean], rec: (K, Vector)): Array[Boolean] = {
       var i = 0
       while (i < arr.length) {
         arr(i) |= rec._2(i).isNaN
@@ -146,7 +147,7 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector[Double])
     val newDates = activeIndices.map(index.dateTimeAtLoc)
     val newIndex = DateTimeIndex.irregular(newDates, index.zone)
     mapSeries(series => {
-      new DenseVector[Double](activeIndices.map(x => series(x)))
+      new DenseVector(activeIndices.map(x => series(x)))
     }, newIndex)
   }
 
@@ -157,12 +158,6 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector[Double])
    */
   def slice(start: ZonedDateTime, end: ZonedDateTime): TimeSeriesRDD[K] = {
     val targetIndex = index.slice(start, end)
-    val rebaserFunction = rebaser(index, targetIndex, Double.NaN)
-    new TimeSeriesRDD[K](targetIndex, mapSeries(rebaserFunction))
-  }
-
-  def islice(start: Int, end: Int): TimeSeriesRDD[K] = {
-    var targetIndex = index.islice(start, end)
     val rebaserFunction = rebaser(index, targetIndex, Double.NaN)
     new TimeSeriesRDD[K](targetIndex, mapSeries(rebaserFunction))
   }
@@ -191,7 +186,7 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector[Double])
    * Applies a transformation to each time series that preserves the time index of this
    * TimeSeriesRDD.
    */
-  def mapSeries[U](f: (Vector[Double]) => Vector[Double]): TimeSeriesRDD[K] = {
+  def mapSeries[U](f: (Vector) => Vector): TimeSeriesRDD[K] = {
     new TimeSeriesRDD[K](index, map(kt => (kt._1, f(kt._2))))
   }
 
@@ -199,7 +194,7 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector[Double])
    * Applies a transformation to each time series and returns a TimeSeriesRDD with the given index.
    * The caller is expected to ensure that the time series produced line up with the given index.
    */
-  def mapSeries[U](f: (Vector[Double]) => Vector[Double], index: DateTimeIndex)
+  def mapSeries[U](f: (Vector) => Vector, index: DateTimeIndex)
     : TimeSeriesRDD[K] = {
     new TimeSeriesRDD[K](index, map(kt => (kt._1, f(kt._2))))
   }
@@ -218,19 +213,19 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector[Double])
    * In the returned RDD, the ordering of values within each record corresponds to the ordering of
    * the time series records in the original RDD. The records are ordered by time.
    */
-  def toInstants(nPartitions: Int = -1): RDD[(ZonedDateTime, Vector[Double])] = {
+  def toInstants(nPartitions: Int = -1): RDD[(ZonedDateTime, Vector)] = {
     val maxChunkSize = 20
 
     val dividedOnMapSide = mapPartitionsWithIndex { case (partitionId, iter) =>
-      new Iterator[((Int, Int), Vector[Double])] {
+      new Iterator[((Int, Int), Vector)] {
         // Each chunk is a buffer of time series
-        var chunk = new ArrayBuffer[Vector[Double]]()
+        var chunk = new ArrayBuffer[Vector]()
         // Current date time.  Gets reset for every chunk.
         var dtLoc: Int = _
         var chunkId: Int = -1
 
         override def hasNext: Boolean = iter.hasNext || dtLoc < index.size
-        override def next(): ((Int, Int), Vector[Double]) = {
+        override def next(): ((Int, Int), Vector) = {
           if (chunkId == -1 || dtLoc == index.size) {
             chunk.clear()
             while (chunk.size < maxChunkSize && iter.hasNext) {
@@ -272,17 +267,17 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector[Double])
       }
     }
     val repartitioned = dividedOnMapSide.repartitionAndSortWithinPartitions(partitioner)
-    repartitioned.mapPartitions { iter0: Iterator[((Int, Int), Vector[Double])] =>
-      new Iterator[(ZonedDateTime, Vector[Double])] {
+    repartitioned.mapPartitions { iter0: Iterator[((Int, Int), Vector)] =>
+      new Iterator[(ZonedDateTime, Vector)] {
         var snipsPerSample = -1
         var elementsPerSample = -1
-        var iter: Iterator[((Int, Int), Vector[Double])] = _
+        var iter: Iterator[((Int, Int), Vector)] = _
 
         // Read the first sample specially so that we know the number of elements and snippets
         // for succeeding samples.
-        def firstSample(): ArrayBuffer[((Int, Int), Vector[Double])] = {
+        def firstSample(): ArrayBuffer[((Int, Int), Vector)] = {
           var snip = iter0.next()
-          val snippets = new ArrayBuffer[((Int, Int), Vector[Double])]()
+          val snippets = new ArrayBuffer[((Int, Int), Vector)]()
           val firstDtLoc = snip._1._1
 
           while (snip != null && snip._1._1 == firstDtLoc) {
@@ -293,15 +288,15 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector[Double])
           snippets
         }
 
-        def assembleSnips(snips: Iterator[((Int, Int), Vector[Double])])
-          : (ZonedDateTime, Vector[Double]) = {
-          val resVec = DenseVector.zeros[Double](elementsPerSample)
+        def assembleSnips(snips: Iterator[((Int, Int), Vector)])
+          : (ZonedDateTime, Vector) = {
+          val resVec = BDV.zeros[Double](elementsPerSample)
           var dtLoc = -1
           var i = 0
           for (j <- 0 until snipsPerSample) {
             val ((loc, _), snipVec) = snips.next()
             dtLoc = loc
-            resVec(i until i + snipVec.length) := snipVec
+            resVec(i until i + snipVec.length) := toBreeze(snipVec)
             i += snipVec.length
           }
           (index.dateTimeAtLoc(dtLoc), resVec)
@@ -315,7 +310,7 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector[Double])
           }
         }
 
-        override def next(): (ZonedDateTime, Vector[Double]) = {
+        override def next(): (ZonedDateTime, Vector) = {
           if (snipsPerSample == -1) {
             val firstSnips = firstSample()
             snipsPerSample = firstSnips.length
@@ -423,7 +418,7 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector[Double])
     new RowMatrix(rows)
   }
 
-  def compute(split: Partition, context: TaskContext): Iterator[(K, Vector[Double])] = {
+  def compute(split: Partition, context: TaskContext): Iterator[(K, Vector)] = {
     parent.iterator(split, context)
   }
 
@@ -467,10 +462,10 @@ object TimeSeriesRDD {
    */
   def timeSeriesRDD[K](
       targetIndex: UniformDateTimeIndex,
-      seriesRDD: RDD[(K, UniformDateTimeIndex, Vector[Double])])
+      seriesRDD: RDD[(K, UniformDateTimeIndex, Vector)])
       (implicit kClassTag: ClassTag[K]): TimeSeriesRDD[K] = {
     val rdd = seriesRDD.map { case (key, index, vec) =>
-      val newVec = TimeSeriesUtils.rebase(index, targetIndex, vec, Double.NaN)
+      val newVec: Vector = TimeSeriesUtils.rebase(index, targetIndex, vec, Double.NaN)
       (key, newVec)
     }
     new TimeSeriesRDD[K](targetIndex, rdd)
@@ -486,7 +481,8 @@ object TimeSeriesRDD {
       (implicit kClassTag: ClassTag[K]): TimeSeriesRDD[K] = {
     val rdd = seriesRDD.flatMap { series =>
       series.univariateKeyAndSeriesIterator().map { case (key, vec) =>
-        (key, TimeSeriesUtils.rebase(series.index, targetIndex, vec, Double.NaN))
+        val newVec: Vector = TimeSeriesUtils.rebase(series.index, targetIndex, vec, Double.NaN)
+        (key, newVec)
       }
     }
     new TimeSeriesRDD[K](targetIndex, rdd)
@@ -525,10 +521,10 @@ object TimeSeriesRDD {
     })
     new TimeSeriesRDD[String](targetIndex, shuffled.mapPartitions { iter =>
       val bufferedIter = iter.buffered
-      new Iterator[(String, DenseVector[Double])]() {
+      new Iterator[(String, DenseVector)]() {
         override def hasNext: Boolean = bufferedIter.hasNext
 
-        override def next(): (String, DenseVector[Double]) = {
+        override def next(): (String, DenseVector) = {
           // TODO: this will be slow for Irregular DateTimeIndexes because it will result in an
           // O(log n) lookup for each element.
           val series = new Array[Double](targetIndex.size)
@@ -546,7 +542,7 @@ object TimeSeriesRDD {
               series(sampleLoc) = sample._2
             }
           }
-          (key, new DenseVector[Double](series))
+          (key, new DenseVector(series))
         }
       }
     })
@@ -559,8 +555,8 @@ object TimeSeriesRDD {
     : TimeSeriesRDD[String] = {
     val rdd = sc.textFile(path).map { line =>
       val tokens = line.split(",")
-      val series = new DenseVector[Double](tokens.tail.map(_.toDouble))
-      (tokens.head, series.asInstanceOf[Vector[Double]])
+      val series = new DenseVector(tokens.tail.map(_.toDouble))
+      (tokens.head, series.asInstanceOf[Vector])
     }
 
     val fs = FileSystem.get(new Configuration())
@@ -594,7 +590,7 @@ object TimeSeriesRDD {
         series(i) = buf.getDouble()
         i += 1
       }
-      (new String(keyChars), new DenseVector[Double](series))
+      (new String(keyChars), new DenseVector(series))
     })
   }
 }
