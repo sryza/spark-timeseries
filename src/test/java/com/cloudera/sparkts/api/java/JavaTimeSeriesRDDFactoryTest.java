@@ -16,8 +16,7 @@ import org.apache.spark.sql.DataFrame;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.Row$;
 import org.apache.spark.sql.SQLContext;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
+
 import org.junit.Test;
 import scala.Tuple2;
 import scala.Tuple3;
@@ -32,6 +31,8 @@ import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Timestamp;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.*;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -85,7 +86,7 @@ public class JavaTimeSeriesRDDFactoryTest implements Serializable {
     public void testSlice() {
         JavaSparkContext sc = init();
 
-        DateTime start = new DateTime("2015-4-9");
+        ZonedDateTime start = ZonedDateTime.of(2015, 4, 9, 0, 0, 0, 0, ZoneId.systemDefault());
         UniformDateTimeIndex index = DateTimeIndexFactory.uniform(start, 10, new DayFrequency(1));
         List<Tuple3<String, UniformDateTimeIndex, Vector>> list = new ArrayList<>();
         list.add(new Tuple3<>("0.0", index, (Vector) new DenseVector(until(0, 10))));
@@ -112,7 +113,7 @@ public class JavaTimeSeriesRDDFactoryTest implements Serializable {
     public void testFilterEndingAfter() {
         JavaSparkContext sc = init();
 
-        DateTime start = new DateTime("2015-4-9");
+        ZonedDateTime start = ZonedDateTime.of(2015, 4, 9, 0, 0, 0, 0, ZoneId.systemDefault());
         UniformDateTimeIndex index = DateTimeIndexFactory.uniform(start, 10, new DayFrequency(1));
         List<Tuple3<String, UniformDateTimeIndex, Vector>> list = new ArrayList<>();
         list.add(new Tuple3<>("0.0", index, (Vector) new DenseVector(until(0, 10))));
@@ -130,7 +131,7 @@ public class JavaTimeSeriesRDDFactoryTest implements Serializable {
     public void testToInstants() {
         JavaSparkContext sc = init();
 
-        DateTime start = new DateTime("2015-4-9");
+        ZonedDateTime start = ZonedDateTime.of(2015, 4, 9, 0, 0, 0, 0, ZoneId.systemDefault());
         String[] labels = new String[]{ "a", "b", "c", "d", "e" };
         double[] seeds = untilBy(0, 20, 4);
         List<Tuple2<String, Vector>> list = new ArrayList<>();
@@ -145,7 +146,7 @@ public class JavaTimeSeriesRDDFactoryTest implements Serializable {
         JavaTimeSeriesRDD<String> tsRdd = JavaTimeSeriesRDDFactory.javaTimeSeriesRDD(
                 index, rdd);
 
-        List<Tuple2<DateTime, Vector>> samples = tsRdd.toInstants().collect();
+        List<Tuple2<ZonedDateTime, Vector>> samples = tsRdd.toInstants().collect();
         assertEquals(
             Arrays.asList(new Tuple2<>(start, new DenseVector(untilBy(0, 20, 4))),
                     new Tuple2<>(start.plusDays(1), new DenseVector(untilBy(1, 20, 4))),
@@ -162,7 +163,7 @@ public class JavaTimeSeriesRDDFactoryTest implements Serializable {
 
         SQLContext sqlContext = new SQLContext(sc);
 
-        DateTime start = new DateTime("2015-4-9");
+        ZonedDateTime start = ZonedDateTime.of(2015, 4, 9, 0, 0, 0, 0, ZoneId.systemDefault());
         String[] labels = new String[]{ "a", "b", "c", "d", "e" };
         double[] seeds = untilBy(0, 20, 4);
         List<Tuple2<String, Vector>> list = new ArrayList<>();
@@ -188,10 +189,10 @@ public class JavaTimeSeriesRDDFactoryTest implements Serializable {
         assertArrayEquals(labels, columnNamesTail);
 
         assertArrayEquals(new Row[] {
-                rowFrom(new Timestamp(start.getMillis()), untilBy(0, 20, 4)),
-                rowFrom(new Timestamp(start.plusDays(1).getMillis()), untilBy(1, 20, 4)),
-                rowFrom(new Timestamp(start.plusDays(2).getMillis()), untilBy(2, 20, 4)),
-                rowFrom(new Timestamp(start.plusDays(3).getMillis()), untilBy(3, 20, 4))
+          rowFrom(new Timestamp(TimeSeriesUtils.zonedDateTimeToLong(start)), untilBy(0, 20, 4)),
+          rowFrom(new Timestamp(TimeSeriesUtils.zonedDateTimeToLong(start)), untilBy(1, 20, 4)),
+          rowFrom(new Timestamp(TimeSeriesUtils.zonedDateTimeToLong(start)), untilBy(2, 20, 4)),
+          rowFrom(new Timestamp(TimeSeriesUtils.zonedDateTimeToLong(start)), untilBy(3, 20, 4))
         }, sampleRows);
 
         sc.close();
@@ -201,7 +202,7 @@ public class JavaTimeSeriesRDDFactoryTest implements Serializable {
     public void testSaveLoad() {
         JavaSparkContext sc = init();
 
-        DateTime start = new DateTime("2015-4-9");
+        ZonedDateTime start = ZonedDateTime.of(2015, 4, 9, 0, 0, 0, 0, ZoneId.systemDefault());
         UniformDateTimeIndex index = DateTimeIndexFactory.uniform(start, 10, new DayFrequency(1));
         List<Tuple3<String, UniformDateTimeIndex, Vector>> list = new ArrayList<>();
         list.add(new Tuple3<>("0.0", index, (Vector) new DenseVector(until(0, 10))));
@@ -244,7 +245,7 @@ public class JavaTimeSeriesRDDFactoryTest implements Serializable {
     public void testToIndexedRowMatrix() {
         JavaSparkContext sc = init();
 
-        DateTime start = new DateTime("2015-4-9");
+        ZonedDateTime start = ZonedDateTime.of(2015, 4, 9, 0, 0, 0, 0, ZoneId.systemDefault());
         String[] labels = new String[]{ "a", "b", "c", "d", "e" };
         double[] seeds = untilBy(0, 20, 4);
         List<Tuple2<String, Vector>> list = new ArrayList<>();
@@ -286,7 +287,7 @@ public class JavaTimeSeriesRDDFactoryTest implements Serializable {
     public void testToRowMatrix() {
         JavaSparkContext sc = init();
 
-        DateTime start = new DateTime("2015-4-9");
+        ZonedDateTime start = ZonedDateTime.of(2015, 4, 9, 0, 0, 0, 0, ZoneId.systemDefault());
         String[] labels = new String[]{ "a", "b", "c", "d", "e" };
         double[] seeds = untilBy(0, 20, 4);
         List<Tuple2<String, Vector>> list = new ArrayList<>();
@@ -325,7 +326,7 @@ public class JavaTimeSeriesRDDFactoryTest implements Serializable {
 
         SQLContext sqlContext = new SQLContext(sc);
 
-        DateTime start = new DateTime("2015-4-9", DateTimeZone.UTC);
+        ZonedDateTime start = ZonedDateTime.of(2015, 4, 9, 0, 0, 0, 0, ZoneId.of("Z"));
         String[] labels = new String[]{ "a", "b", "c", "d", "e" };
         double[] seeds = untilBy(0, 20, 4);
         List<Tuple2<String, Vector>> list = new ArrayList<>();
@@ -383,7 +384,7 @@ public class JavaTimeSeriesRDDFactoryTest implements Serializable {
     public void testRemoveInstantsWithNaNs() {
         JavaSparkContext sc = init();
 
-        DateTime start = new DateTime("2015-4-9");
+        ZonedDateTime start = ZonedDateTime.of(2015, 4, 9, 0, 0, 0, 0, ZoneId.systemDefault());
         UniformDateTimeIndex index = DateTimeIndexFactory.uniform(start, 4, new DayFrequency(1));
         List<Tuple3<String, UniformDateTimeIndex, Vector>> list = new ArrayList<>();
         list.add(new Tuple3<>("1.0", index,
@@ -398,9 +399,11 @@ public class JavaTimeSeriesRDDFactoryTest implements Serializable {
 
         JavaTimeSeriesRDD<String> rdd2 = rdd.removeInstantsWithNaNs();
 
-        assertEquals(DateTimeIndexFactory.irregular(new DateTime[] {
-                        new DateTime("2015-4-9"), new DateTime("2015-4-11") }),
-                rdd2.index());
+        assertEquals(DateTimeIndexFactory.irregular(new ZonedDateTime[] {
+          ZonedDateTime.of(2015, 4, 9, 0, 0, 0, 0, ZoneId.systemDefault()),
+          ZonedDateTime.of(2015, 4, 11, 0, 0, 0, 0, ZoneId.systemDefault())
+          }),
+          rdd2.index());
 
         assertArrayEquals(new Vector[]{ new DenseVector(new double[] { 1.0, 3.0 }),
                 new DenseVector(new double[] { 5.0, 7.0 }),

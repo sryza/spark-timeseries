@@ -1,14 +1,15 @@
 package com.cloudera.sparkts.api.java;
 
 import com.cloudera.sparkts.*;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
+
 import org.junit.Test;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
 import scala.Tuple2;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -17,8 +18,8 @@ import java.util.Map;
 public class JavaTimeSeriesFactoryTest {
     @Test
     public void testTimeSeriesFromIrregularSamples() {
-        DateTime dt = new DateTime("2015-4-8");
-        List<Tuple2<DateTime, double[]>> samples = new ArrayList<>();
+        ZonedDateTime dt = ZonedDateTime.of(2015, 4, 8, 0, 0, 0, 0, ZoneId.systemDefault());
+        List<Tuple2<ZonedDateTime, double[]>> samples = new ArrayList<>();
         samples.add(new Tuple2<>(dt, new double[]{1.0, 2.0, 3.0}));
         samples.add(new Tuple2<>(dt.plusDays(1), new double[]{4.0, 5.0, 6.0}));
         samples.add(new Tuple2<>(dt.plusDays(2), new double[]{7.0, 8.0, 9.0}));
@@ -33,8 +34,8 @@ public class JavaTimeSeriesFactoryTest {
 
     @Test
     public void testLagsIncludingOriginals() {
-        UniformDateTimeIndex originalIndex = new UniformDateTimeIndex(0, 5, new DayFrequency(1),
-                DateTimeZone.getDefault());
+        UniformDateTimeIndex originalIndex = new UniformDateTimeIndex(ZonedDateTime.now(), 5, new DayFrequency(1),
+                ZoneId.systemDefault());
 
         List<double[]> samples = new ArrayList<>();
         samples.add(new double[] { 1.0, 6.0 });
@@ -64,8 +65,8 @@ public class JavaTimeSeriesFactoryTest {
 
     @Test
     public void testLagsExcludingOriginals() {
-        UniformDateTimeIndex originalIndex = new UniformDateTimeIndex(0, 5, new DayFrequency(1),
-                DateTimeZone.getDefault());
+        UniformDateTimeIndex originalIndex = new UniformDateTimeIndex(ZonedDateTime.now(), 5, new DayFrequency(1),
+                ZoneId.systemDefault());
 
         List<double[]> samples = new ArrayList<>();
         samples.add(new double[] { 1.0, 6.0 });
@@ -99,8 +100,11 @@ public class JavaTimeSeriesFactoryTest {
 
     @Test
     public void testCustomLags() {
-        UniformDateTimeIndex originalIndex = new UniformDateTimeIndex(0, 5, new DayFrequency(1),
-                DateTimeZone.getDefault());
+        UniformDateTimeIndex originalIndex = new UniformDateTimeIndex(
+          ZonedDateTime.now(),
+          5,
+          new DayFrequency(1),
+          ZoneId.systemDefault());
 
         List<double[]> samples = new ArrayList<>();
         samples.add(new double[] { 1.0, 6.0 });
