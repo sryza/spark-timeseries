@@ -105,9 +105,21 @@ trait DateTimeIndex extends Serializable {
   def locAtDateTime(dt: Long): Int
 
   /**
+    * The location of the given date-time. If the index contains the date-time more than once,
+    * returns its first appearance. If the given date-time does not appear in the index, returns the
+    * location of the closest anterior DateTime that exists.
+    */
+  def locAtOrBeforeDateTime(dt: ZonedDateTime): Int
+
+  /**
    * Returns the contents of the DateTimeIndex as an array of millisecond values from the epoch.
    */
   def toMillisArray(): Array[Long]
+
+  /**
+    * Returns the contents of the DateTimeIndex as an array of ZonedDateTime
+    */
+  def toZonedDateTimeArray(): Array[ZonedDateTime]
 }
 
 /**
@@ -167,10 +179,23 @@ class UniformDateTimeIndex(
     locAtDateTime(LongToZonedDateTime(dt, dateTimeZone))
   }
 
+  override def locAtOrBeforeDateTime(dt: ZonedDateTime): Int = {
+    val loc = locAtDateTime(dt)
+    if (loc == -1 && dt.isAfter(last)) size - 1 else loc
+  }
+
   override def toMillisArray(): Array[Long] = {
     val arr = new Array[Long](periods)
     for (i <- 0 until periods) {
       arr(i) = ZonedDateTimeToLong(dateTimeAtLoc(i)) / 1000000L
+    }
+    arr
+  }
+
+  override def toZonedDateTimeArray(): Array[ZonedDateTime] = {
+    val arr = new Array[ZonedDateTime](periods)
+    for (i <- 0 until periods) {
+      arr(i) = dateTimeAtLoc(i)
     }
     arr
   }
@@ -239,8 +264,17 @@ class IrregularDateTimeIndex(
     if (loc < 0) -1 else loc
   }
 
+  override def locAtOrBeforeDateTime(dt: ZonedDateTime): Int = {
+    val loc = java.util.Arrays.binarySearch(instants, dt.toInstant().toEpochMilli())
+    if (loc < 0) (-loc) - 2 else loc
+  }
+
   override def toMillisArray(): Array[Long] = {
-    instants.map(zdt => zdt / 1000000L)
+    instants.map(dt => dt / 1000000L)
+  }
+
+  override def toZonedDateTimeArray(): Array[ZonedDateTime] = {
+    instants.map(l => LongToZonedDateTime(l, dateTimeZone))
   }
 
   override def equals(other: Any): Boolean = {

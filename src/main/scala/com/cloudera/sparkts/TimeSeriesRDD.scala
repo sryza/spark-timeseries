@@ -161,6 +161,12 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector[Double])
     new TimeSeriesRDD[K](targetIndex, mapSeries(rebaserFunction))
   }
 
+  def islice(start: Int, end: Int): TimeSeriesRDD[K] = {
+    var targetIndex = index.islice(start, end)
+    val rebaserFunction = rebaser(index, targetIndex, Double.NaN)
+    new TimeSeriesRDD[K](targetIndex, mapSeries(rebaserFunction))
+  }
+
   /**
    * Returns a TimeSeriesRDD that's a sub-slice of the given series.
    * @param start The start date the for slice.

@@ -164,4 +164,29 @@ class DateTimeIndexSuite extends FunSuite with ShouldMatchers {
     loc4 should be (-1)
   }
 
+  test("locAtOrBeforeDatetime returns previous loc") {
+    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+    val index = irregular(Array(
+      "2015-04-14 00:00:00",
+      "2015-04-15 00:00:00",
+      "2015-04-17 00:00:00",
+      "2015-04-22 00:00:00",
+      "2015-04-25 00:00:00"
+    ).map(text => LocalDateTime.parse(text, formatter).atZone(ZoneId.of("Z"))))
+    index.size should be (5)
+    index.first should be (ZonedDateTime.of(2015, 4, 14, 0, 0, 0, 0, ZoneId.of("Z")))
+    index.last should be (ZonedDateTime.of(2015, 4, 25, 0, 0, 0, 0, ZoneId.of("Z")))
+
+    val loc1 = index.locAtOrBeforeDateTime(ZonedDateTime.of(2015, 4, 15, 0, 0, 0, 0, ZoneId.of("Z")))
+    loc1 should be (1)
+
+    val loc2 = index.locAtOrBeforeDateTime(ZonedDateTime.of(2015, 4, 16, 0, 0, 0, 0, ZoneId.of("Z")))
+    loc2 should be (1)
+
+    val loc3 = index.locAtOrBeforeDateTime(ZonedDateTime.of(2015, 4, 25, 0, 0, 0, 0, ZoneId.of("Z")))
+    loc3 should be (4)
+
+    val loc4 = index.locAtOrBeforeDateTime(ZonedDateTime.of(2015, 4, 24, 0, 0, 0, 0, ZoneId.of("Z")))
+    loc4 should be (3)
+  }
 }
