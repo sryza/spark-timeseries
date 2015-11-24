@@ -5,7 +5,7 @@ import com.cloudera.sparkts.DateTimeIndex;
 import com.cloudera.sparkts.DayFrequency;
 import java.time.*;
 import scala.runtime.RichInt;
-
+import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 
 public class DateTimeIndexFactoryTest {
