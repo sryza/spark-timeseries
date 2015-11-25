@@ -189,10 +189,10 @@ public class JavaTimeSeriesRDDFactoryTest implements Serializable {
         assertArrayEquals(labels, columnNamesTail);
 
         assertArrayEquals(new Row[] {
-          rowFrom(new Timestamp(TimeSeriesUtils.zonedDateTimeToLong(start)), untilBy(0, 20, 4)),
-          rowFrom(new Timestamp(TimeSeriesUtils.zonedDateTimeToLong(start)), untilBy(1, 20, 4)),
-          rowFrom(new Timestamp(TimeSeriesUtils.zonedDateTimeToLong(start)), untilBy(2, 20, 4)),
-          rowFrom(new Timestamp(TimeSeriesUtils.zonedDateTimeToLong(start)), untilBy(3, 20, 4))
+          rowFrom(Timestamp.from(start.toInstant()), untilBy(0, 20, 4)),
+          rowFrom(Timestamp.from(start.plusDays(1).toInstant()), untilBy(1, 20, 4)),
+          rowFrom(Timestamp.from(start.plusDays(2).toInstant()), untilBy(2, 20, 4)),
+          rowFrom(Timestamp.from(start.plusDays(3).toInstant()), untilBy(3, 20, 4))
         }, sampleRows);
 
         sc.close();
