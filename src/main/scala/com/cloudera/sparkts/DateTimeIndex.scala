@@ -267,7 +267,7 @@ class IrregularDateTimeIndex(
 
   override def toString: String = {
     "irregular," + dateTimeZone.toString + "," +
-      instants.map(_.toString).mkString(",")
+      instants.map(longToZonedDateTime(_, dateTimeZone).toString).mkString(",")
   }
 }
 
@@ -276,10 +276,11 @@ object DateTimeIndex {
    * Create a UniformDateTimeIndex with the given start time, number of periods, frequency,
    * and time zone(optionally)
    */
-  def uniform(start: Long,
-              periods: Int,
-              frequency: Frequency,
-              zone: ZoneId = ZoneId.systemDefault()): UniformDateTimeIndex = {
+  def uniform(
+      start: Long,
+      periods: Int,
+      frequency: Frequency,
+      zone: ZoneId = ZoneId.systemDefault()): UniformDateTimeIndex = {
 
     new UniformDateTimeIndex(longToZonedDateTime(start, zone), periods, frequency)
   }
@@ -304,8 +305,8 @@ object DateTimeIndex {
   /**
     * Create a UniformDateTimeIndex with the given start time and end time (inclusive) and frequency.
     */
-  def uniform(start: ZonedDateTime, end: ZonedDateTime, frequency: Frequency):
-  UniformDateTimeIndex = {
+  def uniform(start: ZonedDateTime, end: ZonedDateTime, frequency: Frequency)
+    : UniformDateTimeIndex = {
     val tz = ZoneId.systemDefault()
     uniform(start, frequency.difference(start, end) + 1, frequency, tz)
   }
@@ -314,8 +315,8 @@ object DateTimeIndex {
     * Create a UniformDateTimeIndex with the given start time and end time (inclusive), frequency
     * and time zone.
     */
-  def uniform(start: ZonedDateTime, end: ZonedDateTime, frequency: Frequency, tz: ZoneId):
-    UniformDateTimeIndex = {
+  def uniform(start: ZonedDateTime, end: ZonedDateTime, frequency: Frequency, tz: ZoneId)
+    : UniformDateTimeIndex = {
     uniform(start, frequency.difference(start, end) + 1, frequency, tz)
   }
 
@@ -471,7 +472,7 @@ object DateTimeIndex {
         val zone = ZoneId.of(tokens(1))
         val dts = new Array[ZonedDateTime](tokens.length - 2)
         for (i <- 2 until tokens.length) {
-          dts(i - 2) = longToZonedDateTime(tokens(i).toLong, zone)
+          dts(i - 2) = ZonedDateTime.parse(tokens(i))
         }
         irregular(dts, zone)
       case _ => throw new IllegalArgumentException(

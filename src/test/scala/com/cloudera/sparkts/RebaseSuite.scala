@@ -182,8 +182,10 @@ class RebaseSuite extends FunSuite with ShouldMatchers {
     )
 
     cases.foreach { case (source, target, expected) =>
-      val sourceIndex = irregular(source.map(x => ZonedDateTime.of(2015, 4, x, 0, 0, 0, 0, ZoneId.systemDefault())))
-      val targetIndex = irregular(target.map(x => ZonedDateTime.of(2015, 4, x, 0, 0, 0, 0, ZoneId.systemDefault())))
+      val sourceIndex = irregular(source.
+        map(x => ZonedDateTime.of(2015, 4, x, 0, 0, 0, 0, ZoneId.systemDefault())))
+      val targetIndex = irregular(target.
+        map(x => ZonedDateTime.of(2015, 4, x, 0, 0, 0, 0, ZoneId.systemDefault())))
       val vec = new DenseVector[Double](source.map(_.toDouble))
       val expectedVec = new DenseVector[Double](expected.map(_.toDouble))
       rebase(sourceIndex, targetIndex, vec, -1) should be (expectedVec)
