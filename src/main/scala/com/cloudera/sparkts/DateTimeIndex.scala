@@ -292,11 +292,42 @@ class HybridDateTimeIndex(
     }
   }
 
-  override def slice(interval: Interval): DateTimeIndex = ???
+  override def slice(interval: Interval): HybridDateTimeIndex = {
+    slice(ZonedDateTime.ofInstant(interval.getStart, dateTimeZone),
+      ZonedDateTime.ofInstant(interval.getEnd, dateTimeZone))
+  }
 
-  override def slice(start: ZonedDateTime, end: ZonedDateTime): DateTimeIndex = ???
+  override def slice(start: ZonedDateTime, end: ZonedDateTime): HybridDateTimeIndex = {
+    require(start.isBefore(end), s"start($start) should be less than end($end)")
 
-  override def slice(start: Long, end: Long): DateTimeIndex = ???
+    val startIndex = binarySearch(0, indices.length - 1, start)
+    val endIndex = binarySearch(0, indices.length - 1, end)
+
+    var newIndices: Array[DateTimeIndex] = Array.empty
+
+    newIndices =
+      if (startIndex == endIndex) {
+        Array(indices(startIndex).slice(start, end))
+      } else {
+        val startDateTimeIndex = indices(startIndex)
+        val endDateTimeIndex = indices(endIndex)
+
+        val startSlice = Array(startDateTimeIndex.slice(start, startDateTimeIndex.last))
+        val endSlice = Array(endDateTimeIndex.slice(endDateTimeIndex.first, end))
+
+        if (endIndex - startIndex == 1)
+          startSlice ++ endSlice
+        else
+          startSlice ++ indices.slice(startIndex + 1, endIndex) ++ endSlice
+      }
+
+    new HybridDateTimeIndex(newIndices, dateTimeZone)
+  }
+
+  override def slice(start: Long, end: Long): HybridDateTimeIndex = {
+    slice(longToZonedDateTime(start, dateTimeZone),
+      longToZonedDateTime(end, dateTimeZone))
+  }
 
   override def islice(range: Range): DateTimeIndex = ???
 
