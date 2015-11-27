@@ -284,10 +284,10 @@ class HybridDateTimeIndex(
     val dateTimeZone: ZoneId = ZoneId.systemDefault())
   extends DateTimeIndex {
 
-  private val sizeOnLeft: Array[Long] = {
-    var sum: Long = 0
-    (Array(0) ++ indices.init.map(_.size)).map {_ =>
-      sum += _
+  private val sizeOnLeft: Array[Int] = {
+    var sum: Int = 0
+    (Array(0) ++ indices.init.map(_.size)).map {a =>
+      sum += a
       sum
     }
   }
@@ -330,7 +330,7 @@ class HybridDateTimeIndex(
   }
 
   override def islice(range: Range): HybridDateTimeIndex = {
-    islice(range.head, range.last)
+    islice(range.head, range.last + 1)
   }
 
   override def islice(start: Int, end: Int): HybridDateTimeIndex = {
@@ -339,17 +339,20 @@ class HybridDateTimeIndex(
     val startIndex = binarySearch(0, indices.length - 1, start)
     val endIndex = binarySearch(0, indices.length - 1, end)
 
+    val alignedStart = start - sizeOnLeft(startIndex)
+    val alignedEnd = end - sizeOnLeft(endIndex)
+
     var newIndices: Array[DateTimeIndex] = Array.empty
 
     newIndices =
       if (startIndex == endIndex) {
-        Array(indices(startIndex).islice(start, end))
+        Array(indices(startIndex).islice(alignedStart, alignedEnd))
       } else {
         val startDateTimeIndex = indices(startIndex)
         val endDateTimeIndex = indices(endIndex)
 
-        val startSlice = Array(startDateTimeIndex.islice(start, startDateTimeIndex.size))
-        val endSlice = Array(endDateTimeIndex.islice(0, end))
+        val startSlice = Array(startDateTimeIndex.islice(alignedStart, startDateTimeIndex.size))
+        val endSlice = Array(endDateTimeIndex.islice(0, alignedEnd))
 
         if (endIndex - startIndex == 1)
           startSlice ++ endSlice
@@ -366,11 +369,11 @@ class HybridDateTimeIndex(
 
   override def zone: ZoneId = dateTimeZone
 
-  override def size: Long = indices.map(_.size.toLong).sum
+  override def size: Int = indices.map(_.size).sum
 
   override def dateTimeAtLoc(loc: Int): ZonedDateTime = {
     val i = binarySearch(0, indices.length - 1, loc)
-    if (i > -1) indices(i).dateTimeAtLoc(loc)
+    if (i > -1) indices(i).dateTimeAtLoc(loc - sizeOnLeft(i))
     else throw new ArrayIndexOutOfBoundsException(s"no dateTime at loc $loc")
   }
 
@@ -380,14 +383,18 @@ class HybridDateTimeIndex(
       val midIndex = indices(mid)
       val sizeOnLeftOfMid = sizeOnLeft(mid)
       if (i < sizeOnLeftOfMid) binarySearch(low, mid - 1, i)
-      else if (i > sizeOnLeftOfMid + midIndex.size) binarySearch(mid + 1, high, i)
+      else if (i >= sizeOnLeftOfMid + midIndex.size) binarySearch(mid + 1, high, i)
       else mid
     } else -1
   }
 
   override def locAtDateTime(dt: ZonedDateTime): Int = {
     val i = binarySearch(0, indices.length - 1, dt)
-    if (i > -1) indices(i).locAtDateTime(dt)
+    if (i > -1) {
+      val loc = indices(i).locAtDateTime(dt)
+      if (loc > -1) sizeOnLeft(i) + loc
+      else -1
+    }
     else -1
   }
 
@@ -556,7 +563,7 @@ object DateTimeIndex {
   /**
    * Create a HybridDateTimeIndex composed of the given indices using the provided date-time zone.
    */
-  def hybrid(indices: Array[DateTimeIndex], zone: DateTimeZone): HybridDateTimeIndex = {
+  def hybrid(indices: Array[DateTimeIndex], zone: ZoneId): HybridDateTimeIndex = {
     new HybridDateTimeIndex(indices, zone)
   }
 
@@ -642,8 +649,8 @@ object DateTimeIndex {
         }
         irregular(dts, zone)
       case "hybrid" =>
-        val zone = DateTimeZone.forID(tokens(1))
-        val indices = tokens.last.split(";").map(fromString)
+        val zone = ZoneId.of(tokens(1))
+        val indices = str.split(",", 3).last.split(";").map(fromString)
         hybrid(indices, zone)
       case _ => throw new IllegalArgumentException(
         s"DateTimeIndex type ${tokens(0)} not recognized")
