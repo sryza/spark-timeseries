@@ -329,9 +329,36 @@ class HybridDateTimeIndex(
       longToZonedDateTime(end, dateTimeZone))
   }
 
-  override def islice(range: Range): DateTimeIndex = ???
+  override def islice(range: Range): HybridDateTimeIndex = {
+    islice(range.head, range.last)
+  }
 
-  override def islice(start: Int, end: Int): DateTimeIndex = ???
+  override def islice(start: Int, end: Int): HybridDateTimeIndex = {
+    require(start < end, s"start($start) should be less than end($end)")
+
+    val startIndex = binarySearch(0, indices.length - 1, start)
+    val endIndex = binarySearch(0, indices.length - 1, end)
+
+    var newIndices: Array[DateTimeIndex] = Array.empty
+
+    newIndices =
+      if (startIndex == endIndex) {
+        Array(indices(startIndex).islice(start, end))
+      } else {
+        val startDateTimeIndex = indices(startIndex)
+        val endDateTimeIndex = indices(endIndex)
+
+        val startSlice = Array(startDateTimeIndex.islice(start, startDateTimeIndex.size))
+        val endSlice = Array(endDateTimeIndex.islice(0, end))
+
+        if (endIndex - startIndex == 1)
+          startSlice ++ endSlice
+        else
+          startSlice ++ indices.slice(startIndex + 1, endIndex) ++ endSlice
+      }
+
+    new HybridDateTimeIndex(newIndices, dateTimeZone)
+  }
 
   override def first: ZonedDateTime = new ZonedDateTime(indices(0).first, dateTimeZone)
 
