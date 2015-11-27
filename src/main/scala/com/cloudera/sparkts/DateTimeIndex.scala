@@ -284,6 +284,14 @@ class HybridDateTimeIndex(
     val dateTimeZone: ZoneId = ZoneId.systemDefault())
   extends DateTimeIndex {
 
+  private val sizeOnLeft: Array[Long] = {
+    var sum: Long = 0
+    (Array(0) ++ indices.init.map(_.size)).map {_ =>
+      sum += _
+      sum
+    }
+  }
+
   override def slice(interval: Interval): DateTimeIndex = ???
 
   override def slice(start: ZonedDateTime, end: ZonedDateTime): DateTimeIndex = ???
@@ -302,7 +310,22 @@ class HybridDateTimeIndex(
 
   override def size: Long = indices.map(_.size.toLong).sum
 
-  override def dateTimeAtLoc(i: Int): ZonedDateTime = ???
+  override def dateTimeAtLoc(loc: Int): ZonedDateTime = {
+    val i = binarySearch(0, indices.length - 1, loc)
+    if (i > -1) indices(i).dateTimeAtLoc(loc)
+    else throw new ArrayIndexOutOfBoundsException(s"no dateTime at loc $loc")
+  }
+
+  private def binarySearch(low: Int, high: Int, i: Int): Int = {
+    if (low <= high) {
+      val mid = (low + high) >>> 1
+      val midIndex = indices(mid)
+      val sizeOnLeftOfMid = sizeOnLeft(mid)
+      if (i < sizeOnLeftOfMid) binarySearch(low, mid - 1, i)
+      else if (i > sizeOnLeftOfMid + midIndex.size) binarySearch(mid + 1, high, i)
+      else mid
+    } else -1
+  }
 
   override def locAtDateTime(dt: ZonedDateTime): Int = {
     val i = binarySearch(0, indices.length - 1, dt)
