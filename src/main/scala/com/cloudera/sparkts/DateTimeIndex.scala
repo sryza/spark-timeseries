@@ -547,6 +547,20 @@ object DateTimeIndex {
   }
 
   /**
+   * Create a HybridDateTimeIndex composed of the given indices using the default date-time zone.
+   */
+  def hybrid(indices: Array[DateTimeIndex]): HybridDateTimeIndex = {
+    new HybridDateTimeIndex(indices)
+  }
+
+  /**
+   * Create a HybridDateTimeIndex composed of the given indices using the provided date-time zone.
+   */
+  def hybrid(indices: Array[DateTimeIndex], zone: DateTimeZone): HybridDateTimeIndex = {
+    new HybridDateTimeIndex(indices, zone)
+  }
+
+  /**
    * Given the ISO index of the day of week, the method returns the day
    * of week index relative to the first day of week i.e. assuming the
    * the first day of week is the base index and has the value of 1
@@ -627,6 +641,10 @@ object DateTimeIndex {
           dts(i - 2) = ZonedDateTime.parse(tokens(i))
         }
         irregular(dts, zone)
+      case "hybrid" =>
+        val zone = DateTimeZone.forID(tokens(1))
+        val indices = tokens.last.split(";").map(fromString)
+        hybrid(indices, zone)
       case _ => throw new IllegalArgumentException(
         s"DateTimeIndex type ${tokens(0)} not recognized")
     }
