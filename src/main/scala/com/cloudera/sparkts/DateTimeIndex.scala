@@ -271,6 +271,52 @@ class IrregularDateTimeIndex(
   }
 }
 
+/**
+ * An implementation of DateTimeIndex that holds a hybrid collection of DateTimeIndex
+ * implementations.
+ *
+ * Indices are assumed to be sorted and disjoint such that
+ * for any two consecutive indices i and j: i.last < j.first
+ *
+ */
+class HybridDateTimeIndex(
+    val indices: Array[DateTimeIndex],
+    val dateTimeZone: ZoneId = ZoneId.systemDefault())
+  extends DateTimeIndex {
+
+  override def slice(interval: Interval): DateTimeIndex = ???
+
+  override def slice(start: ZonedDateTime, end: ZonedDateTime): DateTimeIndex = ???
+
+  override def slice(start: Long, end: Long): DateTimeIndex = ???
+
+  override def islice(range: Range): DateTimeIndex = ???
+
+  override def islice(start: Int, end: Int): DateTimeIndex = ???
+
+  override def first: ZonedDateTime = ???
+
+  override def last: ZonedDateTime = ???
+
+  override def zone: ZonedDateTime = ???
+
+  override def size: Int = ???
+
+  override def dateTimeAtLoc(i: Int): ZonedDateTime = ???
+
+  override def locAtDateTime(dt: ZonedDateTime): Int = ???
+
+  override def locAtDateTime(dt: Long): Int = ???
+
+  override def toMillisArray(): Array[Long] = ???
+
+  override def toZonedDateTimeArray(): Array[ZonedDateTime] = ???
+
+  override def equals(other: Any): Boolean = ???
+
+  override def toString: String = ???
+}
+
 object DateTimeIndex {
   /**
    * Create a UniformDateTimeIndex with the given start time, number of periods, frequency,
