@@ -294,13 +294,13 @@ class HybridDateTimeIndex(
 
   override def islice(start: Int, end: Int): DateTimeIndex = ???
 
-  override def first: ZonedDateTime = ???
+  override def first: ZonedDateTime = new ZonedDateTime(indices(0).first, dateTimeZone)
 
-  override def last: ZonedDateTime = ???
+  override def last: ZonedDateTime = new ZonedDateTime(indices(indices.length - 1).last, dateTimeZone)
 
-  override def zone: ZonedDateTime = ???
+  override def zone: ZoneId = dateTimeZone
 
-  override def size: Int = ???
+  override def size: Long = indices.map(_.size.toLong).sum
 
   override def dateTimeAtLoc(i: Int): ZonedDateTime = ???
 
@@ -308,13 +308,23 @@ class HybridDateTimeIndex(
 
   override def locAtDateTime(dt: Long): Int = ???
 
-  override def toMillisArray(): Array[Long] = ???
+  override def toMillisArray(): Array[Long] = {
+    indices.map(_.toMillisArray).reduce(_ ++ _)
+  }
 
-  override def toZonedDateTimeArray(): Array[ZonedDateTime] = ???
+  override def toZonedDateTimeArray(): Array[ZonedDateTime] = {
+    indices.map(_.toZonedDateTimeArray).reduce(_ ++ _)
+  }
 
-  override def equals(other: Any): Boolean = ???
+  override def equals(other: Any): Boolean = {
+    val otherIndex = other.asInstanceOf[HybridDateTimeIndex]
+    otherIndex.indices.sameElements(indices)
+  }
 
-  override def toString: String = ???
+  override def toString: String = {
+    "hybrid," + dateTimeZone.toString + "," +
+      indices.map(_.toString).mkString(";")
+  }
 }
 
 object DateTimeIndex {
