@@ -304,9 +304,24 @@ class HybridDateTimeIndex(
 
   override def dateTimeAtLoc(i: Int): ZonedDateTime = ???
 
-  override def locAtDateTime(dt: ZonedDateTime): Int = ???
+  override def locAtDateTime(dt: ZonedDateTime): Int = {
+    val i = binarySearch(0, indices.length - 1, dt)
+    if (i > -1) indices(i).locAtDateTime(dt)
+    else -1
+  }
 
-  override def locAtDateTime(dt: Long): Int = ???
+  override def locAtDateTime(dt: Long): Int =
+    locAtDateTime(longToZonedDateTime(dt, dateTimeZone))
+
+  private def binarySearch(low: Int, high: Int, dt: ZonedDateTime): Int = {
+    if (low <= high) {
+      val mid = (low + high) >>> 1
+      val midIndex = indices(mid)
+      if (dt.isBefore(midIndex.first)) binarySearch(low, mid - 1, dt)
+      else if (dt.isAfter(midIndex.last)) binarySearch(mid + 1, high, dt)
+      else mid
+    } else -1
+  }
 
   override def toMillisArray(): Array[Long] = {
     indices.map(_.toMillisArray).reduce(_ ++ _)
