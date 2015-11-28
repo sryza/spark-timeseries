@@ -363,9 +363,10 @@ class HybridDateTimeIndex(
     new HybridDateTimeIndex(newIndices, dateTimeZone)
   }
 
-  override def first: ZonedDateTime = new ZonedDateTime(indices(0).first, dateTimeZone)
+  override def first: ZonedDateTime = indices(0).first.withZoneSameInstant(dateTimeZone)
 
-  override def last: ZonedDateTime = new ZonedDateTime(indices(indices.length - 1).last, dateTimeZone)
+  override def last: ZonedDateTime = indices(indices.length - 1).last
+    .withZoneSameInstant(dateTimeZone)
 
   override def zone: ZoneId = dateTimeZone
 

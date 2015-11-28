@@ -110,6 +110,20 @@ public final class DateTimeIndexFactory {
     }
 
     /**
+     * Create a HybridDateTimeIndex composed of the given indices using the default date-time zone.
+     */
+    public static HybridDateTimeIndex hybrid(DateTimeIndex[] indices) {
+        return DATE_TIME_INDEX.hybrid(indices);
+    }
+
+    /**
+     * Create a HybridDateTimeIndex composed of the given indices using the provided date-time zone.
+     */
+    public static HybridDateTimeIndex hybrid(DateTimeIndex[] indices, ZoneId zone) {
+        return DATE_TIME_INDEX.hybrid(indices, zone);
+    }
+
+    /**
      * Finds the next business day occurring at or after the given date-time.
      */
     public static ZonedDateTime nextBusinessDay(ZonedDateTime dt, int firstDayOfWeek) {

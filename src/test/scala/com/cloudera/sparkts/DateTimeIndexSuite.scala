@@ -239,7 +239,7 @@ class DateTimeIndexSuite extends FunSuite with ShouldMatchers {
       "2015-04-22 00:00:00",
       "2015-04-25 00:00:00"
     ).map(text => LocalDateTime.parse(text, formatter).atZone(UTC)))
-    val index2 = uniform(ZonedDateTime.of(2015, 4, 10, 0, 0, 0, 0, UTC),
+    val index2 = uniform(ZonedDateTime.of(2015, 5, 10, 0, 0, 0, 0, UTC),
       5, new DayFrequency(2))
     val index = hybrid(Array(index1, index2), UTC)
 
