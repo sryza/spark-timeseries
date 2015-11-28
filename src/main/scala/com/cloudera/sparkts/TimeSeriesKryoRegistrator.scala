@@ -20,8 +20,9 @@ import com.esotericsoftware.kryo.io.{Output, Input}
 
 import org.apache.spark.SparkConf
 import org.apache.spark.serializer.{KryoRegistrator, KryoSerializer}
+import com.cloudera.sparkts.TimeSeriesUtils._
 
-import org.joda.time.DateTime
+import java.time._
 
 class TimeSeriesKryoRegistrator extends KryoRegistrator {
   def registerClasses(kryo: Kryo): Unit = {
@@ -30,17 +31,17 @@ class TimeSeriesKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[IrregularDateTimeIndex])
     kryo.register(classOf[BusinessDayFrequency])
     kryo.register(classOf[DayFrequency])
-    kryo.register(classOf[DateTime], new DateTimeSerializer)
+    kryo.register(classOf[ZonedDateTime], new DateTimeSerializer)
   }
 }
 
-class DateTimeSerializer extends Serializer[DateTime] {
-  def write(kryo: Kryo, out: Output, dt: DateTime) = {
-    out.writeLong(dt.getMillis, true)
+class DateTimeSerializer extends Serializer[ZonedDateTime] {
+  def write(kryo: Kryo, out: Output, dt: ZonedDateTime) = {
+    out.writeLong(zonedDateTimeToLong(dt), true)
   }
 
-  def read(kryo: Kryo, in: Input, clazz: Class[DateTime]): DateTime = {
-    new DateTime(in.readLong(true))
+  def read(kryo: Kryo, in: Input, clazz: Class[ZonedDateTime]): ZonedDateTime = {
+    longToZonedDateTime(in.readLong(true), ZoneId.systemDefault())
   }
 }
 

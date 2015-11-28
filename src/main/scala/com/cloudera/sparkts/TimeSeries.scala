@@ -15,17 +15,17 @@
 
 package com.cloudera.sparkts
 
-import com.github.nscala_time.time.Imports._
+import java.time._
 import breeze.linalg.{diff, DenseMatrix => BDM, DenseVector => BDV}
 import org.apache.spark.mllib.linalg.{DenseMatrix, Vector}
 
-import TimeSeries._
 import MatrixUtil._
+import TimeSeries._
 
 import scala.reflect.ClassTag
 
 class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix,
-    val keys: Array[K])(implicit val kClassTag: ClassTag[K])
+                    val keys: Array[K])(implicit val kClassTag: ClassTag[K])
   extends Serializable {
 
   private def dataToBreeze: BDM[Double] = data
@@ -230,7 +230,7 @@ class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix,
     }
   }
 
-  def toInstants(): IndexedSeq[(DateTime, Vector)] = {
+  def toInstants(): IndexedSeq[(ZonedDateTime, Vector)] = {
     (0 until data.rows).map(rowIndex => (index.dateTimeAtLoc(rowIndex),
       fromBreeze(dataToBreeze(rowIndex, ::).inner.toVector)))
   }
@@ -284,16 +284,15 @@ object TimeSeries {
   def laggedPairKey[K](key: K, lagOrder: Int): (K, Int) = (key, lagOrder)
 
   def timeSeriesFromIrregularSamples[K](
-      samples: Seq[(DateTime, Array[Double])],
+      samples: Seq[(ZonedDateTime, Array[Double])],
       keys: Array[K],
-      zone: DateTimeZone = DateTimeZone.getDefault())
+      zone: ZoneId = ZoneId.systemDefault())
       (implicit kClassTag: ClassTag[K])
     : TimeSeries[K] = {
     val mat = new BDM[Double](samples.length, samples.head._2.length)
-    val dts = new Array[Long](samples.length)
+    val dts: Array[Long] = samples.map(pair => TimeSeriesUtils.zonedDateTimeToLong(pair._1)).toArray
     for (i <- samples.indices) {
-      val (dt, values) = samples(i)
-      dts(i) = dt.getMillis
+      val (_, values) = samples(i)
       mat(i to i, ::) := new BDV[Double](values)
     }
     new TimeSeries[K](new IrregularDateTimeIndex(dts, zone), mat, keys)

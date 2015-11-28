@@ -1,6 +1,8 @@
 package com.cloudera.sparkts.api.java
 
 
+import java.time.ZonedDateTime
+
 import com.cloudera.sparkts._
 import org.apache.spark.api.java.function.{Function => JFunction}
 import org.apache.spark.{TaskContext, Partition}
@@ -9,7 +11,6 @@ import org.apache.spark.mllib.linalg.Vector
 import org.apache.spark.mllib.linalg.distributed.{RowMatrix, IndexedRowMatrix}
 import org.apache.spark.sql.{DataFrame, SQLContext}
 import org.apache.spark.util.StatCounter
-import org.joda.time.DateTime
 
 import scala.reflect.ClassTag
 
@@ -62,13 +63,13 @@ class JavaTimeSeriesRDD[K](tsrdd: TimeSeriesRDD[K])(implicit override val kClass
   /**
    * Keep only time series whose first observation is before or equal to the given start date.
    */
-  def filterStartingBefore(dt: DateTime): JavaTimeSeriesRDD[K] =
+  def filterStartingBefore(dt: ZonedDateTime): JavaTimeSeriesRDD[K] =
     new JavaTimeSeriesRDD[K](tsrdd.filterStartingBefore(dt))
 
   /**
    * Keep only time series whose last observation is after or equal to the given end date.
    */
-  def filterEndingAfter(dt: DateTime): JavaTimeSeriesRDD[K] =
+  def filterEndingAfter(dt: ZonedDateTime): JavaTimeSeriesRDD[K] =
     new JavaTimeSeriesRDD[K](tsrdd.filterEndingAfter(dt))
 
   /**
@@ -82,7 +83,7 @@ class JavaTimeSeriesRDD[K](tsrdd: TimeSeriesRDD[K])(implicit override val kClass
    * @param start The start date the for slice.
    * @param end The end date for the slice (inclusive).
    */
-  def slice(start: DateTime, end: DateTime): JavaTimeSeriesRDD[K] =
+  def slice(start: ZonedDateTime, end: ZonedDateTime): JavaTimeSeriesRDD[K] =
     new JavaTimeSeriesRDD[K](tsrdd.slice(start, end))
 
   /**
@@ -130,13 +131,13 @@ class JavaTimeSeriesRDD[K](tsrdd: TimeSeriesRDD[K])(implicit override val kClass
    * In the returned JavaPairRDD, the ordering of values within each record corresponds to the ordering of
    * the time series records in the original RDD. The records are ordered by time.
    */
-  def toInstants(nPartitions: Int): JavaPairRDD[DateTime, Vector] =
-    new JavaPairRDD[DateTime, Vector](tsrdd.toInstants(nPartitions))
+  def toInstants(nPartitions: Int): JavaPairRDD[ZonedDateTime, Vector] =
+    new JavaPairRDD[ZonedDateTime, Vector](tsrdd.toInstants(nPartitions))
 
   /**
    * Equivalent to toInstants(-1)
    */
-  def toInstants(): JavaPairRDD[DateTime, Vector] = toInstants(-1)
+  def toInstants(): JavaPairRDD[ZonedDateTime, Vector] = toInstants(-1)
 
   /**
    * Performs the same operations as toInstants but returns a DataFrame instead.

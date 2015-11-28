@@ -19,9 +19,9 @@ import java.io.{BufferedReader, InputStreamReader, PrintStream}
 import java.nio.ByteBuffer
 import java.sql.Timestamp
 import java.util.Arrays
-
+import java.time._
 import scala.collection.mutable.ArrayBuffer
-
+import com.cloudera.sparkts.TimeSeriesUtils._
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 
@@ -33,8 +33,6 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, Row, SQLContext}
 import org.apache.spark.sql.types._
 import org.apache.spark.util.StatCounter
-
-import org.joda.time.DateTime
 
 import MatrixUtil._
 
@@ -114,7 +112,7 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector)])
   /**
    * Keep only time series whose first observation is before or equal to the given start date.
    */
-  def filterStartingBefore(dt: DateTime): TimeSeriesRDD[K] = {
+  def filterStartingBefore(dt: ZonedDateTime): TimeSeriesRDD[K] = {
     val startLoc = index.locAtDateTime(dt)
     filter { case (key, ts) => UnivariateTimeSeries.firstNotNaN(ts) <= startLoc }
   }
@@ -122,7 +120,7 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector)])
   /**
    * Keep only time series whose last observation is after or equal to the given end date.
    */
-  def filterEndingAfter(dt: DateTime): TimeSeriesRDD[K] = {
+  def filterEndingAfter(dt: ZonedDateTime): TimeSeriesRDD[K] = {
     val endLoc = index.locAtDateTime(dt)
     filter { case (key, ts) => UnivariateTimeSeries.lastNotNaN(ts) >= endLoc}
   }
@@ -158,10 +156,10 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector)])
    * @param start The start date the for slice.
    * @param end The end date for the slice (inclusive).
    */
-  def slice(start: DateTime, end: DateTime): TimeSeriesRDD[K] = {
+  def slice(start: ZonedDateTime, end: ZonedDateTime): TimeSeriesRDD[K] = {
     val targetIndex = index.slice(start, end)
-    val rebaser = TimeSeriesUtils.rebaser(index, targetIndex, Double.NaN)
-    new TimeSeriesRDD[K](targetIndex, mapSeries(rebaser))
+    val rebaserFunction = rebaser(index, targetIndex, Double.NaN)
+    new TimeSeriesRDD[K](targetIndex, mapSeries(rebaserFunction))
   }
 
   /**
@@ -170,7 +168,8 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector)])
    * @param end The end date for the slice (inclusive).
    */
   def slice(start: Long, end: Long): TimeSeriesRDD[K] = {
-    slice(new DateTime(start), new DateTime(end))
+    slice(longToZonedDateTime(start, ZoneId.systemDefault()),
+          longToZonedDateTime(end, ZoneId.systemDefault()))
   }
 
   /**
@@ -214,7 +213,7 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector)])
    * In the returned RDD, the ordering of values within each record corresponds to the ordering of
    * the time series records in the original RDD. The records are ordered by time.
    */
-  def toInstants(nPartitions: Int = -1): RDD[(DateTime, Vector)] = {
+  def toInstants(nPartitions: Int = -1): RDD[(ZonedDateTime, Vector)] = {
     val maxChunkSize = 20
 
     val dividedOnMapSide = mapPartitionsWithIndex { case (partitionId, iter) =>
@@ -269,7 +268,7 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector)])
     }
     val repartitioned = dividedOnMapSide.repartitionAndSortWithinPartitions(partitioner)
     repartitioned.mapPartitions { iter0: Iterator[((Int, Int), Vector)] =>
-      new Iterator[(DateTime, Vector)] {
+      new Iterator[(ZonedDateTime, Vector)] {
         var snipsPerSample = -1
         var elementsPerSample = -1
         var iter: Iterator[((Int, Int), Vector)] = _
@@ -290,7 +289,7 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector)])
         }
 
         def assembleSnips(snips: Iterator[((Int, Int), Vector)])
-          : (DateTime, Vector) = {
+          : (ZonedDateTime, Vector) = {
           val resVec = BDV.zeros[Double](elementsPerSample)
           var dtLoc = -1
           var i = 0
@@ -311,7 +310,7 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector)])
           }
         }
 
-        override def next(): (DateTime, Vector) = {
+        override def next(): (ZonedDateTime, Vector) = {
           if (snipsPerSample == -1) {
             val firstSnips = firstSample()
             snipsPerSample = firstSnips.length
@@ -337,7 +336,7 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector)])
     import sqlContext.implicits._
 
     val result = instantsRDD.map { case (dt, v) =>
-      val timestamp = new Timestamp(dt.getMillis())
+      val timestamp = Timestamp.from(dt.toInstant)
       (timestamp, v.toArray)
     }.toDF()
 
@@ -356,12 +355,14 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector)])
       tsCol: String = "timestamp",
       keyCol: String = "key",
       valueCol: String = "value"): DataFrame = {
+
     val rowRdd = flatMap { case (key, series) =>
       series.iterator.flatMap { case (i, value) =>
         if (value.isNaN) {
           None
         } else {
-          Some(Row(new Timestamp(index.dateTimeAtLoc(i).getMillis), key.toString, value))
+          val inst = index.dateTimeAtLoc(i).toInstant()
+          Some(Row(Timestamp.from(inst), key.toString, value))
         }
       }
     }
@@ -371,6 +372,7 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector)])
       new StructField(keyCol, StringType),
       new StructField(valueCol, DoubleType)
     ))
+
     sqlContext.createDataFrame(rowRdd, schema)
   }
 
@@ -528,14 +530,14 @@ object TimeSeriesRDD {
           val series = new Array[Double](targetIndex.size)
           Arrays.fill(series, Double.NaN)
           val first = bufferedIter.next()
-          val firstLoc = targetIndex.locAtDateTime(new DateTime(first._1._2, targetIndex.zone))
+          val firstLoc = targetIndex.locAtDateTime(ZonedDateTime.ofInstant(first._1._2.toInstant, targetIndex.zone))
           if (firstLoc >= 0) {
             series(firstLoc) = first._2
           }
           val key = first._1._1
           while (bufferedIter.hasNext && bufferedIter.head._1._1 == key) {
             val sample = bufferedIter.next()
-            val sampleLoc = targetIndex.locAtDateTime(new DateTime(sample._1._2, targetIndex.zone))
+            val sampleLoc = targetIndex.locAtDateTime(ZonedDateTime.ofInstant(sample._1._2.toInstant, targetIndex.zone))
             if (sampleLoc >= 0) {
               series(sampleLoc) = sample._2
             }

@@ -1,11 +1,11 @@
 package com.cloudera.sparkts.api.java
 
+import java.time.{ZoneId, ZonedDateTime}
+
 import com.cloudera.sparkts.MatrixUtil._
 import com.cloudera.sparkts.{UniformDateTimeIndex, DateTimeIndex, TimeSeries}
-import com.github.nscala_time.time.Imports._
 import org.apache.spark.mllib.linalg.{Vector, DenseMatrix}
 import org.apache.spark.api.java.function.{Function => JFunction, Function2 => JFunction2}
-import org.joda.time.DateTime
 
 import scala.collection.JavaConversions
 import scala.reflect.ClassTag
@@ -159,7 +159,7 @@ class JavaTimeSeries[K](val ts: TimeSeries[K])(implicit val kClassTag: ClassTag[
   def univariateKeyAndSeriesIterator(): java.util.Iterator[(K, Vector)] =
     JavaConversions.asJavaIterator(ts.univariateKeyAndSeriesIterator)
 
-  def toInstants(): java.util.List[(DateTime, Vector)] =
+  def toInstants(): java.util.List[(ZonedDateTime, Vector)] =
     JavaConversions.seqAsJavaList(ts.toInstants())
 
   /**
@@ -204,9 +204,9 @@ object JavaTimeSeries {
   }
 
   def javaTimeSeriesFromIrregularSamples[K](
-      samples: Seq[(DateTime, Array[Double])],
+      samples: Seq[(ZonedDateTime, Array[Double])],
       keys: Array[K],
-      zone: DateTimeZone = DateTimeZone.getDefault())
+      zone: ZoneId = ZoneId.systemDefault())
       (implicit kClassTag: ClassTag[K])
     : JavaTimeSeries[K] =
     new JavaTimeSeries[K](TimeSeries.timeSeriesFromIrregularSamples[K](samples, keys, zone))

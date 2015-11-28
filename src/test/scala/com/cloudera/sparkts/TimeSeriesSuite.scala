@@ -16,9 +16,10 @@
 package com.cloudera.sparkts
 
 import breeze.linalg.DenseMatrix
+import java.time._
+import java.time.format._
+import com.cloudera.sparkts.DateTimeIndex._
 import com.cloudera.sparkts.TimeSeries._
-
-import com.github.nscala_time.time.Imports._
 
 import org.scalatest.{FunSuite, ShouldMatchers}
 
@@ -27,12 +28,12 @@ import TimeSeries._
 
 class TimeSeriesSuite extends FunSuite with ShouldMatchers {
   test("timeSeriesFromIrregularSamples") {
-    val dt = new DateTime("2015-4-8")
+    val dt = ZonedDateTime.of(2015, 4, 8, 0, 0, 0, 0, ZoneId.of("Z"))
     val samples = Array(
       ((dt, Array(1.0, 2.0, 3.0))),
-      ((dt + 1.days, Array(4.0, 5.0, 6.0))),
-      ((dt + 2.days, Array(7.0, 8.0, 9.0))),
-      ((dt + 4.days, Array(10.0, 11.0, 12.0)))
+      ((dt.plusDays(1), Array(4.0, 5.0, 6.0))),
+      ((dt.plusDays(2), Array(7.0, 8.0, 9.0))),
+      ((dt.plusDays(4), Array(10.0, 11.0, 12.0)))
     )
 
     val labels = Array("a", "b", "c", "d")
@@ -41,7 +42,7 @@ class TimeSeriesSuite extends FunSuite with ShouldMatchers {
   }
 
   test("lagsIncludingOriginals") {
-    val originalIndex = new UniformDateTimeIndex(0, 5, new DayFrequency(1))
+    val originalIndex = new UniformDateTimeIndex(ZonedDateTime.now(), 5, new DayFrequency(1))
 
     val data = DenseMatrix((1.0, 6.0), (2.0, 7.0), (3.0, 8.0), (4.0, 9.0), (5.0, 10.0))
 
@@ -56,7 +57,7 @@ class TimeSeriesSuite extends FunSuite with ShouldMatchers {
   }
 
   test("lagsExcludingOriginals") {
-    val originalIndex = new UniformDateTimeIndex(0, 5, new DayFrequency(1))
+    val originalIndex = new UniformDateTimeIndex(ZonedDateTime.now(), 5, new DayFrequency(1))
 
     val data = DenseMatrix((1.0, 6.0), (2.0, 7.0), (3.0, 8.0), (4.0, 9.0), (5.0, 10.0))
 
@@ -71,7 +72,7 @@ class TimeSeriesSuite extends FunSuite with ShouldMatchers {
   }
 
   test("customLags") {
-    val originalIndex = new UniformDateTimeIndex(0, 5, new DayFrequency(1))
+    val originalIndex = new UniformDateTimeIndex(ZonedDateTime.now(), 5, new DayFrequency(1))
 
     val data = DenseMatrix((1.0, 6.0), (2.0, 7.0), (3.0, 8.0), (4.0, 9.0), (5.0, 10.0))
 
@@ -84,5 +85,4 @@ class TimeSeriesSuite extends FunSuite with ShouldMatchers {
     laggedTimeSeries.index.size should be (3)
     toBreeze(laggedTimeSeries.data) should be (DenseMatrix((3.0, 7.0, 6.0), (4.0, 8.0, 7.0), (5.0, 9.0, 8.0)))
   }
-
 }

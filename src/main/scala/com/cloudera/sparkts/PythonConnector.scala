@@ -21,7 +21,7 @@ import breeze.linalg.{DenseVector, Vector}
 
 import org.apache.spark.api.java.function.Function
 
-import org.joda.time.DateTime
+import java.time._
 
 /**
  * This file contains utilities used by the spark-timeseries Python bindings to communicate with
@@ -77,13 +77,13 @@ private class KeyAndSeriesToBytes extends Function[(String, Vector[Double]), Arr
   }
 }
 
-private class InstantToBytes extends Function[(DateTime, Vector[Double]), Array[Byte]] {
+private class InstantToBytes extends Function[(ZonedDateTime, Vector[Double]), Array[Byte]] {
   import PythonConnector._
 
-  override def call(instant: (DateTime, Vector[Double])): Array[Byte] = {
+  override def call(instant: (ZonedDateTime, Vector[Double])): Array[Byte] = {
     val arr = new Array[Byte](LONG_SIZE + INT_SIZE + DOUBLE_SIZE * instant._2.length)
     val buf = ByteBuffer.wrap(arr)
-    buf.putLong(instant._1.getMillis)
+    buf.putLong(TimeSeriesUtils.zonedDateTimeToLong(instant._1))
     putVector(buf, instant._2)
     arr
   }

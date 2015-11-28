@@ -3,12 +3,12 @@ package com.cloudera.sparkts.api.java;
 import com.cloudera.sparkts.DateTimeIndex;
 import com.cloudera.sparkts.UniformDateTimeIndex;
 import org.apache.spark.mllib.linalg.Vector;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import scala.Tuple2;
 import scala.collection.JavaConversions;
 import scala.reflect.ClassTag$;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.List;
 
 public final class JavaTimeSeriesFactory {
@@ -17,13 +17,13 @@ public final class JavaTimeSeriesFactory {
     private JavaTimeSeriesFactory() {}
 
     public static <K> JavaTimeSeries<K> javaTimeSeriesFromIrregularSamples(
-            List<Tuple2<DateTime, double[]>> samples,
+            List<Tuple2<ZonedDateTime, double[]>> samples,
             K[] keys,
-            DateTimeZone zone) {
+            ZoneId zone) {
         return JAVA_TIME_SERIES.javaTimeSeriesFromIrregularSamples(
                 JavaConversions.asScalaBuffer(samples),
                 keys,
-                zone != null ? zone : DateTimeZone.getDefault(),
+                zone != null ? zone : ZoneId.systemDefault(),
                 ClassTag$.MODULE$.<K>apply(keys[0].getClass()));
     }
 
