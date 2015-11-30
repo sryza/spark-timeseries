@@ -224,7 +224,7 @@ class UniformDateTimeIndex(
     new Iterator[ZonedDateTime] {
       var current = first
 
-      override def hasNext: Boolean = current.isBefore(last)
+      override def hasNext: Boolean = current.compareTo(last) <= 0
 
       override def next(): ZonedDateTime = {
         val ret = current
@@ -321,7 +321,7 @@ class IrregularDateTimeIndex(
 
       override def hasNext: Boolean = instIter.hasNext
 
-      override def next(): ZonedDateTime = longToZonedDateTime(instIter.next)
+      override def next(): ZonedDateTime = longToZonedDateTime(instIter.next, dateTimeZone)
     }
   }
 }
@@ -499,7 +499,7 @@ class HybridDateTimeIndex(
         }
       }
 
-      override def next(): Long = if (hasNext) milIter.next else null
+      override def next(): Long = if (hasNext) milIter.next else -1
     }
   }
 
