@@ -35,17 +35,19 @@ object Transforms {
     new TimeSeries[K](ts.index.islice(1, ts.index.size), diffedDataBreeze, ts.keys)
   }
 
-  def timeDerivative[K: ClassTag](ts: TimeSeriesRDD[K],
-                                  baseFrequency: Frequency,
-                                  sc: SparkContext): TimeSeriesRDD[K] = {
+  def timeDerivative[K: ClassTag](
+    ts: TimeSeriesRDD[K],
+    baseFrequency: Frequency,
+    sc: SparkContext)
+    : TimeSeriesRDD[K] = {
 
     val bIndex = sc.broadcast(ts.index)
     val bBaseFreq = sc.broadcast(baseFrequency)
 
     val newIndex = ts.index.islice(1, ts.index.size)
     ts.mapSeries(vec => {
-      val timeDataVec: Array[(ZonedDateTime, Double)] = bIndex.value.toZonedDateTimeArray.zip(vec.toArray)
-      val zippedPairs: Array[((ZonedDateTime, Double), (ZonedDateTime, Double))] = timeDataVec.zip(timeDataVec.drop(1))
+      val timeDataVec = bIndex.value.toZonedDateTimeArray.zip(vec.toArray)
+      val zippedPairs = timeDataVec.zip(timeDataVec.drop(1))
 
       val output = zippedPairs.map(pair => {
         val valueDiff = pair._1._2 - pair._2._2
