@@ -19,11 +19,13 @@ import java.time._
 
 import breeze.linalg.{DenseMatrix => BDM}
 import java.time.format._
-import com.cloudera.sparkts.DateTimeIndex._
 import org.apache.spark.mllib.linalg.{DenseMatrix, Vectors}
-import org.apache.spark.{SparkContext, SparkConf}
-import org.scalatest.{FunSuite, ShouldMatchers}
 import MatrixUtil._
+
+import java.time._
+import com.cloudera.sparkts.DateTimeIndex._
+import org.apache.spark.{SparkConf, SparkContext}
+import org.scalatest.{FunSuite, ShouldMatchers}
 
 class TransformsSuite extends FunSuite with ShouldMatchers {
   test("timeDerivative") {
@@ -53,7 +55,7 @@ class TransformsSuite extends FunSuite with ShouldMatchers {
     val expected: DenseMatrix = BDM(
       (1.0, 1.0),
       (0.5, 1.0),
-      (1.0, 0.0),
+      (1.0, -0.0),
       (-0.75, 0.25)
     )
     differencedTimeSeries.data should be (expected)
@@ -95,6 +97,8 @@ class TransformsSuite extends FunSuite with ShouldMatchers {
       (-0.75, 0.25)
     )
     differencedTimeSeries.collectAsTimeSeries().data should be (expected)
+
+    sc.stop()
   }
 
 }

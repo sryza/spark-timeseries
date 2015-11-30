@@ -15,24 +15,20 @@ import scala.reflect.ClassTag
 object Transforms {
 
   def timeDerivative[K: ClassTag](ts: TimeSeries[K], baseFrequency: Frequency): TimeSeries[K] = {
-    val instants = ts.toInstants()
+    val newIndex = ts.index.islice(1, ts.index.size)
+    ts.mapSeries(newIndex, vec => {
+      val timeDataVec = ts.index.toZonedDateTimeArray.zip(vec.toArray)
+      val zippedPairs = timeDataVec.zip(timeDataVec.drop(1))
 
-    val pairs = instants.drop(1).zip(instants)
+      val output = zippedPairs.map(pair => {
+        val valueDiff = pair._1._2 - pair._2._2
+        val timeDiff = baseFrequency.difference(pair._2._1, pair._1._1)
 
-    val diffedDataBreeze = new BDM[Double](instants.length - 1, instants.head._2.size)
-    for (rowIndex <- 0 until instants.length - 1) {
-      val pair = pairs(rowIndex)
-      val timeDiff = baseFrequency.difference(pair._2._1, pair._1._1)
+        valueDiff / timeDiff
+      })
 
-      for (i <- 0 until pair._1._2.size) {
-        val tmp = pair._1._2(i) - pair._2._2(i)
-        val diffValue = tmp / timeDiff
-
-        diffedDataBreeze(rowIndex, i) = diffValue
-      }
-    }
-
-    new TimeSeries[K](ts.index.islice(1, ts.index.size), diffedDataBreeze, ts.keys)
+      breeze.linalg.Vector(output)
+    })
   }
 
   def timeDerivative[K: ClassTag](
