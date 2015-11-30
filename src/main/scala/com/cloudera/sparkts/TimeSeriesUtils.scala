@@ -57,8 +57,6 @@ private[sparkts] object TimeSeriesUtils {
    * will be filled with NaNs or the given default value.
    *
    * The source index must have the same frequency as the target index.
-   *
-   * Currently only irregular target indices are not supported with uniform source indices.
    */
   def rebase(
       sourceIndex: DateTimeIndex,
@@ -74,8 +72,6 @@ private[sparkts] object TimeSeriesUtils {
    * non-overlapping regions will be filled with NaNs or the given default value.
    *
    * The source index must have the same frequency as the target index.
-   *
-   * Currently only irregular target indices are not supported with uniform source indices.
    */
   def rebaser(
       sourceIndex: DateTimeIndex,
@@ -89,16 +85,17 @@ private[sparkts] object TimeSeriesUtils {
           case sourceDTI: IrregularDateTimeIndex =>
             rebaserWithIrregularSource(sourceDTI, targetDTI, defaultValue)
           case _ =>
-            throw new scala.UnsupportedOperationException("Unrecognized source index type")
+            rebaserGeneric(sourceIndex, targetIndex, defaultValue)
         }
       case targetDTI: IrregularDateTimeIndex =>
         sourceIndex match {
           case sourceDTI: IrregularDateTimeIndex =>
             rebaserIrregularSourceIrregularTarget(sourceDTI, targetDTI, defaultValue)
           case _ =>
-            throw new scala.UnsupportedOperationException(
-              "Irregular targets only supported with irregular sources")
+            rebaserGeneric(sourceIndex, targetIndex, defaultValue)
         }
+      case _ =>
+        rebaserGeneric(sourceIndex, targetIndex, defaultValue)
     }
   }
 
@@ -180,6 +177,36 @@ private[sparkts] object TimeSeriesUtils {
       } else {
         indexMapping(i) = -1
       }
+      i += 1
+    }
+
+    vec: Vector[Double] => {
+      var i = 0
+      val resultArr = new Array[Double](targetIndex.size)
+      while (i < indexMapping.length) {
+        if (indexMapping(i) != -1) {
+          resultArr(i) = vec(indexMapping(i))
+        } else {
+          resultArr(i) = defaultValue
+        }
+        i += 1
+      }
+      new DenseVector(resultArr)
+    }
+  }
+
+  private def rebaserGeneric(
+      sourceIndex: DateTimeIndex,
+      targetIndex: DateTimeIndex,
+      defaultValue: Double): Vector[Double] => Vector[Double] = {
+    // indexMapping(i) = j means that resultArr(i) should be filled with the value from
+    // vec(j)
+    val indexMapping = new Array[Int](targetIndex.size)
+
+    val targetIndexZDTIterator = targetIndex.zonedDateTimeIterator
+    var i = 0
+    while (targetIndexZDTIterator.hasNext) {
+      indexMapping(i) = sourceIndex.locAtDateTime(targetIndexZDTIterator.next)
       i += 1
     }
 
