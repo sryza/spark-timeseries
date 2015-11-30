@@ -15,6 +15,7 @@
 
 package com.cloudera.sparkts
 
+import java.util
 import java.util.{Comparators, Comparator}
 
 import org.threeten.extra._
@@ -113,6 +114,16 @@ trait DateTimeIndex extends Serializable {
     * Returns the contents of the DateTimeIndex as an array of ZonedDateTime
     */
   def toZonedDateTimeArray(): Array[ZonedDateTime]
+
+  /**
+   * Returns an iterator over the contents of the DateTimeIndex as milliseconds
+   */
+  def millisIterator(): Iterator[Long]
+
+  /**
+   * Returns an iterator over the contents of the DateTimeIndex as ZonedDateTime
+   */
+  def zonedDateTimeIterator(): Iterator[ZonedDateTime]
 }
 
 /**
@@ -198,6 +209,30 @@ class UniformDateTimeIndex(
       "uniform", dateTimeZone.toString, start.toString,
       periods.toString, frequency.toString).mkString(",")
   }
+
+  override def millisIterator(): Iterator[Long] = {
+    new Iterator[Long] {
+      val zdtIter = zonedDateTimeIterator
+
+      override def hasNext: Boolean = zdtIter.hasNext
+
+      override def next(): Long = zonedDateTimeToLong(zdtIter.next) / 1000000L
+    }
+  }
+
+  override def zonedDateTimeIterator(): Iterator[ZonedDateTime] = {
+    new Iterator[ZonedDateTime] {
+      var current = first
+
+      override def hasNext: Boolean = current.isBefore(last)
+
+      override def next(): ZonedDateTime = {
+        val ret = current
+        current = frequency.advance(current, 1)
+        ret
+      }
+    }
+  }
 }
 
 /**
@@ -268,6 +303,26 @@ class IrregularDateTimeIndex(
   override def toString: String = {
     "irregular," + dateTimeZone.toString + "," +
       instants.map(longToZonedDateTime(_, dateTimeZone).toString).mkString(",")
+  }
+
+  override def millisIterator(): Iterator[Long] = {
+    new Iterator[Long] {
+      val instIter = instants.iterator
+
+      override def hasNext: Boolean = instIter.hasNext
+
+      override def next(): Long = instIter.next / 1000000L
+    }
+  }
+
+  override def zonedDateTimeIterator(): Iterator[ZonedDateTime] = {
+    new Iterator[ZonedDateTime] {
+      val instIter = instants.iterator
+
+      override def hasNext: Boolean = instIter.hasNext
+
+      override def next(): ZonedDateTime = longToZonedDateTime(instIter.next)
+    }
   }
 }
 
@@ -422,6 +477,54 @@ class HybridDateTimeIndex(
   override def toString: String = {
     "hybrid," + dateTimeZone.toString + "," +
       indices.map(_.toString).mkString(";")
+  }
+
+  override def millisIterator(): Iterator[Long] = {
+    new Iterator[Long] {
+      val indicesIter = indices.iterator
+      var milIter = if (indicesIter.hasNext) indicesIter.next.millisIterator else null
+
+      override def hasNext: Boolean = {
+        if (milIter != null) {
+          if (milIter.hasNext) {
+            true
+          } else if(indicesIter.hasNext) {
+            milIter = indicesIter.next.millisIterator
+            hasNext
+          } else {
+            false
+          }
+        } else {
+          false
+        }
+      }
+
+      override def next(): Long = if (hasNext) milIter.next else null
+    }
+  }
+
+  override def zonedDateTimeIterator(): Iterator[ZonedDateTime] = {
+    new Iterator[ZonedDateTime] {
+      val indicesIter = indices.iterator
+      var zdtIter = if (indicesIter.hasNext) indicesIter.next.zonedDateTimeIterator else null
+
+      override def hasNext: Boolean = {
+        if (zdtIter != null) {
+          if (zdtIter.hasNext) {
+            true
+          } else if(indicesIter.hasNext) {
+            zdtIter = indicesIter.next.zonedDateTimeIterator
+            hasNext
+          } else {
+            false
+          }
+        } else {
+          false
+        }
+      }
+
+      override def next(): ZonedDateTime = if (hasNext) zdtIter.next else null
+    }
   }
 }
 
