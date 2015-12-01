@@ -98,6 +98,12 @@ class DateTimeIndexSuite extends FunSuite with ShouldMatchers {
 
     index.nanosIterator.toArray should be (index.toNanosArray)
     index.zonedDateTimeIterator.toArray should be (index.toZonedDateTimeArray)
+
+    index.insertionLoc(ZonedDateTime.of(2015, 4, 9, 0, 0, 0, 0, UTC)) should be (0)
+    index.insertionLoc(ZonedDateTime.of(2015, 4, 10, 0, 0, 0, 0, UTC)) should be (1)
+    index.insertionLoc(ZonedDateTime.of(2015, 4, 11, 0, 0, 0, 0, UTC)) should be (1)
+    index.insertionLoc(ZonedDateTime.of(2015, 4, 12, 0, 0, 0, 0, UTC)) should be (2)
+    index.insertionLoc(index.last) should be (index.size)
   }
 
   test("irregular") {
@@ -130,6 +136,12 @@ class DateTimeIndexSuite extends FunSuite with ShouldMatchers {
 
     index.nanosIterator.toArray should be (index.toNanosArray)
     index.zonedDateTimeIterator.toArray should be (index.toZonedDateTimeArray)
+
+    index.insertionLoc(ZonedDateTime.of(2015, 4, 13, 0, 0, 0, 0, UTC)) should be (0)
+    index.insertionLoc(ZonedDateTime.of(2015, 4, 14, 0, 0, 0, 0, UTC)) should be (1)
+    index.insertionLoc(ZonedDateTime.of(2015, 4, 15, 0, 0, 0, 0, UTC)) should be (2)
+    index.insertionLoc(ZonedDateTime.of(2015, 4, 16, 0, 0, 0, 0, UTC)) should be (2)
+    index.insertionLoc(index.last) should be (index.size)
     // TODO: test bounds that aren't members of the index
   }
 
@@ -216,6 +228,20 @@ class DateTimeIndexSuite extends FunSuite with ShouldMatchers {
 
     index.nanosIterator.toArray should be (index.toNanosArray)
     index.zonedDateTimeIterator.toArray should be (index.toZonedDateTimeArray)
+
+    index.insertionLoc(ZonedDateTime.of(2015, 4, 9, 0, 0, 0, 0, UTC)) should be (0)
+    index.insertionLoc(ZonedDateTime.of(2015, 4, 10, 0, 0, 0, 0, UTC)) should be (1)
+    index.insertionLoc(ZonedDateTime.of(2015, 4, 11, 0, 0, 0, 0, UTC)) should be (1)
+    index.insertionLoc(ZonedDateTime.of(2015, 4, 18, 0, 0, 0, 0, UTC)) should be (5)
+    index.insertionLoc(ZonedDateTime.of(2015, 4, 19, 0, 0, 0, 0, UTC)) should be (6)
+    index.insertionLoc(ZonedDateTime.of(2015, 4, 22, 0, 0, 0, 0, UTC)) should be (8)
+    index.insertionLoc(ZonedDateTime.of(2015, 4, 28, 0, 0, 0, 0, UTC)) should be (10)
+    index.insertionLoc(ZonedDateTime.of(2015, 4, 29, 0, 0, 0, 0, UTC)) should be (10)
+    index.insertionLoc(ZonedDateTime.of(2015, 5, 9, 0, 0, 0, 0, UTC)) should be (10)
+    index.insertionLoc(ZonedDateTime.of(2015, 5, 10, 0, 0, 0, 0, UTC)) should be (11)
+    index.insertionLoc(ZonedDateTime.of(2015, 5, 11, 0, 0, 0, 0, UTC)) should be (11)
+    index.insertionLoc(ZonedDateTime.of(2015, 5, 18, 0, 0, 0, 0, UTC)) should be (15)
+    index.insertionLoc(ZonedDateTime.of(2015, 5, 19, 0, 0, 0, 0, UTC)) should be (15)
   }
 
   test("rebased day of week") {
