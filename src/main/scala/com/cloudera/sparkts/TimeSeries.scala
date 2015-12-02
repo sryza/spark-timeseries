@@ -172,6 +172,33 @@ class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix,
     new TimeSeries[K](index, mat, keys :+ key)
   }
 
+  def union(defaultValue: Double, ts: TimeSeries[K]*): TimeSeries[K] = {
+    union(defaultValue, ts.toArray)
+  }
+
+  def union(defaultValue: Double, others: Array[TimeSeries[K]]): TimeSeries[K] = {
+    val tss = Array(this) ++ others
+    val indices = tss.map(_.index)
+
+    val newIndex = DateTimeIndexUtils.union(indices, index.zone)
+    val rebasers = indices.map(TimeSeriesUtils.rebaser(_, newIndex, defaultValue))
+    val tssRebased = tss.zip(rebasers).map(t => t._1.mapSeries(newIndex, t._2))
+
+    var newKeys = Array.empty[K]
+    val mat = BDM.zeros[Double](newIndex.size, tss.map(_.keys.length).sum)
+    var start = 0
+    var end = 0
+    for (i <- 0 until tss.length) {
+      val keysAtI = tss(i).keys
+      newKeys ++= keysAtI
+      end = start + keysAtI.length
+      mat(::, start until end) := tssRebased(i).dataToBreeze
+      start = end
+    }
+
+    new TimeSeries[K](newIndex, mat, newKeys)
+  }
+  
   /**
    * Returns a TimeSeries where each time series is differenced with the given order. The new
    * TimeSeries will be missing the first n date-times.
