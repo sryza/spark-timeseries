@@ -56,7 +56,10 @@ private[sparkts] object DateTimeIndexUtils {
     }
     simplified.toArray
   }
-  
+
+  /**
+   * Unions a collection of date-time indices into one date-time index
+   */
   def union(indices: Array[DateTimeIndex], zone: ZoneId = ZoneId.systemDefault())
     : DateTimeIndex = {
     val indicesPQ = PriorityQueue.empty[DateTimeIndex](dateTimeIndexOrdering.reverse)
@@ -95,6 +98,6 @@ private[sparkts] object DateTimeIndexUtils {
 
     val simplified = simplify(unionList.toArray)
     
-    new HybridDateTimeIndex(simplified, zone)
+    new HybridDateTimeIndex(simplified).atZone(zone)
   }
 }
