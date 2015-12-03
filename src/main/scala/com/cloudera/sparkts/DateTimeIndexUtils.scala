@@ -149,6 +149,6 @@ private[sparkts] object DateTimeIndexUtils {
 
     val simplified = simplify(unionList.toArray)
     
-    new HybridDateTimeIndex(simplified, zone)
+    new HybridDateTimeIndex(simplified).atZone(zone)
   }
 }

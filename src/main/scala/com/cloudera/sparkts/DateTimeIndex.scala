@@ -140,6 +140,11 @@ trait DateTimeIndex extends Serializable {
    * Returns an iterator over the contents of the DateTimeIndex as ZonedDateTime
    */
   def zonedDateTimeIterator(): Iterator[ZonedDateTime]
+
+  /**
+   * Returns a new DateTimeIndex with instants at the specified zone
+   */
+  def atZone(zone: ZoneId): DateTimeIndex
 }
 
 /**
@@ -256,6 +261,10 @@ class UniformDateTimeIndex(
   override def zonedDateTimeIterator(): Iterator[ZonedDateTime] = {
     (0 until periods).view.map(frequency.advance(start, _)).iterator
   }
+
+  override def atZone(zone: ZoneId): UniformDateTimeIndex = {
+    new UniformDateTimeIndex(start.withZoneSameInstant(zone), periods, frequency, zone)
+  }
 }
 
 /**
@@ -355,6 +364,10 @@ class IrregularDateTimeIndex(
 
   override def zonedDateTimeIterator(): Iterator[ZonedDateTime] = {
     instants.iterator.map(longToZonedDateTime(_, dateTimeZone))
+  }
+
+  override def atZone(zone: ZoneId): IrregularDateTimeIndex = {
+    new IrregularDateTimeIndex(instants, zone)
   }
 }
 
@@ -574,6 +587,10 @@ class HybridDateTimeIndex(
 
   override def zonedDateTimeIterator(): Iterator[ZonedDateTime] = {
     indices.foldLeft(Iterator[ZonedDateTime]())(_ ++ _.zonedDateTimeIterator)
+  }
+
+  override def atZone(zone: ZoneId): HybridDateTimeIndex = {
+    new HybridDateTimeIndex(indices.map(_.atZone(zone)), zone)
   }
 }
 
