@@ -15,7 +15,7 @@
 
 package com.cloudera.sparkts
 
-import java.time.ZoneId
+import java.time.{ZonedDateTime, ZoneId}
 
 import scala.collection.mutable.{ListBuffer, PriorityQueue}
 
@@ -73,14 +73,15 @@ private[sparkts] object DateTimeIndexUtils {
       var b = indicesPQ.dequeue
       
       var isBTrimmed = false
-      while (a.locAtDateTime(b.first) > -1) {
+      while (a.locAtDateTime(b.first) > -1 && b.size > 0) {
         b = b.islice(1, b.size)
         isBTrimmed = true
       }
       
-      if (isBTrimmed && b.size > 0) {
+      if (isBTrimmed) {
         unionList += a
-        indicesPQ.enqueue(b)
+        if (b.size > 0)
+          indicesPQ.enqueue(b)
       } else {
         val splitLoc = a.insertionLoc(b.first)
         if (splitLoc < a.size) {
@@ -99,5 +100,72 @@ private[sparkts] object DateTimeIndexUtils {
     val simplified = simplify(unionList.toArray)
     
     new HybridDateTimeIndex(simplified).atZone(zone)
+  }
+
+  /**
+   * Intersects a collection of date-time indices into one date-time index
+   */
+  def intersect(indices: Array[DateTimeIndex], zone: ZoneId = ZoneId.systemDefault())
+    : Option[DateTimeIndex] = {
+    val indicesSorted = indices.sorted.toBuffer
+
+    var mayIntersect = true
+
+    for (i <- 0 until indicesSorted.length - 1; if mayIntersect) {
+      val iIndex = indicesSorted(i)
+      // the farthest index from iIndex is least likely to intersect with iIndex
+      // that helps to cut the loop earlier
+      for (j <- (i + 1 until indicesSorted.length).reverse; if mayIntersect) {
+        val jIndex = indicesSorted(j)
+        mayIntersect = iIndex.last.compareTo(jIndex.first) >= 0
+      }
+    }
+
+    while (indicesSorted.length > 1 && mayIntersect) {
+      val a = indicesSorted.remove(0)
+      val b = indicesSorted.remove(0)
+      var intersectionBuffer = new ListBuffer[ZonedDateTime]
+
+      var hasPassedEndOfA = false
+      val bIter = b.zonedDateTimeIterator
+      while (bIter.hasNext && !hasPassedEndOfA) {
+        val dt = bIter.next
+        hasPassedEndOfA = dt.isAfter(a.last)
+        if (!hasPassedEndOfA && a.locAtDateTime(dt) > -1)
+          intersectionBuffer += dt
+      }
+
+      if (intersectionBuffer.length > 0) {
+        val intersectionIndex = DateTimeIndex.irregular(intersectionBuffer.toArray, zone)
+
+        var insertionLoc = indicesSorted.length
+        for (i <- 0 until indicesSorted.length;
+             if mayIntersect && insertionLoc == indicesSorted.length) {
+          val iIndex = indicesSorted(i)
+          if (dateTimeIndexOrdering.lteq(iIndex, intersectionIndex)) {
+            mayIntersect = iIndex.last.compareTo(intersectionIndex.first) >= 0
+          } else {
+            insertionLoc = i
+            // the farthest index from intersectionIndex is least likely to intersect
+            // with intersectionIndex that helps to cut the loop earlier
+            for (j <- (i until indicesSorted.length).reverse; if mayIntersect) {
+              val jIndex = indicesSorted(j)
+              mayIntersect = intersectionIndex.last.compareTo(jIndex.first) >= 0
+            }
+          }
+        }
+
+        if (mayIntersect) {
+          indicesSorted.insert(insertionLoc, intersectionIndex)
+        }
+      } else {
+        mayIntersect = false
+      }
+    }
+
+    if (mayIntersect && indicesSorted.length == 1)
+      Some(indicesSorted.head)
+    else
+      None
   }
 }
