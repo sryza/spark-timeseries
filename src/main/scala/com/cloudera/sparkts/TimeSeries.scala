@@ -200,6 +200,14 @@ class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix,
       None
     }
   }
+
+  def leftJoin(other: TimeSeries[K], defaultValue: Double): TimeSeries[K] = {
+    TimeSeriesUtils.rebaseAndMerge(Array(this, other), index, defaultValue)
+  }
+
+  def rightJoin(other: TimeSeries[K], defaultValue: Double): TimeSeries[K] = {
+    TimeSeriesUtils.rebaseAndMerge(Array(this, other), other.index, defaultValue)
+  }
   
   /**
    * Returns a TimeSeries where each time series is differenced with the given order. The new

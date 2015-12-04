@@ -139,4 +139,38 @@ class TimeSeriesSuite extends FunSuite with ShouldMatchers {
       (13.0, 18.0, 4.0, 9.0),
       (14.0, 19.0, 5.0, 10.0)))
   }
+
+  test("left and right joins") {
+    val dt = ZonedDateTime.now().truncatedTo(ChronoUnit.DAYS)
+    val index1 = new UniformDateTimeIndex(dt, 5, new DayFrequency(1))
+    val data1 = DenseMatrix((11.0, 16.0), (12.0, 17.0), (13.0, 18.0), (14.0, 19.0), (15.0, 20.0))
+    val ts1 = new TimeSeries(index1, data1, Array("c", "d"))
+
+    val index2 = new UniformDateTimeIndex(dt.minusDays(1), 5, new DayFrequency(1))
+    val data2 = DenseMatrix((1.0, 6.0), (2.0, 7.0), (3.0, 8.0), (4.0, 9.0), (5.0, 10.0))
+    val ts2 = new TimeSeries(index2, data2, Array("a", "b"))
+
+    val defVal = -1.0
+
+    val tsLeftJoined = ts1.leftJoin(ts2, defVal)
+    val tsRightJoined = ts1.rightJoin(ts2, defVal)
+
+    tsLeftJoined.keys should be (Array("c", "d", "a", "b"))
+    tsLeftJoined.index.size should be (5)
+    toBreeze(tsLeftJoined.data) should be (DenseMatrix(
+      (11.0, 16.0, 2.0, 7.0),
+      (12.0, 17.0, 3.0, 8.0),
+      (13.0, 18.0, 4.0, 9.0),
+      (14.0, 19.0, 5.0, 10.0),
+      (15.0, 20.0, defVal, defVal)))
+
+    tsRightJoined.keys should be (Array("c", "d", "a", "b"))
+    tsRightJoined.index.size should be (5)
+    toBreeze(tsRightJoined.data) should be (DenseMatrix(
+      (defVal, defVal, 1.0, 6.0),
+      (11.0, 16.0, 2.0, 7.0),
+      (12.0, 17.0, 3.0, 8.0),
+      (13.0, 18.0, 4.0, 9.0),
+      (14.0, 19.0, 5.0, 10.0)))
+  }
 }
