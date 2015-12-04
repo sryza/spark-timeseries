@@ -36,7 +36,7 @@ class DateTimeIndexUtilsSuite extends FunSuite with ShouldMatchers {
     ), UTC)
 
     union(Array(index1, index2, index3), UTC) should be (
-      hybrid(Array(index1, index2, index3), UTC))
+      hybrid(Array(index1, index2, index3)))
 
     intersect(Array(index1, index2, index3), UTC) should be (None)
   }
@@ -53,7 +53,7 @@ class DateTimeIndexUtilsSuite extends FunSuite with ShouldMatchers {
     ), UTC)
 
     union(Array(index3, index1, index2), UTC) should be (
-      hybrid(Array(index1, index2, index3), UTC))
+      hybrid(Array(index1, index2, index3)))
 
     intersect(Array(index1, index2, index3), UTC) should be (None)
   }
@@ -79,7 +79,7 @@ class DateTimeIndexUtilsSuite extends FunSuite with ShouldMatchers {
         irregular(Array(dt("2015-05-01")), UTC),
         uniform(dt("2015-05-02"), 9, new DayFrequency(2), UTC),
         irregular(Array(dt("2015-06-25")), UTC)
-      ), UTC))
+      )))
 
     intersect(Array(index3, index2), UTC) should be (Some(
       irregular(Array(

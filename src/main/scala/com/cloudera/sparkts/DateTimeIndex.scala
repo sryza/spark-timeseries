@@ -529,6 +529,13 @@ class HybridDateTimeIndex(
     insertionLoc(longToZonedDateTime(dt, dateTimeZone))
   }
 
+  /**
+   * Returns a tuple (a, b):
+   *  a: is the array index of the date-time index that contains the queried date-time dt
+   *     or -1 if dt is not found. This value is used by locAtDateTime method.
+   *  b: is the array index of the date-time index where the queried date-time dt could
+   *     be inserted. This value is used by insertionLoc method.
+   */
   private def binarySearch(low: Int, high: Int, dt: ZonedDateTime): (Int, Int) = {
     if (low <= high) {
       val mid = (low + high) >>> 1
