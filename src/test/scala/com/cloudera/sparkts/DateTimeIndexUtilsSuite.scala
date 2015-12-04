@@ -15,7 +15,7 @@
 
 package com.cloudera.sparkts
 
-import java.time.{Period, ZonedDateTime, ZoneId}
+import java.time.{ZonedDateTime, ZoneId}
 
 import com.cloudera.sparkts.DateTimeIndex._
 import com.cloudera.sparkts.DateTimeIndexUtils._
@@ -36,7 +36,7 @@ class DateTimeIndexUtilsSuite extends FunSuite with ShouldMatchers {
     ), UTC)
 
     union(Array(index1, index2, index3), UTC) should be (
-      hybrid(Array(index1, index2, index3), UTC))
+      hybrid(Array(index1, index2, index3)))
   }
 
   test("non-overlapping non-sorted") {
@@ -51,7 +51,7 @@ class DateTimeIndexUtilsSuite extends FunSuite with ShouldMatchers {
     ), UTC)
 
     union(Array(index3, index1, index2), UTC) should be (
-      hybrid(Array(index1, index2, index3), UTC))
+      hybrid(Array(index1, index2, index3)))
   }
 
   test("overlapping uniform and irregular") {
@@ -76,7 +76,7 @@ class DateTimeIndexUtilsSuite extends FunSuite with ShouldMatchers {
           dt("2015-05-10")), UTC),
         uniform(dt("2015-05-12"), 4, new DayFrequency(2), UTC),
         irregular(Array(dt("2015-06-25")), UTC)
-      ), UTC))
+      )))
   }
 
   def dt(dt: String, zone: ZoneId = UTC): ZonedDateTime = {

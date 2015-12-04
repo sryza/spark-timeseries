@@ -483,11 +483,13 @@ class HybridDateTimeIndex(
     val i = binarySearch(0, indices.length - 1, dt)._1
     if (i > -1) {
       val loc = indices(i).locAtDateTime(dt)
-      if (loc >= 0) {
+      if (loc > -1) {
         sizeOnLeft(i) + loc
       } else {
         -1
       }
+    } else {
+      -1
     }
   }
 
@@ -510,6 +512,13 @@ class HybridDateTimeIndex(
     insertionLoc(longToZonedDateTime(dt, dateTimeZone))
   }
 
+  /**
+   * Returns a tuple (a, b):
+   *  a: is the array index of the date-time index that contains the queried date-time dt
+   *     or -1 if dt is not found. This value is used by locAtDateTime method.
+   *  b: is the array index of the date-time index where the queried date-time dt could
+   *     be inserted. This value is used by insertionLoc method.
+   */
   @tailrec
   private def binarySearch(low: Int, high: Int, dt: ZonedDateTime): (Int, Int) = {
     if (low <= high) {
