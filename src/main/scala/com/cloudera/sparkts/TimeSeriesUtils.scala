@@ -19,7 +19,11 @@ import scala.collection.mutable.ArrayBuffer
 
 import breeze.linalg._
 
+import MatrixUtil._
+
 import java.time._
+
+import scala.reflect.ClassTag
 
 /**
  * Internal utilities for dealing with 1-D time series.
@@ -49,6 +53,30 @@ private[sparkts] object TimeSeriesUtils {
     }
 
     throw new UnsupportedOperationException()
+  }
+
+  def rebaseAndMerge[K: ClassTag](
+      tss: Array[TimeSeries[K]],
+      newIndex: DateTimeIndex,
+      defaultValue: Double = Double.NaN)
+    : TimeSeries[K] = {
+    val indices = tss.map(_.index)
+    val rebasers = indices.map(TimeSeriesUtils.rebaser(_, newIndex, defaultValue))
+    val tssRebased = tss.zip(rebasers).map(t => t._1.mapSeries(newIndex, t._2))
+
+    var newKeys = Array.empty[K]
+    val mat = DenseMatrix.zeros[Double](newIndex.size, tss.map(_.keys.length).sum)
+    var start = 0
+    var end = 0
+    for (i <- 0 until tss.length) {
+      val keysAtI = tss(i).keys
+      newKeys ++= keysAtI
+      end = start + keysAtI.length
+      mat(::, start until end) := tssRebased(i).dataToBreeze
+      start = end
+    }
+
+    new TimeSeries[K](newIndex, mat, newKeys)
   }
 
   /**

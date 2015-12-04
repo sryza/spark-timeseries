@@ -28,7 +28,7 @@ class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix,
                     val keys: Array[K])(implicit val kClassTag: ClassTag[K])
   extends Serializable {
 
-  private def dataToBreeze: BDM[Double] = data
+  private[sparkts] def dataToBreeze: BDM[Double] = data
 
   /**
    * IMPORTANT: this function assumes that the DateTimeIndex is a UniformDateTimeIndex, not an
@@ -181,22 +181,24 @@ class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix,
     val indices = tss.map(_.index)
 
     val newIndex = DateTimeIndexUtils.union(indices, index.zone)
-    val rebasers = indices.map(TimeSeriesUtils.rebaser(_, newIndex, defaultValue))
-    val tssRebased = tss.zip(rebasers).map(t => t._1.mapSeries(newIndex, t._2))
+    TimeSeriesUtils.rebaseAndMerge(tss, newIndex, defaultValue)
+  }
 
-    var newKeys = Array.empty[K]
-    val mat = BDM.zeros[Double](newIndex.size, tss.map(_.keys.length).sum)
-    var start = 0
-    var end = 0
-    for (i <- 0 until tss.length) {
-      val keysAtI = tss(i).keys
-      newKeys ++= keysAtI
-      end = start + keysAtI.length
-      mat(::, start until end) := tssRebased(i).dataToBreeze
-      start = end
+  def intersect(ts: TimeSeries[K]*): Option[TimeSeries[K]] = {
+    intersect(ts.toArray)
+  }
+
+  def intersect(others: Array[TimeSeries[K]]): Option[TimeSeries[K]] = {
+    val tss = Array(this) ++ others
+    val indices = tss.map(_.index)
+
+    val newIndexOption = DateTimeIndexUtils.intersect(indices, index.zone)
+
+    if (newIndexOption.nonEmpty) {
+      Some(TimeSeriesUtils.rebaseAndMerge(tss, newIndexOption.get))
+    } else {
+      None
     }
-
-    new TimeSeries[K](newIndex, mat, newKeys)
   }
   
   /**
