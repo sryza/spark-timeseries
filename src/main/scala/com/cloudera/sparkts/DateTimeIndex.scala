@@ -752,6 +752,46 @@ object DateTimeIndex {
   }
 
   /**
+   * Union the provided indices into a single index using system's default zone
+   */
+  def union(indices: Array[DateTimeIndex]): DateTimeIndex = {
+    DateTimeIndexUtils.union(indices, ZoneId.systemDefault)
+  }
+
+  /**
+   * Union the provided indices into a single index given the provided zone
+   */
+  def union(indices: Array[DateTimeIndex], zone: ZoneId): DateTimeIndex = {
+    DateTimeIndexUtils.union(indices, zone)
+  }
+
+  /**
+   * Intersect the provided indices, if possible, into a single index using the
+   * system's default zone
+   */
+  def intersect(indices: Array[DateTimeIndex]): Option[DateTimeIndex] = {
+    DateTimeIndexUtils.intersect(indices, ZoneId.systemDefault)
+  }
+
+  /**
+   * Intersect the provided indices, if possible, into a single index given the
+   * provided zone
+   */
+  def intersect(indices: Array[DateTimeIndex], zone: ZoneId): Option[DateTimeIndex] = {
+    DateTimeIndexUtils.intersect(indices, zone)
+  }
+
+  /**
+   * Removes instants of indexToExclude from index and returns a new index if possible
+   *
+   *  newIndex = index - indexToExclude
+   *
+   */
+  def except(index: DateTimeIndex, indexToExclude: DateTimeIndex): Option[DateTimeIndex] = {
+    DateTimeIndexUtils.except(index, indexToExclude)
+  }
+
+  /**
    * Given the ISO index of the day of week, the method returns the day
    * of week index relative to the first day of week i.e. assuming the
    * the first day of week is the base index and has the value of 1
