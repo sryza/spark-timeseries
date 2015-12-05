@@ -168,4 +168,40 @@ private[sparkts] object DateTimeIndexUtils {
     else
       None
   }
+
+  /**
+   * Removes instants of indexToExclude from index and returns a new index if possible
+   *
+   *  newIndex = index - indexToExclude
+   *
+   */
+  def except(index: DateTimeIndex, indexToExclude: DateTimeIndex): Option[DateTimeIndex] = {
+    val intersectionOption = intersect(Array(index, indexToExclude), index.zone)
+    if (intersectionOption.nonEmpty) {
+      val intersection = intersectionOption.get
+
+      val firstSplitEnd = index.locAtDateTime(intersection.first)
+      val secondSplitStart = index.locAtDateTime(intersection.last) + 1
+
+      var result = new ListBuffer[DateTimeIndex]
+
+      if (firstSplitEnd > 0)
+        result += index.islice(0, firstSplitEnd)
+
+      if (secondSplitStart < index.size)
+        result += index.islice(secondSplitStart, index.size)
+
+      if (result.length > 0) {
+        val simplified = simplify(result.toArray)
+        if (simplified.length > 1)
+          Some(new HybridDateTimeIndex(simplified).atZone(index.zone))
+        else
+          Some(simplified(0).atZone(index.zone))
+      } else {
+        None
+      }
+    } else {
+      Some(index)
+    }
+  }
 }

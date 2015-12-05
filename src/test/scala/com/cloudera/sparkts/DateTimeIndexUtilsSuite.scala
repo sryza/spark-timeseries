@@ -15,10 +15,9 @@
 
 package com.cloudera.sparkts
 
-import java.time.{Period, ZonedDateTime, ZoneId}
+import java.time.{ZonedDateTime, ZoneId}
 
 import com.cloudera.sparkts.DateTimeIndex._
-import com.cloudera.sparkts.DateTimeIndexUtils._
 import org.scalatest.{FunSuite, ShouldMatchers}
 
 class DateTimeIndexUtilsSuite extends FunSuite with ShouldMatchers {
@@ -35,10 +34,13 @@ class DateTimeIndexUtilsSuite extends FunSuite with ShouldMatchers {
       dt("2015-06-25")
     ), UTC)
 
-    union(Array(index1, index2, index3), UTC) should be (
+    DateTimeIndexUtils.union(Array(index1, index2, index3), UTC) should be (
       hybrid(Array(index1, index2, index3), UTC))
 
-    intersect(Array(index1, index2, index3), UTC) should be (None)
+    DateTimeIndexUtils.intersect(Array(index1, index2, index3), UTC) should be (None)
+
+    DateTimeIndexUtils.except(index1, index1) should be (None)
+    DateTimeIndexUtils.except(index1, index2) should be (Some(index1))
   }
 
   test("non-overlapping non-sorted") {
@@ -52,10 +54,10 @@ class DateTimeIndexUtilsSuite extends FunSuite with ShouldMatchers {
       dt("2015-06-25")
     ), UTC)
 
-    union(Array(index3, index1, index2), UTC) should be (
+    DateTimeIndexUtils.union(Array(index3, index1, index2), UTC) should be (
       hybrid(Array(index1, index2, index3), UTC))
 
-    intersect(Array(index1, index2, index3), UTC) should be (None)
+    DateTimeIndexUtils.intersect(Array(index1, index2, index3), UTC) should be (None)
   }
 
   test("overlapping uniform and irregular") {
@@ -69,7 +71,7 @@ class DateTimeIndexUtilsSuite extends FunSuite with ShouldMatchers {
       dt("2015-06-25")
     ), UTC)
 
-    union(Array(index3, index1, index2), UTC) should be (
+    DateTimeIndexUtils.union(Array(index3, index1, index2), UTC) should be (
       hybrid(Array(
         irregular(Array(
           dt("2015-04-09"),
@@ -81,16 +83,35 @@ class DateTimeIndexUtilsSuite extends FunSuite with ShouldMatchers {
         irregular(Array(dt("2015-06-25")), UTC)
       ), UTC))
 
-    intersect(Array(index3, index2), UTC) should be (Some(
+    DateTimeIndexUtils.intersect(Array(index3, index2), UTC) should be (Some(
       irregular(Array(
         dt("2015-05-10")
       ), UTC)
     ))
 
-    intersect(Array(index2, index1), UTC) should be (Some(
+    DateTimeIndexUtils.intersect(Array(index2, index1), UTC) should be (Some(
       irregular(uniform(dt("2015-05-10"), 5, new DayFrequency(2), UTC)
         .toZonedDateTimeArray(), UTC)
     ))
+
+    DateTimeIndexUtils.except(index1, index2) should be (Some(
+      uniform(dt("2015-04-10"), 15, new DayFrequency(2), UTC)))
+
+    DateTimeIndexUtils.except(index2, index1) should be (None)
+
+    DateTimeIndexUtils.except(index3, irregular(Array(index3.last), UTC)) should be (
+      Some(index3.islice(0, index3.size - 1)))
+
+    DateTimeIndexUtils.except(index3, irregular(Array(index3.first), UTC)) should be (
+      Some(index3.islice(1, index3.size)))
+
+    DateTimeIndexUtils.except(index3, irregular(Array(dt("2015-05-01")), UTC)) should be (
+      Some(irregular(Array(
+        dt("2015-04-09"),
+        dt("2015-04-11"),
+        dt("2015-05-10"),
+        dt("2015-06-25")
+      ), UTC)))
   }
 
   test("intersection") {
@@ -105,9 +126,9 @@ class DateTimeIndexUtilsSuite extends FunSuite with ShouldMatchers {
       dt("2015-06-25")
     ), UTC)
 
-    intersect(Array(index3, index3, index3), UTC) should be (Some(index3))
+    DateTimeIndexUtils.intersect(Array(index3, index3, index3), UTC) should be (Some(index3))
 
-    intersect(Array(index3, index2, index1), UTC) should be (
+    DateTimeIndexUtils.intersect(Array(index3, index2, index1), UTC) should be (
       Some(irregular(Array(
         dt("2015-05-10"),
         dt("2015-05-18")
