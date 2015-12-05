@@ -239,8 +239,13 @@ class UniformDateTimeIndex(
   }
 
   override def equals(other: Any): Boolean = {
-    val otherIndex = other.asInstanceOf[UniformDateTimeIndex]
-    otherIndex.first == first && otherIndex.periods == periods && otherIndex.frequency == frequency
+    other match {
+      case otherIndex: UniformDateTimeIndex =>
+        otherIndex.first == first &&
+          otherIndex.periods == periods &&
+          otherIndex.frequency == frequency
+      case _ => false
+    }
   }
 
   override def toString: String = {
@@ -354,8 +359,11 @@ class IrregularDateTimeIndex(
   }
 
   override def equals(other: Any): Boolean = {
-    val otherIndex = other.asInstanceOf[IrregularDateTimeIndex]
-    otherIndex.instants.sameElements(instants)
+    other match {
+      case otherIndex: IrregularDateTimeIndex =>
+        otherIndex.instants.sameElements(instants)
+      case _ => false
+    }
   }
 
   override def toString: String = {
@@ -556,8 +564,11 @@ class HybridDateTimeIndex(
   }
 
   override def equals(other: Any): Boolean = {
-    val otherIndex = other.asInstanceOf[HybridDateTimeIndex]
-    otherIndex.indices.sameElements(indices)
+    other match {
+      case otherIndex: HybridDateTimeIndex =>
+        otherIndex.indices.sameElements(indices)
+      case _ => false
+    }
   }
 
   override def toString: String = {
