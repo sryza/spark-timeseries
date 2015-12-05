@@ -245,6 +245,15 @@ class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix,
     mapSeries(index.islice(1, index.size), vec => UnivariateTimeSeries.price2ret(vec, 1))
   }
 
+  /**
+   * Returns a TimeSeries rebased on top of a new index.  Any timestamps that exist in the new
+   * index but not in the existing index will be filled in with defaultValue.
+   */
+  def withIndex(newIndex: DateTimeIndex, defaultValue: Double = Double.NaN): TimeSeries[K] = {
+    val rebaser = TimeSeriesUtils.rebaser(index, newIndex, defaultValue)
+    mapSeries(newIndex, rebaser)
+  }
+
   def univariateSeriesIterator(): Iterator[Vector] = {
     new Iterator[Vector] {
       var i = 0

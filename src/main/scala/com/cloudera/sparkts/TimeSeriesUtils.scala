@@ -60,9 +60,7 @@ private[sparkts] object TimeSeriesUtils {
       newIndex: DateTimeIndex,
       defaultValue: Double = Double.NaN)
     : TimeSeries[K] = {
-    val indices = tss.map(_.index)
-    val rebasers = indices.map(TimeSeriesUtils.rebaser(_, newIndex, defaultValue))
-    val tssRebased = tss.zip(rebasers).map(t => t._1.mapSeries(newIndex, t._2))
+    val tssRebased = tss.map(t => t.withIndex(newIndex, defaultValue))
 
     var newKeys = Array.empty[K]
     val mat = DenseMatrix.zeros[Double](newIndex.size, tss.map(_.keys.length).sum)
