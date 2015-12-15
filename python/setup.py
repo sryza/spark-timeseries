@@ -1,3 +1,4 @@
+from multiprocessing import util
 from setuptools import setup, find_packages
 import os
 import re
@@ -27,10 +28,11 @@ setup(
     keywords = ['spark', 'time', 'series', 'data', 'analysis'],
     install_requires = [
         'pandas >= 0.13',
-        'numpy >= 1.9.2'
+        'numpy > 1.9.0'
     ],
-    test_requires = [
+    tests_require = [
         'nose == 1.3.7',
         'unittest2 >= 1.0.0'
-    ]
+    ],
+    test_suite = 'nose.collector'
 )
