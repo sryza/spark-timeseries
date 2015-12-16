@@ -2,8 +2,8 @@ from py4j.java_gateway import java_import
 from pyspark import RDD
 from pyspark.serializers import FramedSerializer, SpecialLengths, write_int, read_int
 from pyspark.sql import DataFrame
-from utils import datetime_to_millis
-from datetimeindex import DateTimeIndex, irregular
+from .utils import datetime_to_millis
+from .datetimeindex import DateTimeIndex, irregular
 import struct
 import numpy as np
 import pandas as pd

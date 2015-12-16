@@ -1,5 +1,5 @@
 from py4j.java_gateway import java_import
-from utils import datetime_to_millis
+from .utils import datetime_to_millis
 import numpy as np
 import pandas as pd
 
