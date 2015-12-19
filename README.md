@@ -3,7 +3,7 @@
 spark-ts
 =============
 
-A Scala / Python library for interacting with time series data on Apache Spark.
+A Scala / Java / Python library for interacting with time series data on Apache Spark.
 
 Docs are available at http://cloudera.github.io/spark-timeseries.
 
@@ -35,7 +35,7 @@ elements.
 
 The library sits on a few other excellent Java and Scala libraries.
 * [Breeze](https://github.com/scalanlp/breeze) for NumPy-like, BLAS-able linear algebra.
-* [JodaTime](http://www.joda.org/joda-time/) for dates and times. 
+* [java.time](https://docs.oracle.com/javase/8/docs/api/index.html?java/time/package-summary.html) for dates and times. 
 * [Apache Commons Math](https://commons.apache.org/proper/commons-math/) for general math and
   statistics functionality.
 * [Apache Spark](https://spark.apache.org/) for distributed computation with in-memory
