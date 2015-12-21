@@ -11,14 +11,14 @@ public final class DateTimeIndexFactory {
     private DateTimeIndexFactory() {}
 
     /**
-     * Create a UniformDateTimeIndex with the given start time, number of periods, and frequency.
+     * Creates a UniformDateTimeIndex with the given start time, number of periods, and frequency.
      */
     public static UniformDateTimeIndex uniform(long start, int periods, Frequency frequency) {
         return DATE_TIME_INDEX.uniform(start, periods, frequency);
     }
 
     /**
-     * Create a UniformDateTimeIndex with the given start time, number of periods, frequency
+     * Creates a UniformDateTimeIndex with the given start time, number of periods, frequency
      * and time zone.
      */
     public static UniformDateTimeIndex uniform(long start, int periods, Frequency frequency,
@@ -27,14 +27,14 @@ public final class DateTimeIndexFactory {
     }
 
     /**
-     * Create a UniformDateTimeIndex with the given start time, number of periods, and frequency.
+     * Creates a UniformDateTimeIndex with the given start time, number of periods, and frequency.
      */
     public static UniformDateTimeIndex uniform(ZonedDateTime start, int periods, Frequency frequency) {
         return DATE_TIME_INDEX.uniform(start, periods, frequency);
     }
 
     /**
-     * Create a UniformDateTimeIndex with the given start time, number of periods, frequency
+     * Creates a UniformDateTimeIndex with the given start time, number of periods, frequency
      * and time zone.
      */
     public static UniformDateTimeIndex uniform(ZonedDateTime start, int periods, Frequency frequency,
@@ -43,14 +43,14 @@ public final class DateTimeIndexFactory {
     }
 
     /**
-     * Create a UniformDateTimeIndex with the given start time and end time (inclusive) and frequency.
+     * Creates a UniformDateTimeIndex with the given start time and end time (inclusive) and frequency.
      */
     public static UniformDateTimeIndex uniform(long start, long end, Frequency frequency) {
         return DATE_TIME_INDEX.uniform(start, end, frequency);
     }
 
     /**
-     * Create a UniformDateTimeIndex with the given start time and end time (inclusive), frequency
+     * Creates a UniformDateTimeIndex with the given start time and end time (inclusive), frequency
      * and time zone.
      */
     public static UniformDateTimeIndex uniform(long start, long end, Frequency frequency,
@@ -59,7 +59,7 @@ public final class DateTimeIndexFactory {
     }
 
     /**
-     * Create a UniformDateTimeIndex with the given start time and end time (inclusive) and frequency.
+     * Creates a UniformDateTimeIndex with the given start time and end time (inclusive) and frequency.
      */
     public static UniformDateTimeIndex uniform(ZonedDateTime start,
                                                ZonedDateTime end,
@@ -68,7 +68,7 @@ public final class DateTimeIndexFactory {
     }
 
     /**
-     * Create a UniformDateTimeIndex with the given start time and end time (inclusive), frequency
+     * Creates a UniformDateTimeIndex with the given start time and end time (inclusive), frequency
      * and time zone
      */
     public static UniformDateTimeIndex uniform(ZonedDateTime start,
@@ -79,7 +79,7 @@ public final class DateTimeIndexFactory {
     }
 
     /**
-     * Create an IrregularDateTimeIndex composed of the given date-times using the time zone
+     * Creates an IrregularDateTimeIndex composed of the given date-times using the time zone
      * of the first date-time in dts array.
      */
     public static IrregularDateTimeIndex irregular(ZonedDateTime[] dts) {
@@ -87,14 +87,14 @@ public final class DateTimeIndexFactory {
     }
 
     /**
-     * Create an IrregularDateTimeIndex composed of the given date-times and zone
+     * Creates an IrregularDateTimeIndex composed of the given date-times and zone
      */
     public static IrregularDateTimeIndex irregular(ZonedDateTime[] dts, ZoneId zone) {
         return DATE_TIME_INDEX.irregular(dts, zone);
     }
 
     /**
-     * Create an IrregularDateTimeIndex composed of the given date-times, as millis from the epoch
+     * Creates an IrregularDateTimeIndex composed of the given date-times, as millis from the epoch
      * using the default date-time zone.
      */
     public static IrregularDateTimeIndex irregular(long[] dts) {
@@ -102,7 +102,7 @@ public final class DateTimeIndexFactory {
     }
 
     /**
-     * Create an IrregularDateTimeIndex composed of the given date-times, as millis from the epoch
+     * Creates an IrregularDateTimeIndex composed of the given date-times, as millis from the epoch
      * using the provided date-time zone.
      */
     public static IrregularDateTimeIndex irregular(long[] dts, ZoneId zone) {
@@ -110,17 +110,11 @@ public final class DateTimeIndexFactory {
     }
 
     /**
-     * Create a HybridDateTimeIndex composed of the given indices using the default date-time zone.
+     * Creates a HybridDateTimeIndex composed of the given indices.
+     * All indices should have the same zone.
      */
     public static HybridDateTimeIndex hybrid(DateTimeIndex[] indices) {
         return DATE_TIME_INDEX.hybrid(indices);
-    }
-
-    /**
-     * Create a HybridDateTimeIndex composed of the given indices using the provided date-time zone.
-     */
-    public static HybridDateTimeIndex hybrid(DateTimeIndex[] indices, ZoneId zone) {
-        return DATE_TIME_INDEX.hybrid(indices, zone);
     }
 
     /**

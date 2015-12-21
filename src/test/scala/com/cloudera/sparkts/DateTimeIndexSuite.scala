@@ -36,7 +36,7 @@ class DateTimeIndexSuite extends FunSuite with ShouldMatchers {
 
   test("to / from string") {
     val uniformIndex = uniform(
-      ZonedDateTime.of(1990, 4, 10, 0, 0, 0, 0, ZoneId.systemDefault()),
+      ZonedDateTime.of(1990, 4, 10, 0, 0, 0, 0, UTC),
       5,
       new BusinessDayFrequency(2))
     val uniformStr = uniformIndex.toString
@@ -67,7 +67,7 @@ class DateTimeIndexSuite extends FunSuite with ShouldMatchers {
     val irregularStr = irregularIndex.toString
     fromString(irregularStr) should be (irregularIndex)
 
-    val hybridIndex = hybrid(Array(uniformIndex, irregularIndex), zone)
+    val hybridIndex = hybrid(Array(uniformIndex, irregularIndex))
     val hybridStr = hybridIndex.toString
     fromString(hybridStr) should be (hybridIndex)
   }
@@ -142,7 +142,7 @@ class DateTimeIndexSuite extends FunSuite with ShouldMatchers {
     val index3 = uniform(ZonedDateTime.of(2015, 5, 10, 0, 0, 0, 0, UTC),
       5, new DayFrequency(2), UTC)
 
-    val index = hybrid(Array(index1, index2, index3), UTC)
+    val index = hybrid(Array(index1, index2, index3))
 
     index.size should be (15)
     index.first should be (ZonedDateTime.of(2015, 4, 10, 0, 0, 0, 0, UTC))
@@ -241,7 +241,7 @@ class DateTimeIndexSuite extends FunSuite with ShouldMatchers {
     ).map(text => LocalDateTime.parse(text, formatter).atZone(UTC)))
     val index2 = uniform(ZonedDateTime.of(2015, 5, 10, 0, 0, 0, 0, UTC),
       5, new DayFrequency(2))
-    val index = hybrid(Array(index1, index2), UTC)
+    val index = hybrid(Array(index1, index2))
 
     index.first should be (ZonedDateTime.of(2015, 4, 14, 0, 0, 0, 0, UTC))
     index.last should be (ZonedDateTime.of(2015, 5, 18, 0, 0, 0, 0, UTC))

@@ -19,16 +19,16 @@ public class DateTimeIndexFactoryTest {
     @Test
     public void testToFromString() {
         DateTimeIndex uniformIndex = DateTimeIndexFactory.uniform(
-          ZonedDateTime.of(1990, 4, 10, 0, 0, 0, 0, ZoneId.systemDefault()),
+          ZonedDateTime.of(1990, 4, 10, 0, 0, 0, 0, UTC),
           5,
           new BusinessDayFrequency(2, DayOfWeek.MONDAY.getValue()));
         String uniformStr = uniformIndex.toString();
         assertEquals(fromString(uniformStr), uniformIndex);
 
         DateTimeIndex irregularIndex = DateTimeIndexFactory.irregular(new ZonedDateTime[]{
-          ZonedDateTime.of(1990, 4, 10, 0, 0, 0, 0, ZoneId.systemDefault()),
-          ZonedDateTime.of(1990, 4, 12, 0, 0, 0, 0, ZoneId.systemDefault()),
-          ZonedDateTime.of(1990, 4, 13, 0, 0, 0, 0, ZoneId.systemDefault())
+          ZonedDateTime.of(1990, 4, 10, 0, 0, 0, 0, UTC),
+          ZonedDateTime.of(1990, 4, 12, 0, 0, 0, 0, UTC),
+          ZonedDateTime.of(1990, 4, 13, 0, 0, 0, 0, UTC)
         });
         String irregularStr = irregularIndex.toString();
         assertEquals(fromString(irregularStr), irregularIndex);
@@ -111,7 +111,7 @@ public class DateTimeIndexFactoryTest {
         DateTimeIndex index3 = uniform(zonedDateTime("2015-05-10", UTC), 5,
                 new DayFrequency(2), UTC);
 
-        DateTimeIndex index = hybrid(new DateTimeIndex[]{index1, index2, index3}, UTC);
+        DateTimeIndex index = hybrid(new DateTimeIndex[]{index1, index2, index3});
 
         assertEquals(index.size(), 15);
         assertEquals(index.first(), zonedDateTime("2015-04-10", UTC));
