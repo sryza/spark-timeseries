@@ -18,24 +18,23 @@ package com.cloudera.sparkts
 import java.io.{BufferedReader, InputStreamReader, PrintStream}
 import java.nio.ByteBuffer
 import java.sql.Timestamp
-import java.util.Arrays
 import java.time._
-import scala.collection.mutable.ArrayBuffer
+import java.util.Arrays
+
+import breeze.linalg.{DenseMatrix => BDM, DenseVector => BDV, Vector => BV, diff}
+import com.cloudera.sparkts.MatrixUtil._
 import com.cloudera.sparkts.TimeSeriesUtils._
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
-
 import org.apache.spark._
 import org.apache.spark.mllib.linalg.distributed.{IndexedRow, IndexedRowMatrix, RowMatrix}
-import org.apache.spark.mllib.linalg.{Vectors, DenseVector, DenseMatrix, Vector}
-import breeze.linalg.{diff, DenseMatrix => BDM, Vector => BV, DenseVector => BDV}
+import org.apache.spark.mllib.linalg.{DenseMatrix, DenseVector, Vector, Vectors}
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.{DataFrame, Row, SQLContext}
 import org.apache.spark.sql.types._
+import org.apache.spark.sql.{DataFrame, Row, SQLContext}
 import org.apache.spark.util.StatCounter
 
-import MatrixUtil._
-
+import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
 
 /**
@@ -72,6 +71,32 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector)])
       }
       new TimeSeries[K](index, mat, labels)
     }
+  }
+
+  /**
+   *Lags Each time series in the RDD
+   * @param maxLag maximum Lag
+   * @param includeOriginals include original time series
+   * @param laggedKey function to generate lagged keys
+   * @tparam U type of keys
+   * @return RDD of lagged time series
+   */
+  def lags[U: ClassTag](maxLag: Int, includeOriginals: Boolean, laggedKey: (K, Int) => U): TimeSeriesRDD[U] = {
+
+    val newDateTimeIndex = index.islice(maxLag, index.size)
+
+    val laggedTimeSeriesRDD: RDD[(U, Vector)] = flatMap(t => {
+      val tseries: TimeSeries[K] =
+        new TimeSeries[K](index, new BDM[Double](t._2.length, 1, t._2.toArray), Array[K](t._1))
+      val laggedTseries: TimeSeries[U] = tseries.lags(maxLag, includeOriginals, laggedKey)
+      var l = List[(U, Vector)]()
+      for (c <- 0 until laggedTseries.keys.length) {
+        val laggedDataBreeze: BDM[Double] = laggedTseries.data
+        l ::=(laggedTseries.keys(c), new DenseVector(laggedDataBreeze(::, c).toArray))
+      }
+      l.toIterable
+    })
+    new TimeSeriesRDD[U](newDateTimeIndex, laggedTimeSeriesRDD)
   }
 
   /**
