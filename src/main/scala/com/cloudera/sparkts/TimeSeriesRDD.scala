@@ -74,7 +74,7 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector)])
   }
 
   /**
-   *Lags Each time series in the RDD
+   * Lags Each time series in the RDD
    * @param maxLag maximum Lag
    * @param includeOriginals include original time series
    * @param laggedKey function to generate lagged keys
@@ -89,12 +89,12 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector)])
       val tseries: TimeSeries[K] =
         new TimeSeries[K](index, new BDM[Double](t._2.length, 1, t._2.toArray), Array[K](t._1))
       val laggedTseries: TimeSeries[U] = tseries.lags(maxLag, includeOriginals, laggedKey)
-      var l = List[(U, Vector)]()
+      var listLaggedTseries = List[(U, Vector)]()
       for (c <- 0 until laggedTseries.keys.length) {
         val laggedDataBreeze: BDM[Double] = laggedTseries.data
-        l ::=(laggedTseries.keys(c), new DenseVector(laggedDataBreeze(::, c).toArray))
+        listLaggedTseries ::=(laggedTseries.keys(c), new DenseVector(laggedDataBreeze(::, c).toArray))
       }
-      l.toIterable
+      listLaggedTseries.toIterable
     })
     new TimeSeriesRDD[U](newDateTimeIndex, laggedTimeSeriesRDD)
   }
