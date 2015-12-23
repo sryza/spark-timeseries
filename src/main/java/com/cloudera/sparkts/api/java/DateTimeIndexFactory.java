@@ -29,7 +29,8 @@ public final class DateTimeIndexFactory {
     /**
      * Creates a UniformDateTimeIndex with the given start time, number of periods, and frequency.
      */
-    public static UniformDateTimeIndex uniform(ZonedDateTime start, int periods, Frequency frequency) {
+    public static UniformDateTimeIndex uniform(ZonedDateTime start, int periods,
+            Frequency frequency) {
         return DATE_TIME_INDEX.uniform(start, periods, frequency);
     }
 
@@ -37,21 +38,22 @@ public final class DateTimeIndexFactory {
      * Creates a UniformDateTimeIndex with the given start time, number of periods, frequency
      * and time zone.
      */
-    public static UniformDateTimeIndex uniform(ZonedDateTime start, int periods, Frequency frequency,
-           ZoneId zone) {
+    public static UniformDateTimeIndex uniform(ZonedDateTime start, int periods,
+            Frequency frequency, ZoneId zone) {
         return DATE_TIME_INDEX.uniform(start, periods, frequency, zone);
     }
 
     /**
-     * Creates a UniformDateTimeIndex with the given start time and end time (inclusive) and frequency.
+     * Creates a UniformDateTimeIndex with the given start time and end time (inclusive) and
+     * frequency.
      */
     public static UniformDateTimeIndex uniform(long start, long end, Frequency frequency) {
         return DATE_TIME_INDEX.uniform(start, end, frequency);
     }
 
     /**
-     * Creates a UniformDateTimeIndex with the given start time and end time (inclusive), frequency
-     * and time zone.
+     * Creates a UniformDateTimeIndex with the given start time and end time (inclusive),
+     * frequency and time zone.
      */
     public static UniformDateTimeIndex uniform(long start, long end, Frequency frequency,
             ZoneId zone) {
@@ -59,11 +61,11 @@ public final class DateTimeIndexFactory {
     }
 
     /**
-     * Creates a UniformDateTimeIndex with the given start time and end time (inclusive) and frequency.
+     * Creates a UniformDateTimeIndex with the given start time and end time (inclusive) and
+     * frequency.
      */
-    public static UniformDateTimeIndex uniform(ZonedDateTime start,
-                                               ZonedDateTime end,
-                                               Frequency frequency) {
+    public static UniformDateTimeIndex uniform(ZonedDateTime start, ZonedDateTime end,
+            Frequency frequency) {
         return DATE_TIME_INDEX.uniform(start, end, frequency);
     }
 
@@ -71,10 +73,8 @@ public final class DateTimeIndexFactory {
      * Creates a UniformDateTimeIndex with the given start time and end time (inclusive), frequency
      * and time zone
      */
-    public static UniformDateTimeIndex uniform(ZonedDateTime start,
-                                               ZonedDateTime end,
-                                               Frequency frequency,
-                                               ZoneId zone) {
+    public static UniformDateTimeIndex uniform(ZonedDateTime start, ZonedDateTime end,
+            Frequency frequency, ZoneId zone) {
         return DATE_TIME_INDEX.uniform(start, end, frequency, zone);
     }
 

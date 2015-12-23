@@ -98,7 +98,9 @@ class UnivariateTimeSeriesSuite extends FunSuite with ShouldMatchers {
     val lineY = fillLinear(new DenseVector(moreFreq.toArray)).toArray
 
     val MSE = (est: Array[Double], obs: Array[Double]) => {
-      val errs = est.zip(obs).filter(!_._1.isNaN).map { case (yhat, yi) => (yhat - yi) * (yhat - yi) }
+      val errs = est.zip(obs).filter(!_._1.isNaN).map { case (yhat, yi) =>
+        (yhat - yi) * (yhat - yi)
+      }
       errs.sum / errs.length
     }
 
