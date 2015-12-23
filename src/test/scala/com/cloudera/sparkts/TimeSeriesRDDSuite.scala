@@ -232,8 +232,7 @@ class TimeSeriesRDDSuite extends FunSuite with LocalSparkContext with ShouldMatc
     ))
   }
 
-  test("lagWithIncludeOriginalsLaggedStringKey")
-  {
+  test("lagWithIncludeOriginalsLaggedStringKey") {
     val conf = new SparkConf().setMaster("local").setAppName(getClass.getName)
     TimeSeriesKryoRegistrator.registerKryoClasses(conf)
     sc = new SparkContext(conf)
@@ -245,60 +244,71 @@ class TimeSeriesRDDSuite extends FunSuite with LocalSparkContext with ShouldMatc
 
     val index = uniform(start, 10, new DayFrequency(1))
     val rdd = new TimeSeriesRDD[String](index, sc.parallelize(vecs))
-    val lagTSrdd = rdd.lags(maxLag = 2,includeOriginals = true,laggedKey = TimeSeries.laggedStringKey)
+    val lagTsrdd = rdd.lags(2, true, TimeSeries.laggedStringKey)
 
-    val cts = lagTSrdd.collectAsTimeSeries()
+    val cts = lagTsrdd.collectAsTimeSeries()
 
-    cts.keys.toSet should be (Array("0.0","10.0","20.0","lag1(0.0)","lag1(10.0)","lag1(20.0)","lag2(0.0)","lag2(10.0)","lag2(20.0)").toSet)
-    lagTSrdd.index should be (uniform(start.plusDays(2),8,new DayFrequency(1)))
+    cts.keys.toSet should be (Array("0.0", "10.0", "20.0", "lag1(0.0)", "lag1(10.0)", "lag1(20.0)",
+      "lag2(0.0)", "lag2(10.0)", "lag2(20.0)").toSet)
+    lagTsrdd.index should be (uniform(start.plusDays(2), 8, new DayFrequency(1)))
 
-    lagTSrdd.keys.size should be (9)
-    val lagTsMap: Map[String, Vector] = lagTSrdd.collectAsMap()
+    lagTsrdd.keys.size should be (9)
+    val lagTsMap: Map[String, Vector] = lagTsrdd.collectAsMap()
 
-    lagTsMap.getOrElse("0.0",null) should be (new DenseVector((2 to 9).toArray.map(_.toDouble)))
-    lagTsMap.getOrElse("10.0",null) should be (new DenseVector((12 to 19).toArray.map(_.toDouble)))
-    lagTsMap.getOrElse("20.0",null) should be (new DenseVector((22 to 29).toArray.map(_.toDouble)))
+    lagTsMap.getOrElse("0.0", null) should be (new DenseVector((2 to 9).toArray.map(_.toDouble)))
+    lagTsMap.getOrElse("10.0", null) should be (new DenseVector((12 to 19).toArray.map(_.toDouble)))
+    lagTsMap.getOrElse("20.0", null) should be (new DenseVector((22 to 29).toArray.map(_.toDouble)))
 
-    lagTsMap.getOrElse("lag1(0.0)",null) should be (new DenseVector((1 to 8).toArray.map(_.toDouble)))
-    lagTsMap.getOrElse("lag1(10.0)",null) should be (new DenseVector((11 to 18).toArray.map(_.toDouble)))
-    lagTsMap.getOrElse("lag1(20.0)",null) should be (new DenseVector((21 to 28).toArray.map(_.toDouble)))
+    lagTsMap.getOrElse("lag1(0.0)", null) should be (
+      new DenseVector((1 to 8).toArray.map(_.toDouble)))
+    lagTsMap.getOrElse("lag1(10.0)", null) should be (
+      new DenseVector((11 to 18).toArray.map(_.toDouble)))
+    lagTsMap.getOrElse("lag1(20.0)", null) should be (
+      new DenseVector((21 to 28).toArray.map(_.toDouble)))
 
-    lagTsMap.getOrElse("lag2(0.0)",null) should be (new DenseVector((0 to 7).toArray.map(_.toDouble)))
-    lagTsMap.getOrElse("lag2(10.0)",null) should be (new DenseVector((10 to 17).toArray.map(_.toDouble)))
-    lagTsMap.getOrElse("lag2(20.0)",null) should be (new DenseVector((20 to 27).toArray.map(_.toDouble)))
-
+    lagTsMap.getOrElse("lag2(0.0)", null) should be (
+      new DenseVector((0 to 7).toArray.map(_.toDouble)))
+    lagTsMap.getOrElse("lag2(10.0)", null) should be (
+      new DenseVector((10 to 17).toArray.map(_.toDouble)))
+    lagTsMap.getOrElse("lag2(20.0)", null) should be (
+      new DenseVector((20 to 27).toArray.map(_.toDouble)))
   }
 
-  test("lagWithExcludeOriginalsLaggedStringKey")
-  {
+  test("lagWithExcludeOriginalsLaggedStringKey") {
     val conf = new SparkConf().setMaster("local").setAppName(getClass.getName)
     TimeSeriesKryoRegistrator.registerKryoClasses(conf)
     sc = new SparkContext(conf)
     val vecs = Array(0 until 10, 10 until 20, 20 until 30)
-      .map(_.map(x => x.toDouble).toArray)
-      .map(new DenseVector(_))
-      .map(x => (x(0).toString, x))
+    .map(_.map(x => x.toDouble).toArray)
+    .map(new DenseVector(_))
+    .map(x => (x(0).toString, x))
     val start = ZonedDateTime.of(2015, 4, 9, 0, 0, 0, 0, ZoneId.of("Z"))
 
     val index = uniform(start, 10, new DayFrequency(1))
     val rdd = new TimeSeriesRDD[String](index, sc.parallelize(vecs))
-    val lagTSrdd = rdd.lags(maxLag = 2,includeOriginals = false,laggedKey = TimeSeries.laggedStringKey)
+    val lagTsrdd = rdd.lags(2, false, TimeSeries.laggedStringKey)
 
-    val cts = lagTSrdd.collectAsTimeSeries()
+    val cts = lagTsrdd.collectAsTimeSeries()
 
-    lagTSrdd.keys.size should be (6)
-    cts.keys.toSet should be (Array("lag1(0.0)","lag1(10.0)","lag1(20.0)","lag2(0.0)","lag2(10.0)","lag2(20.0)").toSet)
-    lagTSrdd.index should be (uniform(start.plusDays(2),8,new DayFrequency(1)))
+    lagTsrdd.keys.size should be(6)
+    cts.keys.toSet should be(Array("lag1(0.0)", "lag1(10.0)", "lag1(20.0)", "lag2(0.0)",
+      "lag2(10.0)", "lag2(20.0)").toSet)
+    lagTsrdd.index should be(uniform(start.plusDays(2), 8, new DayFrequency(1)))
 
-    val lagTsMap: Map[String, Vector] = lagTSrdd.collectAsMap()
+    val lagTsMap: Map[String, Vector] = lagTsrdd.collectAsMap()
 
-    lagTsMap.getOrElse("lag1(0.0)",null) should be (new DenseVector((1 to 8).toArray.map(_.toDouble)))
-    lagTsMap.getOrElse("lag1(10.0)",null) should be (new DenseVector((11 to 18).toArray.map(_.toDouble)))
-    lagTsMap.getOrElse("lag1(20.0)",null) should be (new DenseVector((21 to 28).toArray.map(_.toDouble)))
+    lagTsMap.getOrElse("lag1(0.0)", null) should be(
+      new DenseVector((1 to 8).toArray.map(_.toDouble)))
+    lagTsMap.getOrElse("lag1(10.0)", null) should be(
+      new DenseVector((11 to 18).toArray.map(_.toDouble)))
+    lagTsMap.getOrElse("lag1(20.0)", null) should be(
+      new DenseVector((21 to 28).toArray.map(_.toDouble)))
 
-    lagTsMap.getOrElse("lag2(0.0)",null) should be (new DenseVector((0 to 7).toArray.map(_.toDouble)))
-    lagTsMap.getOrElse("lag2(10.0)",null) should be (new DenseVector((10 to 17).toArray.map(_.toDouble)))
-    lagTsMap.getOrElse("lag2(20.0)",null) should be (new DenseVector((20 to 27).toArray.map(_.toDouble)))
-
+    lagTsMap.getOrElse("lag2(0.0)", null) should be(
+      new DenseVector((0 to 7).toArray.map(_.toDouble)))
+    lagTsMap.getOrElse("lag2(10.0)", null) should be(
+      new DenseVector((10 to 17).toArray.map(_.toDouble)))
+    lagTsMap.getOrElse("lag2(20.0)", null) should be(
+      new DenseVector((20 to 27).toArray.map(_.toDouble)))
   }
 }
