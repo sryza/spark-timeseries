@@ -23,37 +23,57 @@ private[sparkts] object DateTimeIndexUtils {
   implicit val dateTimeIndexOrdering = new Ordering[DateTimeIndex] {
     override def compare(x: DateTimeIndex, y: DateTimeIndex): Int = {
       val c = x.first.compareTo(y.first)
-      if (c == 0) x.size.compareTo(y.size)
-      else c
+      if (c == 0) x.size.compareTo(y.size) else c
     }
   }
 
   /**
-   * indices are sorted and non-overlapping
+   * Given an array of indices that are sorted and non-overlapping,
+   * consecutive two indices a and b are merged into a new index d
+   * according to the following rules:
+   *
+   *  - a and b are both irregular -> d is irregular
+   *  - a and b are both of size 1 -> d is irregular
+   *  - either a is irregular and b is of size 1
+   *    or a is of size 1 and b is irregular -> d is irregular
    */
   def simplify(indices: Array[DateTimeIndex]): Array[DateTimeIndex] = {
     val simplified = new ListBuffer[DateTimeIndex]
-    val accumulator = new ListBuffer[Long]
-    for (i <- 0 until indices.length) {
+
+    // a buffer that holds merge candidates
+    val indexBuffer = new ListBuffer[DateTimeIndex]
+    val lastI = indices.length - 1
+
+    for (i <- 0 to lastI) {
       val currentIndex = indices(i)
-      if (currentIndex.isInstanceOf[IrregularDateTimeIndex]) {
-        accumulator ++= currentIndex.asInstanceOf[IrregularDateTimeIndex].instants
-      } else if (currentIndex.size == 1 && !currentIndex.isInstanceOf[IrregularDateTimeIndex]) {
-        accumulator += TimeSeriesUtils.zonedDateTimeToLong(currentIndex.first)
-      } else {
-        if (accumulator.size > 0) {
-          val newIndex = new IrregularDateTimeIndex(accumulator.toArray, indices(i - 1).zone)
-          simplified += newIndex
-          accumulator.clear()
+      val isAMergeCandidate = currentIndex.size == 1 ||
+        currentIndex.isInstanceOf[IrregularDateTimeIndex]
+
+      // if currentIndex is a merge candidate -> append to the buffer
+      if (isAMergeCandidate) {
+        indexBuffer += currentIndex
+      }
+
+      // if the contiguous sequence of merge candidates, if any
+      // , is broken by a non-merge candidate or we are at the
+      // end of the loop
+      if (!isAMergeCandidate || i == lastI) {
+        // more than one merge candidate -> do the merge
+        if (indexBuffer.length > 1) {
+          simplified += new IrregularDateTimeIndex(
+            indexBuffer.map(_.toInstantsArray).reduce(_ ++ _),
+            indexBuffer.head.zone)
+          indexBuffer.clear()
+        // only one merge candidate -> no merge
+        } else if (indexBuffer.length == 1) {
+          simplified += indexBuffer.head
+          indexBuffer.clear()
         }
-        simplified += currentIndex
+
+        if (!isAMergeCandidate) simplified += currentIndex
       }
     }
-    if (accumulator.size > 0) {
-      val newIndex = new IrregularDateTimeIndex(accumulator.toArray, indices.last.zone)
-      simplified += newIndex
-      accumulator.clear()
-    }
+
     simplified.toArray
   }
 
@@ -163,9 +183,10 @@ private[sparkts] object DateTimeIndexUtils {
       }
     }
 
-    if (mayIntersect && indicesSorted.length == 1)
+    if (mayIntersect && indicesSorted.length == 1) {
       Some(indicesSorted.head)
-    else
+    } else {
       None
+    }
   }
 }

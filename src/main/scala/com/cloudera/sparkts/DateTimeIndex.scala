@@ -121,6 +121,11 @@ trait DateTimeIndex extends Serializable {
   def insertionLoc(dt: Long): Int
 
   /**
+   * Returns the contents of the DateTimeIndex as an array of nanoseconds values from the epoch.
+   */
+  def toInstantsArray(): Array[Long]
+
+  /**
    * Returns the contents of the DateTimeIndex as an array of millisecond values from the epoch.
    */
   def toMillisArray(): Array[Long]
@@ -220,6 +225,14 @@ class UniformDateTimeIndex(
 
   override def insertionLoc(dt: Long): Int = {
     insertionLoc(longToZonedDateTime(dt, dateTimeZone))
+  }
+
+  override def toInstantsArray(): Array[Long] = {
+    val arr = new Array[Long](periods)
+    for (i <- 0 until periods) {
+      arr(i) = zonedDateTimeToLong(dateTimeAtLoc(i))
+    }
+    arr
   }
 
   override def toMillisArray(): Array[Long] = {
@@ -343,6 +356,10 @@ class IrregularDateTimeIndex(
     } else {
       -loc - 1
     }
+  }
+
+  override def toInstantsArray(): Array[Long] = {
+    instants.clone
   }
 
   override def toMillisArray(): Array[Long] = {
@@ -552,6 +569,10 @@ class HybridDateTimeIndex(
       else if (low < indices.length && dt.isBefore(indices(low).first)) (-1, low)
       else (-1, -1)
     }
+  }
+
+  override def toInstantsArray(): Array[Long] = {
+    indices.map(_.toInstantsArray).reduce(_ ++ _)
   }
 
   override def toMillisArray(): Array[Long] = {
