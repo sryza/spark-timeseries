@@ -76,7 +76,41 @@ private[sparkts] object DateTimeIndexUtils {
 
     simplified.toArray
   }
-  
+
+  /**
+   * Unions a collection of date-time indices into one date-time index
+   *
+   * Algorithm:
+   * 
+   * originalList: a list of non-unioned non-sorted indices
+   * sortedList: same elements from originalList however sorted s.t.
+   *             index i is before index j iff:
+   *              i.first < j.first ||
+   *              (i.first == j.first && i.size < j.size)
+   * unionList: a list that contains the union result that is also
+   *            sorted by definition/construction
+   *
+   * first element from the sortedList is removed and unionList is
+   * initialized by that element.
+   *
+   * as long as there more elements in the sortedList:
+   *  - remove the last/largest element from the unionList, let it be a
+   *  - remove the first/least element from the sortedList, let it be b
+   *  - by construction, a < b
+   *  - if there is no overlap between a and b, append a then b to the
+   *    unionList
+   *  - otherwise, handle the overlap:
+   *   - trim the leading instants of b that are already in a
+   *     , that will affect the sort order of b as other indices in
+   *     sortedList might now be less than the trimmed b, so put back
+   *     the rest of b in the sortedList in the new correct sort order
+   *     , and put back a to the end of unionList
+   *   - no trimming -> split a on b.first into aLower and aUpper, now
+   *     aLower < b < aUpper and aLower and b are non-overlapping, however
+   *     b and aUpper might be overlapping, hence append aLower and b to
+   *     the unionList, and put aUpper in the correct sort order in the
+   *     sortedList
+   */
   def union(indices: Array[DateTimeIndex], zone: ZoneId = ZoneId.systemDefault())
     : DateTimeIndex = {
     val indicesPQ = PriorityQueue.empty[DateTimeIndex](dateTimeIndexOrdering.reverse)
