@@ -195,7 +195,7 @@ private[sparkts] object TimeSeriesUtils {
     }
   }
 
-  private def rebaserGeneric(
+  def rebaserGeneric(
       sourceIndex: DateTimeIndex,
       targetIndex: DateTimeIndex,
       defaultValue: Double): Vector[Double] => Vector[Double] = {
