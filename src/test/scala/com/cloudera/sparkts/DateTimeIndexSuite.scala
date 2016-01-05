@@ -81,7 +81,7 @@ class DateTimeIndexSuite extends FunSuite with ShouldMatchers {
     index.first should be (ZonedDateTime.of(2015, 4, 10, 0, 0, 0, 0, UTC))
     index.last should be (ZonedDateTime.of(2015, 4, 18, 0, 0, 0, 0, UTC))
 
-    def verifySlice(index: DateTimeIndex) = {
+    def verifySlice(index: DateTimeIndex): Unit = {
       index.size should be (2)
       index.first should be (ZonedDateTime.of(2015, 4, 14, 0, 0, 0, 0, UTC))
       index.last should be (ZonedDateTime.of(2015, 4, 16, 0, 0, 0, 0, UTC))
@@ -113,7 +113,7 @@ class DateTimeIndexSuite extends FunSuite with ShouldMatchers {
     index.first should be (ZonedDateTime.of(2015, 4, 14, 0, 0, 0, 0, UTC))
     index.last should be (ZonedDateTime.of(2015, 4, 25, 0, 0, 0, 0, UTC))
 
-    def verifySlice(index: DateTimeIndex) = {
+    def verifySlice(index: DateTimeIndex): Unit = {
       index.size should be (3)
       index.first should be (ZonedDateTime.of(2015, 4, 15, 0, 0, 0, 0, UTC))
       index.last should be (ZonedDateTime.of(2015, 4, 22, 0, 0, 0, 0, UTC))
@@ -153,7 +153,7 @@ class DateTimeIndexSuite extends FunSuite with ShouldMatchers {
     index.first should be (ZonedDateTime.of(2015, 4, 10, 0, 0, 0, 0, UTC))
     index.last should be (ZonedDateTime.of(2015, 5, 18, 0, 0, 0, 0, UTC))
 
-    def verifySlice1(index: DateTimeIndex) = {
+    def verifySlice1(index: DateTimeIndex): Unit = {
       index.size should be (2)
       index.first should be (ZonedDateTime.of(2015, 4, 14, 0, 0, 0, 0, UTC))
       index.last should be (ZonedDateTime.of(2015, 4, 16, 0, 0, 0, 0, UTC))
@@ -168,7 +168,7 @@ class DateTimeIndexSuite extends FunSuite with ShouldMatchers {
     verifySlice1(index.islice(2 until 4))
     verifySlice1(index.islice(2 to 3))
 
-    def verifySlice2(index: DateTimeIndex) = {
+    def verifySlice2(index: DateTimeIndex): Unit = {
       index.size should be (3)
       index.first should be (ZonedDateTime.of(2015, 4, 20, 0, 0, 0, 0, UTC))
       index.last should be (ZonedDateTime.of(2015, 4, 25, 0, 0, 0, 0, UTC))
@@ -183,7 +183,7 @@ class DateTimeIndexSuite extends FunSuite with ShouldMatchers {
     verifySlice2(index.islice(6 until 9))
     verifySlice2(index.islice(6 to 8))
 
-    def verifySlice3(index: DateTimeIndex) = {
+    def verifySlice3(index: DateTimeIndex): Unit = {
       index.size should be (11)
       index.first should be (ZonedDateTime.of(2015, 4, 16, 0, 0, 0, 0, UTC))
       index.last should be (ZonedDateTime.of(2015, 5, 16, 0, 0, 0, 0, UTC))

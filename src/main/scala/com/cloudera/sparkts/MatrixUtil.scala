@@ -103,7 +103,8 @@ private[sparkts] object MatrixUtil {
         if (!sm.isTransposed) {
           new CSCMatrix[Double](sm.values, sm.numRows, sm.numCols, sm.colPtrs, sm.rowIndices)
         } else {
-          val breezeMatrix = new CSCMatrix[Double](sm.values, sm.numCols, sm.numRows, sm.colPtrs, sm.rowIndices)
+          val breezeMatrix =
+            new CSCMatrix[Double](sm.values, sm.numCols, sm.numRows, sm.colPtrs, sm.rowIndices)
           breezeMatrix.t
         }
       case _ =>
@@ -151,32 +152,35 @@ private[sparkts] object MatrixUtil {
         new DenseVector[Double](v.values)
       case v: SSV =>
         new SparseVector[Double](v.indices, v.values, v.size)
-      case v =>
-        sys.error("Unsupported Spark vector type: " + v.getClass.getName)
     }
   }
 
-  private[sparkts] implicit def mSparkToBreeze(sparkMatrix: SM): Matrix[Double] = toBreeze(sparkMatrix)
+  private[sparkts] implicit def mSparkToBreeze(sparkMatrix: SM): Matrix[Double] =
+    toBreeze(sparkMatrix)
 
   private[sparkts] implicit def dmSparkToBreeze(sparkMatrix: SDM): DenseMatrix[Double] =
     toBreeze(sparkMatrix).asInstanceOf[DenseMatrix[Double]]
 
-  private[sparkts] implicit def mBreezeToSpark(breezeMatrix: Matrix[Double]): SM = fromBreeze(breezeMatrix)
+  private[sparkts] implicit def mBreezeToSpark(breezeMatrix: Matrix[Double]): SM =
+    fromBreeze(breezeMatrix)
 
   private[sparkts] implicit def dmBreezeToSpark(breezeMatrix: DenseMatrix[Double]): SDM =
     fromBreeze(breezeMatrix).asInstanceOf[SDM]
 
-  private[sparkts] implicit def vSparkToBreeze(sparkVector: SV): Vector[Double] = toBreeze(sparkVector)
+  private[sparkts] implicit def vSparkToBreeze(sparkVector: SV): Vector[Double] =
+    toBreeze(sparkVector)
 
   private[sparkts] implicit def dvSparkToBreeze(sparkVector: SDV): DenseVector[Double] =
     toBreeze(sparkVector).asInstanceOf[DenseVector[Double]]
 
-  private[sparkts] implicit def vBreezeToSpark(breezeVector: Vector[Double]): SV = fromBreeze(breezeVector)
+  private[sparkts] implicit def vBreezeToSpark(breezeVector: Vector[Double]): SV =
+    fromBreeze(breezeVector)
 
   private[sparkts] implicit def dvBreezeToSpark(breezeVector: DenseVector[Double]): SDV =
     fromBreeze(breezeVector).asInstanceOf[SDV]
 
-  private[sparkts] implicit def fvtovBreezeToSpark(f: (Vector[Double]) => Vector[Double]): (SV) => SV = {
+  private[sparkts] implicit def fvtovBreezeToSpark(f: (Vector[Double]) => Vector[Double])
+  : (SV) => SV = {
     v: SV => f(v)
   }
 

@@ -41,8 +41,8 @@ class RebaseSuite extends FunSuite with ShouldMatchers {
     val dts = Array(baseDT, baseDT.plusDays(1), baseDT.plusDays(2), baseDT.plusDays(3))
     val values = Array(1.0, 2.0, 3.0, 4.0)
     val iter = iterateWithUniformFrequency(dts.zip(values).iterator, new DayFrequency(1))
-    iter.toArray should be (Array((baseDT, 1.0), (baseDT.plusDays(1), 2.0), (baseDT.plusDays(2), 3.0),
-      (baseDT.plusDays(3), 4.0)))
+    iter.toArray should be (Array((baseDT, 1.0), (baseDT.plusDays(1), 2.0),
+      (baseDT.plusDays(2), 3.0), (baseDT.plusDays(3), 4.0)))
   }
 
   test("iterateWithUniformFrequency multiple gaps") {
@@ -50,8 +50,9 @@ class RebaseSuite extends FunSuite with ShouldMatchers {
     val dts = Array(baseDT, baseDT.plusDays(2), baseDT.plusDays(5))
     val values = Array(1.0, 2.0, 3.0)
     val iter = iterateWithUniformFrequency(dts.zip(values).iterator, new DayFrequency(1), 47.0)
-    iter.toArray should be (Array((baseDT, 1.0), (baseDT.plusDays(1), 47.0), (baseDT.plusDays(2), 2.0),
-      (baseDT.plusDays(3), 47.0), (baseDT.plusDays(4), 47.0), (baseDT.plusDays(5), 3.0)))
+    iter.toArray should be (Array((baseDT, 1.0), (baseDT.plusDays(1), 47.0),
+      (baseDT.plusDays(2), 2.0), (baseDT.plusDays(3), 47.0), (baseDT.plusDays(4), 47.0),
+      (baseDT.plusDays(5), 3.0)))
   }
 
   test("uniform source same range") {

@@ -66,9 +66,6 @@ object ARIMA {
    *                       (default), initialized using Hannan-Rissanen algorithm. If provided,
    *                       order of parameter should be: intercept term, AR parameters (in
    *                       increasing order of lag), MA parameters (in increasing order of lag)
-   *
-   *
-   * @return
    */
   def fitModel(
       p: Int,
@@ -91,7 +88,7 @@ object ARIMA {
 
     // Initial parameter guesses if none provided by user
     val initParams = if (userInitParams == null) {
-      HannanRissanenInit(p, q, diffedTs, includeIntercept)
+      hannanRissanenInit(p, q, diffedTs, includeIntercept)
     } else {
       userInitParams
     }
@@ -204,7 +201,7 @@ object ARIMA {
    * @param includeIntercept flag to include intercept
    * @return initial ARMA(p, d, q) parameter estimates
    */
-  private def HannanRissanenInit(
+  private def hannanRissanenInit(
       p: Int,
       q: Int,
       y: Array[Double],

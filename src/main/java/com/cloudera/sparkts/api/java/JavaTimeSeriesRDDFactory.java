@@ -24,8 +24,6 @@ import org.apache.spark.mllib.linalg.Vector;
 import scala.Tuple3;
 import scala.reflect.ClassTag$;
 
-import java.lang.reflect.Array;
-
 public final class JavaTimeSeriesRDDFactory {
     private static final JavaTimeSeriesRDD$ JAVA_TIME_SERIES_RDD = JavaTimeSeriesRDD$.MODULE$;
 
@@ -68,10 +66,12 @@ public final class JavaTimeSeriesRDDFactory {
     public static <K> JavaTimeSeriesRDD<K> javaTimeSeriesRDD(
         DateTimeIndex targetIndex,
         JavaRDD<JavaTimeSeries<K>> seriesRDD) {
+        @SuppressWarnings("unchecked")
+        K[] keys = (K[]) seriesRDD.first().keys();
         return JAVA_TIME_SERIES_RDD.javaTimeSeriesRDD(
                 targetIndex,
                 seriesRDD,
-                ClassTag$.MODULE$.<K>apply(((K[]) seriesRDD.first().keys())[0].getClass()));
+                ClassTag$.MODULE$.<K>apply(keys[0].getClass()));
     }
 
     /**

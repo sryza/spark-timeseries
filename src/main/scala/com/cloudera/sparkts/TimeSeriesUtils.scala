@@ -278,7 +278,9 @@ private[sparkts] object TimeSeriesUtils {
     }
   }
 
-  def minMaxDateTimes(index: UniformDateTimeIndex, series: Array[Double]): (ZonedDateTime, ZonedDateTime) = {
+  def minMaxDateTimes(
+      index: UniformDateTimeIndex,
+      series: Array[Double]): (ZonedDateTime, ZonedDateTime) = {
     var min = Double.MaxValue
     var minDt: ZonedDateTime = null
     var max = Double.MinValue

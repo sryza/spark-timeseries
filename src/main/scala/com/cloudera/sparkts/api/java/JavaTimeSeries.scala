@@ -30,11 +30,13 @@ import JavaTimeSeries._
 class JavaTimeSeries[K](val ts: TimeSeries[K])(implicit val kClassTag: ClassTag[K])
   extends Serializable {
 
-  def this(index: DateTimeIndex, data: DenseMatrix, keys: Array[K])(implicit kClassTag: ClassTag[K]) {
+  def this(index: DateTimeIndex, data: DenseMatrix, keys: Array[K])
+      (implicit kClassTag: ClassTag[K]) {
     this(new TimeSeries[K](index, data, keys))
   }
 
-  def this(index: DateTimeIndex, data: DenseMatrix, keys: List[K])(implicit kClassTag: ClassTag[K]) {
+  def this(index: DateTimeIndex, data: DenseMatrix, keys: List[K])
+      (implicit kClassTag: ClassTag[K]) {
     this(new TimeSeries[K](index, data, keys.toArray))
   }
 
@@ -43,13 +45,13 @@ class JavaTimeSeries[K](val ts: TimeSeries[K])(implicit val kClassTag: ClassTag[
     this(index, data, JavaConversions.asScalaBuffer(keys).toArray)
   }
 
-  def index = ts.index
+  def index: DateTimeIndex = ts.index
 
-  def data = ts.data
+  def data: DenseMatrix = ts.data
 
-  def dataAsArray = ts.data.valuesIterator.toArray
+  def dataAsArray: Array[Double] = ts.data.valuesIterator.toArray
 
-  def keys = ts.keys
+  def keys: Array[K] = ts.keys
 
   /**
    * IMPORTANT: this function assumes that the DateTimeIndex is a UniformDateTimeIndex, not an
@@ -61,18 +63,18 @@ class JavaTimeSeries[K](val ts: TimeSeries[K])(implicit val kClassTag: ClassTag[
    * corresponding lagged key.
    *
    * Example input TimeSeries:
-   *   time 	a 	b
-   *   4 pm 	1 	6
-   *   5 pm 	2 	7
-   *   6 pm 	3 	8
-   *   7 pm 	4 	9
-   *   8 pm 	5 	10
+   *   time   a   b
+   *   4 pm   1   6
+   *   5 pm   2   7
+   *   6 pm   3   8
+   *   7 pm   4   9
+   *   8 pm   5   10
    *
    * With maxLag 2 and includeOriginals = true, and JavaTimeSeries.laggedStringKey, we would get:
-   *   time 	a 	lag1(a) 	lag2(a)  b 	lag1(b)  lag2(b)
-   *   6 pm 	3 	2 	      1         8 	7 	      6
-   *   7 pm 	4 	3 	      2         9 	8 	      7
-   *   8 pm   5 	4 	      3         10	9 	      8
+   *   time   a   lag1(a)   lag2(a)  b   lag1(b)  lag2(b)
+   *   6 pm   3   2         1         8   7         6
+   *   7 pm   4   3         2         9   8         7
+   *   8 pm   5   4         3         10  9         8
    *
    */
   def lags[U](maxLag: Int, includeOriginals: Boolean,
@@ -97,7 +99,8 @@ class JavaTimeSeries[K](val ts: TimeSeries[K])(implicit val kClassTag: ClassTag[
    * IMPORTANT: this function assumes that the DateTimeIndex is a UniformDateTimeIndex, not an
    * Irregular one.
    *
-   * Lags the specified individual time series of the TimeSeries instance by up to their matching lag amount.
+   * Lags the specified individual time series of the TimeSeries instance by up to
+   * their matching lag amount.
    * Each time series can be indicated to either retain the original value, or drop it.
    *
    * In other words, the lagsPerCol has the following structure:

@@ -16,19 +16,19 @@
 package com.cloudera.sparkts
 
 import java.nio.ByteBuffer
+import java.time._
 
 import breeze.linalg.{DenseVector, Vector}
 
 import org.apache.spark.api.java.function.Function
 
-import java.time._
+import PythonConnector._
 
 /**
  * This file contains utilities used by the spark-timeseries Python bindings to communicate with
  * the JVM.  BytesToKeyAndSeries and KeyAndSeriesToBytes write and read bytes in the format
  * read and written by the Python TimeSeriesSerializer class.
  */
-
 private object PythonConnector {
   val INT_SIZE = 4
   val DOUBLE_SIZE = 8
@@ -63,8 +63,6 @@ private class BytesToKeyAndSeries extends Function[Array[Byte], (String, Vector[
 }
 
 private class KeyAndSeriesToBytes extends Function[(String, Vector[Double]), Array[Byte]] {
-  import PythonConnector._
-
   override def call(keyVec: (String, Vector[Double])): Array[Byte] = {
     val keyBytes = keyVec._1.getBytes("UTF-8")
     val vec = keyVec._2
@@ -78,8 +76,6 @@ private class KeyAndSeriesToBytes extends Function[(String, Vector[Double]), Arr
 }
 
 private class InstantToBytes extends Function[(ZonedDateTime, Vector[Double]), Array[Byte]] {
-  import PythonConnector._
-
   override def call(instant: (ZonedDateTime, Vector[Double])): Array[Byte] = {
     val arr = new Array[Byte](LONG_SIZE + INT_SIZE + DOUBLE_SIZE * instant._2.length)
     val buf = ByteBuffer.wrap(arr)
