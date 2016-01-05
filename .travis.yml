@@ -1,18 +1,21 @@
 language: java
 sudo: false
-install: mvn ${SPARK} ${JAVA} ${SCALA} -Dmaven.javadoc.skip=true -DskipTests=true -B -V -Dgpg.skip=true install
-script: mvn ${SPARK} ${JAVA} ${SCALA} -Dmaven.javadoc.skip=true -q -B -Dgpg.skip=true verify
+jdk: oraclejdk8
+install: mvn ${SPARK} ${SCALA} -Dmaven.javadoc.skip=true -DskipTests=true -B -V -Dgpg.skip=true install
+script: mvn ${SPARK} ${SCALA} -Dmaven.javadoc.skip=true -q -B -Dgpg.skip=true verify
 env:
   global:
     - MAVEN_OPTS=-Xmx2g
 matrix:
   include:
-    # Covers Java 8, Oracle JDK, and Spark 1.4.x
-    - jdk: oraclejdk8
-      env: SPARK=-Dspark.version=1.4.1 JAVA=-Djava.version=1.8
-    # Covers Scala 2.11
-    - jdk: oraclejdk8
-      env: SCALA=-Pscala-2.11 SPARK=-Dspark.version=1.4.1
+    # Covers Spark 1.3.x
+    - env: SPARK=-Dspark.version=1.3.1
+    # Covers Spark 1.4.x
+    - env: SPARK=-Dspark.version=1.4.1
+    # Covers Spark 1.5.x
+    - env: SPARK=-Dspark.version=1.5.2
+    # Covers Scala 2.11, Spark 1.6.x
+    - env: SCALA=-Pscala-2.11 SPARK=-Dspark.version=1.6.0
 cache:
   directories:
     - $HOME/.m2
