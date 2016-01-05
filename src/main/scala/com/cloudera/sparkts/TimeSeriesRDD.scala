@@ -278,7 +278,7 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector)])
     val partitioner = new Partitioner() {
       val nPart = if (nPartitions == -1) parent.partitions.length else nPartitions
       override def numPartitions: Int = nPart
-      override def getPartition(key: Any): Int = key.asInstanceOf[(Int, _)]._1 / nPart
+      override def getPartition(key: Any): Int = key.asInstanceOf[(Int, _)]._1 % nPart
     }
     implicit val ordering = new Ordering[(Int, Int)] {
       override def compare(a: (Int, Int), b: (Int, Int)): Int = {
@@ -364,7 +364,7 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector)])
       (timestamp, v.toArray)
     }.toDF()
 
-    val dataColExpr = keys.zipWithIndex.map { case (key, i) => s"_2[$i] AS $key" }
+    val dataColExpr = keys.zipWithIndex.map { case (key, i) => s"_2[$i] AS `$key`" }
     val allColsExpr = "_1 AS instant" +: dataColExpr
 
     result.selectExpr(allColsExpr: _*)
