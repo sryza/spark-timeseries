@@ -238,8 +238,10 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector)])
    * the time series records in the original RDD. The records are ordered by time.
    */
   def toInstants(nPartitions: Int = -1): RDD[(ZonedDateTime, Vector)] = {
+    // Construct a pre-shuffle RDD where each element is a snippet of a sample, i.e. a set of
+    // observations that all correspond to the same timestamp.  Each key is a tuple of
+    // (date-time loc in date-time index, position of snippet in full sample)
     val maxChunkSize = 20
-
     val dividedOnMapSide = mapPartitionsWithIndex { case (partitionId, iter) =>
       new Iterator[((Int, Int), Vector)] {
         // Each chunk is a buffer of time series
@@ -271,14 +273,13 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector)])
       }
     }
 
-    // At this point, dividedOnMapSide is an RDD of snippets of full samples that will be
-    // assembled on the reduce side.  Each key is a tuple of
-    // (date-time, position of snippet in full sample)
-
+    // Carry out a secondary sort.  I.e. repartition the data so that all snippets corresponding
+    // to the same timestamp end up in the same partition, and timestamps are lines up contiguously.
+    val nPart = if (nPartitions == -1) parent.partitions.length else nPartitions
+    val denom = index.size / nPart + (if (index.size % nPart == 0) 0 else 1)
     val partitioner = new Partitioner() {
-      val nPart = if (nPartitions == -1) parent.partitions.length else nPartitions
       override def numPartitions: Int = nPart
-      override def getPartition(key: Any): Int = key.asInstanceOf[(Int, _)]._1 % nPart
+      override def getPartition(key: Any): Int = key.asInstanceOf[(Int, _)]._1 / denom
     }
     implicit val ordering = new Ordering[(Int, Int)] {
       override def compare(a: (Int, Int), b: (Int, Int)): Int = {
