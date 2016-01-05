@@ -219,8 +219,7 @@ class RebaseSuite extends FunSuite with ShouldMatchers {
   private def assertRebaser(
       rebaser: Rebaser,
       vec: Vector[Double],
-      expected: Array[Double])
-    : Unit = {
+      expected: Array[Double]): Unit = {
     val rebased = rebaser(vec)
     assertArraysEqualWithNaN(rebased.toArray, expected)
   }

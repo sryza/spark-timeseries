@@ -15,9 +15,6 @@
 
 package com.cloudera.sparkts
 
-import java.util
-import java.util.{Comparators, Comparator}
-
 import org.threeten.extra._
 import scala.language.implicitConversions
 import java.time._
@@ -211,27 +208,11 @@ class UniformDateTimeIndex(
   }
 
   override def millisIterator(): Iterator[Long] = {
-    new Iterator[Long] {
-      val zdtIter = zonedDateTimeIterator
-
-      override def hasNext: Boolean = zdtIter.hasNext
-
-      override def next(): Long = zonedDateTimeToLong(zdtIter.next) / 1000000L
-    }
+    zonedDateTimeIterator.map(zonedDateTimeToLong(_) / 1000000L)
   }
 
   override def zonedDateTimeIterator(): Iterator[ZonedDateTime] = {
-    new Iterator[ZonedDateTime] {
-      var current = first
-
-      override def hasNext: Boolean = current.compareTo(last) <= 0
-
-      override def next(): ZonedDateTime = {
-        val ret = current
-        current = frequency.advance(current, 1)
-        ret
-      }
-    }
+    (0 until periods).view.map(frequency.advance(start, _)).iterator
   }
 }
 
@@ -306,23 +287,11 @@ class IrregularDateTimeIndex(
   }
 
   override def millisIterator(): Iterator[Long] = {
-    new Iterator[Long] {
-      val instIter = instants.iterator
-
-      override def hasNext: Boolean = instIter.hasNext
-
-      override def next(): Long = instIter.next / 1000000L
-    }
+    instants.iterator.map(_ / 1000000L)
   }
 
   override def zonedDateTimeIterator(): Iterator[ZonedDateTime] = {
-    new Iterator[ZonedDateTime] {
-      val instIter = instants.iterator
-
-      override def hasNext: Boolean = instIter.hasNext
-
-      override def next(): ZonedDateTime = longToZonedDateTime(instIter.next, dateTimeZone)
-    }
+    instants.iterator.map(longToZonedDateTime(_, dateTimeZone))
   }
 }
 
@@ -462,11 +431,11 @@ class HybridDateTimeIndex(
   }
 
   override def toMillisArray(): Array[Long] = {
-    indices.map(_.toMillisArray).reduce(_ ++ _)
+    indices.flatMap(_.toMillisArray)
   }
 
   override def toZonedDateTimeArray(): Array[ZonedDateTime] = {
-    indices.map(_.toZonedDateTimeArray).reduce(_ ++ _)
+    indices.flatMap(_.toZonedDateTimeArray)
   }
 
   override def equals(other: Any): Boolean = {
@@ -480,51 +449,11 @@ class HybridDateTimeIndex(
   }
 
   override def millisIterator(): Iterator[Long] = {
-    new Iterator[Long] {
-      val indicesIter = indices.iterator
-      var milIter = if (indicesIter.hasNext) indicesIter.next.millisIterator else null
-
-      override def hasNext: Boolean = {
-        if (milIter != null) {
-          if (milIter.hasNext) {
-            true
-          } else if(indicesIter.hasNext) {
-            milIter = indicesIter.next.millisIterator
-            hasNext
-          } else {
-            false
-          }
-        } else {
-          false
-        }
-      }
-
-      override def next(): Long = if (hasNext) milIter.next else -1
-    }
+    indices.foldLeft(Iterator[Long]())(_ ++ _.millisIterator)
   }
 
   override def zonedDateTimeIterator(): Iterator[ZonedDateTime] = {
-    new Iterator[ZonedDateTime] {
-      val indicesIter = indices.iterator
-      var zdtIter = if (indicesIter.hasNext) indicesIter.next.zonedDateTimeIterator else null
-
-      override def hasNext: Boolean = {
-        if (zdtIter != null) {
-          if (zdtIter.hasNext) {
-            true
-          } else if(indicesIter.hasNext) {
-            zdtIter = indicesIter.next.zonedDateTimeIterator
-            hasNext
-          } else {
-            false
-          }
-        } else {
-          false
-        }
-      }
-
-      override def next(): ZonedDateTime = if (hasNext) zdtIter.next else null
-    }
+    indices.foldLeft(Iterator[ZonedDateTime]())(_ ++ _.zonedDateTimeIterator)
   }
 }
 

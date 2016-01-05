@@ -25,6 +25,8 @@ import java.time._
  * Internal utilities for dealing with 1-D time series.
  */
 private[sparkts] object TimeSeriesUtils {
+  type Rebaser = Vector[Double] => Vector[Double]
+
   def union(series: Array[Array[Double]]): Array[Double] = {
     val unioned = Array.fill(series.head.length)(Double.NaN)
     var i = 0
@@ -76,7 +78,7 @@ private[sparkts] object TimeSeriesUtils {
   def rebaser(
       sourceIndex: DateTimeIndex,
       targetIndex: DateTimeIndex,
-      defaultValue: Double): Vector[Double] => Vector[Double] = {
+      defaultValue: Double): Rebaser = {
     targetIndex match {
       case targetDTI: UniformDateTimeIndex =>
         sourceIndex match {
@@ -105,7 +107,7 @@ private[sparkts] object TimeSeriesUtils {
   private def rebaserWithUniformSource(
       sourceIndex: UniformDateTimeIndex,
       targetIndex: UniformDateTimeIndex,
-      defaultValue: Double): Vector[Double] => Vector[Double] = {
+      defaultValue: Double): Rebaser = {
     val startLoc = sourceIndex.frequency.difference(sourceIndex.first, targetIndex.first)
     val endLoc = sourceIndex.frequency.difference(sourceIndex.first, targetIndex.last) + 1
 
@@ -131,7 +133,7 @@ private[sparkts] object TimeSeriesUtils {
   private def rebaserWithIrregularSource(
       sourceIndex: IrregularDateTimeIndex,
       targetIndex: UniformDateTimeIndex,
-      defaultValue: Double): Vector[Double] => Vector[Double] = {
+      defaultValue: Double): Rebaser = {
     val startLoc = -targetIndex.locAtDateTime(sourceIndex.first)
     val startLocInSourceVec = math.max(0, startLoc)
     val dtsRelevant: Iterator[Long] = sourceIndex.instants.iterator.drop(startLocInSourceVec)
@@ -159,9 +161,8 @@ private[sparkts] object TimeSeriesUtils {
   private def rebaserIrregularSourceIrregularTarget(
       sourceIndex: IrregularDateTimeIndex,
       targetIndex: IrregularDateTimeIndex,
-      defaultValue: Double): Vector[Double] => Vector[Double] = {
-    // indexMapping(i) = j means that resultArr(i) should be filled with the value from
-    // vec(j)
+      defaultValue: Double): Rebaser = {
+    // indexMapping(i) = j means that resultArr(i) should be filled with the value from vec(j)
     val indexMapping = new Array[Int](targetIndex.size)
 
     val sourceStamps = sourceIndex.instants
@@ -180,47 +181,42 @@ private[sparkts] object TimeSeriesUtils {
       i += 1
     }
 
-    vec: Vector[Double] => {
-      var i = 0
-      val resultArr = new Array[Double](targetIndex.size)
-      while (i < indexMapping.length) {
-        if (indexMapping(i) != -1) {
-          resultArr(i) = vec(indexMapping(i))
-        } else {
-          resultArr(i) = defaultValue
-        }
-        i += 1
-      }
-      new DenseVector(resultArr)
-    }
+    indexMappingRebaser(indexMapping, defaultValue)
   }
 
+  /**
+   * Note: time complexity of this method depends on the type of the source index
+   * , more specifically on the time complexity of the locAtDateTime method of the
+   * source index. If n and m are the lengths of the target and source indices
+   * respectively, this method takes O(n.f(m)) where f(m) is the complexity of
+   * locAtDateTime method of the source index.
+   *
+   * Source     Complexity
+   * uniform    O(n)
+   * irregular  O(n.log(m))
+   * hybrid     O(n(log(p) + f(q))); where
+   *            p: number of indices
+   *            q: length of sub index containing the search query
+   *
+   * more efficient implementations could achieve O(n)
+   * 
+   */
   def rebaserGeneric(
       sourceIndex: DateTimeIndex,
       targetIndex: DateTimeIndex,
-      defaultValue: Double): Vector[Double] => Vector[Double] = {
-    // indexMapping(i) = j means that resultArr(i) should be filled with the value from
-    // vec(j)
-    val indexMapping = new Array[Int](targetIndex.size)
+      defaultValue: Double): Rebaser = {
+    // indexMapping(i) = j means that resultArr(i) should be filled with the value from vec(j)
+    val indexMapping = targetIndex.zonedDateTimeIterator.map(sourceIndex.locAtDateTime(_)).toArray
+    
+    indexMappingRebaser(indexMapping, defaultValue)
+  }
 
-    val targetIndexZDTIterator = targetIndex.zonedDateTimeIterator
-    var i = 0
-    while (targetIndexZDTIterator.hasNext) {
-      indexMapping(i) = sourceIndex.locAtDateTime(targetIndexZDTIterator.next)
-      i += 1
-    }
-
+  private def indexMappingRebaser(indexMapping: Array[Int], defaultValue: Double): Rebaser = {
     vec: Vector[Double] => {
-      var i = 0
-      val resultArr = new Array[Double](targetIndex.size)
-      while (i < indexMapping.length) {
-        if (indexMapping(i) != -1) {
-          resultArr(i) = vec(indexMapping(i))
-        } else {
-          resultArr(i) = defaultValue
-        }
-        i += 1
-      }
+      val resultArr = indexMapping.map { _ match {
+        case -1 => defaultValue
+        case otherwise => vec(otherwise)
+      }}
       new DenseVector(resultArr)
     }
   }
