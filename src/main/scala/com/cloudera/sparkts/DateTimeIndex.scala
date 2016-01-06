@@ -15,8 +15,6 @@
 
 package com.cloudera.sparkts
 
-import java.util.{Comparators, Comparator}
-
 import org.threeten.extra._
 import scala.language.implicitConversions
 import java.time._
@@ -113,6 +111,16 @@ trait DateTimeIndex extends Serializable {
     * Returns the contents of the DateTimeIndex as an array of ZonedDateTime
     */
   def toZonedDateTimeArray(): Array[ZonedDateTime]
+
+  /**
+   * Returns an iterator over the contents of the DateTimeIndex as milliseconds
+   */
+  def millisIterator(): Iterator[Long]
+
+  /**
+   * Returns an iterator over the contents of the DateTimeIndex as ZonedDateTime
+   */
+  def zonedDateTimeIterator(): Iterator[ZonedDateTime]
 }
 
 /**
@@ -198,6 +206,14 @@ class UniformDateTimeIndex(
       "uniform", dateTimeZone.toString, start.toString,
       periods.toString, frequency.toString).mkString(",")
   }
+
+  override def millisIterator(): Iterator[Long] = {
+    zonedDateTimeIterator.map(zonedDateTimeToLong(_) / 1000000L)
+  }
+
+  override def zonedDateTimeIterator(): Iterator[ZonedDateTime] = {
+    (0 until periods).view.map(frequency.advance(start, _)).iterator
+  }
 }
 
 /**
@@ -268,6 +284,14 @@ class IrregularDateTimeIndex(
   override def toString: String = {
     "irregular," + dateTimeZone.toString + "," +
       instants.map(longToZonedDateTime(_, dateTimeZone).toString).mkString(",")
+  }
+
+  override def millisIterator(): Iterator[Long] = {
+    instants.iterator.map(_ / 1000000L)
+  }
+
+  override def zonedDateTimeIterator(): Iterator[ZonedDateTime] = {
+    instants.iterator.map(longToZonedDateTime(_, dateTimeZone))
   }
 }
 
@@ -407,11 +431,11 @@ class HybridDateTimeIndex(
   }
 
   override def toMillisArray(): Array[Long] = {
-    indices.map(_.toMillisArray).reduce(_ ++ _)
+    indices.flatMap(_.toMillisArray)
   }
 
   override def toZonedDateTimeArray(): Array[ZonedDateTime] = {
-    indices.map(_.toZonedDateTimeArray).reduce(_ ++ _)
+    indices.flatMap(_.toZonedDateTimeArray)
   }
 
   override def equals(other: Any): Boolean = {
@@ -422,6 +446,14 @@ class HybridDateTimeIndex(
   override def toString: String = {
     "hybrid," + dateTimeZone.toString + "," +
       indices.map(_.toString).mkString(";")
+  }
+
+  override def millisIterator(): Iterator[Long] = {
+    indices.foldLeft(Iterator[Long]())(_ ++ _.millisIterator)
+  }
+
+  override def zonedDateTimeIterator(): Iterator[ZonedDateTime] = {
+    indices.foldLeft(Iterator[ZonedDateTime]())(_ ++ _.zonedDateTimeIterator)
   }
 }
 
