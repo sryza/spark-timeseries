@@ -140,13 +140,14 @@ object TimeSeriesStatisticalTests {
    */
   private def mackinnonp(testStat: Double, regression: String = "c", n: Int = 1): Double = {
     val maxStat = ADF_TAU_MAX(regression)
-    val minStat = ADF_TAU_MIN(regression)
-    val starStat = ADF_TAU_STAR(regression)
     if (testStat > maxStat(n - 1)) {
       return 1.0
-    } else if (testStat < minStat(n - 1)) {
+    }
+    val minStat = ADF_TAU_MIN(regression)
+    if (testStat < minStat(n - 1)) {
       return 0.0
     }
+    val starStat = ADF_TAU_STAR(regression)
     val tauCoef = if (testStat <= starStat(n - 1)) {
       ADF_TAU_SMALLP(regression)(n - 1)
     } else {
@@ -194,9 +195,10 @@ object TimeSeriesStatisticalTests {
   /**
    * Augmented Dickey-Fuller test for a unit root in a univariate time series.
    *
-   * The null hypothesis is that the time series contains a unit root, implying that differencing is required to make
-   * it stationary.  The alternative hypothesis is that the time series is stationary.  Lower values of the test
-   * statistic imply lower p-values, and thus higher likelihood of rejecting the null hypothesis.
+   * The null hypothesis is that the time series contains a unit root, implying that
+   * differencing is required to make it stationary.  The alternative hypothesis is that the
+   * time series is stationary.  Lower values of the test statistic imply lower p-values,
+   * and thus higher likelihood of rejecting the null hypothesis.
    *
    * @param ts The time series.
    * @return A tuple containing the test statistic and p value.
@@ -250,7 +252,7 @@ object TimeSeriesStatisticalTests {
     }
     diffsSum / residsSum
   }
-  
+
   /**
    * Breusch-Godfrey test for serial correlation in a model
    * The statistic asymptotically follows an X^2 distribution with maxLag degrees of freedom,

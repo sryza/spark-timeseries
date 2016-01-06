@@ -40,18 +40,18 @@ class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix,
    * corresponding lagged key.
    *
    * Example input TimeSeries:
-   *   time 	a 	b
-   *   4 pm 	1 	6
-   *   5 pm 	2 	7
-   *   6 pm 	3 	8
-   *   7 pm 	4 	9
-   *   8 pm 	5 	10
+   *   time   a   b
+   *   4 pm   1   6
+   *   5 pm   2   7
+   *   6 pm   3   8
+   *   7 pm   4   9
+   *   8 pm   5   10
    *
    * With maxLag 2, includeOriginals = true and TimeSeries.laggedStringKey, we would get:
-   *   time 	a 	lag1(a) 	lag2(a)  b 	lag1(b)  lag2(b)
-   *   6 pm 	3 	2 	      1         8 	7 	      6
-   *   7 pm 	4 	3 	      2         9 	8 	      7
-   *   8 pm   5 	4 	      3         10	9 	      8
+   *   time   a   lag1(a)   lag2(a)  b   lag1(b)  lag2(b)
+   *   6 pm   3   2         1         8   7         6
+   *   7 pm   4   3         2         9   8         7
+   *   8 pm   5   4         3         10  9         8
    *
    */
   def lags[U: ClassTag](maxLag: Int, includeOriginals: Boolean, laggedKey: (K, Int) => U)

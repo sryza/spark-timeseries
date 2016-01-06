@@ -40,10 +40,11 @@ public class JavaTimeSeriesFactoryTest {
         samples.add(new Tuple2<>(dt.plusDays(2), new double[]{7.0, 8.0, 9.0}));
         samples.add(new Tuple2<>(dt.plusDays(4), new double[]{10.0, 11.0, 12.0}));
 
-        String[] labels = new String[]{"a", "b", "c", "d"};
+        String[] labels = {"a", "b", "c", "d"};
         JavaTimeSeries<String> ts = JavaTimeSeriesFactory.javaTimeSeriesFromIrregularSamples(
                 samples, labels, null);
-        assertArrayEquals(new double[]{1d, 2d, 3d, 4d, 5d, 6d, 7d, 8d, 9d, 10d, 11d, 12d},
+        assertArrayEquals(
+                new double[]{1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0},
                 ts.dataAsArray(), 0);
     }
 
@@ -66,10 +67,12 @@ public class JavaTimeSeriesFactoryTest {
         JavaTimeSeries<String> laggedTimeSeries = originalTimeSeries.lags(
                 2, true, new JavaTimeSeries.laggedStringKey());
 
-        String laggedKeysExpected[] = new String[] { "a", "lag1(a)", "lag2(a)",
-                "b", "lag1(b)", "lag2(b)" };
+        String[] laggedKeysExpected = {"a", "lag1(a)", "lag2(a)",
+          "b", "lag1(b)", "lag2(b)"};
 
-        assertArrayEquals(laggedKeysExpected, (String[]) laggedTimeSeries.keys());
+        @SuppressWarnings("unchecked")
+        String[] actualKeys = (String[]) laggedTimeSeries.keys();
+        assertArrayEquals(laggedKeysExpected, actualKeys);
         assertEquals(3, laggedTimeSeries.index().size());
 
         assertArrayEquals(new double[] { 3.0, 2.0, 1.0, 8.0, 7.0, 6.0,
@@ -97,14 +100,16 @@ public class JavaTimeSeriesFactoryTest {
         JavaTimeSeries<Tuple2<String, Integer>> laggedTimeSeries =
                 originalTimeSeries.lags(2, false);
 
-        Tuple2<String, Integer> laggedKeysExpected[] = new Tuple2[4];
+        @SuppressWarnings("unchecked")
+        Tuple2<String, Integer>[] laggedKeysExpected = new Tuple2[4];
         laggedKeysExpected[0] = new Tuple2<>("a", 1);
         laggedKeysExpected[1] = new Tuple2<>("a", 2);
         laggedKeysExpected[2] = new Tuple2<>("b", 1);
         laggedKeysExpected[3] = new Tuple2<>("b", 2);
 
-        assertArrayEquals(laggedKeysExpected,
-                (Tuple2<String, Integer>[]) laggedTimeSeries.keys());
+        @SuppressWarnings("unchecked")
+        Tuple2<String, Integer>[] actualKeys = (Tuple2<String, Integer>[]) laggedTimeSeries.keys();
+        assertArrayEquals(laggedKeysExpected, actualKeys);
         assertEquals(3, laggedTimeSeries.index().size());
 
         assertArrayEquals(new double[]{2.0, 1.0, 7.0, 6.0,
@@ -139,9 +144,11 @@ public class JavaTimeSeriesFactoryTest {
         JavaTimeSeries<String> laggedTimeSeries = originalTimeSeries.lags(
                 lagMap, new JavaTimeSeries.laggedStringKey());
 
-        String laggedKeysExpected[] = new String[] { "a", "lag1(b)", "lag2(b)" };
+        String[] laggedKeysExpected = {"a", "lag1(b)", "lag2(b)"};
 
-        assertArrayEquals(laggedKeysExpected, (String[]) laggedTimeSeries.keys());
+        @SuppressWarnings("unchecked")
+        String[] actualKeys = (String[]) laggedTimeSeries.keys();
+        assertArrayEquals(laggedKeysExpected, actualKeys);
         assertEquals(3, laggedTimeSeries.index().size());
 
         assertArrayEquals(new double[]{3.0, 7.0, 6.0,

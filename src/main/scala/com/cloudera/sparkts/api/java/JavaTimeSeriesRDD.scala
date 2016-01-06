@@ -41,7 +41,7 @@ import scala.reflect.ClassTag
 class JavaTimeSeriesRDD[K](tsrdd: TimeSeriesRDD[K])(implicit override val kClassTag: ClassTag[K])
   extends JavaPairRDD[K, Vector](tsrdd) {
 
-  def index = tsrdd.index
+  def index: DateTimeIndex = tsrdd.index
 
   /**
    * Collects the RDD as a local JavaTimeSeries
@@ -125,8 +125,9 @@ class JavaTimeSeriesRDD[K](tsrdd: TimeSeriesRDD[K])(implicit override val kClass
     new JavaTimeSeriesRDD[K](tsrdd.mapSeries((v) => f.call(v)))
 
   /**
-   * Applies a transformation to each time series and returns a JavaTimeSeriesRDD with the given index.
-   * The caller is expected to ensure that the time series produced line up with the given index.
+   * Applies a transformation to each time series and returns a JavaTimeSeriesRDD with
+   * the given index. The caller is expected to ensure that the time series produced line
+   * up with the given index.
    */
   def mapSeries(f: JFunction[Vector, Vector], index: DateTimeIndex): JavaTimeSeriesRDD[K] =
     new JavaTimeSeriesRDD[K](tsrdd.mapSeries((v) => f.call(v), index))
@@ -138,12 +139,13 @@ class JavaTimeSeriesRDD[K](tsrdd: TimeSeriesRDD[K])(implicit override val kClass
     new JavaRDD[StatCounter](tsrdd.seriesStats)
 
   /**
-   * Essentially transposes the time series matrix to create a JavaPairRDD where each record contains a
-   * single instant in time as the key and all the values that correspond to it as the value.
-   * Involves a shuffle operation.
+   * Essentially transposes the time series matrix to create a JavaPairRDD where each
+   * record contains a single instant in time as the key and all the values that correspond to
+   * it as the value. Involves a shuffle operation.
    *
-   * In the returned JavaPairRDD, the ordering of values within each record corresponds to the ordering of
-   * the time series records in the original RDD. The records are ordered by time.
+   * In the returned JavaPairRDD, the ordering of values within each record corresponds
+   * to the ordering of the time series records in the original RDD. The records are ordered
+   * by time.
    */
   def toInstants(nPartitions: Int): JavaPairRDD[ZonedDateTime, Vector] =
     new JavaPairRDD[ZonedDateTime, Vector](tsrdd.toInstants(nPartitions))
@@ -223,8 +225,8 @@ class JavaTimeSeriesRDD[K](tsrdd: TimeSeriesRDD[K])(implicit override val kClass
   def saveAsCsv(path: String): Unit = tsrdd.saveAsCsv(path)
 
   /**
-   * Returns a JavaTimeSeriesRDD rebased on top of a new index.  Any timestamps that exist in the new
-   * index but not in the existing index will be filled in with NaNs.
+   * Returns a JavaTimeSeriesRDD rebased on top of a new index.  Any timestamps that exist
+   * in the new index but not in the existing index will be filled in with NaNs.
    *
    * @param newIndex The DateTimeIndex for the new RDD
    */
@@ -265,7 +267,8 @@ object JavaTimeSeriesRDD {
    */
   def javaTimeSeriesRDD[K](targetIndex: DateTimeIndex, seriesRDD: JavaRDD[JavaTimeSeries[K]])
     (implicit kClassTag: ClassTag[K]): JavaTimeSeriesRDD[K] =
-    new JavaTimeSeriesRDD[K](TimeSeriesRDD.timeSeriesRDD(targetIndex, seriesRDD.rdd.map(jts => jts.ts)))
+    new JavaTimeSeriesRDD[K](
+      TimeSeriesRDD.timeSeriesRDD(targetIndex, seriesRDD.rdd.map(jts => jts.ts)))
 
   /**
    * Instantiates a JavaTimeSeriesRDD from a DataFrame of observations.

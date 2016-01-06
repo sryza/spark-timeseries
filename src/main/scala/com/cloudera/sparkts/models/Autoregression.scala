@@ -57,7 +57,9 @@ class ARModel(val c: Double, val coefficients: Array[Double]) extends TimeSeries
 
   def this(c: Double, coef: Double) = this(c, Array(coef))
 
-  def removeTimeDependentEffects(ts: Vector[Double], destTs: Vector[Double] = null): Vector[Double] = {
+  def removeTimeDependentEffects(
+      ts: Vector[Double],
+      destTs: Vector[Double] = null): Vector[Double] = {
     val dest = if (destTs == null) DenseVector.zeros[Double](ts.length) else destTs
     var i = 0
     while (i < ts.length) {

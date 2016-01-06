@@ -38,8 +38,8 @@ trait Frequency extends Serializable {
   def difference(dt1: ZonedDateTime, dt2: ZonedDateTime): Int
 }
 
-// Warning: this is not DST-aware. If you need DST-awareness, derive a new class from this one and override the
-// appropriate methods with your DST-aware implementation.
+// Warning: this is not DST-aware. If you need DST-awareness, derive a new class from this
+// one and override the appropriate methods with your DST-aware implementation.
 abstract class PeriodFrequency(val period: Duration) extends Frequency {
 
   def advance(dt: ZonedDateTime, n: Int): ZonedDateTime = dt.plus(period.multipliedBy(n))
@@ -50,6 +50,11 @@ abstract class PeriodFrequency(val period: Duration) extends Frequency {
       case _ => false
     }
   }
+
+  override def hashCode(): Int = {
+    period.hashCode()
+  }
+
 }
 
 class MillisecondFrequency(val ms: Int)
@@ -182,6 +187,8 @@ class BusinessDayFrequency(
       case _ => false
     }
   }
+
+  override def hashCode(): Int = days
 
   override def toString: String = s"businessDays $days firstDayOfWeek $firstDayOfWeek"
 }

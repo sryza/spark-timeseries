@@ -50,7 +50,7 @@ class TimeSeriesStatisticalTestsSuite extends FunSuite with ShouldMatchers {
     bgtest(new DenseVector(resids2), new DenseMatrix(x.length, 1, x), 1)._2 should be < pthreshold
     bgtest(new DenseVector(resids2), new DenseMatrix(x.length, 1, x), 4)._2 should be < pthreshold
   }
-  
+
   test("breusch-pagan") {
     // Replicating the example provided by R package lmtest for bptest
     val rand = new MersenneTwister(5L)

@@ -15,9 +15,13 @@
 
 package com.cloudera.sparkts
 
-import org.threeten.extra._
-import scala.language.implicitConversions
 import java.time._
+import java.util.Arrays
+
+import org.threeten.extra._
+import scala.annotation.tailrec
+import scala.language.implicitConversions
+
 import com.cloudera.sparkts.DateTimeIndex._
 import com.cloudera.sparkts.TimeSeriesUtils._
 
@@ -201,6 +205,10 @@ class UniformDateTimeIndex(
     otherIndex.first == first && otherIndex.periods == periods && otherIndex.frequency == frequency
   }
 
+  override def hashCode(): Int = {
+    first.hashCode() ^ periods ^ frequency.hashCode()
+  }
+
   override def toString: String = {
     Array(
       "uniform", dateTimeZone.toString, start.toString,
@@ -250,13 +258,15 @@ class IrregularDateTimeIndex(
 
   override def first: ZonedDateTime = longToZonedDateTime(instants(0), dateTimeZone)
 
-  override def last: ZonedDateTime = longToZonedDateTime(instants(instants.length - 1), dateTimeZone)
+  override def last: ZonedDateTime =
+    longToZonedDateTime(instants(instants.length - 1), dateTimeZone)
 
   override def zone: ZoneId = dateTimeZone
 
   override def size: Int = instants.length
 
-  override def dateTimeAtLoc(loc: Int): ZonedDateTime = longToZonedDateTime(instants(loc), dateTimeZone)
+  override def dateTimeAtLoc(loc: Int): ZonedDateTime =
+    longToZonedDateTime(instants(loc), dateTimeZone)
 
   override def locAtDateTime(dt: ZonedDateTime): Int = {
     val loc = java.util.Arrays.binarySearch(instants, zonedDateTimeToLong(dt))
@@ -279,6 +289,10 @@ class IrregularDateTimeIndex(
   override def equals(other: Any): Boolean = {
     val otherIndex = other.asInstanceOf[IrregularDateTimeIndex]
     otherIndex.instants.sameElements(instants)
+  }
+
+  override def hashCode(): Int = {
+    Arrays.hashCode(instants)
   }
 
   override def toString: String = {
@@ -392,42 +406,62 @@ class HybridDateTimeIndex(
 
   override def dateTimeAtLoc(loc: Int): ZonedDateTime = {
     val i = binarySearch(0, indices.length - 1, loc)
-    if (i > -1) indices(i).dateTimeAtLoc(loc - sizeOnLeft(i))
-    else throw new ArrayIndexOutOfBoundsException(s"no dateTime at loc $loc")
+    if (i < 0) {
+      throw new ArrayIndexOutOfBoundsException(s"no dateTime at loc $loc")
+    }
+    indices(i).dateTimeAtLoc(loc - sizeOnLeft(i))
   }
 
+  @tailrec
   private def binarySearch(low: Int, high: Int, i: Int): Int = {
     if (low <= high) {
       val mid = (low + high) >>> 1
       val midIndex = indices(mid)
       val sizeOnLeftOfMid = sizeOnLeft(mid)
-      if (i < sizeOnLeftOfMid) binarySearch(low, mid - 1, i)
-      else if (i >= sizeOnLeftOfMid + midIndex.size) binarySearch(mid + 1, high, i)
-      else mid
-    } else -1
+      if (i < sizeOnLeftOfMid) {
+        binarySearch(low, mid - 1, i)
+      } else if (i >= sizeOnLeftOfMid + midIndex.size) {
+        binarySearch(mid + 1, high, i)
+      } else {
+        mid
+      }
+    } else {
+      -1
+    }
   }
 
   override def locAtDateTime(dt: ZonedDateTime): Int = {
     val i = binarySearch(0, indices.length - 1, dt)
-    if (i > -1) {
+    if (i < 0) {
+      -1
+    } else {
       val loc = indices(i).locAtDateTime(dt)
-      if (loc > -1) sizeOnLeft(i) + loc
-      else -1
+      if (loc >= 0) {
+        sizeOnLeft(i) + loc
+      } else {
+        -1
+      }
     }
-    else -1
   }
 
   override def locAtDateTime(dt: Long): Int =
     locAtDateTime(longToZonedDateTime(dt, dateTimeZone))
 
+  @tailrec
   private def binarySearch(low: Int, high: Int, dt: ZonedDateTime): Int = {
     if (low <= high) {
       val mid = (low + high) >>> 1
       val midIndex = indices(mid)
-      if (dt.isBefore(midIndex.first)) binarySearch(low, mid - 1, dt)
-      else if (dt.isAfter(midIndex.last)) binarySearch(mid + 1, high, dt)
-      else mid
-    } else -1
+      if (dt.isBefore(midIndex.first)) {
+        binarySearch(low, mid - 1, dt)
+      } else if (dt.isAfter(midIndex.last)) {
+        binarySearch(mid + 1, high, dt)
+      } else {
+        mid
+      }
+    } else {
+      -1
+    }
   }
 
   override def toMillisArray(): Array[Long] = {
@@ -441,6 +475,10 @@ class HybridDateTimeIndex(
   override def equals(other: Any): Boolean = {
     val otherIndex = other.asInstanceOf[HybridDateTimeIndex]
     otherIndex.indices.sameElements(indices)
+  }
+
+  override def hashCode(): Int = {
+    Arrays.hashCode(indices.asInstanceOf[Array[AnyRef]])
   }
 
   override def toString: String = {
@@ -489,8 +527,9 @@ object DateTimeIndex {
   }
 
   /**
-    * Creates a UniformDateTimeIndex with the given start time and end time (inclusive) and frequency.
-    */
+   * Creates a UniformDateTimeIndex with the given start time and end time
+   * (inclusive) and frequency.
+   */
   def uniform(start: ZonedDateTime, end: ZonedDateTime, frequency: Frequency)
     : UniformDateTimeIndex = {
     val tz = ZoneId.systemDefault()
@@ -507,7 +546,8 @@ object DateTimeIndex {
   }
 
   /**
-   * Creates a UniformDateTimeIndex with the given start time and end time (inclusive) and frequency.
+   * Creates a UniformDateTimeIndex with the given start time and end time (inclusive)
+   * and frequency.
    */
   def uniform(start: Long, end: Long, frequency: Frequency): UniformDateTimeIndex = {
     val tz = ZoneId.systemDefault()
@@ -525,9 +565,14 @@ object DateTimeIndex {
   }
 
   /**
-   * Creates a UniformDateTimeIndex with the given start time and end time (inclusive) and frequency.
+   * Creates a UniformDateTimeIndex with the given start time and end time
+   * (inclusive) and frequency.
    */
-  def uniformFromInterval(start: Long, end: Long, frequency: Frequency, zone: ZoneId): UniformDateTimeIndex = {
+  def uniformFromInterval(
+      start: Long,
+      end: Long,
+      frequency: Frequency,
+      zone: ZoneId): UniformDateTimeIndex = {
     uniform(start, frequency.difference(longToZonedDateTime(start, zone),
       longToZonedDateTime(end, zone)) + 1, frequency, zone)
   }
@@ -536,7 +581,10 @@ object DateTimeIndex {
    * Creates a UniformDateTimeIndex with the given start time and end time (inclusive) and frequency
    * using the time zone of start time.
    */
-  def uniformFromInterval(start: ZonedDateTime, end: ZonedDateTime, frequency: Frequency): UniformDateTimeIndex = {
+  def uniformFromInterval(
+      start: ZonedDateTime,
+      end: ZonedDateTime,
+      frequency: Frequency): UniformDateTimeIndex = {
     uniform(start, frequency.difference(start, end) + 1, frequency)
   }
 
@@ -544,8 +592,11 @@ object DateTimeIndex {
    * Creates a UniformDateTimeIndex with the given start time and end time (inclusive) and frequency
    * and time zone.
    */
-  def uniformFromInterval(start: ZonedDateTime, end: ZonedDateTime, frequency: Frequency, zone: ZoneId)
-    : UniformDateTimeIndex = {
+  def uniformFromInterval(
+      start: ZonedDateTime,
+      end: ZonedDateTime,
+      frequency: Frequency,
+      zone: ZoneId): UniformDateTimeIndex = {
     uniform(start, frequency.difference(start, end) + 1, frequency, zone)
   }
 
@@ -626,7 +677,9 @@ object DateTimeIndex {
   /**
    * Finds the next business day occurring at or after the given date-time.
    */
-  def nextBusinessDay(dt: ZonedDateTime, firstDayOfWeek: Int = DayOfWeek.MONDAY.getValue): ZonedDateTime = {
+  def nextBusinessDay(
+      dt: ZonedDateTime,
+      firstDayOfWeek: Int = DayOfWeek.MONDAY.getValue): ZonedDateTime = {
     val rebasedDayOfWeek = rebaseDayOfWeek(dt.getDayOfWeek.getValue)
     if (rebasedDayOfWeek == 6) {
       dt.plusDays(2)
@@ -638,15 +691,16 @@ object DateTimeIndex {
   }
 
   implicit def periodToFrequency(period: Period): Frequency = {
-    if (period.getDays != 0) {
-      return new DayFrequency(period.getDays)
+    if (period.getDays == 0) {
+      throw new UnsupportedOperationException()
     }
-    throw new UnsupportedOperationException()
+    new DayFrequency(period.getDays)
   }
 
   implicit def intToBusinessDayRichInt(n: Int) : BusinessDayRichInt = new BusinessDayRichInt(n)
 
-  implicit def intToBusinessDayRichInt(tuple: (Int, Int)) : BusinessDayRichInt = new BusinessDayRichInt(tuple._1, tuple._2)
+  implicit def intToBusinessDayRichInt(tuple: (Int, Int)) : BusinessDayRichInt =
+    new BusinessDayRichInt(tuple._1, tuple._2)
 
   /**
    * Parses a DateTimeIndex from the output of its toString method
