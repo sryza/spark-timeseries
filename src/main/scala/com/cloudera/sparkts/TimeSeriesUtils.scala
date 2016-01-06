@@ -19,7 +19,11 @@ import scala.collection.mutable.ArrayBuffer
 
 import breeze.linalg._
 
+import MatrixUtil._
+
 import java.time._
+
+import scala.reflect.ClassTag
 
 /**
  * Internal utilities for dealing with 1-D time series.
@@ -51,14 +55,36 @@ private[sparkts] object TimeSeriesUtils {
     throw new UnsupportedOperationException()
   }
 
+  def rebaseAndMerge[K: ClassTag](
+      tss: Array[TimeSeries[K]],
+      newIndex: DateTimeIndex,
+      defaultValue: Double = Double.NaN)
+    : TimeSeries[K] = {
+    val indices = tss.map(_.index)
+    val rebasers = indices.map(TimeSeriesUtils.rebaser(_, newIndex, defaultValue))
+    val tssRebased = tss.zip(rebasers).map(t => t._1.mapSeries(newIndex, t._2))
+
+    var newKeys = Array.empty[K]
+    val mat = DenseMatrix.zeros[Double](newIndex.size, tss.map(_.keys.length).sum)
+    var start = 0
+    var end = 0
+    for (i <- 0 until tss.length) {
+      val keysAtI = tss(i).keys
+      newKeys ++= keysAtI
+      end = start + keysAtI.length
+      mat(::, start until end) := tssRebased(i).dataToBreeze
+      start = end
+    }
+
+    new TimeSeries[K](newIndex, mat, newKeys)
+  }
+
   /**
    * Accepts a series of values indexed by the given source index and moves it to conform to a
    * target index. The target index need not fit inside the source index - non-overlapping regions
    * will be filled with NaNs or the given default value.
    *
    * The source index must have the same frequency as the target index.
-   *
-   * Currently only irregular target indices are not supported with uniform source indices.
    */
   def rebase(
       sourceIndex: DateTimeIndex,
@@ -74,8 +100,6 @@ private[sparkts] object TimeSeriesUtils {
    * non-overlapping regions will be filled with NaNs or the given default value.
    *
    * The source index must have the same frequency as the target index.
-   *
-   * Currently only irregular target indices are not supported with uniform source indices.
    */
   def rebaser(
       sourceIndex: DateTimeIndex,
@@ -89,16 +113,17 @@ private[sparkts] object TimeSeriesUtils {
           case sourceDTI: IrregularDateTimeIndex =>
             rebaserWithIrregularSource(sourceDTI, targetDTI, defaultValue)
           case _ =>
-            throw new scala.UnsupportedOperationException("Unrecognized source index type")
+            rebaserGeneric(sourceIndex, targetIndex, defaultValue)
         }
       case targetDTI: IrregularDateTimeIndex =>
         sourceIndex match {
           case sourceDTI: IrregularDateTimeIndex =>
             rebaserIrregularSourceIrregularTarget(sourceDTI, targetDTI, defaultValue)
           case _ =>
-            throw new scala.UnsupportedOperationException(
-              "Irregular targets only supported with irregular sources")
+            rebaserGeneric(sourceIndex, targetIndex, defaultValue)
         }
+      case _ =>
+        rebaserGeneric(sourceIndex, targetIndex, defaultValue)
     }
   }
 
@@ -180,6 +205,36 @@ private[sparkts] object TimeSeriesUtils {
       } else {
         indexMapping(i) = -1
       }
+      i += 1
+    }
+
+    vec: Vector[Double] => {
+      var i = 0
+      val resultArr = new Array[Double](targetIndex.size)
+      while (i < indexMapping.length) {
+        if (indexMapping(i) != -1) {
+          resultArr(i) = vec(indexMapping(i))
+        } else {
+          resultArr(i) = defaultValue
+        }
+        i += 1
+      }
+      new DenseVector(resultArr)
+    }
+  }
+
+  private def rebaserGeneric(
+      sourceIndex: DateTimeIndex,
+      targetIndex: DateTimeIndex,
+      defaultValue: Double): Vector[Double] => Vector[Double] = {
+    // indexMapping(i) = j means that resultArr(i) should be filled with the value from
+    // vec(j)
+    val indexMapping = new Array[Int](targetIndex.size)
+
+    val targetIndexZDTIterator = targetIndex.zonedDateTimeIterator
+    var i = 0
+    while (targetIndexZDTIterator.hasNext) {
+      indexMapping(i) = sourceIndex.locAtDateTime(targetIndexZDTIterator.next)
       i += 1
     }
 
