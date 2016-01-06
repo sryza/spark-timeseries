@@ -100,8 +100,9 @@ class DayFrequency(val days: Int)
   extends PeriodFrequency(ChronoUnit.DAYS.getDuration.multipliedBy(days)) {
 
   override def difference(dt1: ZonedDateTime, dt2: ZonedDateTime): Int = {
-    val period = Period.between(dt1.toLocalDate, dt2.toLocalDate)
-    period.getDays / days
+    //val period = Period.between(dt1.toLocalDate, dt2.toLocalDate)
+    //period.getDays / days
+    dt1.until(dt2, ChronoUnit.DAYS).toInt / days
   }
 
   override def toString: String = s"days $days"

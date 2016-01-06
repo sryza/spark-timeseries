@@ -28,7 +28,7 @@ class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix,
                     val keys: Array[K])(implicit val kClassTag: ClassTag[K])
   extends Serializable {
 
-  private def dataToBreeze: BDM[Double] = data
+  private[sparkts] def dataToBreeze: BDM[Double] = data
 
   /**
    * IMPORTANT: this function assumes that the DateTimeIndex is a UniformDateTimeIndex, not an
@@ -172,6 +172,43 @@ class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix,
     new TimeSeries[K](index, mat, keys :+ key)
   }
 
+  def union(defaultValue: Double, ts: TimeSeries[K]*): TimeSeries[K] = {
+    union(defaultValue, ts.toArray)
+  }
+
+  def union(defaultValue: Double, others: Array[TimeSeries[K]]): TimeSeries[K] = {
+    val tss = Array(this) ++ others
+    val indices = tss.map(_.index)
+
+    val newIndex = DateTimeIndexUtils.union(indices, index.zone)
+    TimeSeriesUtils.rebaseAndMerge(tss, newIndex, defaultValue)
+  }
+
+  def intersect(ts: TimeSeries[K]*): Option[TimeSeries[K]] = {
+    intersect(ts.toArray)
+  }
+
+  def intersect(others: Array[TimeSeries[K]]): Option[TimeSeries[K]] = {
+    val tss = Array(this) ++ others
+    val indices = tss.map(_.index)
+
+    val newIndexOption = DateTimeIndexUtils.intersect(indices, index.zone)
+
+    if (newIndexOption.nonEmpty) {
+      Some(TimeSeriesUtils.rebaseAndMerge(tss, newIndexOption.get))
+    } else {
+      None
+    }
+  }
+
+  def leftJoin(other: TimeSeries[K], defaultValue: Double): TimeSeries[K] = {
+    TimeSeriesUtils.rebaseAndMerge(Array(this, other), index, defaultValue)
+  }
+
+  def rightJoin(other: TimeSeries[K], defaultValue: Double): TimeSeries[K] = {
+    TimeSeriesUtils.rebaseAndMerge(Array(this, other), other.index, defaultValue)
+  }
+  
   /**
    * Returns a TimeSeries where each time series is differenced with the given order. The new
    * TimeSeries will be missing the first n date-times.
@@ -206,6 +243,15 @@ class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix,
    */
   def price2ret(): TimeSeries[K] = {
     mapSeries(index.islice(1, index.size), vec => UnivariateTimeSeries.price2ret(vec, 1))
+  }
+
+  /**
+   * Returns a TimeSeries rebased on top of a new index.  Any timestamps that exist in the new
+   * index but not in the existing index will be filled in with defaultValue.
+   */
+  def withIndex(newIndex: DateTimeIndex, defaultValue: Double = Double.NaN): TimeSeries[K] = {
+    val rebaser = TimeSeriesUtils.rebaser(index, newIndex, defaultValue)
+    mapSeries(newIndex, rebaser)
   }
 
   def univariateSeriesIterator(): Iterator[Vector] = {
