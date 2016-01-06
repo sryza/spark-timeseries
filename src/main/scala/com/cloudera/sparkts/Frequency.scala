@@ -38,10 +38,30 @@ trait Frequency extends Serializable {
   def difference(dt1: ZonedDateTime, dt2: ZonedDateTime): Int
 }
 
-// Warning: this is not DST-aware. If you need DST-awareness, derive a new class from this
-// one and override the appropriate methods with your DST-aware implementation.
-abstract class PeriodFrequency(val period: Duration) extends Frequency {
+class DurationFrequency(val duration: Duration) extends Frequency {
+  val durationNanos = duration.getSeconds * 1000000000 + duration.getNano
 
+  def advance(dt: ZonedDateTime, n: Int): ZonedDateTime = dt.plus(duration.multipliedBy(n))
+
+  override def difference(dt1: ZonedDateTime, dt2: ZonedDateTime): Int = {
+    val between = Duration.between(dt1, dt2)
+    val betweenNanos = between.getSeconds * 1000000000 + between.getNano
+    (betweenNanos / durationNanos).toInt
+  }
+
+  override def equals(other: Any): Boolean = {
+    other match {
+      case frequency: DurationFrequency => frequency.duration == duration
+      case _ => false
+    }
+  }
+
+  override def hashCode(): Int = {
+    duration.hashCode()
+  }
+}
+
+abstract class PeriodFrequency(val period: Period) extends Frequency {
   def advance(dt: ZonedDateTime, n: Int): ZonedDateTime = dt.plus(period.multipliedBy(n))
 
   override def equals(other: Any): Boolean = {
@@ -54,33 +74,22 @@ abstract class PeriodFrequency(val period: Duration) extends Frequency {
   override def hashCode(): Int = {
     period.hashCode()
   }
-
 }
 
 class MillisecondFrequency(val ms: Int)
-  extends PeriodFrequency(ChronoUnit.MILLIS.getDuration.multipliedBy(ms)) {
-
-  override def difference(dt1: ZonedDateTime, dt2: ZonedDateTime): Int = {
-    val duration = Duration.between(dt1.toLocalDateTime, dt2.toLocalDateTime)
-    (duration.toMillis() / ms).toInt
-  }
+  extends DurationFrequency(ChronoUnit.MILLIS.getDuration.multipliedBy(ms)) {
 
   override def toString: String = s"milliseconds $ms"
 }
 
 class MicrosecondFrequency(val us: Int)
-  extends PeriodFrequency(ChronoUnit.MICROS.getDuration.multipliedBy(us)) {
-
-  override def difference(dt1: ZonedDateTime, dt2: ZonedDateTime): Int = {
-    val duration = Duration.between(dt1.toLocalDateTime, dt2.toLocalDateTime)
-    ((duration.toNanos() / 1000.0) / us).toInt
-  }
+  extends DurationFrequency(ChronoUnit.MICROS.getDuration.multipliedBy(us)) {
 
   override def toString: String = s"microseconds $us"
 }
 
 class MonthFrequency(val months: Int)
-  extends PeriodFrequency(ChronoUnit.MONTHS.getDuration.multipliedBy(months)) {
+  extends PeriodFrequency(Period.ofMonths(months)) {
 
   override def difference(dt1: ZonedDateTime, dt2: ZonedDateTime): Int = {
     val period = Period.between(dt1.toLocalDate, dt2.toLocalDate)
@@ -91,7 +100,7 @@ class MonthFrequency(val months: Int)
 }
 
 class YearFrequency(val years: Int)
-  extends PeriodFrequency(ChronoUnit.YEARS.getDuration.multipliedBy(years)) {
+  extends PeriodFrequency(Period.ofYears(years)) {
 
   override def difference(dt1: ZonedDateTime, dt2: ZonedDateTime): Int = {
     val period = Period.between(dt1.toLocalDate, dt2.toLocalDate)
@@ -102,7 +111,7 @@ class YearFrequency(val years: Int)
 }
 
 class DayFrequency(val days: Int)
-  extends PeriodFrequency(ChronoUnit.DAYS.getDuration.multipliedBy(days)) {
+  extends PeriodFrequency(Period.ofDays(days)) {
 
   override def difference(dt1: ZonedDateTime, dt2: ZonedDateTime): Int = {
     val period = Period.between(dt1.toLocalDate, dt2.toLocalDate)
@@ -113,34 +122,19 @@ class DayFrequency(val days: Int)
 }
 
 class HourFrequency(val hours: Int)
-  extends PeriodFrequency(ChronoUnit.HOURS.getDuration.multipliedBy(hours)) {
-
-  override def difference(dt1: ZonedDateTime, dt2: ZonedDateTime): Int = {
-    val duration = Duration.between(dt1.toLocalDateTime, dt2.toLocalDateTime)
-    (duration.getSeconds / (hours * 3600)).toInt
-  }
+  extends DurationFrequency(ChronoUnit.HOURS.getDuration.multipliedBy(hours)) {
 
   override def toString: String = s"hours $hours"
 }
 
 class MinuteFrequency(val minutes: Int)
-  extends PeriodFrequency(ChronoUnit.MINUTES.getDuration.multipliedBy(minutes)) {
-
-  override def difference(dt1: ZonedDateTime, dt2: ZonedDateTime): Int = {
-    val duration = Duration.between(dt1.toLocalDateTime, dt2.toLocalDateTime)
-    (duration.getSeconds / (minutes * 60)).toInt
-  }
+  extends DurationFrequency(ChronoUnit.MINUTES.getDuration.multipliedBy(minutes)) {
 
   override def toString: String = s"minutes $minutes"
 }
 
 class SecondFrequency(val seconds: Int)
-  extends PeriodFrequency(ChronoUnit.SECONDS.getDuration.multipliedBy(seconds)) {
-
-  override def difference(dt1: ZonedDateTime, dt2: ZonedDateTime): Int = {
-    val duration = Duration.between(dt1.toLocalDateTime, dt2.toLocalDateTime)
-    (duration.getSeconds / seconds).toInt
-  }
+  extends DurationFrequency(ChronoUnit.SECONDS.getDuration.multipliedBy(seconds)) {
 
   override def toString: String = s"seconds $seconds"
 }
