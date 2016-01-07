@@ -22,7 +22,7 @@ import org.scalatest.{FunSuite, ShouldMatchers}
 
 class BusinessDayFrequencySuite extends FunSuite with ShouldMatchers {
   test("business days") {
-    def caseOf(aDay: ZonedDateTime, firstDayOfWeek: Int) {
+    def caseOf(aDay: ZonedDateTime, firstDayOfWeek: Int): Unit = {
       // don't cross a weekend
       (1, firstDayOfWeek).businessDays.advance(aDay, 1) should be(aDay.plusDays(1))
       (1, firstDayOfWeek).businessDays.difference(aDay, aDay.plusDays(1)) should be(1)

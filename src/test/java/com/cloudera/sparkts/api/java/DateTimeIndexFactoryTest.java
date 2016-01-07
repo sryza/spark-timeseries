@@ -15,13 +15,14 @@
 
 package com.cloudera.sparkts.api.java;
 
+import java.time.*;
+import scala.runtime.RichInt;
+
 import com.cloudera.sparkts.BusinessDayFrequency;
 import com.cloudera.sparkts.DateTimeIndex;
 import com.cloudera.sparkts.DayFrequency;
-import java.time.*;
 
 import org.threeten.extra.Interval;
-import scala.runtime.RichInt;
 import org.junit.Test;
 
 import static com.cloudera.sparkts.api.java.DateTimeIndexFactory.*;
@@ -29,18 +30,18 @@ import static org.junit.Assert.assertEquals;
 
 public class DateTimeIndexFactoryTest {
     
-    private static ZoneId UTC = ZoneId.of("Z");
+    private static final ZoneId UTC = ZoneId.of("Z");
     
     @Test
     public void testToFromString() {
-        DateTimeIndex uniformIndex = DateTimeIndexFactory.uniform(
+        DateTimeIndex uniformIndex = uniform(
           ZonedDateTime.of(1990, 4, 10, 0, 0, 0, 0, UTC),
           5,
           new BusinessDayFrequency(2, DayOfWeek.MONDAY.getValue()));
         String uniformStr = uniformIndex.toString();
         assertEquals(fromString(uniformStr), uniformIndex);
 
-        DateTimeIndex irregularIndex = DateTimeIndexFactory.irregular(new ZonedDateTime[]{
+        DateTimeIndex irregularIndex = irregular(new ZonedDateTime[]{
           ZonedDateTime.of(1990, 4, 10, 0, 0, 0, 0, UTC),
           ZonedDateTime.of(1990, 4, 12, 0, 0, 0, 0, UTC),
           ZonedDateTime.of(1990, 4, 13, 0, 0, 0, 0, UTC)
@@ -56,11 +57,11 @@ public class DateTimeIndexFactoryTest {
 
     @Test
     public void testUniform() {
-        DateTimeIndex index = DateTimeIndexFactory.uniform(
+        DateTimeIndex index = uniform(
           ZonedDateTime.of(2015, 4, 10, 0, 0, 0, 0, UTC),
           5,
           new DayFrequency(2));
-        assertEquals(index.size(), 5);
+        assertEquals(5, index.size());
         assertEquals(index.first(), ZonedDateTime.of(2015, 4, 10, 0, 0, 0, 0, UTC));
         assertEquals(index.last(), ZonedDateTime.of(2015, 4, 18, 0, 0, 0, 0, UTC));
 
@@ -74,22 +75,22 @@ public class DateTimeIndexFactoryTest {
         verifySliceUniform(index.islice(new RichInt(2).to(3)));
     }
 
-    private void verifySliceUniform(DateTimeIndex index) {
-        assertEquals(index.size(), 2);
+    private static void verifySliceUniform(DateTimeIndex index) {
+        assertEquals(2, index.size());
         assertEquals(index.first(), ZonedDateTime.of(2015, 4, 14, 0, 0, 0, 0, UTC));
         assertEquals(index.last(), ZonedDateTime.of(2015, 4, 16, 0, 0, 0, 0, UTC));
     }
 
     @Test
     public void testIrregular() {
-        DateTimeIndex index = DateTimeIndexFactory.irregular(new ZonedDateTime[]{
+        DateTimeIndex index = irregular(new ZonedDateTime[]{
                 ZonedDateTime.of(2015, 4, 14, 0, 0, 0, 0, UTC),
                 ZonedDateTime.of(2015, 4, 15, 0, 0, 0, 0, UTC),
                 ZonedDateTime.of(2015, 4, 17, 0, 0, 0, 0, UTC),
                 ZonedDateTime.of(2015, 4, 22, 0, 0, 0, 0, UTC),
                 ZonedDateTime.of(2015, 4, 25, 0, 0, 0, 0, UTC)
         });
-        assertEquals(index.size(), 5);
+        assertEquals(5, index.size());
         assertEquals(index.first(), ZonedDateTime.of(2015, 4, 14, 0, 0, 0, 0, UTC));
         assertEquals(index.last(), ZonedDateTime.of(2015, 4, 25, 0, 0, 0, 0, UTC));
 
@@ -106,8 +107,8 @@ public class DateTimeIndexFactoryTest {
         // TODO: test bounds that aren't members of the index
     }
 
-    private void verifySliceIrregular(DateTimeIndex index) {
-        assertEquals(index.size(), 3);
+    private static void verifySliceIrregular(DateTimeIndex index) {
+        assertEquals(3, index.size());
         assertEquals(index.first(), ZonedDateTime.of(2015, 4, 15, 0, 0, 0, 0, UTC));
         assertEquals(index.last(), ZonedDateTime.of(2015, 4, 22, 0, 0, 0, 0, UTC));
     }
@@ -128,7 +129,7 @@ public class DateTimeIndexFactoryTest {
 
         DateTimeIndex index = hybrid(new DateTimeIndex[]{index1, index2, index3});
 
-        assertEquals(index.size(), 15);
+        assertEquals(15, index.size());
         assertEquals(index.first(), zonedDateTime("2015-04-10", UTC));
         assertEquals(index.last(), zonedDateTime("2015-05-18", UTC));
 
@@ -167,29 +168,29 @@ public class DateTimeIndexFactoryTest {
         assertEquals(index.dateTimeAtLoc(10), zonedDateTime("2015-05-10", UTC));
         assertEquals(index.dateTimeAtLoc(14), zonedDateTime("2015-05-18", UTC));
 
-        assertEquals(index.locAtDateTime(zonedDateTime("2015-04-10", UTC)), 0);
-        assertEquals(index.locAtDateTime(zonedDateTime("2015-04-18", UTC)), 4);
-        assertEquals(index.locAtDateTime(zonedDateTime("2015-04-19", UTC)), 5);
-        assertEquals(index.locAtDateTime(zonedDateTime("2015-04-21", UTC)), 7);
-        assertEquals(index.locAtDateTime(zonedDateTime("2015-04-28", UTC)), 9);
-        assertEquals(index.locAtDateTime(zonedDateTime("2015-05-10", UTC)), 10);
-        assertEquals(index.locAtDateTime(zonedDateTime("2015-05-18", UTC)), 14);
+        assertEquals(0, index.locAtDateTime(zonedDateTime("2015-04-10", UTC)));
+        assertEquals(4, index.locAtDateTime(zonedDateTime("2015-04-18", UTC)));
+        assertEquals(5, index.locAtDateTime(zonedDateTime("2015-04-19", UTC)));
+        assertEquals(7, index.locAtDateTime(zonedDateTime("2015-04-21", UTC)));
+        assertEquals(9, index.locAtDateTime(zonedDateTime("2015-04-28", UTC)));
+        assertEquals(10, index.locAtDateTime(zonedDateTime("2015-05-10", UTC)));
+        assertEquals(14, index.locAtDateTime(zonedDateTime("2015-05-18", UTC)));
     }
 
-    private void verifySlice1(DateTimeIndex index) {
-        assertEquals(index.size(), 2);
+    private static void verifySlice1(DateTimeIndex index) {
+        assertEquals(2, index.size());
         assertEquals(index.first(), zonedDateTime("2015-04-14", UTC));
         assertEquals(index.last(), zonedDateTime("2015-04-16", UTC));
     }
 
-    private void verifySlice2(DateTimeIndex index) {
-        assertEquals(index.size(), 3);
+    private static void verifySlice2(DateTimeIndex index) {
+        assertEquals(3, index.size());
         assertEquals(index.first(), zonedDateTime("2015-04-20", UTC));
         assertEquals(index.last(), zonedDateTime("2015-04-25", UTC));
     }
 
-    private void verifySlice3(DateTimeIndex index) {
-        assertEquals(index.size(), 11);
+    private static void verifySlice3(DateTimeIndex index) {
+        assertEquals(11, index.size());
         assertEquals(index.first(), zonedDateTime("2015-04-16", UTC));
         assertEquals(index.last(), zonedDateTime("2015-05-16", UTC));
     }

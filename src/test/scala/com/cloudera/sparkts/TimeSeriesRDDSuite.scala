@@ -206,7 +206,7 @@ class TimeSeriesRDDSuite extends FunSuite with LocalSparkContext with ShouldMatc
 
     val df1 = obsDF.collect()
     val df2 = tsRddFromDF.toObservationsDataFrame(sqlContext).collect()
-    df1.size should be (df2.size)
+    df1.length should be (df2.length)
     df1.toSet should be (df2.toSet)
   }
 
@@ -252,7 +252,7 @@ class TimeSeriesRDDSuite extends FunSuite with LocalSparkContext with ShouldMatc
       "lag2(0.0)", "lag2(10.0)", "lag2(20.0)").toSet)
     lagTsrdd.index should be (uniform(start.plusDays(2), 8, new DayFrequency(1)))
 
-    lagTsrdd.keys.size should be (9)
+    lagTsrdd.keys.length should be (9)
     val lagTsMap: Map[String, Vector] = lagTsrdd.collectAsMap()
 
     lagTsMap.getOrElse("0.0", null) should be (new DenseVector((2 to 9).toArray.map(_.toDouble)))
@@ -290,7 +290,7 @@ class TimeSeriesRDDSuite extends FunSuite with LocalSparkContext with ShouldMatc
 
     val cts = lagTsrdd.collectAsTimeSeries()
 
-    lagTsrdd.keys.size should be(6)
+    lagTsrdd.keys.length should be(6)
     cts.keys.toSet should be(Array("lag1(0.0)", "lag1(10.0)", "lag1(20.0)", "lag2(0.0)",
       "lag2(10.0)", "lag2(20.0)").toSet)
     lagTsrdd.index should be(uniform(start.plusDays(2), 8, new DayFrequency(1)))

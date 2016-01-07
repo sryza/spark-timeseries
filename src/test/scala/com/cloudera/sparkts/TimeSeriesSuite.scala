@@ -48,7 +48,7 @@ class TimeSeriesSuite extends FunSuite with ShouldMatchers {
 
     val originalTimeSeries = new TimeSeries(originalIndex, data, Array("a", "b"))
 
-    val laggedTimeSeries = originalTimeSeries.lags(2, true, laggedStringKey _)
+    val laggedTimeSeries = originalTimeSeries.lags(2, true, laggedStringKey)
 
     laggedTimeSeries.keys should be (Array("a", "lag1(a)", "lag2(a)", "b", "lag1(b)", "lag2(b)"))
     laggedTimeSeries.index.size should be (3)

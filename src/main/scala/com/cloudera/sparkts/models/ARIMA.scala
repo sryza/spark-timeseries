@@ -465,7 +465,6 @@ class ARIMAModel(
    * To do so, we assume prior MA terms are 0.0, and prior AR are equal to the model's intercept or
    * 0.0 if fit without an intercept
    * @param ts Time series of observations with this model's characteristics.
-   * @param destTs
    * @return The dest series, representing remaining errors, for convenience.
    */
   def removeTimeDependentEffects(ts: Vector[Double], destTs: Vector[Double]): Vector[Double] = {
@@ -488,7 +487,6 @@ class ARIMAModel(
    * We assume that prior MA terms are 0.0 and prior AR terms are equal to the intercept or 0.0 if
    * fit without an intercept
    * @param ts Time series of i.i.d. observations.
-   * @param destTs
    * @return The dest series, representing the application of the model to provided error
    *         terms, for convenience.
    */

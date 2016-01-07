@@ -96,7 +96,6 @@ class EWMAModel(val smoothing: Double) extends TimeSeriesModel {
 
   /**
    * Calculates the gradient of the SSE cost function for our EWMA model
-   * @param ts
    * @return gradient
    */
   private[sparkts] def gradient(ts: Vector[Double]): Double = {

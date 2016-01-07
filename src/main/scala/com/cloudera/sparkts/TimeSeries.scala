@@ -87,10 +87,8 @@ class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix,
    * It returns TimeSeries with a new key that is a pair of (original key, lag order).
    *
    */
-  def lags[U >: (K, Int)](maxLag: Int, includeOriginals: Boolean)
-    : TimeSeries[(K, Int)] = {
-    lags(maxLag, includeOriginals, laggedPairKey[K]_)
-  }
+  def lags[U >: (K, Int)](maxLag: Int, includeOriginals: Boolean): TimeSeries[(K, Int)] =
+    lags(maxLag, includeOriginals, laggedPairKey[K])
 
   /**
    * IMPORTANT: this function assumes that the DateTimeIndex is a UniformDateTimeIndex, not an
