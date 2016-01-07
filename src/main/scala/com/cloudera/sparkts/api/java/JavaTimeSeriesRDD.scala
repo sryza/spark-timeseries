@@ -204,7 +204,6 @@ class JavaTimeSeriesRDD[K](tsrdd: TimeSeriesRDD[K])(implicit override val kClass
    * of the type of time index.  See
    * [[http://spark.apache.org/docs/latest/mllib-data-types.html]] for more information on the
    * matrix data structure
-   * @param nPartitions
    * @return an equivalent RowMatrix
    */
   def toRowMatrix(nPartitions: Int): RowMatrix =

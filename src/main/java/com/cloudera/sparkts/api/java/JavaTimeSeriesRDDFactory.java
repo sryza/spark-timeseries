@@ -27,6 +27,9 @@ import scala.reflect.ClassTag$;
 public final class JavaTimeSeriesRDDFactory {
     private static final JavaTimeSeriesRDD$ JAVA_TIME_SERIES_RDD = JavaTimeSeriesRDD$.MODULE$;
 
+    private JavaTimeSeriesRDDFactory() {
+    }
+
     /**
      * Instantiates a JavaTimeSeriesRDD.
      *
@@ -100,7 +103,8 @@ public final class JavaTimeSeriesRDDFactory {
     /**
      * Loads a JavaTimeSeriesRDD from a directory containing a set of CSV files and a date-time index.
      */
-    public static JavaTimeSeriesRDD<String> javaTimeSeriesRDDFromCsv(String path, JavaSparkContext sc) {
+    public static JavaTimeSeriesRDD<String> javaTimeSeriesRDDFromCsv(
+            String path, JavaSparkContext sc) {
         return JAVA_TIME_SERIES_RDD.javaTimeSeriesRDDFromCsv(path, sc);
     }
 

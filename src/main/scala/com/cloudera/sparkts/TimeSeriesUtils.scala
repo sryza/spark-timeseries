@@ -199,24 +199,22 @@ private[sparkts] object TimeSeriesUtils {
    *            q: length of sub index containing the search query
    *
    * more efficient implementations could achieve O(n)
-   * 
    */
   def rebaserGeneric(
       sourceIndex: DateTimeIndex,
       targetIndex: DateTimeIndex,
       defaultValue: Double): Rebaser = {
     // indexMapping(i) = j means that resultArr(i) should be filled with the value from vec(j)
-    val indexMapping = targetIndex.zonedDateTimeIterator.map(sourceIndex.locAtDateTime(_)).toArray
-    
+    val indexMapping = targetIndex.zonedDateTimeIterator.map(sourceIndex.locAtDateTime).toArray
     indexMappingRebaser(indexMapping, defaultValue)
   }
 
   private def indexMappingRebaser(indexMapping: Array[Int], defaultValue: Double): Rebaser = {
     vec: Vector[Double] => {
-      val resultArr = indexMapping.map { _ match {
+      val resultArr = indexMapping.map {
         case -1 => defaultValue
-        case otherwise => vec(otherwise)
-      }}
+        case otherwise: Any => vec(otherwise)
+      }
       new DenseVector(resultArr)
     }
   }

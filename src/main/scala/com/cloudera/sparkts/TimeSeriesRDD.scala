@@ -91,7 +91,7 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector)])
         new TimeSeries[K](index, new BDM[Double](t._2.length, 1, t._2.toArray), Array[K](t._1))
       val laggedTseries = tseries.lags(maxLag, includeOriginals, laggedKey)
       val laggedDataBreeze: BDM[Double] = laggedTseries.data
-      (0 until laggedTseries.keys.length).map { c =>
+      laggedTseries.keys.indices.map { c =>
         (laggedTseries.keys(c), new DenseVector(laggedDataBreeze(::, c).toArray))
       }
     }
@@ -434,7 +434,6 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector)])
    * of the type of time index.  See
    * [[http://spark.apache.org/docs/latest/mllib-data-types.html]] for more information on the
    * matrix data structure
-   * @param nPartitions
    * @return an equivalent RowMatrix
    */
   def toRowMatrix(nPartitions: Int = -1): RowMatrix = {
@@ -539,10 +538,10 @@ object TimeSeriesRDD {
     }
 
     val shuffled = rdd.repartitionAndSortWithinPartitions(new Partitioner() {
-      val hashPartitioner = new HashPartitioner(rdd.partitions.size)
+      val hashPartitioner = new HashPartitioner(rdd.partitions.length)
       override def numPartitions: Int = hashPartitioner.numPartitions
       override def getPartition(key: Any): Int =
-        hashPartitioner.getPartition(key.asInstanceOf[Tuple2[Any, Any]]._1)
+        hashPartitioner.getPartition(key.asInstanceOf[(Any, Any)]._1)
     })
     new TimeSeriesRDD[String](targetIndex, shuffled.mapPartitions { iter =>
       val bufferedIter = iter.buffered

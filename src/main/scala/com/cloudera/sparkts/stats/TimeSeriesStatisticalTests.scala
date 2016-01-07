@@ -285,7 +285,6 @@ object TimeSeriesStatisticalTests {
    * is that serial correlation is present. The test statistic follows a Chi-Squared distribution
    * with `maxLag` degrees of freedom. See [[https://en.wikipedia.org/wiki/Ljung%E2%80%93Box_test]]
    * for more information.
-   * @param residuals
    * @return the test statistic and the p-value associated with it.
    */
   def lbtest(residuals: Vector[Double], maxLag: Int): (Double, Double) = {
