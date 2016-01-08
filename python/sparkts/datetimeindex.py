@@ -1,5 +1,5 @@
 from py4j.java_gateway import java_import
-from .utils import datetime_to_millis
+from .utils import datetime_to_nanos
 import numpy as np
 import pandas as pd
 
@@ -21,25 +21,32 @@ class DateTimeIndex(object):
         """Returns the number of timestamps included in the index."""
         return self._jdt_index.size()
 
+    def _zdt_to_nanos(self, zdt):
+        """Extracts nanoseconds from a ZonedDateTime"""
+        instant = zdt.toInstant()
+        return instant.getNano() + instant.getEpochSecond() * 1000000000
+
     def first(self):
         """Returns the earliest timestamp in the index, as a Pandas Timestamp."""
-        millis = self._jdt_index.first().getMillis()
-        return pd.Timestamp(millis * 1000000)
+        return pd.Timestamp(self._zdt_to_nanos(self._jdt_index.first()))
 
     def last(self):
         """Returns the latest timestamp in the index, as a Pandas Timestamp."""
-        millis = self._jdt_index.last().getMillis()
-        return pd.Timestamp(millis * 1000000)
+        return pd.Timestamp(self._zdt_to_nanos(self._jdt_index.last()))
+    
+    def datetime_at_loc(self, loc):
+        """Returns the timestamp at the given integer location as a Pandas Timestamp."""
+        return pd.Timestamp(self._zdt_to_nanos(self._jdt_index.dateTimeAtLoc(loc)))
 
     def __getitem__(self, val):
         # TODO: throw an error if the step size is defined
         if isinstance(val, slice):
-            start = datetime_to_millis(val.start)
-            stop = datetime_to_millis(val.stop)
+            start = datetime_to_nanos(val.start)
+            stop = datetime_to_nanos(val.stop)
             jdt_index = self._jdt_index.slice(start, stop)
             return DateTimeIndex(jdt_index)
         else:
-            return self._jdt_index.locAtDateTime(datetime_to_millis(val))
+            return self._jdt_index.locAtDateTime(datetime_to_nanos(val))
 
     def islice(self, start, end):
         """
@@ -56,16 +63,10 @@ class DateTimeIndex(object):
         jdt_index = self._jdt_index.islice(start, end)
         return DateTimeIndex(jdt_index=jdt_index)
 
-    def datetime_at_loc(self, loc):
-        """Returns the timestamp at the given integer location as a Pandas Timestamp."""
-        millis = self._jdt_index.dateTimeAtLoc(loc).getMillis()
-        return pd.Timestamp(millis * 1000000)
-
     def to_pandas_index(self):
         """Returns a pandas.DatetimeIndex representing the same date-times"""
         # TODO: we can probably speed this up for uniform indices
-        arr = self._jdt_index.toMillisArray()
-        arr = [arr[i] * 1000000 for i in xrange(len(self))]
+        arr = self._jdt_index.toNanosArray()
         return pd.DatetimeIndex(arr)
 
     def __eq__(self, other):
@@ -129,8 +130,8 @@ def uniform(start, end=None, periods=None, freq=None, sc=None):
     
     Parameters
     ----------
-        start : string, long (millis from epoch), or Pandas Timestamp
-        end : string, long (millis from epoch), or Pandas Timestamp
+        start : string, long (nanos from epoch), or Pandas Timestamp
+        end : string, long (nanos from epoch), or Pandas Timestamp
         periods : int
         freq : a frequency object
         sc : SparkContext
@@ -141,11 +142,11 @@ def uniform(start, end=None, periods=None, freq=None, sc=None):
     elif end is None and periods == None:
         raise ValueError("Need an end date or number of periods")
     elif end is not None:
-        return DateTimeIndex(dtmodule.uniform( \
-            datetime_to_millis(start), datetime_to_millis(end), freq._jfreq))
+        return DateTimeIndex(dtmodule.uniformFromInterval( \
+            datetime_to_nanos(start), datetime_to_nanos(end), freq._jfreq))
     else:
         return DateTimeIndex(dtmodule.uniform( \
-            datetime_to_millis(start), periods, freq._jfreq))
+            datetime_to_nanos(start), periods, freq._jfreq))
 
 def irregular(timestamps, sc):
     """
@@ -160,6 +161,6 @@ def irregular(timestamps, sc):
     dtmodule = sc._jvm.com.cloudera.sparkts.__getattr__('DateTimeIndex$').__getattr__('MODULE$')
     arr = sc._gateway.new_array(sc._jvm.long, len(timestamps))
     for i in xrange(len(timestamps)):
-        arr[i] = datetime_to_millis(timestamps[i])
+        arr[i] = datetime_to_nanos(timestamps[i])
     return DateTimeIndex(dtmodule.irregular(arr))
 

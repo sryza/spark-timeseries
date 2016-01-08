@@ -33,14 +33,14 @@ def quiet_py4j():
     logger = logging.getLogger('py4j')
     logger.setLevel(logging.INFO)
 
-def datetime_to_millis(dt):
+def datetime_to_nanos(dt):
     """
-    Accept a string, Pandas Timestamp, or long, and return millis since the epoch.
+    Accepts a string, Pandas Timestamp, or long, and returns nanos since the epoch.
     """
     if isinstance(dt, pd.Timestamp):
-        return dt.value / 1000000
+        return dt.value
     elif isinstance(dt, str):
-        return pd.Timestamp(dt).value / 1000000
+        return pd.Timestamp(dt).value
     elif isinstance(dt, long):
         return dt
 

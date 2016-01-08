@@ -66,6 +66,7 @@ class TimeSeriesRDDTestCase(PySparkTestCase):
         labels = ['a', 'b', 'c', 'd', 'e']
         start = '2015-4-9'
         dt_index = uniform(start, periods=4, freq=DayFrequency(1, self.sc), sc=self.sc)
+        print(dt_index._jdt_index.size())
         rdd = self.sc.parallelize(zip(labels, vecs), 3)
         tsrdd = TimeSeriesRDD(dt_index, rdd)
 

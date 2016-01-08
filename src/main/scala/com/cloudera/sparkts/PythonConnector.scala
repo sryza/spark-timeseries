@@ -18,9 +18,9 @@ package com.cloudera.sparkts
 import java.nio.ByteBuffer
 import java.time._
 
-import breeze.linalg.{DenseVector, Vector}
+import org.apache.spark.mllib.linalg.{DenseVector, Vector}
 
-import org.apache.spark.api.java.function.Function
+import org.apache.spark.api.java.function.{PairFunction, Function}
 
 import PythonConnector._
 
@@ -34,18 +34,18 @@ private object PythonConnector {
   val DOUBLE_SIZE = 8
   val LONG_SIZE = 8
 
-  def putVector(buf: ByteBuffer, vec: Vector[Double]): Unit = {
-    buf.putInt(vec.length)
+  def putVector(buf: ByteBuffer, vec: Vector): Unit = {
+    buf.putInt(vec.size)
     var i = 0
-    while (i < vec.length) {
+    while (i < vec.size) {
       buf.putDouble(vec(i))
       i += 1
     }
   }
 }
 
-private class BytesToKeyAndSeries extends Function[Array[Byte], (String, Vector[Double])] {
-  override def call(arr: Array[Byte]): (String, Vector[Double]) = {
+private class BytesToKeyAndSeries extends PairFunction[Array[Byte], String, Vector] {
+  override def call(arr: Array[Byte]): (String, Vector) = {
     val buf = ByteBuffer.wrap(arr)
     val keySize = buf.getInt()
     val keyBytes = new Array[Byte](keySize)
@@ -58,15 +58,15 @@ private class BytesToKeyAndSeries extends Function[Array[Byte], (String, Vector[
       series(i) = buf.getDouble()
       i += 1
     }
-    (new String(keyBytes, "UTF8"), new DenseVector[Double](series))
+    (new String(keyBytes, "UTF8"), new DenseVector(series))
   }
 }
 
-private class KeyAndSeriesToBytes extends Function[(String, Vector[Double]), Array[Byte]] {
-  override def call(keyVec: (String, Vector[Double])): Array[Byte] = {
+private class KeyAndSeriesToBytes extends Function[(String, Vector), Array[Byte]] {
+  override def call(keyVec: (String, Vector)): Array[Byte] = {
     val keyBytes = keyVec._1.getBytes("UTF-8")
     val vec = keyVec._2
-    val arr = new Array[Byte](INT_SIZE + keyBytes.length + INT_SIZE + DOUBLE_SIZE * vec.length)
+    val arr = new Array[Byte](INT_SIZE + keyBytes.length + INT_SIZE + DOUBLE_SIZE * vec.size)
     val buf = ByteBuffer.wrap(arr)
     buf.putInt(keyBytes.length)
     buf.put(keyBytes)
@@ -75,9 +75,9 @@ private class KeyAndSeriesToBytes extends Function[(String, Vector[Double]), Arr
   }
 }
 
-private class InstantToBytes extends Function[(ZonedDateTime, Vector[Double]), Array[Byte]] {
-  override def call(instant: (ZonedDateTime, Vector[Double])): Array[Byte] = {
-    val arr = new Array[Byte](LONG_SIZE + INT_SIZE + DOUBLE_SIZE * instant._2.length)
+private class InstantToBytes extends Function[(ZonedDateTime, Vector), Array[Byte]] {
+  override def call(instant: (ZonedDateTime, Vector)): Array[Byte] = {
+    val arr = new Array[Byte](LONG_SIZE + INT_SIZE + DOUBLE_SIZE * instant._2.size)
     val buf = ByteBuffer.wrap(arr)
     buf.putLong(TimeSeriesUtils.zonedDateTimeToLong(instant._1))
     putVector(buf, instant._2)

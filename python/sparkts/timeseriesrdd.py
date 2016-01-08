@@ -2,7 +2,7 @@ from py4j.java_gateway import java_import
 from pyspark import RDD
 from pyspark.serializers import FramedSerializer, SpecialLengths, write_int, read_int
 from pyspark.sql import DataFrame
-from .utils import datetime_to_millis
+from .utils import datetime_to_nanos
 from .datetimeindex import DateTimeIndex, irregular
 import struct
 import numpy as np
@@ -24,15 +24,15 @@ class TimeSeriesRDD(RDD):
         if jtsrdd == None:
             # Construct from a Python RDD object and a Python DateTimeIndex
             jvm = rdd.ctx._jvm
-            jrdd = rdd._reserialize(_TimeSeriesSerializer())._jrdd.map( \
+            jrdd = rdd._reserialize(_TimeSeriesSerializer())._jrdd.mapToPair( \
                 jvm.com.cloudera.sparkts.BytesToKeyAndSeries())
-            self._jtsrdd = jvm.com.cloudera.sparkts.TimeSeriesRDD( \
-                dt_index._jdt_index, jrdd.rdd())
+            self._jtsrdd = jvm.com.cloudera.sparkts.api.java.JavaTimeSeriesRDDFactory.javaTimeSeriesRDD( \
+                dt_index._jdt_index, jrdd)
             RDD.__init__(self, rdd._jrdd, rdd.ctx)
         else:
-            # Construct from a py4j.JavaObject pointing to a TimeSeriesRDD and a Python SparkContext
+            # Construct from a py4j.JavaObject pointing to a JavaTimeSeriesRDD and a Python SparkContext
             jvm = sc._jvm
-            jrdd = jvm.org.apache.spark.api.java.JavaRDD(jtsrdd, None).map( \
+            jrdd = jtsrdd.map( \
                 jvm.com.cloudera.sparkts.KeyAndSeriesToBytes())
             RDD.__init__(self, jrdd, sc, _TimeSeriesSerializer())
             self._jtsrdd = jtsrdd
@@ -42,8 +42,8 @@ class TimeSeriesRDD(RDD):
         Returns a TimeSeriesRDD representing a subslice of this TimeSeriesRDD, containing only
         values for a sub-range of the time it covers.
         """
-        start = datetime_to_millis(val.start)
-        stop = datetime_to_millis(val.stop)
+        start = datetime_to_nanos(val.start)
+        stop = datetime_to_nanos(val.stop)
         return TimeSeriesRDD(None, None, self._jtsrdd.slice(start, stop), self.ctx)
 
     def differences(self, n):
@@ -99,7 +99,7 @@ class TimeSeriesRDD(RDD):
         This essentially transposes the TimeSeriesRDD, producing an RDD of tuples of datetime and
         a numpy array containing all the observations that occurred at that time.
         """
-        jrdd = self._jtsrdd.toInstants(-1).toJavaRDD().map( \
+        jrdd = self._jtsrdd.toInstants(-1).map( \
             self.ctx._jvm.com.cloudera.sparkts.InstantToBytes())
         return RDD(jrdd, self.ctx, _InstantDeserializer())
 
@@ -232,7 +232,7 @@ def time_series_rdd_from_observations(dt_index, df, ts_col, key_col, val_col):
         The name of the column in the DataFrame containing the values.
     """
     jvm = df._sc._jvm
-    jtsrdd = jvm.com.cloudera.sparkts.TimeSeriesRDD.timeSeriesRDDFromObservations( \
+    jtsrdd = jvm.com.cloudera.sparkts.api.java.JavaTimeSeriesRDDFactory.javaTimeSeriesRDDFromObservations( \
       dt_index._jdt_index, df._jdf, ts_col, key_col, val_col)
     return TimeSeriesRDD(None, None, jtsrdd, df._sc)
 
@@ -273,9 +273,9 @@ class _InstantDeserializer(FramedSerializer):
     
     def loads(self, obj):
         stream = BytesIO(obj)
-        timestamp_ms = struct.unpack('!q', stream.read(8))[0]
+        timestamp_nanos = struct.unpack('!q', stream.read(8))[0]
 
-        return (pd.Timestamp(timestamp_ms * 1000000), _read_vec(stream))
+        return (pd.Timestamp(timestamp_nanos), _read_vec(stream))
 
     def __repr__(self):
         return "_InstantDeserializer"

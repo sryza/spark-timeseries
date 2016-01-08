@@ -96,7 +96,7 @@ class DateTimeIndexSuite extends FunSuite with ShouldMatchers {
     verifySlice(index.islice(2 until 4))
     verifySlice(index.islice(2 to 3))
 
-    index.millisIterator.toArray should be (index.toMillisArray)
+    index.nanosIterator.toArray should be (index.toNanosArray)
     index.zonedDateTimeIterator.toArray should be (index.toZonedDateTimeArray)
   }
 
@@ -128,7 +128,7 @@ class DateTimeIndexSuite extends FunSuite with ShouldMatchers {
     verifySlice(index.islice(1 until 4))
     verifySlice(index.islice(1 to 3))
 
-    index.millisIterator.toArray should be (index.toMillisArray)
+    index.nanosIterator.toArray should be (index.toNanosArray)
     index.zonedDateTimeIterator.toArray should be (index.toZonedDateTimeArray)
     // TODO: test bounds that aren't members of the index
   }
@@ -214,7 +214,7 @@ class DateTimeIndexSuite extends FunSuite with ShouldMatchers {
     index.locAtDateTime(ZonedDateTime.of(2015, 5, 10, 0, 0, 0, 0, UTC)) should be (10)
     index.locAtDateTime(ZonedDateTime.of(2015, 5, 18, 0, 0, 0, 0, UTC)) should be (14)
 
-    index.millisIterator.toArray should be (index.toMillisArray)
+    index.nanosIterator.toArray should be (index.toNanosArray)
     index.zonedDateTimeIterator.toArray should be (index.toZonedDateTimeArray)
   }
 
