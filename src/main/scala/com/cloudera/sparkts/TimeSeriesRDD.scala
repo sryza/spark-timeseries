@@ -243,7 +243,7 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector)])
     // (date-time loc in date-time index, position of snippet in full sample)
     val maxChunkSize = 20
     val dividedOnMapSide = mapPartitionsWithIndex { case (partitionId, iter) =>
-      new Iterator[((Int, Int), Vector)] {
+      new Iterator[((Int, Int, Int), Vector)] {
         // Each chunk is a buffer of time series
         var chunk = new ArrayBuffer[Vector]()
         // Current date time.  Gets reset for every chunk.
@@ -251,7 +251,7 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector)])
         var chunkId: Int = -1
 
         override def hasNext: Boolean = iter.hasNext || dtLoc < index.size
-        override def next(): ((Int, Int), Vector) = {
+        override def next(): ((Int, Int, Int), Vector) = {
           if (chunkId == -1 || dtLoc == index.size) {
             chunk.clear()
             while (chunk.size < maxChunkSize && iter.hasNext) {
@@ -268,7 +268,7 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector)])
             i += 1
           }
           dtLoc += 1
-          ((dtLoc - 1, partitionId * maxChunkSize + chunkId), new DenseVector(arr))
+          ((dtLoc - 1, partitionId, chunkId), new DenseVector(arr))
         }
       }
     }
@@ -279,30 +279,31 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector)])
     val denom = index.size / nPart + (if (index.size % nPart == 0) 0 else 1)
     val partitioner = new Partitioner() {
       override def numPartitions: Int = nPart
-      override def getPartition(key: Any): Int = key.asInstanceOf[(Int, _)]._1 / denom
+      override def getPartition(key: Any): Int = key.asInstanceOf[(Int, _, _)]._1 / denom
     }
-    implicit val ordering = new Ordering[(Int, Int)] {
-      override def compare(a: (Int, Int), b: (Int, Int)): Int = {
-        val dtDiff = a._1 - b._1
-        if (dtDiff != 0){
-          dtDiff
-        } else {
+    implicit val ordering = new Ordering[(Int, Int, Int)] {
+      override def compare(a: (Int, Int, Int), b: (Int, Int, Int)): Int = {
+        if (a._1 - b._1 != 0) {
+          a._1 - b._1
+        } else if (a._2 - b._2 != 0) {
           a._2 - b._2
+        } else {
+          a._3 - b._3
         }
       }
     }
     val repartitioned = dividedOnMapSide.repartitionAndSortWithinPartitions(partitioner)
-    repartitioned.mapPartitions { iter0: Iterator[((Int, Int), Vector)] =>
+    repartitioned.mapPartitions { iter0: Iterator[((Int, Int, Int), Vector)] =>
       new Iterator[(ZonedDateTime, Vector)] {
         var snipsPerSample = -1
         var elementsPerSample = -1
-        var iter: Iterator[((Int, Int), Vector)] = _
+        var iter: Iterator[((Int, Int, Int), Vector)] = _
 
         // Read the first sample specially so that we know the number of elements and snippets
         // for succeeding samples.
-        def firstSample(): ArrayBuffer[((Int, Int), Vector)] = {
+        def firstSample(): ArrayBuffer[((Int, Int, Int), Vector)] = {
           var snip = iter0.next()
-          val snippets = new ArrayBuffer[((Int, Int), Vector)]()
+          val snippets = new ArrayBuffer[((Int, Int, Int), Vector)]()
           val firstDtLoc = snip._1._1
 
           while (snip != null && snip._1._1 == firstDtLoc) {
@@ -313,13 +314,13 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector)])
           snippets
         }
 
-        def assembleSnips(snips: Iterator[((Int, Int), Vector)])
+        def assembleSnips(snips: Iterator[((Int, Int, Int), Vector)])
           : (ZonedDateTime, Vector) = {
           val resVec = BDV.zeros[Double](elementsPerSample)
           var dtLoc = -1
           var i = 0
           for (j <- 0 until snipsPerSample) {
-            val ((loc, _), snipVec) = snips.next()
+            val ((loc, _, _), snipVec) = snips.next()
             dtLoc = loc
             resVec(i until i + snipVec.length) := toBreeze(snipVec)
             i += snipVec.length
