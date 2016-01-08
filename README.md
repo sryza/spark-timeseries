@@ -109,7 +109,7 @@ jars:
     
 To run a spark-shell with spark-ts and its dependencies on the classpath:
 
-    spark-shell --jars target/sparkts-0.0.1-jar-with-dependencies.jar
+    spark-shell --jars target/sparkts-$VERSION-jar-with-dependencies.jar
     
 To run Python tests (requires [nose](https://nose.readthedocs.org/en/latest/)):
 
