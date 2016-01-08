@@ -100,16 +100,16 @@ trait DateTimeIndex extends Serializable {
   def locAtDateTime(dt: ZonedDateTime): Int
 
   /**
-   * The location of the given date-time, as milliseconds since the epoch. If the index contains the
+   * The location of the given date-time, as nanoseconds since the epoch. If the index contains the
    * date-time more than once, returns its first appearance. If the given date-time does not appear
    * in the index, returns -1.
    */
   def locAtDateTime(dt: Long): Int
 
   /**
-   * Returns the contents of the DateTimeIndex as an array of millisecond values from the epoch.
+   * Returns the contents of the DateTimeIndex as an array of nanosecond values from the epoch.
    */
-  def toMillisArray(): Array[Long]
+  def toNanosArray(): Array[Long]
 
   /**
     * Returns the contents of the DateTimeIndex as an array of ZonedDateTime
@@ -117,9 +117,9 @@ trait DateTimeIndex extends Serializable {
   def toZonedDateTimeArray(): Array[ZonedDateTime]
 
   /**
-   * Returns an iterator over the contents of the DateTimeIndex as milliseconds
+   * Returns an iterator over the contents of the DateTimeIndex as nanosecond values from the epoch.
    */
-  def millisIterator(): Iterator[Long]
+  def nanosIterator(): Iterator[Long]
 
   /**
    * Returns an iterator over the contents of the DateTimeIndex as ZonedDateTime
@@ -184,10 +184,10 @@ class UniformDateTimeIndex(
     locAtDateTime(longToZonedDateTime(dt, dateTimeZone))
   }
 
-  override def toMillisArray(): Array[Long] = {
+  override def toNanosArray(): Array[Long] = {
     val arr = new Array[Long](periods)
     for (i <- 0 until periods) {
-      arr(i) = zonedDateTimeToLong(dateTimeAtLoc(i)) / 1000000L
+      arr(i) = zonedDateTimeToLong(dateTimeAtLoc(i))
     }
     arr
   }
@@ -215,8 +215,8 @@ class UniformDateTimeIndex(
       periods.toString, frequency.toString).mkString(",")
   }
 
-  override def millisIterator(): Iterator[Long] = {
-    zonedDateTimeIterator.map(zonedDateTimeToLong(_) / 1000000L)
+  override def nanosIterator(): Iterator[Long] = {
+    zonedDateTimeIterator.map(zonedDateTimeToLong(_))
   }
 
   override def zonedDateTimeIterator(): Iterator[ZonedDateTime] = {
@@ -278,8 +278,8 @@ class IrregularDateTimeIndex(
     if (loc < 0) -1 else loc
   }
 
-  override def toMillisArray(): Array[Long] = {
-    instants.map(dt => dt / 1000000L)
+  override def toNanosArray(): Array[Long] = {
+    instants
   }
 
   override def toZonedDateTimeArray(): Array[ZonedDateTime] = {
@@ -300,8 +300,8 @@ class IrregularDateTimeIndex(
       instants.map(longToZonedDateTime(_, dateTimeZone).toString).mkString(",")
   }
 
-  override def millisIterator(): Iterator[Long] = {
-    instants.iterator.map(_ / 1000000L)
+  override def nanosIterator(): Iterator[Long] = {
+    instants.iterator
   }
 
   override def zonedDateTimeIterator(): Iterator[ZonedDateTime] = {
@@ -464,8 +464,8 @@ class HybridDateTimeIndex(
     }
   }
 
-  override def toMillisArray(): Array[Long] = {
-    indices.flatMap(_.toMillisArray)
+  override def toNanosArray(): Array[Long] = {
+    indices.flatMap(_.toNanosArray)
   }
 
   override def toZonedDateTimeArray(): Array[ZonedDateTime] = {
@@ -486,8 +486,8 @@ class HybridDateTimeIndex(
       indices.map(_.toString).mkString(";")
   }
 
-  override def millisIterator(): Iterator[Long] = {
-    indices.foldLeft(Iterator[Long]())(_ ++ _.millisIterator)
+  override def nanosIterator(): Iterator[Long] = {
+    indices.foldLeft(Iterator[Long]())(_ ++ _.nanosIterator)
   }
 
   override def zonedDateTimeIterator(): Iterator[ZonedDateTime] = {
@@ -503,11 +503,23 @@ object DateTimeIndex {
   def uniform(
       start: Long,
       periods: Int,
-      frequency: Frequency,
-      zone: ZoneId = ZoneId.systemDefault()): UniformDateTimeIndex = {
-
+      frequency: Frequency): UniformDateTimeIndex = {
+    val zone = ZoneId.systemDefault()
     new UniformDateTimeIndex(longToZonedDateTime(start, zone), periods, frequency)
   }
+
+  /**
+   * Creates a UniformDateTimeIndex with the given start time, number of periods, frequency,
+   * and time zone(optionally)
+   */
+  def uniform(
+      start: Long,
+      periods: Int,
+      frequency: Frequency,
+      zone: ZoneId = ZoneId.systemDefault()): UniformDateTimeIndex = {
+    new UniformDateTimeIndex(longToZonedDateTime(start, zone), periods, frequency)
+  }
+
 
   /**
    * Creates a UniformDateTimeIndex with the given start time, number of periods, and frequency
@@ -527,29 +539,10 @@ object DateTimeIndex {
   }
 
   /**
-   * Creates a UniformDateTimeIndex with the given start time and end time
-   * (inclusive) and frequency.
-   */
-  def uniform(start: ZonedDateTime, end: ZonedDateTime, frequency: Frequency)
-    : UniformDateTimeIndex = {
-    val tz = ZoneId.systemDefault()
-    uniform(start, frequency.difference(start, end) + 1, frequency, tz)
-  }
-
-  /**
-    * Creates a UniformDateTimeIndex with the given start time and end time (inclusive), frequency
-    * and time zone.
-    */
-  def uniform(start: ZonedDateTime, end: ZonedDateTime, frequency: Frequency, tz: ZoneId)
-    : UniformDateTimeIndex = {
-    uniform(start, frequency.difference(start, end) + 1, frequency, tz)
-  }
-
-  /**
    * Creates a UniformDateTimeIndex with the given start time and end time (inclusive)
    * and frequency.
    */
-  def uniform(start: Long, end: Long, frequency: Frequency): UniformDateTimeIndex = {
+  def uniformFromInterval(start: Long, end: Long, frequency: Frequency): UniformDateTimeIndex = {
     val tz = ZoneId.systemDefault()
     uniform(start, frequency.difference(longToZonedDateTime(start, tz),
       longToZonedDateTime(end, tz)) + 1, frequency, tz)
@@ -559,22 +552,10 @@ object DateTimeIndex {
     * Creates a UniformDateTimeIndex with the given start time and end time (inclusive), frequency
     * and time zone.
     */
-  def uniform(start: Long, end: Long, frequency: Frequency, tz: ZoneId): UniformDateTimeIndex = {
+  def uniformFromInterval(start: Long, end: Long, frequency: Frequency, tz: ZoneId)
+    : UniformDateTimeIndex = {
     uniform(start, frequency.difference(longToZonedDateTime(start, tz),
       longToZonedDateTime(end, tz)) + 1, frequency, tz)
-  }
-
-  /**
-   * Creates a UniformDateTimeIndex with the given start time and end time
-   * (inclusive) and frequency.
-   */
-  def uniformFromInterval(
-      start: Long,
-      end: Long,
-      frequency: Frequency,
-      zone: ZoneId): UniformDateTimeIndex = {
-    uniform(start, frequency.difference(longToZonedDateTime(start, zone),
-      longToZonedDateTime(end, zone)) + 1, frequency, zone)
   }
 
   /**
@@ -616,7 +597,7 @@ object DateTimeIndex {
   }
 
   /**
-   * Creates an IrregularDateTimeIndex composed of the given date-times, as millis from the epoch
+   * Creates an IrregularDateTimeIndex composed of the given date-times, as nanos from the epoch
    * using the default date-time zone.
    */
   def irregular(dts: Array[Long]): IrregularDateTimeIndex = {
@@ -624,7 +605,7 @@ object DateTimeIndex {
   }
 
   /**
-   * Creates an IrregularDateTimeIndex composed of the given date-times, as millis from the epoch
+   * Creates an IrregularDateTimeIndex composed of the given date-times, as nanos from the epoch
    * using the provided date-time zone.
    */
   def irregular(dts: Array[Long], zone: ZoneId): IrregularDateTimeIndex = {
@@ -669,7 +650,9 @@ object DateTimeIndex {
    * @param dayOfWeek the ISO index of the day of week
    * @return the day of week index aligned w.r.t the first day of week
    */
-  def rebaseDayOfWeek(dayOfWeek: Int, firstDayOfWeek: Int = DayOfWeek.MONDAY.getValue): Int = {
+  private[sparkts] def rebaseDayOfWeek(
+      dayOfWeek: Int,
+      firstDayOfWeek: Int = DayOfWeek.MONDAY.getValue): Int = {
     (dayOfWeek - firstDayOfWeek + DayOfWeek.MONDAY.getValue +
       DayOfWeek.values.length - 1) % DayOfWeek.values.length + 1
   }
@@ -677,7 +660,7 @@ object DateTimeIndex {
   /**
    * Finds the next business day occurring at or after the given date-time.
    */
-  def nextBusinessDay(
+  private[sparkts] def nextBusinessDay(
       dt: ZonedDateTime,
       firstDayOfWeek: Int = DayOfWeek.MONDAY.getValue): ZonedDateTime = {
     val rebasedDayOfWeek = rebaseDayOfWeek(dt.getDayOfWeek.getValue)
