@@ -140,8 +140,9 @@ private[sparkts] object TimeSeriesUtils {
 
     vec: Vector[Double] => {
       val vecRelevant: Iterator[Double] = vec(startLocInSourceVec until vec.length).valuesIterator
-      val iter = iterateWithUniformFrequency(dtsRelevant.map(dts => longToZonedDateTime(dts)).
-        zip(vecRelevant), targetIndex.frequency, defaultValue)
+      val iter = iterateWithUniformFrequency(dtsRelevant.map(dts =>
+        longToZonedDateTime(dts, targetIndex.zone))
+        .zip(vecRelevant), targetIndex.frequency, defaultValue)
 
       val resultArr = new Array[Double](targetIndex.size)
       for (i <- 0 until targetIndex.size) {
