@@ -240,7 +240,7 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector)])
   def toInstants(nPartitions: Int = -1): RDD[(ZonedDateTime, Vector)] = {
     // Construct a pre-shuffle RDD where each element is a snippet of a sample, i.e. a set of
     // observations that all correspond to the same timestamp.  Each key is a tuple of
-    // (date-time loc in date-time index, position of snippet in full sample)
+    // (date-time loc in date-time index, original partition ID, chunk ID)
     val maxChunkSize = 20
     val dividedOnMapSide = mapPartitionsWithIndex { case (partitionId, iter) =>
       new Iterator[((Int, Int, Int), Vector)] {
@@ -283,12 +283,16 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector)])
     }
     implicit val ordering = new Ordering[(Int, Int, Int)] {
       override def compare(a: (Int, Int, Int), b: (Int, Int, Int)): Int = {
-        if (a._1 - b._1 != 0) {
-          a._1 - b._1
-        } else if (a._2 - b._2 != 0) {
-          a._2 - b._2
+        val diff1 = a._1 - b._1
+        if (diff1 != 0) {
+          diff1
         } else {
-          a._3 - b._3
+          val diff2 = a._2 - b._2
+          if (diff2 != 0) {
+            diff2
+          } else {
+            a._3 - b._3
+          }
         }
       }
     }
