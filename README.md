@@ -7,9 +7,9 @@ A Scala / Java / Python library for interacting with time series data on Apache 
 
 Docs are available at http://cloudera.github.io/spark-timeseries.
 
-Scaladoc is available at http://cloudera.github.io/spark-timeseries/0.1.0/scaladocs/index.html.
+Scaladoc is available at http://cloudera.github.io/spark-timeseries/0.2.0/scaladocs/index.html.
 
-Python doc is available at http://cloudera.github.io/spark-timeseries/0.1.0/pydoc/py-modindex.html.
+Python doc is available at http://cloudera.github.io/spark-timeseries/0.2.0/pydoc/py-modindex.html.
 
 The aim here is to provide
 * A set of abstractions for manipulating large time series data sets, similar to
@@ -150,7 +150,7 @@ To build a Python source distribution, first build with Maven, then:
     cd python
     python setup.py sdist
 
-To release Java/Scala packages (based on [http://oryxproject.github.io/oryx/docs/how-to-release.html]):
+To release Java/Scala packages (based on http://oryxproject.github.io/oryx/docs/how-to-release.html):
 
     mvn -Darguments="-DskipTests" -DreleaseVersion=$VERSION \
         -DdevelopmentVersion=$VERSION-SNAPSHOT release:prepare
