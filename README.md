@@ -9,6 +9,8 @@ Docs are available at http://cloudera.github.io/spark-timeseries.
 
 Scaladoc is available at http://cloudera.github.io/spark-timeseries/0.2.0/scaladocs/index.html.
 
+Javadoc is available at http://cloudera.github.io/spark-timeseries/0.2.0/apidocs/index.html.
+
 Python doc is available at http://cloudera.github.io/spark-timeseries/0.2.0/pydoc/py-modindex.html.
 
 The aim here is to provide
