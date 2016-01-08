@@ -126,6 +126,9 @@ to as DOCS_REPO.  Then:
     # Build scaladoc
     mvn scala:doc
     
+    # Build javadoc
+    mvn javadoc:javadoc
+
     # Build Python doc
     cd python
     export SPARK_HOME=<location of local Spark installation>
@@ -146,4 +149,13 @@ To build a Python source distribution, first build with Maven, then:
     cp target/sparkts-$VERSION-jar-with-dependencies.jar python/sparkts/
     cd python
     python setup.py sdist
+
+To release Java/Scala packages (based on [http://oryxproject.github.io/oryx/docs/how-to-release.html]):
+
+    mvn -Darguments="-DskipTests" -DreleaseVersion=$VERSION \
+        -DdevelopmentVersion=$VERSION-SNAPSHOT release:prepare
+
+    mvn -s private-settings.xml -Darguments="-DskipTests" release:perform
+
+
 
