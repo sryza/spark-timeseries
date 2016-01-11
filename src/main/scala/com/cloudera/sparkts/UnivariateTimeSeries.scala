@@ -145,8 +145,29 @@ object UnivariateTimeSeries {
       case "next" => fillNext(ts)
       case "previous" => fillPrevious(ts)
       case "spline" => fillSpline(ts)
+      case "zero" => fillValue(ts, 0)
       case _ => throw new UnsupportedOperationException()
     }
+  }
+
+  /**
+   * Replace all NaNs with a specific value
+   */
+  def fillValue(values: Array[Double], filler: Double): Array[Double] = {
+    fillValue(new DenseVector(values), filler).data
+  }
+
+  /**
+   * Replace all NaNs with a specific value
+   */
+  def fillValue(values: Vector[Double], filler: Double): DenseVector[Double] = {
+    val result = new DenseVector(values.toArray)
+    var i = 0
+    while (i < result.length) {
+      if (result(i).isNaN) result(i) = filler
+      i += 1
+    }
+    result
   }
 
   def fillNearest(values: Array[Double]): Array[Double] = {
