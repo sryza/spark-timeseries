@@ -39,13 +39,13 @@ trait Frequency extends Serializable {
 }
 
 class DurationFrequency(val duration: Duration) extends Frequency {
-  val durationNanos = duration.getSeconds * 1000000000 + duration.getNano
+  val durationNanos = duration.getSeconds * 1000000000L + duration.getNano
 
   def advance(dt: ZonedDateTime, n: Int): ZonedDateTime = dt.plus(duration.multipliedBy(n))
 
   override def difference(dt1: ZonedDateTime, dt2: ZonedDateTime): Int = {
     val between = Duration.between(dt1, dt2)
-    val betweenNanos = between.getSeconds * 1000000000 + between.getNano
+    val betweenNanos = between.getSeconds * 1000000000L + between.getNano
     (betweenNanos / durationNanos).toInt
   }
 
@@ -92,8 +92,8 @@ class MonthFrequency(val months: Int)
   extends PeriodFrequency(Period.ofMonths(months)) {
 
   override def difference(dt1: ZonedDateTime, dt2: ZonedDateTime): Int = {
-    val period = Period.between(dt1.toLocalDate, dt2.toLocalDate)
-    period.getMonths / months
+    val diffMonths = ChronoUnit.MONTHS.between(dt1.toLocalDate, dt2.toLocalDate)
+    (diffMonths / months).toInt
   }
 
   override def toString: String = s"months $months"
@@ -103,8 +103,8 @@ class YearFrequency(val years: Int)
   extends PeriodFrequency(Period.ofYears(years)) {
 
   override def difference(dt1: ZonedDateTime, dt2: ZonedDateTime): Int = {
-    val period = Period.between(dt1.toLocalDate, dt2.toLocalDate)
-    period.getYears / years
+    val diffYears = ChronoUnit.YEARS.between(dt1.toLocalDate, dt2.toLocalDate)
+    (diffYears / years).toInt
   }
 
   override def toString: String = s"years $years"
@@ -114,8 +114,9 @@ class DayFrequency(val days: Int)
   extends PeriodFrequency(Period.ofDays(days)) {
 
   override def difference(dt1: ZonedDateTime, dt2: ZonedDateTime): Int = {
-    val period = Period.between(dt1.toLocalDate, dt2.toLocalDate)
-    period.getDays / days
+    val diffDays = ChronoUnit.DAYS.between(dt1, dt2)
+
+    (diffDays / days).toInt
   }
 
   override def toString: String = s"days $days"
