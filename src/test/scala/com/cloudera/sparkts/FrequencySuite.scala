@@ -107,10 +107,8 @@ class FrequencySuite extends FunSuite with ShouldMatchers {
   }
 
   test("duration difference") {
-    // Test for single day freq
     val nanoFreq = new DurationFrequency(Duration.ofNanos(1))
-    val durFreq2 = new DurationFrequency(Duration.ofNanos(2))
-
+    val nanoFreq2 = new DurationFrequency(Duration.ofNanos(2))
     val secondsFreq = new DurationFrequency(Duration.ofSeconds(1))
 
     val aTime = ZonedDateTime.of(2015, 4, 7, 0, 0, 0, 100000, ZoneId.of("Z"))
@@ -128,20 +126,20 @@ class FrequencySuite extends FunSuite with ShouldMatchers {
     secondsFreq.difference(aTime.plusSeconds(5e3.toLong), aTime) should be(-5e3)
 
     //Ensure that countBy2 works
-    durFreq2.difference(aTime, aTime.plusNanos(5e3.toLong)) should be(2.5e3)
-    durFreq2.difference(aTime.plusNanos(5e3.toLong), aTime) should be(-2.5e3)
+    nanoFreq2.difference(aTime, aTime.plusNanos(5e3.toLong)) should be(2.5e3)
+    nanoFreq2.difference(aTime.plusNanos(5e3.toLong), aTime) should be(-2.5e3)
 
     // Ensure that rolling over milliseconds works
-    durFreq2.difference(aTime, aTime.plusNanos(5e6.toLong)) should be(2.5e6)
-    durFreq2.difference(aTime.plusNanos(5e6.toLong), aTime) should be(-2.5e6)
+    nanoFreq2.difference(aTime, aTime.plusNanos(5e6.toLong)) should be(2.5e6)
+    nanoFreq2.difference(aTime.plusNanos(5e6.toLong), aTime) should be(-2.5e6)
 
     //TODO This will roll-over and cause numerical errors for any difference > MAX_INT
   }
 
   test("month difference") {
-    // Test for single day freq
     val monthFreq = new MonthFrequency(1)
     val monthFreq2 = new MonthFrequency(2)
+    val monthFreq24 = new MonthFrequency(24)
 
     val aTuesday = ZonedDateTime.of(2015, 4, 7, 0, 0, 0, 0, ZoneId.of("Z"))
     // Ensure rolling over days works
@@ -160,21 +158,114 @@ class FrequencySuite extends FunSuite with ShouldMatchers {
     monthFreq.difference(aTuesday.plusDays(400), aTuesday) should be(-13)
 
     // Ensure count by 2 works
-    monthFreq.difference(aTuesday, aTuesday.plusDays(40)) should be(0)
-    monthFreq.difference(aTuesday.plusDays(40), aTuesday) should be(0)
+    monthFreq2.difference(aTuesday, aTuesday.plusDays(40)) should be(0)
+    monthFreq2.difference(aTuesday.plusDays(40), aTuesday) should be(0)
 
-    monthFreq.difference(aTuesday, aTuesday.plusDays(80)) should be(1)
-    monthFreq.difference(aTuesday.plusDays(80), aTuesday) should be(-1)
+    monthFreq2.difference(aTuesday, aTuesday.plusDays(80)) should be(1)
+    monthFreq2.difference(aTuesday.plusDays(80), aTuesday) should be(-1)
 
     // Ensure that rolling over months works
-    monthFreq.difference(aTuesday, aTuesday.plusDays(130)) should be(2)
-    monthFreq.difference(aTuesday.plusDays(130), aTuesday) should be(-2)
+    monthFreq2.difference(aTuesday, aTuesday.plusDays(130)) should be(2)
+    monthFreq2.difference(aTuesday.plusDays(130), aTuesday) should be(-2)
 
     //Ensure that rolling over years works
-    monthFreq.difference(aTuesday, aTuesday.plusDays(770)) should be(13)
-    monthFreq.difference(aTuesday.plusDays(770), aTuesday) should be(-13)
+    monthFreq2.difference(aTuesday, aTuesday.plusDays(790 + 6)) should be(13)
+    monthFreq2.difference(aTuesday.plusDays(790 + 6), aTuesday) should be(-13)
 
+    // Ensure long periods works
+    monthFreq24.difference(aTuesday, aTuesday.plusMonths(24*15)) should be(15)
+    monthFreq24.difference(aTuesday, aTuesday.plusMonths(24*30)) should be(30)
   }
+
+  test("day difference") {
+    // Test for single day freq
+    val dayFreq = new DayFrequency(1)
+    val dayFreq2 = new DayFrequency(2)
+    val dayFreq24 = new DayFrequency(24)
+
+    val aTuesday = ZonedDateTime.of(2015, 4, 7, 0, 0, 0, 0, ZoneId.of("Z"))
+    // Ensure rolling over days works
+    dayFreq.difference(aTuesday, aTuesday.plusDays(20)) should be(20)
+    dayFreq.difference(aTuesday.plusDays(20), aTuesday) should be(-20)
+
+    dayFreq.difference(aTuesday, aTuesday.plusDays(40)) should be(40)
+    dayFreq.difference(aTuesday.plusDays(40), aTuesday) should be(-40)
+
+    // Ensure that rolling over months works
+    dayFreq.difference(aTuesday, aTuesday.plusDays(70)) should be(70)
+    dayFreq.difference(aTuesday.plusDays(70), aTuesday) should be(-70)
+
+    //Ensure that rolling over years works
+    dayFreq.difference(aTuesday, aTuesday.plusDays(400)) should be(400)
+    dayFreq.difference(aTuesday.plusDays(400), aTuesday) should be(-400)
+
+    // Ensure count by 2 works
+    dayFreq2.difference(aTuesday, aTuesday.plusDays(40)) should be(20)
+    dayFreq2.difference(aTuesday.plusDays(40), aTuesday) should be(-20)
+
+    dayFreq2.difference(aTuesday, aTuesday.plusDays(80)) should be(40)
+    dayFreq2.difference(aTuesday.plusDays(80), aTuesday) should be(-40)
+
+    // Ensure that rolling over months works
+    dayFreq2.difference(aTuesday, aTuesday.plusDays(130)) should be(65)
+    dayFreq2.difference(aTuesday.plusDays(130), aTuesday) should be(-65)
+
+    //Ensure that rolling over years works
+    dayFreq2.difference(aTuesday, aTuesday.plusDays(796)) should be(398)
+    dayFreq2.difference(aTuesday.plusDays(796), aTuesday) should be(-398)
+
+    // Ensure long periods works
+    dayFreq24.difference(aTuesday, aTuesday.plusDays(24 * 15)) should be(15)
+    dayFreq24.difference(aTuesday, aTuesday.plusDays(24 * 30)) should be(30)
+  }
+
+  test("year difference") {
+    // Test for single day freq
+    val yearFreq = new YearFrequency(1)
+    val yearFreq2 = new YearFrequency(2)
+    val yearFrea24 = new YearFrequency(24)
+
+    val aTuesday = ZonedDateTime.of(2015, 4, 7, 0, 0, 0, 0, ZoneId.of("Z"))
+    // Ensure rolling over days works
+    yearFreq.difference(aTuesday, aTuesday.plusYears(20)) should be(20)
+    yearFreq.difference(aTuesday.plusYears(20), aTuesday) should be(-20)
+
+    yearFreq.difference(aTuesday, aTuesday.plusYears(40)) should be(40)
+    yearFreq.difference(aTuesday.plusYears(40), aTuesday) should be(-40)
+
+    // Ensure that rolling over months works
+    yearFreq.difference(aTuesday, aTuesday.plusYears(70)) should be(70)
+    yearFreq.difference(aTuesday.plusYears(70), aTuesday) should be(-70)
+
+    //Ensure that rolling over years works
+    yearFreq.difference(aTuesday, aTuesday.plusYears(400)) should be(400)
+    yearFreq.difference(aTuesday.plusYears(400), aTuesday) should be(-400)
+
+    //Ensure that rolling over by days works
+    yearFreq.difference(aTuesday, aTuesday.plusDays(796)) should be(2)
+    yearFreq.difference(aTuesday.plusDays(796), aTuesday) should be(-2)
+
+    // Ensure count by 2 works
+    yearFreq2.difference(aTuesday, aTuesday.plusYears(40)) should be(20)
+    yearFreq2.difference(aTuesday.plusYears(40), aTuesday) should be(-20)
+
+    yearFreq2.difference(aTuesday, aTuesday.plusYears(80)) should be(40)
+    yearFreq2.difference(aTuesday.plusYears(80), aTuesday) should be(-40)
+
+    // Ensure that rolling over months works
+    yearFreq2.difference(aTuesday, aTuesday.plusYears(130)) should be(65)
+    yearFreq2.difference(aTuesday.plusYears(130), aTuesday) should be(-65)
+
+    //Ensure that rolling over years works
+    yearFreq2.difference(aTuesday, aTuesday.plusYears(796)) should be(398)
+    yearFreq2.difference(aTuesday.plusYears(796), aTuesday) should be(-398)
+
+
+    // Ensure long periods works
+    yearFrea24.difference(aTuesday, aTuesday.plusYears(24 * 15)) should be(15)
+    yearFrea24.difference(aTuesday, aTuesday.plusYears(24 * 30)) should be(30)
+  }
+
 
 
 }
