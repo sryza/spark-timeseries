@@ -18,7 +18,6 @@ package com.cloudera.sparkts
 import java.time.{ZonedDateTime, ZoneId}
 
 import com.cloudera.sparkts.DateTimeIndex._
-import com.cloudera.sparkts.DateTimeIndexUtils._
 import org.scalatest.{FunSuite, ShouldMatchers}
 
 class DateTimeIndexUtilsSuite extends FunSuite with ShouldMatchers {
@@ -35,7 +34,7 @@ class DateTimeIndexUtilsSuite extends FunSuite with ShouldMatchers {
       dt("2015-06-25")
     ), UTC)
 
-    union(Array(index1, index2, index3), UTC) should be (
+    DateTimeIndexUtils.union(Array(index1, index2, index3), UTC) should be (
       hybrid(Array(index1, index2, index3)))
   }
 
@@ -50,7 +49,7 @@ class DateTimeIndexUtilsSuite extends FunSuite with ShouldMatchers {
       dt("2015-06-25")
     ), UTC)
 
-    union(Array(index3, index1, index2), UTC) should be (
+    DateTimeIndexUtils.union(Array(index3, index1, index2), UTC) should be (
       hybrid(Array(index1, index2, index3)))
   }
 
@@ -65,7 +64,7 @@ class DateTimeIndexUtilsSuite extends FunSuite with ShouldMatchers {
       dt("2015-06-25")
     ), UTC)
 
-    union(Array(index3, index1, index2), UTC) should be (
+    DateTimeIndexUtils.union(Array(index3, index1, index2), UTC) should be (
       hybrid(Array(
         irregular(Array(
           dt("2015-04-09"),

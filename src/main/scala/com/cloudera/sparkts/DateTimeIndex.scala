@@ -722,6 +722,20 @@ object DateTimeIndex {
   }
 
   /**
+   * Unions the given indices into a single index at the default date-time zone
+   */
+  def union(indices: Array[DateTimeIndex]): DateTimeIndex = {
+    DateTimeIndexUtils.union(indices)
+  }
+
+  /**
+   * Unions the given indices into a single index at the given date-time zone
+   */
+  def union(indices: Array[DateTimeIndex], zone: ZoneId): DateTimeIndex = {
+    DateTimeIndexUtils.union(indices, zone)
+  }
+
+  /**
    * Given the ISO index of the day of week, the method returns the day
    * of week index relative to the first day of week i.e. assuming the
    * the first day of week is the base index and has the value of 1

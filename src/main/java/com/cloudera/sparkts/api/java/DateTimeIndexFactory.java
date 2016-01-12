@@ -139,6 +139,20 @@ public final class DateTimeIndexFactory {
     }
 
     /**
+     * Unions the given indices into a single index at the default date-time zone
+     */
+    public static DateTimeIndex union(DateTimeIndex[] indices) {
+        return DATE_TIME_INDEX.union(indices);
+    }
+
+    /**
+     * Unions the given indices into a single index at the given date-time zone
+     */
+    public static DateTimeIndex union(DateTimeIndex[] indices, ZoneId zone) {
+        return DATE_TIME_INDEX.union(indices, zone);
+    }
+
+    /**
      * Finds the next business day occurring at or after the given date-time.
      */
     public static ZonedDateTime nextBusinessDay(ZonedDateTime dt, int firstDayOfWeek) {
