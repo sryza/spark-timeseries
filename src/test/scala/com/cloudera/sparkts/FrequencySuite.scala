@@ -265,7 +265,4 @@ class FrequencySuite extends FunSuite with ShouldMatchers {
     yearFrea24.difference(aTuesday, aTuesday.plusYears(24 * 15)) should be(15)
     yearFrea24.difference(aTuesday, aTuesday.plusYears(24 * 30)) should be(30)
   }
-
-
-
 }
