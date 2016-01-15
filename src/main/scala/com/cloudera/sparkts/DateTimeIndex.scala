@@ -107,6 +107,21 @@ trait DateTimeIndex extends Serializable {
   def locAtDateTime(dt: Long): Int
 
   /**
+   * The location at which the given date-time could be inserted. It is the location of the first
+   * date-time that is greater than the given date-time. If the given date-time is greater than
+   * or equal to the last date-time in the index, the index size is returned.
+   */
+  def insertionLoc(dt: ZonedDateTime): Int
+
+  /**
+   * The location at which the given date-time, as milliseconds since the epoch, could be inserted.
+   * It is the location of the first date-time that is greater than the given date-time. If the
+   * given date-time is greater than or equal to the last date-time in the index, the index size
+   * is returned.
+   */
+  def insertionLoc(dt: Long): Int
+
+  /**
    * Returns the contents of the DateTimeIndex as an array of nanosecond values from the epoch.
    */
   def toNanosArray(): Array[Long]
@@ -125,6 +140,11 @@ trait DateTimeIndex extends Serializable {
    * Returns an iterator over the contents of the DateTimeIndex as ZonedDateTime
    */
   def zonedDateTimeIterator(): Iterator[ZonedDateTime]
+
+  /**
+   * Returns a new DateTimeIndex with instants at the specified zone
+   */
+  def atZone(zone: ZoneId): DateTimeIndex
 }
 
 /**
@@ -184,6 +204,25 @@ class UniformDateTimeIndex(
     locAtDateTime(longToZonedDateTime(dt, dateTimeZone))
   }
 
+  override def insertionLoc(dt: ZonedDateTime): Int = {
+    val loc = frequency.difference(first, dt)
+    if (loc >= 0 && loc < size) {
+      if (dateTimeAtLoc(loc).compareTo(dt) <= 0) {
+        loc + 1
+      } else {
+        loc
+      }
+    } else if (loc < 0) {
+      0
+    } else {
+      size
+    }
+  }
+
+  override def insertionLoc(dt: Long): Int = {
+    insertionLoc(longToZonedDateTime(dt, dateTimeZone))
+  }
+
   override def toNanosArray(): Array[Long] = {
     val arr = new Array[Long](periods)
     for (i <- 0 until periods) {
@@ -221,6 +260,10 @@ class UniformDateTimeIndex(
 
   override def zonedDateTimeIterator(): Iterator[ZonedDateTime] = {
     (0 until periods).view.map(frequency.advance(start, _)).iterator
+  }
+
+  override def atZone(zone: ZoneId): UniformDateTimeIndex = {
+    new UniformDateTimeIndex(start.withZoneSameInstant(zone), periods, frequency, zone)
   }
 }
 
@@ -278,6 +321,21 @@ class IrregularDateTimeIndex(
     if (loc < 0) -1 else loc
   }
 
+  override def insertionLoc(dt: ZonedDateTime): Int = {
+    insertionLoc(zonedDateTimeToLong(dt))
+  }
+
+  override def insertionLoc(dt: Long): Int = {
+    var loc = java.util.Arrays.binarySearch(instants, dt)
+    if (loc >= 0) {
+      do loc += 1
+      while (loc < size && instants(loc) == dt)
+      loc
+    } else {
+      -loc - 1
+    }
+  }
+
   override def toNanosArray(): Array[Long] = {
     instants
   }
@@ -307,6 +365,10 @@ class IrregularDateTimeIndex(
   override def zonedDateTimeIterator(): Iterator[ZonedDateTime] = {
     instants.iterator.map(longToZonedDateTime(_, dateTimeZone))
   }
+
+  override def atZone(zone: ZoneId): IrregularDateTimeIndex = {
+    new IrregularDateTimeIndex(instants, zone)
+  }
 }
 
 /**
@@ -334,8 +396,8 @@ class HybridDateTimeIndex(
   override def slice(start: ZonedDateTime, end: ZonedDateTime): HybridDateTimeIndex = {
     require(start.isBefore(end), s"start($start) should be less than end($end)")
 
-    val startIndex = binarySearch(0, indices.length - 1, start)
-    val endIndex = binarySearch(0, indices.length - 1, end)
+    val startIndex = binarySearch(0, indices.length - 1, start)._1
+    val endIndex = binarySearch(0, indices.length - 1, end)._1
 
     val newIndices =
       if (startIndex == endIndex) {
@@ -431,24 +493,47 @@ class HybridDateTimeIndex(
   }
 
   override def locAtDateTime(dt: ZonedDateTime): Int = {
-    val i = binarySearch(0, indices.length - 1, dt)
-    if (i < 0) {
-      -1
-    } else {
+    val i = binarySearch(0, indices.length - 1, dt)._1
+    if (i > -1) {
       val loc = indices(i).locAtDateTime(dt)
-      if (loc >= 0) {
+      if (loc > -1) {
         sizeOnLeft(i) + loc
       } else {
         -1
       }
+    } else {
+      -1
     }
   }
 
-  override def locAtDateTime(dt: Long): Int =
+  override def locAtDateTime(dt: Long): Int = {
     locAtDateTime(longToZonedDateTime(dt, dateTimeZone))
+  }
 
+  override def insertionLoc(dt: ZonedDateTime): Int = {
+    val loc = binarySearch(0, indices.length - 1, dt)._2
+    if (loc >= 0) {
+      sizeOnLeft(loc) + indices(loc).insertionLoc(dt)
+    } else if (dt.isBefore(first)) {
+      0
+    } else {
+      size
+    }
+  }
+
+  override def insertionLoc(dt: Long): Int = {
+    insertionLoc(longToZonedDateTime(dt, dateTimeZone))
+  }
+
+  /**
+   * Returns a tuple (a, b):
+   *  a: is the array index of the date-time index that contains the queried date-time dt
+   *     or -1 if dt is not found. This value is used by locAtDateTime method.
+   *  b: is the array index of the date-time index where the queried date-time dt could
+   *     be inserted. This value is used by insertionLoc method.
+   */
   @tailrec
-  private def binarySearch(low: Int, high: Int, dt: ZonedDateTime): Int = {
+  private def binarySearch(low: Int, high: Int, dt: ZonedDateTime): (Int, Int) = {
     if (low <= high) {
       val mid = (low + high) >>> 1
       val midIndex = indices(mid)
@@ -457,10 +542,20 @@ class HybridDateTimeIndex(
       } else if (dt.isAfter(midIndex.last)) {
         binarySearch(mid + 1, high, dt)
       } else {
-        mid
+        (mid, mid)
       }
     } else {
-      -1
+      // if coming from the call "binarySearch(low, mid - 1, dt)"
+      // on the condition "if (dt.isBefore(midIndex.first))"
+      if (high >= 0 && dt.isAfter(indices(high).last)) {
+        (-1, high)
+        // if coming from the call "binarySearch(mid + 1, high, dt)"
+        // on the condition "if (dt.isAfter(midIndex.last))"
+      } else if (low < indices.length && dt.isBefore(indices(low).first)) {
+        (-1, low)
+      } else {
+        (-1, -1)
+      }
     }
   }
 
@@ -492,6 +587,10 @@ class HybridDateTimeIndex(
 
   override def zonedDateTimeIterator(): Iterator[ZonedDateTime] = {
     indices.foldLeft(Iterator[ZonedDateTime]())(_ ++ _.zonedDateTimeIterator)
+  }
+
+  override def atZone(zone: ZoneId): HybridDateTimeIndex = {
+    new HybridDateTimeIndex(indices.map(_.atZone(zone)), zone)
   }
 }
 
@@ -620,6 +719,20 @@ object DateTimeIndex {
     val zone = indices.head.zone
     require(indices.forall(_.zone.equals(zone)), "All indices should have the same zone")
     new HybridDateTimeIndex(indices, zone)
+  }
+
+  /**
+   * Unions the given indices into a single index at the default date-time zone
+   */
+  def union(indices: Array[DateTimeIndex]): DateTimeIndex = {
+    DateTimeIndexUtils.union(indices)
+  }
+
+  /**
+   * Unions the given indices into a single index at the given date-time zone
+   */
+  def union(indices: Array[DateTimeIndex], zone: ZoneId): DateTimeIndex = {
+    DateTimeIndexUtils.union(indices, zone)
   }
 
   /**
