@@ -47,7 +47,7 @@ import org.apache.spark.mllib.linalg.{DenseVector, Vector}
  */
 object ARIMA {
   /**
-   * Given a time series, fit a non-seasonal ARIMA model of order (p, d, q), where p represents
+   * Given a time zeries, fit a non-seasonal ARIMA model of order (p, d, q), where p represents
    * the autoregression terms, d represents the order of differencing, and q moving average error
    * terms. If includeIntercept is true, the model is fitted with an intercept. In order to select
    * the appropriate order of the model, users are advised to inspect ACF and PACF plots, or compare
