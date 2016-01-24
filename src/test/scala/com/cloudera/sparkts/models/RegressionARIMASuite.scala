@@ -9,29 +9,13 @@ import org.scalatest.{FunSuite, ShouldMatchers}
  * Created by baddar on 1/17/16.
  */
 class RegressionARIMASuite extends FunSuite with ShouldMatchers {
+
   /**
    * Test cochrane orchutt method
    * ref:
    * https://onlinecourses.science.psu.edu/stat501/node/365
    */
-  test("Cohchrane-Orcutt-EmpData-Without-MaxIter") {
 
-    val metal: Array[Double] = Array(44.2, 44.3, 44.4, 43.4, 42.8, 44.3, 44.4, 44.8, 44.4, 43.1, 42.6, 42.4, 42.2, 41.8, 40.1, 42
-      , 42.4, 43.1, 42.4, 43.1, 43.2, 42.8, 43, 42.8, 42.5, 42.6, 42.3, 42.9, 43.6, 44.7, 44.5, 45, 44.8, 44.9, 45.2, 45.2, 45, 45.5
-      , 46.2, 46.8, 47.5, 48.3, 48.3, 49.1, 48.9, 49.4, 50, 50, 49.6, 49.9, 49.6, 50.7, 50.7, 50.9, 50.5, 51.2, 50.7, 50.3, 49.2, 48.1)
-
-    val vendor: Array[Double] = Array(322.0, 317, 319, 323, 327, 328, 325, 326, 330, 334, 337, 341, 322, 318, 320, 326, 332, 334, 335, 336, 335, 338, 342, 348
-      , 330, 326, 329, 337, 345, 350, 351, 354, 355, 357, 362, 368, 348, 345, 349, 355, 362, 367, 366, 370, 371, 375, 380, 385, 361, 354, 357, 367
-      , 376, 381, 381, 383, 384, 387, 392, 396)
-    val Y: linalg.DenseVector[Double] = linalg.DenseVector(metal)
-    val regressors = new DenseMatrix[Double](vendor.length, 1)
-    regressors(::, 0) := linalg.DenseVector(vendor)
-    val regARIMA: RegressionARIMAModel = RegressionARIMA.fit(ts = Y, regressors = regressors
-      , method = RegressionARIMA.COCHRANE_ORCHUTT)
-    val beta: Array[Double] = regARIMA.getRegressionCoeff
-    beta(0) should equal(28.918 +- 0.01)
-    beta(1) should equal(0.0479 +- 0.001)
-  }
   test("Cohchrane-Orcutt-EmpData-With-MaxIter") {
 
     val metal: Array[Double] = Array(44.2, 44.3, 44.4, 43.4, 42.8, 44.3, 44.4, 44.8, 44.4, 43.1, 42.6, 42.4, 42.2, 41.8, 40.1, 42
