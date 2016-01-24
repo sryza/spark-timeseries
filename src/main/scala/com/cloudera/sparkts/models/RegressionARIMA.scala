@@ -126,7 +126,7 @@ object RegressionARIMA {
       //residuals auto correlated ?
       val isResAR = isAutoCorrelated(transformedRegResiduals)
       //exceeded maximum iterations
-      val exceededMaxIter = iter > maxIter
+      val exceededMaxIter = iter >= maxIter
       //values of rho converged
       val rhosConverged = if (iter >= 2) {
         Math.abs(rhos(iter - 1) - rhos(iter - 2)) <= rhoDiffThr
