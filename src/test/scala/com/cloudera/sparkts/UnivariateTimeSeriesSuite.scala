@@ -19,7 +19,7 @@ import com.cloudera.sparkts.models.ARModel
 
 import scala.Double.NaN
 
-import breeze.linalg._
+import org.apache.spark.mllib.linalg._
 
 import com.cloudera.sparkts.UnivariateTimeSeries._
 
@@ -29,13 +29,13 @@ import org.scalatest.{FunSuite, ShouldMatchers}
 
 class UnivariateTimeSeriesSuite extends FunSuite with ShouldMatchers {
   test("lagIncludeOriginalsTrue") {
-    val lagMatrix = UnivariateTimeSeries.lag(Vector(1.0, 2.0, 3.0, 4.0, 5.0), 2, true)
-    lagMatrix should be (DenseMatrix((3.0, 2.0, 1.0), (4.0, 3.0, 2.0), (5.0, 4.0, 3.0)))
+    val lagMatrix = UnivariateTimeSeries.lag(Vectors.dense(1.0, 2.0, 3.0, 4.0, 5.0), 2, true)
+    lagMatrix should be (Matrices.dense(3, 3, Array(3.0, 4.0, 5.0, 2.0, 3.0, 4.0, 1.0, 2.0, 3.0)))
   }
 
   test("lagIncludeOriginalsFalse") {
-    val lagMatrix = UnivariateTimeSeries.lag(Vector(1.0, 2.0, 3.0, 4.0, 5.0), 2, false)
-    lagMatrix should be (DenseMatrix((2.0, 1.0), (3.0, 2.0), (4.0, 3.0)))
+    val lagMatrix = UnivariateTimeSeries.lag(Vectors.dense(1.0, 2.0, 3.0, 4.0, 5.0), 2, false)
+    lagMatrix should be (Matrices.dense(3, 2, Array(2.0, 3.0, 4.0, 1.0, 2.0, 3.0)))
   }
 
   test("lastNotNaN") {

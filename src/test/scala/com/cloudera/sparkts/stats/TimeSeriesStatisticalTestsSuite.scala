@@ -15,10 +15,10 @@
 
 package com.cloudera.sparkts.stats
 
-import breeze.linalg._
 import com.cloudera.sparkts.stats.TimeSeriesStatisticalTests._
 import org.apache.commons.math.stat.regression.OLSMultipleLinearRegression
 import org.apache.commons.math3.random.MersenneTwister
+import org.apache.spark.mllib.linalg._
 import org.scalatest.{FunSuite, ShouldMatchers}
 
 class TimeSeriesStatisticalTestsSuite extends FunSuite with ShouldMatchers {

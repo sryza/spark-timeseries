@@ -15,7 +15,7 @@
 
 package com.cloudera.sparkts.models
 
-import breeze.linalg._
+import org.apache.spark.mllib.linalg._
 import org.scalatest.{FunSuite, ShouldMatchers}
 
 class EWMASuite extends FunSuite with ShouldMatchers {

@@ -17,7 +17,9 @@ package com.cloudera.sparkts.models
 
 import java.util.Random
 
-import breeze.linalg._
+import com.cloudera.sparkts.MatrixUtil.toBreeze
+
+import org.apache.spark.mllib.linalg._
 import org.apache.commons.math3.random.MersenneTwister
 import org.scalatest.FunSuite
 
@@ -43,10 +45,10 @@ class AutoregressionSuite extends FunSuite {
 
   test("add and remove time dependent effects") {
     val rand = new Random()
-    val ts = new DenseVector[Double](Array.fill(1000)(rand.nextDouble()))
+    val ts = new DenseVector(Array.fill(1000)(rand.nextDouble()))
     val model = new ARModel(1.5, Array(.2, .3))
-    val added = model.addTimeDependentEffects(ts, DenseVector.zeros[Double](ts.length))
-    val removed = model.removeTimeDependentEffects(added, DenseVector.zeros[Double](ts.length))
-    assert((ts - removed).toArray.forall(math.abs(_) < .001))
+    val added = model.addTimeDependentEffects(ts, Vectors.zeros(ts.size))
+    val removed = model.removeTimeDependentEffects(added, Vectors.zeros(ts.size))
+    assert((toBreeze(ts) - toBreeze(removed)).toArray.forall(math.abs(_) < .001))
   }
 }

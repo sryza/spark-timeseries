@@ -15,8 +15,9 @@
 
 package com.cloudera.sparkts.models
 
-import breeze.linalg._
+import breeze.linalg.{DenseMatrix => BreezeDenseMatrix, DenseVector => BreezeDenseVector, diag, sum}
 import com.cloudera.sparkts.Lag
+import com.cloudera.sparkts.MatrixUtil.{toBreeze, dvBreezeToSpark}
 import com.cloudera.sparkts.UnivariateTimeSeries.{differencesOfOrderD, inverseDifferencesOfOrderD}
 import org.apache.commons.math3.analysis.solvers.LaguerreSolver
 import org.apache.commons.math3.analysis.{MultivariateFunction, MultivariateVectorFunction}
@@ -28,6 +29,7 @@ import org.apache.commons.math3.optim.{InitialGuess, MaxEval, MaxIter, SimpleBou
    SimpleValueChecker}
 import org.apache.commons.math3.random.RandomGenerator
 import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression
+import org.apache.spark.mllib.linalg.{DenseVector, Vector}
 
 /**
  * ARIMA models allow modeling timeseries as a function of prior values of the series
@@ -71,7 +73,7 @@ object ARIMA {
       p: Int,
       d: Int,
       q: Int,
-      ts: Vector[Double],
+      ts: Vector,
       includeIntercept: Boolean = true,
       method: String = "css-cgd",
       userInitParams: Array[Double] = null): ARIMAModel = {
@@ -260,7 +262,7 @@ class ARIMAModel(
    * @param y time series
    * @return log likelihood
    */
-  def logLikelihoodCSS(y: Vector[Double]): Double = {
+  def logLikelihoodCSS(y: Vector): Double = {
     val diffedY = differencesOfOrderD(y, d).toArray.drop(d)
     logLikelihoodCSSARMA(diffedY)
   }
@@ -274,10 +276,10 @@ class ARIMAModel(
    */
   def logLikelihoodCSSARMA(diffedY: Array[Double]): Double = {
     val n = diffedY.length
-    val yHat = new DenseVector(Array.fill(n)(0.0))
+    val yHat = new BreezeDenseVector(Array.fill(n)(0.0))
     val yVec = new DenseVector(diffedY)
 
-    iterateARMA(yVec,  yHat, _ + _, goldStandard = yVec)
+    iterateARMA(yVec, yHat, _ + _, goldStandard = yVec)
 
     val maxLag = math.max(p, q)
     // drop first maxLag terms, since we can't estimate residuals there, since no
@@ -309,7 +311,7 @@ class ARIMAModel(
   def gradientlogLikelihoodCSSARMA(diffedY: Array[Double]): Array[Double] = {
     val n = diffedY.length
     // fitted
-    val yHat = new DenseVector(Array.fill(n)(0.0))
+    val yHat = new BreezeDenseVector[Double](Array.fill(n)(0.0))
     // reference values (i.e. gold standard)
     val yRef = new DenseVector(diffedY)
     val maxLag = math.max(p, q)
@@ -317,8 +319,8 @@ class ARIMAModel(
     val maTerms = Array.fill(q)(0.0)
 
     // matrix of error derivatives at time t - 0, t - 1, ... t - q
-    val dEdTheta = new DenseMatrix[Double](q + 1, coefficients.length)
-    val gradient = new DenseVector(Array.fill(coefficients.length)(0.0))
+    val dEdTheta = new BreezeDenseMatrix[Double](q + 1, coefficients.length)
+    val gradient = new BreezeDenseVector[Double](Array.fill(coefficients.length)(0.0))
 
     // error-related
     var error = 0.0
@@ -421,19 +423,19 @@ class ARIMAModel(
    *         coefficients
    */
   private def iterateARMA(
-      ts: Vector[Double],
-      dest: Vector[Double],
+      ts: Vector,
+      dest: BreezeDenseVector[Double],
       op: (Double, Double) => Double,
-      goldStandard: Vector[Double] = null,
-      errors: Vector[Double] = null,
-      initMATerms: Array[Double] = null): Vector[Double] = {
+      goldStandard: Vector = null,
+      errors: Vector = null,
+      initMATerms: Array[Double] = null): BreezeDenseVector[Double] = {
     require(goldStandard != null || errors != null, "goldStandard or errors must be passed in")
     val maTerms = if (initMATerms == null) Array.fill(q)(0.0) else initMATerms
     val intercept = if (hasIntercept) 1 else 0
     // maximum lag
     var i = math.max(p, q)
     var j = 0
-    val n = ts.length
+    val n = ts.size
     var error = 0.0
 
     while (i < n) {
@@ -467,18 +469,20 @@ class ARIMAModel(
    * @param ts Time series of observations with this model's characteristics.
    * @return The dest series, representing remaining errors, for convenience.
    */
-  def removeTimeDependentEffects(ts: Vector[Double], destTs: Vector[Double]): Vector[Double] = {
+  def removeTimeDependentEffects(ts: Vector, destTs: Vector): Vector = {
     // difference as necessary
     val diffed = differencesOfOrderD(ts, d)
     val maxLag = math.max(p, q)
     val interceptAmt = if (hasIntercept) coefficients(0) else 0.0
     // extend vector so that initial AR(maxLag) are equal to intercept value
-    val diffedExtended = new DenseVector(Array.fill(maxLag)(interceptAmt) ++ diffed.toArray)
+    val diffedExtended = new BreezeDenseVector[Double](
+      Array.fill(maxLag)(interceptAmt) ++ diffed.toArray)
     val changes = diffedExtended.copy
     // changes(i) corresponds to the error term at index i, since when it is used we will have
     // removed AR and MA terms at index i
     iterateARMA(diffedExtended, changes, _ - _, errors = changes)
-    destTs := changes(maxLag to -1)
+    val breezeDestTs = toBreeze(destTs)
+    toBreeze(destTs) := changes(maxLag to -1)
     destTs
   }
 
@@ -490,17 +494,17 @@ class ARIMAModel(
    * @return The dest series, representing the application of the model to provided error
    *         terms, for convenience.
    */
-  def addTimeDependentEffects(ts: Vector[Double], destTs: Vector[Double]): Vector[Double] = {
+  def addTimeDependentEffects(ts: Vector, destTs: Vector): Vector = {
     val maxLag = math.max(p, q)
     val interceptAmt = if (hasIntercept) coefficients(0) else 0.0
     // extend vector so that initial AR(maxLag) are equal to intercept value
     // Recall iterateARMA begins at index maxLag, and uses previous values as AR terms
-    val changes = new DenseVector(Array.fill(maxLag)(interceptAmt) ++ ts.toArray)
+    val changes = new BreezeDenseVector[Double](Array.fill(maxLag)(interceptAmt) ++ ts.toArray)
     // ts corresponded to errors, and we want to use them
     val errorsProvided = changes.copy
     iterateARMA(changes, changes, _ + _, errors = errorsProvided)
     // drop assumed AR terms at start and perform any inverse differencing required
-    destTs := inverseDifferencesOfOrderD(changes(maxLag to -1), d)
+    toBreeze(destTs) := toBreeze(inverseDifferencesOfOrderD(changes(maxLag to -1), d))
     destTs
   }
 
@@ -509,7 +513,7 @@ class ARIMAModel(
    * @param n size of sample
    * @return series reflecting ARIMA(p, d, q) process
    */
-  def sample(n: Int, rand: RandomGenerator): Vector[Double] = {
+  def sample(n: Int, rand: RandomGenerator): Vector = {
     val vec = new DenseVector(Array.fill[Double](n)(rand.nextGaussian))
     addTimeDependentEffects(vec, vec)
   }
@@ -529,7 +533,7 @@ class ARIMAModel(
    *         `nFuture` periods of forecasts. Note that in the future values error terms become
    *         zero and prior predictions are used for any AR terms.
    */
-  def forecast(ts: Vector[Double], nFuture: Int): Vector[Double] = {
+  def forecast(ts: Vector, nFuture: Int): Vector = {
     val maxLag = math.max(p, q)
     // difference timeseries as necessary for model
     val diffedTs = new DenseVector(differencesOfOrderD(ts, d).toArray.drop(d))
@@ -537,8 +541,8 @@ class ARIMAModel(
     // Assumes prior AR terms are equal to model intercept
     val interceptAmt =  if (hasIntercept) coefficients(0) else 0.0
     val diffedTsExtended = new DenseVector(Array.fill(maxLag)(interceptAmt) ++ diffedTs.toArray)
-    val histLen = diffedTsExtended.length
-    val hist = new DenseVector(Array.fill(histLen)(0.0))
+    val histLen = diffedTsExtended.size
+    val hist = new BreezeDenseVector[Double](Array.fill(histLen)(0.0))
 
     // fit historical values (really differences in case of d > 0)
     iterateARMA(diffedTsExtended, hist, _ + _,  goldStandard = diffedTsExtended)
@@ -549,32 +553,32 @@ class ARIMAModel(
     }).toArray
 
     // copy over last maxLag values, to use in iterateARMA for forward curve
-    val forward = new DenseVector(Array.fill(nFuture + maxLag)(0.0))
+    val forward = new BreezeDenseVector[Double](Array.fill(nFuture + maxLag)(0.0))
     forward(0 until maxLag) := hist(-maxLag to -1)
     // use self as ts to take AR from same series, use self as goldStandard to induce future errors
     // of zero, and use prior moving average errors as initial error terms for MA
     iterateARMA(forward, forward, _ + _, goldStandard = forward, initMATerms = maTerms)
 
-    val results = new DenseVector(Array.fill(ts.length + nFuture)(0.0))
+    val results = new BreezeDenseVector[Double](Array.fill(ts.size + nFuture)(0.0))
     // copy over first d terms, since we have no corresponding differences for these
-    results(0 until d) := ts(0 until d)
+    results(0 until d) := toBreeze(ts)(0 until d)
     // copy over historicals, drop first maxLag terms (our assumed AR terms)
     results(d until d + histLen - maxLag) := hist(maxLag to -1)
     // drop first maxLag terms from forward curve before copying, these are part of hist already
-    results(ts.length to -1) :=  forward(maxLag to -1)
+    results(ts.size to -1) := forward(maxLag to -1)
 
     if (d != 0) {
       // we need to create 1-step ahead forecasts for the integrated series for fitted values
       // by backing through the d-order differences
       // create and fill a matrix of the changes of order i = 0 through d
-      val diffMatrix = new DenseMatrix[Double](d + 1, ts.length)
-      diffMatrix(0, ::) := ts.t
+      val diffMatrix = new BreezeDenseMatrix[Double](d + 1, ts.size)
+      diffMatrix(0, ::) := toBreeze(ts).t
 
       for (i <- 1 to d) {
         // create incremental differences of each order
         // recall that differencesOfOrderD skips first `order` terms, so make sure
         // to advance start as appropriate
-        diffMatrix(i, i to -1) := differencesOfOrderD(diffMatrix(i - 1, i to -1).t, 1).t
+        diffMatrix(i, i to -1) := toBreeze(differencesOfOrderD(diffMatrix(i - 1, i to -1).t, 1)).t
       }
 
       // historical values are done as 1 step ahead forecasts
@@ -590,11 +594,11 @@ class ARIMAModel(
       val prevTermsForForwardInverse = diag(diffMatrix(0 until d, -d to -1))
       // for forecasts, drop first maxLag terms
       val forwardIntegrated = inverseDifferencesOfOrderD(
-        DenseVector.vertcat(prevTermsForForwardInverse, forward(maxLag to -1)),
+        BreezeDenseVector.vertcat(prevTermsForForwardInverse, forward(maxLag to -1)),
         d
       )
       // copy into results
-      results(-(d + nFuture) to -1) := forwardIntegrated
+      results(-(d + nFuture) to -1) := toBreeze(forwardIntegrated)
     }
     results
   }
