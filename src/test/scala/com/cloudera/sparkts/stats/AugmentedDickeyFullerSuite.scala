@@ -14,9 +14,9 @@
  */
 package com.cloudera.sparkts.stats
 
-import breeze.linalg._
 import com.cloudera.sparkts.models.ARModel
 import org.apache.commons.math3.random.MersenneTwister
+import org.apache.spark.mllib.linalg.DenseVector
 import org.scalatest.FunSuite
 
 class AugmentedDickeyFullerSuite extends FunSuite {

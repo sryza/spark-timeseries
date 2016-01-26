@@ -15,21 +15,21 @@
 
 package com.cloudera.sparkts
 
-import breeze.linalg._
+import org.apache.spark.mllib.linalg._
 import breeze.plot._
 import com.cloudera.sparkts.models.Autoregression
 
 import org.apache.commons.math3.distribution.NormalDistribution
 
 object EasyPlot {
-  def ezplot(vec: Vector[Double], style: Char): Figure = {
+  def ezplot(vec: Vector, style: Char): Figure = {
     val f = Figure()
     val p = f.subplot(0)
-    p += plot((0 until vec.length).map(_.toDouble).toArray, vec, style = style)
+    p += plot((0 until vec.size).map(_.toDouble).toArray, vec.toArray, style = style)
     f
   }
 
-  def ezplot(vec: Vector[Double]): Figure = ezplot(vec, '-')
+  def ezplot(vec: Vector): Figure = ezplot(vec, '-')
 
   def ezplot(arr: Array[Double], style: Char): Figure = {
     val f = Figure()
@@ -40,17 +40,17 @@ object EasyPlot {
 
     def ezplot(arr: Array[Double]): Figure = ezplot(arr, '-')
 
-  def ezplot(vecs: Seq[Vector[Double]], style: Char): Figure = {
+  def ezplot(vecs: Seq[Vector], style: Char): Figure = {
     val f = Figure()
     val p = f.subplot(0)
     val first = vecs.head
     vecs.foreach { vec =>
-      p += plot((0 until first.length).map(_.toDouble).toArray, vec, style)
+      p += plot((0 until first.size).map(_.toDouble).toArray, vec.toArray, style)
     }
     f
   }
 
-  def ezplot(vecs: Seq[Vector[Double]]): Figure = ezplot(vecs, '-')
+  def ezplot(vecs: Seq[Vector]): Figure = ezplot(vecs, '-')
 
   /**
    * Autocorrelation function plot
@@ -95,7 +95,7 @@ object EasyPlot {
     f
   }
 
-  private[sparkts] def calcConfVal(conf:Double, n: Int): Double = {
+  private[sparkts] def calcConfVal(conf: Double, n: Int): Double = {
     val stdNormDist = new NormalDistribution(0, 1)
     val pVal = (1 - conf) / 2.0
     stdNormDist.inverseCumulativeProbability(1 - pVal) / Math.sqrt(n)

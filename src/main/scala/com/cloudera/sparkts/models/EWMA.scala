@@ -15,12 +15,13 @@
 
 package com.cloudera.sparkts.models
 
-import breeze.linalg._
+import com.cloudera.sparkts.MatrixUtil
 import org.apache.commons.math3.analysis.{MultivariateFunction, MultivariateVectorFunction}
 import org.apache.commons.math3.optim.nonlinear.scalar.gradient.NonLinearConjugateGradientOptimizer
 import org.apache.commons.math3.optim.nonlinear.scalar.{GoalType, ObjectiveFunction,
   ObjectiveFunctionGradient}
 import org.apache.commons.math3.optim.{InitialGuess, MaxEval, MaxIter, SimpleValueChecker}
+import org.apache.spark.mllib.linalg.{DenseVector, Vector}
 
 /**
  * Fits an Exponentially Weight Moving Average model (EWMA) (aka. Simple Exponential Smoothing) to
@@ -41,7 +42,7 @@ object EWMA {
    * @param ts the time series to which we want to fit an EWMA model
    * @return EWMA model
    */
-  def fitModel(ts: Vector[Double]): EWMAModel = {
+  def fitModel(ts: Vector): EWMAModel = {
     val optimizer = new NonLinearConjugateGradientOptimizer(
       NonLinearConjugateGradientOptimizer.Formula.FLETCHER_REEVES,
       new SimpleValueChecker(1e-6, 1e-6))
@@ -77,8 +78,8 @@ class EWMAModel(val smoothing: Double) extends TimeSeriesModel {
    * @param ts the time series to fit a EWMA model to
    * @return Sum Squared Error
    */
-  private[sparkts] def sse(ts: Vector[Double]): Double = {
-    val n = ts.length
+  private[sparkts] def sse(ts: Vector): Double = {
+    val n = ts.size
     val smoothed = new DenseVector(Array.fill(n)(0.0))
     addTimeDependentEffects(ts, smoothed)
 
@@ -98,8 +99,8 @@ class EWMAModel(val smoothing: Double) extends TimeSeriesModel {
    * Calculates the gradient of the SSE cost function for our EWMA model
    * @return gradient
    */
-  private[sparkts] def gradient(ts: Vector[Double]): Double = {
-    val n = ts.length
+  private[sparkts] def gradient(ts: Vector): Double = {
+    val n = ts.size
     val smoothed = new DenseVector(Array.fill(n)(0.0))
     addTimeDependentEffects(ts, smoothed)
 
@@ -121,22 +122,23 @@ class EWMAModel(val smoothing: Double) extends TimeSeriesModel {
     2 * dJda
   }
 
-  override def removeTimeDependentEffects(ts: Vector[Double], dest: Vector[Double] = null)
-    : Vector[Double] = {
-    dest(0) = ts(0) // by definition in our model S_0 = X_0
+  override def removeTimeDependentEffects(ts: Vector, dest: Vector = null): Vector = {
+    val arr = dest.toArray
+    arr(0) = ts(0) // by definition in our model S_0 = X_0
 
-    for (i <- 1 until ts.length) {
-      dest(i) = (ts(i) - (1 - smoothing) * ts(i - 1)) / smoothing
+    for (i <- 1 until ts.size) {
+      arr(i) = (ts(i) - (1 - smoothing) * ts(i - 1)) / smoothing
     }
-    dest
+    new DenseVector(arr)
   }
 
-  override def addTimeDependentEffects(ts: Vector[Double], dest: Vector[Double]): Vector[Double] = {
-    dest(0) = ts(0) // by definition in our model S_0 = X_0
+  override def addTimeDependentEffects(ts: Vector, dest: Vector): Vector = {
+    val arr = dest.toArray
+    arr(0) = ts(0) // by definition in our model S_0 = X_0
 
-    for (i <- 1 until ts.length) {
-      dest(i) = smoothing * ts(i) + (1 - smoothing) * dest(i - 1)
+    for (i <- 1 until ts.size) {
+      arr(i) = smoothing * ts(i) + (1 - smoothing) * dest(i - 1)
     }
-    dest
+    new DenseVector(arr)
   }
 }
