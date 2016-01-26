@@ -15,7 +15,9 @@
 
 package com.cloudera.sparkts.models
 
-import breeze.linalg._
+import com.cloudera.sparkts.MatrixUtil.toBreeze
+
+import org.apache.spark.mllib.linalg._
 import org.apache.commons.math3.random.MersenneTwister
 import org.scalatest.FunSuite
 
@@ -71,7 +73,7 @@ class GARCHSuite extends FunSuite {
   }
 
   test("fit model 2") {
-    val ts = DenseVector(0.1,-0.2,-0.1,0.1,0.0,-0.01,0.00,-0.1,0.1,-0.2,-0.1,0.1,
+    val arr = Array[Double](0.1,-0.2,-0.1,0.1,0.0,-0.01,0.00,-0.1,0.1,-0.2,-0.1,0.1,
       0.0,-0.01,0.00,-0.1,0.1,-0.2,-0.1,0.1,0.0,-0.01,0.00,-0.1,0.1,-0.2,-0.1,0.1,0.0,-0.01,0.00,
       -0.1,0.1,-0.2,-0.1,0.1,0.0,-0.01,0.00,-0.1,0.1,-0.2,-0.1,0.1,0.0,-0.01,0.00,-0.1,0.1,-0.2,
       -0.1,0.1,0.0,-0.01,0.00,-0.1,0.1,-0.2,-0.1,0.1,0.0,-0.01,0.00,-0.1,0.1,-0.2,-0.1,0.1,0.0,
@@ -88,6 +90,7 @@ class GARCHSuite extends FunSuite {
       0.0,-0.01,0.00,-0.1,0.1,-0.2,-0.1,0.1,0.0,-0.01,0.00,-0.1,0.1,-0.2,-0.1,0.1,0.0,-0.01,0.00,
       -0.1,0.1,-0.2,-0.1,0.1,0.0,-0.01,0.00,-0.1,0.1,-0.2,-0.1,0.1,0.0,-0.01,0.00,-0.1,0.1,-0.2,
       -0.1,0.1,0.0,-0.01,0.00,-0.1,0.1,-0.2,-0.1,0.1,0.0,-0.01,0.00,-0.1)
+    val ts = new DenseVector(arr)
     val model = ARGARCH.fitModel(ts)
     println(s"alpha: ${model.alpha}")
     println(s"beta: ${model.beta}")
@@ -104,10 +107,10 @@ class GARCHSuite extends FunSuite {
     val ts = new DenseVector(model.sample(n, rand))
 
     // de-heteroskedasticize
-    val standardized = model.removeTimeDependentEffects(ts, DenseVector.zeros[Double](n))
+    val standardized = model.removeTimeDependentEffects(ts, Vectors.zeros(n))
     // heteroskedasticize
-    val filtered = model.addTimeDependentEffects(standardized, DenseVector.zeros[Double](n))
+    val filtered = model.addTimeDependentEffects(standardized, Vectors.zeros(n))
 
-    assert((filtered - ts).toArray.forall(math.abs(_) < .001))
+    assert((toBreeze(filtered) - toBreeze(ts)).toArray.forall(math.abs(_) < .001))
   }
 }

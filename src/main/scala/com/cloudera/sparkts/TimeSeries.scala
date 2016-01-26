@@ -65,9 +65,8 @@ class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix,
       val offset = maxLag + (if (includeOriginals) 1 else 0)
       val start = colIndex * offset
 
-      Lag.lagMatTrimBoth(dataBreeze(::, colIndex),
-        laggedDataBreeze(::, start to (start + offset - 1)),
-        maxLag, includeOriginals)
+      Lag.lagMatTrimBoth(dataBreeze(::, colIndex), laggedDataBreeze, maxLag, includeOriginals,
+        start)
     }
 
     val newKeys = keys.indices.map { keyIndex =>
@@ -121,9 +120,7 @@ class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix,
       val curInclude = lagsPerCol(indexKeyPair._2)._1
       val offset = curLag + (if (curInclude) 1 else 0)
 
-      Lag.lagMatTrimBoth(dataBreeze(::, colIndex),
-        laggedDataBreeze(::, curStart to (curStart + offset - 1)),
-        curLag, maxLag, curInclude)
+      Lag.lagMatTrimBoth(dataBreeze(::, colIndex), laggedDataBreeze, curLag, curInclude, curStart)
 
       curStart += offset
     }

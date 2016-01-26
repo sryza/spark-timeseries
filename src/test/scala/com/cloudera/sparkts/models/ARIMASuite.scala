@@ -15,9 +15,10 @@
 
 package com.cloudera.sparkts.models
 
-import breeze.linalg._
+import breeze.linalg.sum
 import com.cloudera.sparkts.UnivariateTimeSeries.differencesOfOrderD
 import org.apache.commons.math3.random.MersenneTwister
+import org.apache.spark.mllib.linalg.DenseVector
 import org.scalatest.FunSuite
 import org.scalatest.Matchers._
 
@@ -103,7 +104,7 @@ class ARIMASuite extends FunSuite {
     val closeToWhiteNoise = new DenseVector(Array.fill(100)(0.0))
     model.removeTimeDependentEffects(arimaProcess, closeToWhiteNoise)
 
-    for (i <- 0 until whiteNoise.length) {
+    for (i <- 0 until whiteNoise.size) {
       val diff = whiteNoise(i) - closeToWhiteNoise(i)
       math.abs(diff) should be < 1e-4
     }
@@ -113,7 +114,7 @@ class ARIMASuite extends FunSuite {
     val rand = new MersenneTwister(10L)
     val sampled = new DenseVector(Array.fill(100)(rand.nextGaussian))
     val model = ARIMA.fitModel(0, 0, 0, sampled)
-    val mean = sum(sampled) / sampled.length
+    val mean = sampled.toArray.sum / sampled.size
     model.coefficients(0) should be (mean +- 1e-4)
   }
 
