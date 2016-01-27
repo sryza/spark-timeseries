@@ -38,13 +38,16 @@ object RegressionARIMA {
   def fitModel(ts: linalg.Vector[Double], regressors: DenseMatrix[Double], method: String, optimizationArgs: Any*): RegressionARIMAModel = {
     val model: RegressionARIMAModel = method match {
       case "cochrane-orcutt" => {
-        if (optimizationArgs.length == 0)
+        if (optimizationArgs.length == 0) {
           fitCochraneOrcutt(ts, regressors)
+        }
         else {
-          if (!optimizationArgs(0).isInstanceOf[Int])
+          if (!optimizationArgs(0).isInstanceOf[Int]){
             throw new IllegalArgumentException("Maximum iteration parameter to Cochrane orcutt must be integer")
-          if (optimizationArgs.length > 1)
+          }
+          if (optimizationArgs.length > 1){
             throw new IllegalArgumentException("Number of cochrane orcutt arguments can't exceed 3")
+          }
           val maxIter = optimizationArgs(0).asInstanceOf[Int]
           fitCochraneOrcutt(ts, regressors, maxIter)
         }
