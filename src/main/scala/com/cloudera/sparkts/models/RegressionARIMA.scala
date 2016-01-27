@@ -35,7 +35,7 @@ object RegressionARIMA {
 
   val COCHRANE_ORCUTT = 1;
 
-  def fit(ts: linalg.Vector[Double], regressors: DenseMatrix[Double], method: Int, others: Any*): RegressionARIMAModel = {
+  def fitModel(ts: linalg.Vector[Double], regressors: DenseMatrix[Double], method: Int, others: Any*): RegressionARIMAModel = {
     val model: RegressionARIMAModel = method match {
       case COCHRANE_ORCUTT => {
         if (others.length == 0)
