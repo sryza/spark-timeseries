@@ -33,20 +33,20 @@ import scala.language.postfixOps
   */
 object RegressionARIMA {
 
-  val COCHRANE_ORCUTT = 1;
+  
 
-  def fitModel(ts: linalg.Vector[Double], regressors: DenseMatrix[Double], method: Int, others: Any*): RegressionARIMAModel = {
+  def fitModel(ts: linalg.Vector[Double], regressors: DenseMatrix[Double], method: String, optimizationArgs: Any*): RegressionARIMAModel = {
     val model: RegressionARIMAModel = method match {
-      case COCHRANE_ORCUTT => {
-        if (others.length == 0)
-          fitCochraneOrchutt(ts, regressors)
+      case "cochrane-orcutt" => {
+        if (optimizationArgs.length == 0)
+          fitCochraneOrcutt(ts, regressors)
         else {
-          if (!others(0).isInstanceOf[Int])
+          if (!optimizationArgs(0).isInstanceOf[Int])
             throw new IllegalArgumentException("Maximum iteration parameter to Cochrane orcutt must be integer")
-          if (others.length > 1)
+          if (optimizationArgs.length > 1)
             throw new IllegalArgumentException("Number of cochrane orcutt arguments can't exceed 3")
-          val maxIter = others(0).asInstanceOf[Int]
-          fitCochraneOrchutt(ts, regressors, maxIter)
+          val maxIter = optimizationArgs(0).asInstanceOf[Int]
+          fitCochraneOrcutt(ts, regressors, maxIter)
         }
       }
       case _ => {
@@ -78,7 +78,7 @@ object RegressionARIMA {
    */
 
 
-  def fitCochraneOrchutt(ts: linalg.Vector[Double], regressors: DenseMatrix[Double], maxIter: Int = 10): RegressionARIMAModel = {
+  def fitCochraneOrcutt(ts: linalg.Vector[Double], regressors: DenseMatrix[Double], maxIter: Int = 10): RegressionARIMAModel = {
 
     //parameters check
     (0 until regressors.cols).map(i => {
