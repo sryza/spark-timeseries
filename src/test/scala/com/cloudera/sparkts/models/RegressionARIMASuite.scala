@@ -28,8 +28,8 @@ class RegressionARIMASuite extends FunSuite with ShouldMatchers {
     val Y: linalg.DenseVector[Double] = linalg.DenseVector(metal)
     val regressors = new DenseMatrix[Double](vendor.length, 1)
     regressors(::, 0) := linalg.DenseVector(vendor)
-    val regARIMA: RegressionARIMAModel = RegressionARIMA.fit(ts = Y, regressors = regressors
-      , method = RegressionARIMA.COCHRANE_ORCHUTT, 1)
+    val regARIMA: RegressionARIMAModel = RegressionARIMA.fitModel(ts = Y, regressors = regressors
+      , method = "cochrane-orcutt", 1)
     val beta: Array[Double] = regARIMA.getRegressionCoeff
     beta(0) should equal(28.918 +- 0.01)
     beta(1) should equal(0.0479 +- 0.001)
@@ -49,7 +49,7 @@ class RegressionARIMASuite extends FunSuite with ShouldMatchers {
     val regressors = new DenseMatrix[Double](stock.length, 1)
 
     regressors(::, 0) := linalg.DenseVector(stock)
-    val regARIMA = RegressionARIMA.fitCochraneOrchutt(Y, regressors, 11)
+    val regARIMA = RegressionARIMA.fitCochraneOrcutt(Y, regressors, 11)
     val beta = regARIMA.getRegressionCoeff
     val rho = regARIMA.getArimaCoeff(0)
     rho should equal(0.8241 +- 0.001)
