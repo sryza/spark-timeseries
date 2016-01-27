@@ -15,8 +15,7 @@
 
 package com.cloudera.sparkts.models
 
-import breeze.linalg
-import breeze.linalg.{DenseMatrix, DenseVector}
+import breeze.linalg._
 import com.cloudera.sparkts.stats.TimeSeriesStatisticalTests._
 import org.apache.commons.math3.stat.regression.{OLSMultipleLinearRegression, SimpleRegression}
 import scala.language.postfixOps
@@ -35,7 +34,8 @@ object RegressionARIMA {
 
   
 
-  def fitModel(ts: linalg.Vector[Double], regressors: DenseMatrix[Double], method: String, optimizationArgs: Any*): RegressionARIMAModel = {
+  def fitModel(ts: Vector[Double], regressors: DenseMatrix[Double], method: String, optimizationArgs: Any*)
+  : RegressionARIMAModel = {
     val model: RegressionARIMAModel = method match {
       case "cochrane-orcutt" => {
         if (optimizationArgs.length == 0) {
@@ -46,7 +46,7 @@ object RegressionARIMA {
             throw new IllegalArgumentException("Maximum iteration parameter to Cochrane orcutt must be integer")
           }
           if (optimizationArgs.length > 1){
-            throw new IllegalArgumentException("Number of cochrane orcutt arguments can't exceed 3")
+            throw new IllegalArgumentException("Number of Cochrane Orcutt arguments can't exceed 3")
           }
           val maxIter = optimizationArgs(0).asInstanceOf[Int]
           fitCochraneOrcutt(ts, regressors, maxIter)
@@ -71,7 +71,8 @@ object RegressionARIMA {
    *
    * Outline of the method :
    * 1) OLS Regression for Y (timeseries) over regressors (X)
-   * 2)Apply auto correlation test (Durbin-Watson test) over residuals , to test whether e_t still have auto-regressive structure
+   * 2)Apply auto correlation test (Durbin-Watson test) over residuals , to test whether e_t still
+   * have auto-regressive structure
    * 3)if test fails stop , else update update coefficients (B's) accordingly and go back to step 1)
    *
    * @param ts : Vector of size N for time series data to create the model for
@@ -80,14 +81,14 @@ object RegressionARIMA {
    * @return instance of class [[RegressionARIMAModel]]
    */
 
-
-  def fitCochraneOrcutt(ts: linalg.Vector[Double], regressors: DenseMatrix[Double], maxIter: Int = 10): RegressionARIMAModel = {
+  def fitCochraneOrcutt(ts: Vector[Double], regressors: DenseMatrix[Double], maxIter: Int = 10)
+  : RegressionARIMAModel = {
 
     //parameters check
     (0 until regressors.cols).map(i => {
       if (regressors(::, i).length != ts.length) {
-        throw new IllegalArgumentException("regressor at column index = " + i + " has length = " + regressors(::, i).length +
-          "which is not equal to time series length (" + ts.length + ")")
+        throw new IllegalArgumentException("regressor at column index = " + i + " has length = "
+          + regressors(::, i).length + "which is not equal to time series length (" + ts.length + ")")
 
       }
     })
@@ -114,7 +115,8 @@ object RegressionARIMA {
     while (!finished) {
       //create regression et= rho*et-1
 
-      resReg.addObservations(origRegResiduals.slice(0, origRegResiduals.length - 1).map(Array(_)), origRegResiduals.slice(1, origRegResiduals.length))
+      resReg.addObservations(origRegResiduals.slice(0, origRegResiduals.length - 1).map(Array(_)),
+        origRegResiduals.slice(1, origRegResiduals.length))
       //get rho from et = rho*et-1
       rhos(iter) = resReg.getSlope
 
@@ -127,7 +129,8 @@ object RegressionARIMA {
         new DenseVector[Double](ts.toArray.dropRight(1)) * rhos(iter)
       //X_dash_t = X_t - rho *X_t-1
       //Note : use braces in breeze.lang operators to enforce presedence  , as it seems not to follow the defaults
-      val Xdash: DenseMatrix[Double] = regressors((1 to regressors.rows - 1), ::) - (regressors((0 to regressors.rows - 2), ::) :* rhos(iter))
+      val Xdash: DenseMatrix[Double] = regressors((1 to regressors.rows - 1), ::) -
+        (regressors((0 to regressors.rows - 2), ::) :* rhos(iter))
       val XdashArr = new Array[Array[Double]](Xdash.rows)
       (0 until Xdash.rows).map(r => XdashArr(r) = Xdash(r, ::).inner.toArray)
       //transformed regression
@@ -156,7 +159,8 @@ object RegressionARIMA {
       finished = !isResAR | exceededMaxIter | rhosConverged
     }
 
-    return new RegressionARIMAModel(regressionCoeff = beta, arimaOrders = Array(1, 0, 0), arimaCoeff = Array(rhos(Math.max(0, iter - 1))))
+    return new RegressionARIMAModel(regressionCoeff = beta, arimaOrders = Array(1, 0, 0)
+      , arimaCoeff = Array(rhos(Math.max(0, iter - 1))))
   }
 
   /**
@@ -205,7 +209,9 @@ class RegressionARIMAModel(regressionCoeff: Array[Double], arimaOrders: Array[In
    * @param dest Array to put the filtered series, can be the same as ts.
    * @return The dest series, for convenience.
    */
-  override def removeTimeDependentEffects(ts: _root_.breeze.linalg.Vector[Double], dest: _root_.breeze.linalg.Vector[Double]): _root_.breeze.linalg.Vector[Double] = ???
+  override def removeTimeDependentEffects(ts: _root_.breeze.linalg.Vector[Double]
+                                          , dest: _root_.breeze.linalg.Vector[Double])
+  : _root_.breeze.linalg.Vector[Double] = ???
 
   /**
    * Takes a series of i.i.d. observations and returns a time series based on it with the
@@ -215,5 +221,5 @@ class RegressionARIMAModel(regressionCoeff: Array[Double], arimaOrders: Array[In
    * @param dest Array to put the filtered series, can be the same as ts.
    * @return The dest series, for convenience.
    */
-  override def addTimeDependentEffects(ts: linalg.Vector[Double], dest: linalg.Vector[Double]): linalg.Vector[Double] = ???
+  override def addTimeDependentEffects(ts: Vector[Double], dest: Vector[Double]): Vector[Double] = ???
 }
