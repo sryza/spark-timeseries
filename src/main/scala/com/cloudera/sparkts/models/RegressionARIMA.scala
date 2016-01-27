@@ -84,7 +84,7 @@ object RegressionARIMA {
   def fitCochraneOrcutt(ts: Vector[Double], regressors: DenseMatrix[Double], maxIter: Int = 10)
   : RegressionARIMAModel = {
 
-    //parameters check
+    // Parameters check
     (0 until regressors.cols).map(i => {
       if (regressors(::, i).length != ts.length) {
         throw new IllegalArgumentException("regressor at column index = " + i + " has length = "
@@ -95,7 +95,7 @@ object RegressionARIMA {
     val rhoDiffThr = 0.001
     val rhos = new Array[Double](maxIter)
     //Step 1) OLS Multiple Linear Regression
-    val yxOlsMultReg: OLSMultipleLinearRegression = new OLSMultipleLinearRegression()
+    val yxOlsMultReg = new OLSMultipleLinearRegression()
     yxOlsMultReg.setNoIntercept(false) // Regression of the form y = a+B.X + e
     val regressorArr: Array[Array[Double]] = new Array[Array[Double]](regressors.rows)
     (0 until regressors.rows).map(row => {
@@ -103,10 +103,9 @@ object RegressionARIMA {
     })
     yxOlsMultReg.newSampleData(ts.toArray, regressorArr)
     var beta: Array[Double] = yxOlsMultReg.estimateRegressionParameters()
-
     //Step 2) auto correlation test
+    
     var origRegResiduals: Array[Double] = yxOlsMultReg.estimateResiduals()
-
     //step 3) start checking / iteration phase
 
     var finished = !isAutoCorrelated(origRegResiduals)
