@@ -1,21 +1,29 @@
+/**
+ * Copyright (c) 2015, Cloudera, Inc. All Rights Reserved.
+ *
+ * Cloudera, Inc. licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"). You may not use this file except in
+ * compliance with the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+ * CONDITIONS OF ANY KIND, either express or implied. See the License for
+ * the specific language governing permissions and limitations under the
+ * License.
+ */
+
 package com.cloudera.sparkts.models
 
 import breeze.linalg
 import breeze.linalg.{DenseMatrix, DenseVector}
 import com.cloudera.sparkts.stats.TimeSeriesStatisticalTests._
 import org.apache.commons.math3.stat.regression.{OLSMultipleLinearRegression, SimpleRegression}
-
 import scala.language.postfixOps
-
-/**
- * Created by baddar on 1/14/16.
- * This object contains different methods to
- */
 
 object RegressionARIMA {
 
   val COCHRANE_ORCHUTT = 1;
-  val REG_ARMA = 2;
 
   def fit(ts: linalg.Vector[Double], regressors: DenseMatrix[Double], method: Int, others: Any*): RegressionARIMAModel = {
     val model: RegressionARIMAModel = method match {
