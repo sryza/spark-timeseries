@@ -21,13 +21,23 @@ import com.cloudera.sparkts.stats.TimeSeriesStatisticalTests._
 import org.apache.commons.math3.stat.regression.{OLSMultipleLinearRegression, SimpleRegression}
 import scala.language.postfixOps
 
+/**
+  * This model is basically a regression with ARIMA error structure
+ * see
+ * [[https://onlinecourses.science.psu.edu/stat510/node/53]]
+ * [[https://www.otexts.org/fpp/9/1]]
+ * [[http://robjhyndman.com/talks/RevolutionR/11-Dynamic-Regression.pdf]]
+ * the basic idea is that for usual regression models
+ * Y = B*X + e
+ * e should be IID ~ N(0,sigma^2^) , but in time series problems , e tend to have time series characteristics
+  */
 object RegressionARIMA {
 
-  val COCHRANE_ORCHUTT = 1;
+  val COCHRANE_ORCUTT = 1;
 
   def fit(ts: linalg.Vector[Double], regressors: DenseMatrix[Double], method: Int, others: Any*): RegressionARIMAModel = {
     val model: RegressionARIMAModel = method match {
-      case COCHRANE_ORCHUTT => {
+      case COCHRANE_ORCUTT => {
         if (others.length == 0)
           fitCochraneOrchutt(ts, regressors)
         else {
@@ -47,7 +57,7 @@ object RegressionARIMA {
   }
 
   /**
-   * Fit linear regression model with AR(1) errors , for references on cochrane orchutt model:
+   * Fit linear regression model with AR(1) errors , for references on Cochrane Orcutt model:
    * See [[https://onlinecourses.science.psu.edu/stat501/node/357]]
    * See : Applied Linear Statistical Models - Fifth Edition - Michael H. Kutner , page 492
    * The method assumes the time series to have the following model
