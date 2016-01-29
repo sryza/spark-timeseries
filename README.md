@@ -101,23 +101,29 @@ Value at Risk (VaR) and Expected Shortfall (CVaR) through
 * Monte Carlo simulation
 * Bootstrapped historical simulation
 
-Building
---------
+Using this Repo
+---------------
+
+### Building
 
 We use [Maven](https://maven.apache.org/) for building Java / Scala. To compile, run tests, and build
 jars:
 
     mvn package
-    
-To run a spark-shell with spark-ts and its dependencies on the classpath:
 
-    spark-shell --jars target/sparkts-$VERSION-jar-with-dependencies.jar
-    
 To run Python tests (requires [nose](https://nose.readthedocs.org/en/latest/)):
 
     cd python
     export SPARK_HOME=<location of local Spark installation>
     nosetests
+
+### Running
+    
+To run a spark-shell with spark-ts and its dependencies on the classpath:
+
+    spark-shell --jars target/sparkts-$VERSION-jar-with-dependencies.jar
+    
+### Releasing
 
 To publish docs, easiest is to clone a separate version of this repo in some location we'll refer
 to as DOCS_REPO.  Then:
@@ -159,5 +165,7 @@ To release Java/Scala packages (based on http://oryxproject.github.io/oryx/docs/
 
     mvn -s private-settings.xml -Darguments="-DskipTests" release:perform
 
+To release Python packages (based on http://peterdowns.com/posts/first-time-with-pypi.html):
 
-
+    python setup.py register -r pypi
+    python setup.py sdist upload -r pypi
