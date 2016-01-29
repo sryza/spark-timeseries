@@ -15,13 +15,13 @@
 
 package com.cloudera.sparkts.models
 
-import breeze.linalg._
 import org.apache.commons.math3.analysis.{MultivariateFunction, MultivariateVectorFunction}
 import org.apache.commons.math3.optim.nonlinear.scalar.gradient.NonLinearConjugateGradientOptimizer
 import org.apache.commons.math3.optim.nonlinear.scalar.{ObjectiveFunction,
   ObjectiveFunctionGradient}
 import org.apache.commons.math3.optim.{InitialGuess, MaxEval, MaxIter, SimpleValueChecker}
 import org.apache.commons.math3.random.RandomGenerator
+import org.apache.spark.mllib.linalg.{DenseVector, Vector, Vectors}
 
 object GARCH {
   /**
@@ -30,7 +30,7 @@ object GARCH {
    * @param ts The time series to fit the model to.
    * @return The model.
    */
-  def fitModel(ts: Vector[Double]): GARCHModel = {
+  def fitModel(ts: Vector): GARCHModel = {
     val optimizer = new NonLinearConjugateGradientOptimizer(
       NonLinearConjugateGradientOptimizer.Formula.FLETCHER_REEVES,
       new SimpleValueChecker(1e-6, 1e-6))
@@ -60,9 +60,9 @@ object ARGARCH {
    * @param ts The time series to fit the model to.
    * @return The model.
    */
-  def fitModel(ts: Vector[Double]): ARGARCHModel = {
+  def fitModel(ts: Vector): ARGARCHModel = {
     val arModel = Autoregression.fitModel(ts)
-    val residuals = arModel.removeTimeDependentEffects(ts, DenseVector.zeros[Double](ts.length))
+    val residuals = arModel.removeTimeDependentEffects(ts, Vectors.zeros(ts.size))
     val garchModel = GARCH.fitModel(residuals)
     new ARGARCHModel(arModel.c, arModel.coefficients(0), garchModel.omega, garchModel.alpha,
       garchModel.beta)
@@ -79,12 +79,12 @@ class GARCHModel(
    *
    * Based on http://www.unc.edu/~jbhill/Bollerslev_GARCH_1986.pdf
    */
-  def logLikelihood(ts: Vector[Double]): Double = {
+  def logLikelihood(ts: Vector): Double = {
     var sum = 0.0
     iterateWithHAndEta(ts) { (i, h, eta, prevH, prevEta) =>
       sum += -.5 * math.log(h) - .5 * eta * eta / h
     }
-    sum + -.5 * math.log(2 * math.Pi) * (ts.length - 1)
+    sum + -.5 * math.log(2 * math.Pi) * (ts.size - 1)
   }
 
   /**
@@ -93,7 +93,7 @@ class GARCHModel(
    * Based on http://www.unc.edu/~jbhill/Bollerslev_GARCH_1986.pdf
    * @return an 3-element array containing the gradient for the alpha, beta, and omega parameters.
    */
-  private[sparkts] def gradient(ts: Vector[Double]): Array[Double] = {
+  private[sparkts] def gradient(ts: Vector): Array[Double] = {
     var omegaGradient = 0.0
     var alphaGradient = 0.0
     var betaGradient = 0.0
@@ -114,11 +114,11 @@ class GARCHModel(
     Array(alphaGradient * .5, betaGradient * .5, omegaGradient * .5)
   }
 
-  private def iterateWithHAndEta(ts: Vector[Double])
+  private def iterateWithHAndEta(ts: Vector)
                                 (fn: (Int, Double, Double, Double, Double) => Unit): Unit = {
     var prevH = omega / (1 - alpha - beta)
     var i = 1
-    while (i < ts.length) {
+    while (i < ts.size) {
       val h = omega + alpha * ts(i - 1) * ts(i - 1) + beta * prevH
 
       fn(i, h, ts(i), prevH, ts(i - 1))
@@ -128,35 +128,37 @@ class GARCHModel(
     }
   }
 
-  def removeTimeDependentEffects(ts: Vector[Double], dest: Vector[Double]): Vector[Double] = {
+  def removeTimeDependentEffects(ts: Vector, dest: Vector): Vector = {
     var prevEta = ts(0)
     var prevVariance = omega / (1.0 - alpha - beta)
-    dest(0) = prevEta / math.sqrt(prevVariance)
-    for (i <- 1 until ts.length) {
+    val destArr = dest.toArray
+    destArr(0) = prevEta / math.sqrt(prevVariance)
+    for (i <- 1 until ts.size) {
       val variance = omega + alpha * prevEta * prevEta + beta * prevVariance
       val eta = ts(i)
-      dest(i) = eta / math.sqrt(variance)
+      destArr(i) = eta / math.sqrt(variance)
 
       prevEta = eta
       prevVariance = variance
     }
-    dest
+    new DenseVector(destArr)
   }
 
-  override def addTimeDependentEffects(ts: Vector[Double], dest: Vector[Double]): Vector[Double] = {
+  override def addTimeDependentEffects(ts: Vector, dest: Vector): Vector = {
     var prevVariance = omega / (1.0 - alpha - beta)
     var prevEta = ts(0) * math.sqrt(prevVariance)
-    dest(0) = prevEta
-    for (i <- 1 until ts.length) {
+    val destArr = dest.toArray
+    destArr(0) = prevEta
+    for (i <- 1 until ts.size) {
       val variance = omega + alpha * prevEta * prevEta + beta * prevVariance
       val standardizedEta = ts(i)
       val eta = standardizedEta * math.sqrt(variance)
-      dest(i) = eta
+      destArr(i) = eta
 
       prevEta = eta
       prevVariance = variance
     }
-    dest
+    new DenseVector(destArr)
   }
 
   private def sampleWithVariances(n: Int, rand: RandomGenerator): (Array[Double], Array[Double]) = {
@@ -200,36 +202,37 @@ class ARGARCHModel(
     val alpha: Double,
     val beta: Double) extends TimeSeriesModel {
 
-  override def removeTimeDependentEffects(ts: Vector[Double], dest: Vector[Double])
-    : Vector[Double] = {
+  override def removeTimeDependentEffects(ts: Vector, dest: Vector): Vector = {
     var prevEta = ts(0) - c
     var prevVariance = omega / (1.0 - alpha - beta)
-    dest(0) = prevEta / math.sqrt(prevVariance)
-    for (i <- 1 until ts.length) {
+    val destArr = dest.toArray
+    destArr(0) = prevEta / math.sqrt(prevVariance)
+    for (i <- 1 until ts.size) {
       val variance = omega + alpha * prevEta * prevEta + beta * prevVariance
       val eta = ts(i) - c - phi * ts(i - 1)
-      dest(i) = eta / math.sqrt(variance)
+      destArr(i) = eta / math.sqrt(variance)
 
       prevEta = eta
       prevVariance = variance
     }
-    dest
+    new DenseVector(destArr)
   }
 
-  override def addTimeDependentEffects(ts: Vector[Double], dest: Vector[Double]): Vector[Double] = {
+  override def addTimeDependentEffects(ts: Vector, dest: Vector): Vector = {
     var prevVariance = omega / (1.0 - alpha - beta)
     var prevEta = ts(0) * math.sqrt(prevVariance)
-    dest(0) = c + prevEta
-    for (i <- 1 until ts.length) {
+    val destArr = dest.toArray
+    destArr(0) = c + prevEta
+    for (i <- 1 until ts.size) {
       val variance = omega + alpha * prevEta * prevEta + beta * prevVariance
       val standardizedEta = ts(i)
       val eta = standardizedEta * math.sqrt(variance)
-      dest(i) = c + phi * dest(i - 1) + eta
+      destArr(i) = c + phi * dest(i - 1) + eta
 
       prevEta = eta
       prevVariance = variance
     }
-    dest
+    new DenseVector(destArr)
   }
 
   private def sampleWithVariances(n: Int, rand: RandomGenerator): (Array[Double], Array[Double]) = {
@@ -270,12 +273,11 @@ class EGARCHModel(
     throw new UnsupportedOperationException()
   }
 
-  override def removeTimeDependentEffects(ts: Vector[Double], dest: Vector[Double])
-    : Vector[Double] = {
+  override def removeTimeDependentEffects(ts: Vector, dest: Vector): Vector = {
     throw new UnsupportedOperationException()
   }
 
-  override def addTimeDependentEffects(ts: Vector[Double], dest: Vector[Double]): Vector[Double] = {
+  override def addTimeDependentEffects(ts: Vector, dest: Vector): Vector = {
     throw new UnsupportedOperationException()
   }
 }

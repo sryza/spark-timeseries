@@ -14,11 +14,13 @@
  */
 package com.cloudera.sparkts.stats
 
-import breeze.linalg._
 import breeze.numerics.polyval
+import breeze.linalg.{DenseMatrix => BreezeDenseMatrix}
 import com.cloudera.sparkts.{Lag, MatrixUtil, UnivariateTimeSeries}
+import com.cloudera.sparkts.MatrixUtil.{toBreeze, fromBreeze}
 import org.apache.commons.math3.distribution.{ChiSquaredDistribution, NormalDistribution}
 import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression
+import org.apache.spark.mllib.linalg._
 
 import scala.collection.immutable.ListMap
 
@@ -156,21 +158,21 @@ object TimeSeriesStatisticalTests {
     new NormalDistribution().cumulativeProbability(polyval(tauCoef.reverse, testStat))
   }
 
-  private def vanderflipped(vec: Array[Double], n: Int): Matrix[Double] = {
+  private def vanderflipped(vec: Array[Double], n: Int): Matrix = {
     val numRows = vec.length
     val matArr = Array.fill[Double](numRows * n)(1.0)
-    val mat = new DenseMatrix[Double](numRows, matArr, 0)
+    val mat = new DenseMatrix(numRows, n, matArr)
+    val breezeMat = toBreeze(mat)
 
     for (c <- 1 until n) {
       for (r <- 0 until numRows) {
-        mat.update(r, c, vec(r) * mat(r, c - 1))
+        breezeMat(r, c) = vec(r) * mat(r, c - 1)
       }
     }
     mat
   }
 
-  private def addTrend(mat: Matrix[Double], trend: String = "c", prepend: Boolean = false)
-    : Matrix[Double] = {
+  private def addTrend(mat: Matrix, trend: String = "c", prepend: Boolean = false): Matrix = {
     val trendOrder = trend.toLowerCase match {
       case "c" => 0
       case "ct" | "t" => 1
@@ -178,18 +180,19 @@ object TimeSeriesStatisticalTests {
       case _ => throw new IllegalArgumentException(s"Trend $trend is not c, ct, or ctt")
     }
 
-    val nObs = mat.rows
-    var trendMat = vanderflipped((1 until nObs + 1).map(_.toDouble).toArray, trendOrder + 1)
+    val nObs = mat.numRows
+    var trendMat = toBreeze(
+      vanderflipped((1 until nObs + 1).map(_.toDouble).toArray, trendOrder + 1))
 
     if (trend == "t") {
       trendMat = trendMat(0 to trendMat.rows, 1 to 2)
     }
 
-    if (prepend) {
-      DenseMatrix.horzcat(trendMat, mat)
+    fromBreeze(if (prepend) {
+      BreezeDenseMatrix.horzcat(trendMat, toBreeze(mat))
     } else {
-      DenseMatrix.horzcat(mat, trendMat)
-    }
+      BreezeDenseMatrix.horzcat(toBreeze(mat), trendMat)
+    })
   }
 
   /**
@@ -203,18 +206,19 @@ object TimeSeriesStatisticalTests {
    * @param ts The time series.
    * @return A tuple containing the test statistic and p value.
    */
-  def adftest(ts: Vector[Double], maxLag: Int, regression: String = "c"): (Double, Double) = {
-    val tsDiff: DenseVector[Double] = diff(ts.toDenseVector)
+  def adftest(ts: Vector, maxLag: Int, regression: String = "c"): (Double, Double) = {
+    val breezeTs = toBreeze(ts)
+    val tsDiff = UnivariateTimeSeries.differencesAtLag(ts, 1)
     val lagMat = Lag.lagMatTrimBoth(tsDiff, maxLag, true)
-    val nObs = lagMat.rows
+    val nObs = lagMat.numRows
 
     // replace 0 tsDiff with level of ts
     // TODO: unnecessary extra copying here
     // TODO: are indices off by one?
-    lagMat(0 until nObs, 0 to 0) :=
-      ts(ts.length - nObs - 1 until ts.length - 1).toDenseVector.toDenseMatrix.t
+    toBreeze(lagMat)(0 until nObs, 0 to 0) :=
+      breezeTs(ts.size - nObs - 1 until ts.size - 1).toDenseVector.toDenseMatrix.t
     // trim
-    val tsdShort = tsDiff(tsDiff.length - nObs to tsDiff.length - 1)
+    val tsdShort = toBreeze(tsDiff)(tsDiff.size - nObs to tsDiff.size - 1)
 
     val ols = new OLSMultipleLinearRegression()
     ols.setNoIntercept(true)
@@ -240,11 +244,11 @@ object TimeSeriesStatisticalTests {
    *         serial correlation, a value close to 4.0 gives evidence for negative serial
    *         correlation, and a value close to 2.0 gives evidence for no serial correlation.
    */
-  def dwtest(residuals: Vector[Double]): Double = {
+  def dwtest(residuals: Vector): Double = {
     var residsSum = residuals(0) * residuals(0)
     var diffsSum = 0.0
     var i = 1
-    while (i < residuals.length) {
+    while (i < residuals.size) {
       residsSum += residuals(i) * residuals(i)
       val diff = residuals(i) - residuals(i - 1)
       diffsSum += diff * diff
@@ -265,7 +269,7 @@ object TimeSeriesStatisticalTests {
    * Our test statistic is then (# of obs - maxLag) * (R^2 of the auxiliary regression)
    * @return The Breusch-Godfrey statistic and p value
    */
-  def bgtest(residuals: Vector[Double], factors: Matrix[Double], maxLag: Int): (Double, Double) = {
+  def bgtest(residuals: Vector, factors: Matrix, maxLag: Int): (Double, Double) = {
     val origResiduals = residuals.toArray
     val origFactors = MatrixUtil.matToRowArrs(factors) // X (wiki)
     // auxiliary regression model
@@ -287,9 +291,9 @@ object TimeSeriesStatisticalTests {
    * for more information.
    * @return the test statistic and the p-value associated with it.
    */
-  def lbtest(residuals: Vector[Double], maxLag: Int): (Double, Double) = {
+  def lbtest(residuals: Vector, maxLag: Int): (Double, Double) = {
     val autoCorrs = UnivariateTimeSeries.autocorr(residuals, maxLag)
-    val n = residuals.length
+    val n = residuals.size
     val adjAutoCorrs = autoCorrs.toArray.zipWithIndex.map { case (p, k) =>
       (p * p) / (n - k - 1)
     }
@@ -309,13 +313,13 @@ object TimeSeriesStatisticalTests {
    * We construct our test statistic as (# of observations) * R^2 of our auxiliary regression
    * @return The Breusch-Pagan statistic and p value
    */
-  def bptest(residuals: Vector[Double], factors: Matrix[Double]): (Double, Double) = {
+  def bptest(residuals: Vector, factors: Matrix): (Double, Double) = {
     val residualsSquared = residuals.toArray.map(x => x * x) // u^2
     val origFactors = MatrixUtil.matToRowArrs(factors) // X
     val auxOLS = new OLSMultipleLinearRegression() // auxiliary OLS for bp test
     auxOLS.newSampleData(residualsSquared, origFactors) // u^2 = beta * X
-    val bpstat = residuals.length * auxOLS.calculateRSquared()
-    val df = factors.cols // auxOLS uses intercept term, so (# of regressors - 1) = # factors cols
+    val bpstat = residuals.size * auxOLS.calculateRSquared()
+    val df = factors.numCols // auxOLS uses intercept term, so (# of regressors - 1) = # factors cols
     (bpstat, 1 - new ChiSquaredDistribution(df).cumulativeProbability(bpstat))
   }
 
@@ -357,9 +361,9 @@ object TimeSeriesStatisticalTests {
    * @param method "c" or "ct", short for fitting with a constant or a constant and a time trend
    * @return the KPSS statistic and a map of critical values according to the method selected
    */
-  def kpsstest(ts: Vector[Double], method: String): (Double, Map[Double, Double]) = {
+  def kpsstest(ts: Vector, method: String): (Double, Map[Double, Double]) = {
     require(List("c", "ct").contains(method), "trend must be c or ct")
-    val n = ts.length
+    val n = ts.size
     // constant
     val c = Array.fill(n)(1.0)
     // create appropriate regression matrix and obtain critical values

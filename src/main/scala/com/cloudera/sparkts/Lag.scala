@@ -15,7 +15,7 @@
 
 package com.cloudera.sparkts
 
-import breeze.linalg._
+import org.apache.spark.mllib.linalg._
 
 private[sparkts] object Lag {
   /**
@@ -51,7 +51,7 @@ private[sparkts] object Lag {
    * Makes a lag matrix from the given time series with the given lag, trimming both rows and
    * columns so that every element in the matrix is full.
    */
-  def lagMatTrimBoth(x: Vector[Double], maxLag: Int): Matrix[Double] = {
+  def lagMatTrimBoth(x: Vector, maxLag: Int): Matrix = {
     lagMatTrimBoth(x, maxLag, false)
   }
 
@@ -59,38 +59,41 @@ private[sparkts] object Lag {
    * Makes a lag matrix from the given time series with the given lag, trimming both rows and
    * columns so that every element in the matrix is full.
    */
-  def lagMatTrimBoth(x: Vector[Double], maxLag: Int, includeOriginal: Boolean): Matrix[Double] = {
+  def lagMatTrimBoth(x: Vector, maxLag: Int, includeOriginal: Boolean): Matrix = {
     val numObservations = x.size
     val numRows = numObservations - maxLag
     val numCols = maxLag + (if (includeOriginal) 1 else 0)
-    val lagMat = new DenseMatrix[Double](numRows, numCols)
+    val lagMat = new DenseMatrix(numRows, numCols, new Array[Double](numRows * numCols))
 
-    lagMatTrimBoth(x, lagMat, maxLag, maxLag, includeOriginal)
+    lagMatTrimBoth(x, lagMat, maxLag, includeOriginal, 0)
     lagMat
   }
 
+  /**
+   * @param x Vector to be lagged.
+   * @param outputMat Matrix to place the lagged vector into, as a column.
+   * @param numLags The number of times to lag the vector.  E.g. if this is 2, the output matrix
+   *                will include one column that is the vector lagged by 1, and another column to
+   *                the right that is the vector lagged by 2.
+   * @param includeOriginal Whether to place the original time series into the matrix as well.
+   * @param colOffset The offset to start placing columns in the output mat.
+   */
   def lagMatTrimBoth(
-      x: Vector[Double],
-      outputMat: DenseMatrix[Double],
-      maxLag: Int,
-      includeOriginal: Boolean): Unit = {
-    lagMatTrimBoth(x, outputMat, maxLag, maxLag, includeOriginal)
-  }
-
-  private[sparkts] def lagMatTrimBoth(
-      x: Vector[Double],
-      outputMat: DenseMatrix[Double],
-      currentMaxLag: Int,
-      totalMaxLag: Int,
-      includeOriginal: Boolean): Unit = {
-    val numObservations = x.size
-    val numRows = numObservations - totalMaxLag
+      x: Vector,
+      outputMat: DenseMatrix,
+      numLags: Int,
+      includeOriginal: Boolean,
+      colOffset: Int): Unit = {
+    val numRows = outputMat.numRows
+    val numTruncatedRows = x.size - numRows
 
     val initialLag = if (includeOriginal) 0 else 1
 
+    val breezeOutputMat = MatrixUtil.toBreeze(outputMat)
     for (r <- 0 until numRows) {
-      for (c <- initialLag to currentMaxLag) {
-        outputMat(r, (c - initialLag)) = x(r + totalMaxLag - c)
+      for (lag <- initialLag to numLags) {
+        val c = colOffset + lag - initialLag
+        breezeOutputMat(r, c) = x(r + numTruncatedRows - lag)
       }
     }
   }
