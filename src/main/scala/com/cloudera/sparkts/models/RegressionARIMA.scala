@@ -21,42 +21,40 @@ import org.apache.commons.math3.stat.regression.{OLSMultipleLinearRegression, Si
 import scala.language.postfixOps
 
 /**
-  * This model is basically a regression with ARIMA error structure
+ * This model is basically a regression with ARIMA error structure
  * see
  * [[https://onlinecourses.science.psu.edu/stat510/node/53]]
  * [[https://www.otexts.org/fpp/9/1]]
  * [[http://robjhyndman.com/talks/RevolutionR/11-Dynamic-Regression.pdf]]
- * the basic idea is that for usual regression models
+ * The basic idea is that for usual regression models
  * Y = B*X + e
- * e should be IID ~ N(0,sigma^2^) , but in time series problems , e tend to have time series characteristics
-  */
+ * e should be IID ~ N(0,sigma^2^), but in time series problems, e tends to have time series
+ * characteristics.
+ */
 object RegressionARIMA {
-
-  
-
-  def fitModel(ts: Vector[Double], regressors: DenseMatrix[Double], method: String, optimizationArgs: Any*)
-  : RegressionARIMAModel = {
-    val model: RegressionARIMAModel = method match {
-      case "cochrane-orcutt" => {
-        if (optimizationArgs.length == 0) {
+  def fitModel(
+      ts: Vector[Double],
+      regressors: DenseMatrix[Double],
+      method: String,
+      optimizationArgs: Any*): RegressionARIMAModel = {
+    method match {
+      case "cochrane-orcutt" =>
+        if (optimizationArgs.isEmpty) {
           fitCochraneOrcutt(ts, regressors)
-        }
-        else {
+        } else {
           if (!optimizationArgs(0).isInstanceOf[Int]){
-            throw new IllegalArgumentException("Maximum iteration parameter to Cochrane orcutt must be integer")
+            throw new IllegalArgumentException(
+              "Maximum iteration parameter to Cochrane-Orcutt must be integer")
           }
           if (optimizationArgs.length > 1){
-            throw new IllegalArgumentException("Number of Cochrane Orcutt arguments can't exceed 3")
+            throw new IllegalArgumentException("Number of Cochrane-Orcutt arguments can't exceed 3")
           }
           val maxIter = optimizationArgs(0).asInstanceOf[Int]
           fitCochraneOrcutt(ts, regressors, maxIter)
         }
-      }
-      case _ => {
-        throw new UnsupportedOperationException("Regression ARIMA method : " + method + " not defined.")
-      }
+      case _ =>
+        throw new UnsupportedOperationException(s"Regression ARIMA method \"$method\" not defined.")
     }
-    return model;
   }
 
   /**
@@ -82,104 +80,99 @@ object RegressionARIMA {
    */
 
   def fitCochraneOrcutt(ts: Vector[Double], regressors: DenseMatrix[Double], maxIter: Int = 10)
-  : RegressionARIMAModel = {
-
-    // Parameters check
-    (0 until regressors.cols).map(i => {
-      if (regressors(::, i).length != ts.length) {
-        throw new IllegalArgumentException("regressor at column index = " + i + " has length = "
-          + regressors(::, i).length + "which is not equal to time series length (" + ts.length + ")")
-
-      }
-    })
+    : RegressionARIMAModel = {
+    // Check parameters
+    (0 until regressors.cols).find(c => regressors(::, c).length != ts.length).foreach { c =>
+      throw new IllegalArgumentException(s"regressor at column index $c has length "
+        + s"${regressors(::, c).length} which is not equal to time series length ${ts.length}")
+    }
     val rhoDiffThr = 0.001
     val rhos = new Array[Double](maxIter)
-    //Step 1) OLS Multiple Linear Regression
+    // Step 1) OLS Multiple Linear Regression
     val yxOlsMultReg = new OLSMultipleLinearRegression()
     yxOlsMultReg.setNoIntercept(false) // Regression of the form y = a+B.X + e
-    val regressorArr: Array[Array[Double]] = new Array[Array[Double]](regressors.rows)
-    (0 until regressors.rows).map(row => {
+    val regressorArr = new Array[Array[Double]](regressors.rows)
+    (0 until regressors.rows).foreach { row =>
       regressorArr(row) = regressors(row, ::).inner.toArray
-    })
+    }
     yxOlsMultReg.newSampleData(ts.toArray, regressorArr)
-    var beta: Array[Double] = yxOlsMultReg.estimateRegressionParameters()
-    //Step 2) auto correlation test
-    
-    var origRegResiduals: Array[Double] = yxOlsMultReg.estimateResiduals()
-    //step 3) start checking / iteration phase
+    var beta = yxOlsMultReg.estimateRegressionParameters()
 
+    // Step 2) auto correlation test
+    var origRegResiduals = yxOlsMultReg.estimateResiduals()
+
+    // Step 3) start checking / iteration phase
     var finished = !isAutoCorrelated(origRegResiduals)
     val resReg = new SimpleRegression(false)
     var iter = 0
     while (!finished) {
-      //create regression et= rho*et-1
-
+      // Create regression et = rho*et-1
       resReg.addObservations(origRegResiduals.slice(0, origRegResiduals.length - 1).map(Array(_)),
         origRegResiduals.slice(1, origRegResiduals.length))
-      //get rho from et = rho*et-1
+
+      // Get rho from et = rho*et-1
       rhos(iter) = resReg.getSlope
 
-      //clear res regression model
+      // Clear res regression model
       resReg.clear()
-      //calculate transformed regression
-      // Y_dash_t = Y_t - rho *Y_t-1
 
-      val Ydash: DenseVector[Double] = new DenseVector[Double](ts.toArray.drop(1)) -
+      // Calculate transformed regression
+      // Y_dash_t = Y_t - rho *Y_t-1
+      val Ydash = new DenseVector[Double](ts.toArray.drop(1)) -
         new DenseVector[Double](ts.toArray.dropRight(1)) * rhos(iter)
-      //X_dash_t = X_t - rho *X_t-1
-      //Note : use braces in breeze.lang operators to enforce presedence  , as it seems not to follow the defaults
+
+      // X_dash_t = X_t - rho *X_t-1
+      // Note: use braces in breeze.lang operators to enforce precedence, as it seems not to follow
+      // the defaults
       val Xdash: DenseMatrix[Double] = regressors((1 to regressors.rows - 1), ::) -
         (regressors((0 to regressors.rows - 2), ::) :* rhos(iter))
       val XdashArr = new Array[Array[Double]](Xdash.rows)
-      (0 until Xdash.rows).map(r => XdashArr(r) = Xdash(r, ::).inner.toArray)
-      //transformed regression
+      (0 until Xdash.rows).foreach(r => XdashArr(r) = Xdash(r, ::).inner.toArray)
 
+      // Transformed regression
       yxOlsMultReg.newSampleData(Ydash.toArray, XdashArr)
-      //get B.hat , transformed regression params
-      beta = yxOlsMultReg.estimateRegressionParameters()
-      //update B0
-      beta(0) = beta(0) / (1 - rhos(iter))
-      //update regression residuals
-      val Yhat: DenseVector[Double] = (regressors * DenseVector(beta.drop(1)).t.inner).toDenseVector + beta(0)
-      origRegResiduals = (DenseVector(ts.toArray) - Yhat).toArray
-      //iteration finished
-      iter = iter + 1
-      //check for need of other iteration
-      val transformedRegResiduals = yxOlsMultReg.estimateResiduals()
-      //residuals auto correlated ?
-      val isResAR = isAutoCorrelated(transformedRegResiduals)
-      //exceeded maximum iterations
-      val exceededMaxIter = iter >= maxIter
-      //values of rho converged
-      val rhosConverged = if (iter >= 2) {
-        Math.abs(rhos(iter - 1) - rhos(iter - 2)) <= rhoDiffThr
-      } else false
 
-      finished = !isResAR | exceededMaxIter | rhosConverged
+      // Get B.hat, transformed regression params
+      beta = yxOlsMultReg.estimateRegressionParameters()
+      // Update B0
+      beta(0) = beta(0) / (1 - rhos(iter))
+      // Update regression residuals
+      val Yhat = (regressors * DenseVector(beta.drop(1)).t.inner).toDenseVector + beta(0)
+      origRegResiduals = (DenseVector(ts.toArray) - Yhat).toArray
+      // Iteration finished
+      iter = iter + 1
+
+      // Check for need of another iteration
+      val transformedRegResiduals = yxOlsMultReg.estimateResiduals()
+      // Residuals auto correlated ?
+      val isResAR = isAutoCorrelated(transformedRegResiduals)
+      // Exceeded maximum iterations
+      val exceededMaxIter = iter >= maxIter
+      // Values of rho converged
+      val rhosConverged = iter >= 2 && Math.abs(rhos(iter - 1) - rhos(iter - 2)) <= rhoDiffThr
+
+      finished = !isResAR || exceededMaxIter || rhosConverged
     }
 
-    return new RegressionARIMAModel(regressionCoeff = beta, arimaOrders = Array(1, 0, 0)
-      , arimaCoeff = Array(rhos(Math.max(0, iter - 1))))
+    new RegressionARIMAModel(regressionCoeff = beta, arimaOrders = Array(1, 0, 0),
+      arimaCoeff = Array(rhos(Math.max(0, iter - 1))))
   }
 
   /**
-   * Test autocorrelation in data , current implemtnation use durbin watson test , with the following rules
-   * if test statistic close to 0 => +ve autocorrelation
-   * close to 4 => -ve autocorrelation
-   * close to 2 => no autocorrelation
+   * Test autocorrelation in data, current implementation uses Durbin Watson test, with the
+   * following rules:
+   * * If test statistic close to 0 => +ve autocorrelation
+   * * close to 4 => -ve autocorrelation
+   * * close to 2 => no autocorrelation
    * @param data data value to test auto correlations
-   * @return boolen to indicate existence of auto correlation
+   * @return boolean to indicate existence of auto correlation
    */
-  def isAutoCorrelated(data: Array[Double]): Boolean = {
-    //define constants
-    val dwMargin = 0.05 //margin for closeness for dw statistic values
+  private def isAutoCorrelated(data: Array[Double]): Boolean = {
+    val dwMargin = 0.05 // margin for closeness for dw statistic values
 
-    val dwTestStatistic = dwtest(new DenseVector[Double](data))
-    if (dwTestStatistic <= (2 - dwMargin) || dwTestStatistic >= (2 + dwMargin))
-      return true
-    return false
+    val dwTestStatistic = dwtest(new org.apache.spark.mllib.linalg.DenseVector(data))
+    dwTestStatistic <= (2 - dwMargin) || dwTestStatistic >= (2 + dwMargin)
   }
-
 }
 
 /**
@@ -188,37 +181,20 @@ object RegressionARIMA {
  * @param arimaOrders p,d,q for the arima error structure, length of [[arimaOrders]] must be 3
  * @param arimaCoeff AR , d , and MA terms , length of arimaCoeff = p+d+q
  */
-class RegressionARIMAModel(regressionCoeff: Array[Double], arimaOrders: Array[Int]
-                           , arimaCoeff: Array[Double]) extends TimeSeriesModel {
+class RegressionARIMAModel(
+  val regressionCoeff: Array[Double],
+  val arimaOrders: Array[Int],
+  val arimaCoeff: Array[Double]) extends TimeSeriesModel {
 
-  def getRegressionCoeff = this.regressionCoeff
+  override def addTimeDependentEffects(
+      ts: org.apache.spark.mllib.linalg.Vector,
+      dest: org.apache.spark.mllib.linalg.Vector): org.apache.spark.mllib.linalg.Vector = {
+    throw new UnsupportedOperationException()
+  }
 
-  def getArimaOrders = this.arimaOrders
-
-  def getArimaCoeff = this.arimaCoeff
-
-
-  /**
-   * Takes a time series that is assumed to have this model's characteristics and returns a time
-   * series with time-dependent effects of this model removed.
-   *
-   * This is the inverse of [[TimeSeriesModel#addTimeDependentEffects]].
-   *
-   * @param ts Time series of observations with this model's characteristics.
-   * @param dest Array to put the filtered series, can be the same as ts.
-   * @return The dest series, for convenience.
-   */
-  override def removeTimeDependentEffects(ts: _root_.breeze.linalg.Vector[Double]
-                                          , dest: _root_.breeze.linalg.Vector[Double])
-  : _root_.breeze.linalg.Vector[Double] = ???
-
-  /**
-   * Takes a series of i.i.d. observations and returns a time series based on it with the
-   * time-dependent effects of this model added.
-   *
-   * @param ts Time series of i.i.d. observations.
-   * @param dest Array to put the filtered series, can be the same as ts.
-   * @return The dest series, for convenience.
-   */
-  override def addTimeDependentEffects(ts: Vector[Double], dest: Vector[Double]): Vector[Double] = ???
+  override def removeTimeDependentEffects(
+      ts: org.apache.spark.mllib.linalg.Vector,
+      dest: org.apache.spark.mllib.linalg.Vector): org.apache.spark.mllib.linalg.Vector = {
+    throw new UnsupportedOperationException()
+  }
 }
