@@ -15,7 +15,6 @@
 
 package com.cloudera.sparkts.models
 
-import breeze.linalg.sum
 import com.cloudera.sparkts.UnivariateTimeSeries.differencesOfOrderD
 import org.apache.commons.math3.random.MersenneTwister
 import org.apache.spark.mllib.linalg.DenseVector

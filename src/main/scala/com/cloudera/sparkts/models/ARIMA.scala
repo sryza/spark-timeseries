@@ -235,7 +235,7 @@ object ARIMA {
    * Prints a message to stdout warning users about potential issues with lack of stationarity
    * or invertibility, given AR and MA parameters, respectively
    */
-  def warnStationarityAndInvertibility(model: ARIMAModel): Unit = {
+  private def warnStationarityAndInvertibility(model: ARIMAModel): Unit = {
     if (!model.isStationary()) {
       println("Warning: AR parameters are not stationary")
     }
@@ -386,7 +386,7 @@ class ARIMAModel(
    * @param newError the error at time t
    * @return a modified array with the latest error placed into index 0
    */
-  def updateMAErrors(errs: Array[Double], newError: Double): Unit = {
+  private def updateMAErrors(errs: Array[Double], newError: Double): Unit = {
     val n = errs.length
     var i = 0
     while (i < n - 1) {
