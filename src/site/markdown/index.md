@@ -2,14 +2,14 @@ title: Overview
 
 # Overview
 
-Spark-TS is a Python and Scala library for analyzing large-scale time series data sets.  It
-is hosted [here](https://github.com/cloudera/spark-timeseries).
+Morlock (formerly Spark-TS) is a Python and Scala library for analyzing large-scale time series data
+sets with Apache Spark.  It is hosted [here](https://github.com/cloudera/spark-timeseries).
 
 Scaladoc is available [here](scaladocs/index.html).
 
 Python doc is available [here](pydoc/py-modindex.html).
 
-Spark-TS offers:
+Morlock offers:
 
 * A set of abstractions for manipulating time series data, similar to what's provided for smaller
   data sets in
