@@ -36,7 +36,7 @@ public final class JavaTimeSeriesRDDFactory {
      * @param index DateTimeIndex
      * @param seriesRDD JavaPairRDD of time series
      */
-    public static <K> JavaTimeSeriesRDD<K> javaTimeSeriesRDD(
+    public static <K> JavaTimeSeriesRDD<K> timeSeriesRDD(
         DateTimeIndex index,
         JavaPairRDD<K, Vector> seriesRDD) {
         return JAVA_TIME_SERIES_RDD.javaTimeSeriesRDD(
@@ -51,7 +51,7 @@ public final class JavaTimeSeriesRDDFactory {
      * @param targetIndex DateTimeIndex to conform all the indices to.
      * @param seriesRDD JavaRDD of time series, each with their own DateTimeIndex.
      */
-    public static <K> JavaTimeSeriesRDD<K> javaTimeSeriesRDD(
+    public static <K> JavaTimeSeriesRDD<K> timeSeriesRDD(
         UniformDateTimeIndex targetIndex,
         JavaRDD<Tuple3<K, UniformDateTimeIndex, Vector>> seriesRDD) {
         return JAVA_TIME_SERIES_RDD.javaTimeSeriesRDD(
@@ -66,7 +66,7 @@ public final class JavaTimeSeriesRDDFactory {
      * @param targetIndex DateTimeIndex to conform all the indices to.
      * @param seriesRDD JavaRDD of time series, each with their own DateTimeIndex.
      */
-    public static <K> JavaTimeSeriesRDD<K> javaTimeSeriesRDD(
+    public static <K> JavaTimeSeriesRDD<K> timeSeriesRDD(
         DateTimeIndex targetIndex,
         JavaRDD<JavaTimeSeries<K>> seriesRDD) {
         @SuppressWarnings("unchecked")
@@ -86,7 +86,7 @@ public final class JavaTimeSeriesRDDFactory {
      * @param keyCol The string column labeling which string key the observation belongs to..
      * @param valueCol The observed value..
      */
-    public static JavaTimeSeriesRDD<String> javaTimeSeriesRDDFromObservations(
+    public static JavaTimeSeriesRDD<String> timeSeriesRDDFromObservations(
             DateTimeIndex targetIndex,
             DataFrame df,
             String tsCol,
@@ -103,7 +103,7 @@ public final class JavaTimeSeriesRDDFactory {
     /**
      * Loads a JavaTimeSeriesRDD from a directory containing a set of CSV files and a date-time index.
      */
-    public static JavaTimeSeriesRDD<String> javaTimeSeriesRDDFromCsv(
+    public static JavaTimeSeriesRDD<String> timeSeriesRDDFromCsv(
             String path, JavaSparkContext sc) {
         return JAVA_TIME_SERIES_RDD.javaTimeSeriesRDDFromCsv(path, sc);
     }
@@ -112,7 +112,7 @@ public final class JavaTimeSeriesRDDFactory {
      * Creates a TimeSeriesRDD from rows in a binary format that Python can write to.
      * Not a public API. For use only by the Python API.
      */
-    public static JavaTimeSeriesRDD<String> javaTimeSeriesRDDFromPython(DateTimeIndex index,
+    public static JavaTimeSeriesRDD<String> timeSeriesRDDFromPython(DateTimeIndex index,
         JavaRDD<byte[]> pyRdd) {
         return JAVA_TIME_SERIES_RDD.javaTimeSeriesRDDFromPython(index, pyRdd);
     }
