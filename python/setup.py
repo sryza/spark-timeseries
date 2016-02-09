@@ -3,7 +3,7 @@ import os
 import re
 
 # determine version
-VERSION_FILE="sparkts/_version.py"
+VERSION_FILE="morlock/_version.py"
 verstrline = open(VERSION_FILE, "rt").read()
 VERSION_REGEX = r"^__version__ = ['\"]([^'\"]*)['\"]"
 mo = re.search(VERSION_REGEX, verstrline, re.M)
@@ -12,10 +12,10 @@ if mo:
 else:
     raise RuntimeError("Unable to find version string in %s." % (VERSIONFILE,))
 
-JAR_FILE = 'sparkts-' + version_string + '-jar-with-dependencies.jar'
+JAR_FILE = 'morlock-' + version_string + '-jar-with-dependencies.jar'
 
 setup(
-    name='sparkts',
+    name='morlock',
     description = 'A library for analyzing large time series data with Apache Spark',
     author = 'Sandy Ryza',
     author_email = 'sandy@cloudera.com',
@@ -24,7 +24,7 @@ setup(
     packages=find_packages(),
     include_package_data = True,
     classifiers = [],
-    keywords = ['spark', 'time', 'series', 'data', 'analysis'],
+    keywords = ['spark', 'time', 'series', 'timeseries', 'morlock', 'data', 'analysis'],
     install_requires = [
         'pandas >= 0.13',
         'numpy >= 1.9.2'
