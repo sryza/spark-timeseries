@@ -19,6 +19,7 @@ import breeze.linalg.{DenseMatrix => BreezeDenseMatrix, DenseVector => BreezeDen
 import com.cloudera.sparkts.Lag
 import com.cloudera.sparkts.MatrixUtil.{toBreeze, dvBreezeToSpark}
 import com.cloudera.sparkts.UnivariateTimeSeries.{differencesOfOrderD, inverseDifferencesOfOrderD}
+import com.cloudera.sparkts.stats.TimeSeriesStatisticalTests.kpsstest
 import org.apache.commons.math3.analysis.solvers.LaguerreSolver
 import org.apache.commons.math3.analysis.{MultivariateFunction, MultivariateVectorFunction}
 import org.apache.commons.math3.optim.nonlinear.scalar.gradient.NonLinearConjugateGradientOptimizer
@@ -31,8 +32,11 @@ import org.apache.commons.math3.random.RandomGenerator
 import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression
 import org.apache.spark.mllib.linalg.{DenseVector, Vector}
 
+import scala.util.{Failure, Try}
+import scala.collection.mutable.HashSet
+
 /**
- * ARIMA models allow modeling timeseries as a function of prior values of the series
+  * ARIMA models allow modeling timeseries as a function of prior values of the series
  * (i.e. autoregressive terms) and a moving average of prior error terms. ARIMA models
  * are traditionally specified as ARIMA(p, d, q), where p is the autoregressive order,
  * d is the differencing order, and q is the moving average order. Using the backshift (aka
@@ -55,7 +59,8 @@ object ARIMA {
    * `fitModel` verifies that parameters fit stationarity and invertibility requirements,
    * there is currently no function to transform them if they do not. It is up to the user
    * to make these changes as appropriate (or select a different model specification)
-   * @param p autoregressive order
+    *
+    * @param p autoregressive order
    * @param d differencing order
    * @param q moving average order
    * @param ts time series to which to fit an ARIMA(p, d, q) model
@@ -111,7 +116,8 @@ object ARIMA {
   /**
    * Fit an ARIMA model using conditional sum of squares estimator, optimized using unbounded
    * BOBYQA.
-   * @param p autoregressive order
+    *
+    * @param p autoregressive order
    * @param d differencing order
    * @param q moving average order
    * @param diffedY differenced time series, as appropriate
@@ -154,7 +160,8 @@ object ARIMA {
   /**
    * Fit an ARIMA model using conditional sum of squares estimator, optimized using conjugate
    * gradient descent
-   * @param p autoregressive order
+    *
+    * @param p autoregressive order
    * @param d differencing order
    * @param q moving average order
    * @param diffedY differenced time series, as appropriate
@@ -197,7 +204,8 @@ object ARIMA {
    * the OLS model are returned as initial parameter estimates.
    * See [[http://halweb.uc3m.es/esp/Personal/personas/amalonso/esp/TSAtema9.pdf]] for more
    * information.
-   * @param p autoregressive order
+    *
+    * @param p autoregressive order
    * @param q moving average order
    * @param y time series to be modeled
    * @param includeIntercept flag to include intercept
@@ -244,8 +252,126 @@ object ARIMA {
       println("Warning: MA parameters are not invertible")
     }
   }
-}
 
+  /**
+   * Utility function to help in fitting an automatically selected ARIMA model based on approximate
+   * Akaike Information Criterion (AIC) values. The model search is based on the heuristic
+   * developed by Hyndman and Khandakar (2008) and described in [[http://www.jstatsoft
+   * .org/v27/i03/paper]]. In contrast to the algorithm in the paper, we use an approximation to
+   * the AIC, rather than an exact value. Note that if the maximum differencing order provided
+   * does not suffice to induce stationarity, the function returns a failure, with the appropriate
+   * message. Additionally, note that the heuristic only considers models that have parameters
+   * satisfying the stationarity/invertibility constraints. Finally, note that our algorithm is
+   * slightly more lenient than the original heuristic. For example, the original heuristic
+   * rejects models with parameters "close" to violating stationarity/invertibility. We only
+   * reject those that actually violate it.
+   *
+   * This functionality is even less mature than some of the other model fitting functions here, so
+   * use it with caution.
+   *
+   * @param ts time series to which to automatically fit an ARIMA model
+   * @param maxP limit for the AR order
+   * @param maxD limit for differencing order
+   * @param maxQ limit for the MA order
+   * @return an ARIMAModel
+   */
+  def autoFit(ts: Vector, maxP: Int = 5, maxD: Int = 2, maxQ: Int = 5): ARIMAModel = {
+    // p-value threshold for stationarity test
+    val kpssSignificance = 0.05
+
+    // Our first task is to choose a differencing order.
+    // Following R's forecast::auto.arima -> forecast::ndiffs -> tseries::kpss.test, we test for
+    // level stationarity and return lowest differencing order that results in level stationarity.
+    val dOpt = (0 to maxD).find { diff =>
+      val testTs = differencesOfOrderD(ts, diff)
+      val (stat, criticalValues) = kpsstest(testTs, "c")
+      stat < criticalValues(kpssSignificance)
+    }
+    val d = dOpt match {
+      case Some(v) => v
+      case None =>
+        // this gets wrapped in Try at top level, so not necessarily bad to throw exception
+        throw new Exception(s"stationarity not achieved with differencing order <= $maxD")
+    }
+    val diffedTs = differencesOfOrderD(ts, d)
+    // As per heuristic, only fit intercept if differencing is <= 1 for non-seasonal arima
+    val addIntercept = d <= 1
+
+    val bestModel = findBestARMAModel(diffedTs, maxP, maxQ, addIntercept)
+    new ARIMAModel(bestModel.p, d, bestModel.q, bestModel.coefficients, bestModel.hasIntercept)
+  }
+
+  /**
+   * As described by the "A step-wise procedure for traversing the model space" section Hyndman
+   * and Kandahar.
+   */
+  private def findBestARMAModel(
+      diffedTs: Vector,
+      maxP: Int,
+      maxQ: Int,
+      startWithIntercept: Boolean): ARIMAModel = {
+    def fitTryBothStrategies(p: Int, q: Int, ts: Vector, intercept: Boolean): Try[ARIMAModel] = {
+      Try(ARIMA.fitModel(p, 0, q, diffedTs, intercept, method = "css-cgd")).orElse {
+        Try(ARIMA.fitModel(p, 0, q, diffedTs, intercept, method = "css-bobyqa"))
+      }
+    }
+
+    // Maintain a set of parameters we've tried so we don't waste time repeating
+    val pastParams = new HashSet[(Int, Int, Boolean)]()
+    var curBestAIC = Double.MaxValue
+    var curBestModel: ARIMAModel  = null
+    var done = false
+
+    var nextParams = List((0, 0), (2, 2), (1, 0), (0, 1)).map { case (p, q) =>
+      (p, q, startWithIntercept)
+    }
+
+    // Conduct a local search for a best model by varying p and q around the current best. We stop
+    // when no models with nearby p's and q's exceed the AIC of the current best.
+    while (!done) {
+      pastParams ++= nextParams
+      // Fit models to next params.
+      val models = nextParams.map { case (p, q, intercept) =>
+        fitTryBothStrategies(p, q, diffedTs, intercept)
+      }.filter(_.isSuccess).map(_.get)
+
+      // Compute AICs and filter out models with worse (larger) AICs than our current best.
+      // Also only retain models that are stationary and invertible.
+      val modelsAndAICs = models.filter(m => m.isStationary && m.isInvertible).map(
+        model => (model, model.approxAIC(diffedTs)))
+      val improvingModelsAndAICs = modelsAndAICs.filter(_._2 < curBestAIC)
+
+      if (improvingModelsAndAICs.isEmpty) {
+        done = true
+      } else {
+        // Pick params for next iteration based on new incumbent model
+        val newBest = improvingModelsAndAICs.minBy(_._2)
+        curBestModel = newBest._1
+        curBestAIC = newBest._2
+
+        // Try variations of +-1 p and q around the current model, along with keeping p and q the
+        // same, but flipping whether to include an intercept.
+        val deltas = List(-1, 0, 1)
+        // Each param tuple is a triple of (p, q, includeIntercept)
+        val surroundingParams = for { pDelta <- deltas; qDelta <- deltas } yield {
+          val includeIntercept = if (pDelta == 0 && qDelta == 0) {
+            !curBestModel.hasIntercept
+          } else {
+            curBestModel.hasIntercept
+          }
+          (curBestModel.p + pDelta, curBestModel.q, includeIntercept)
+        }
+
+        // Filter out params we've already tried, as well as params that are outside our p and q
+        // bounds.
+        nextParams = surroundingParams.filter(params => !pastParams.contains(params) &&
+          params._1 >= 0 && params._1 <= maxP && params._2 >= 0 && params._2 <= maxQ)
+      }
+    }
+
+    curBestModel
+  }
+}
 
 class ARIMAModel(
     val p: Int, // AR order
@@ -271,7 +397,8 @@ class ARIMAModel(
    * log likelihood based on conditional sum of squares. In contrast to logLikelihoodCSS the array
    * provided should correspond to an already differenced array, so that the function below
    * corresponds to the log likelihood for the ARMA rather than the ARIMA process
-   * @param diffedY differenced array
+    *
+    * @param diffedY differenced array
    * @return log likelihood of ARMA
    */
   def logLikelihoodCSSARMA(diffedY: Array[Double]): Double = {
@@ -305,7 +432,8 @@ class ARIMAModel(
    * \phi_{t-q}^{t-1}*\frac{\partial \epsilon_{t-q}^{t-1}}{\partial \theta_{ar_i}} \\
    * \frac{\partial\hat{y}}{\partial \theta_{ma_i}} =  \epsilon_{t - i} +
    * \phi_{t-q}^{t-1}*\frac{\partial \epsilon_{t-q}^{t-1}}{\partial \theta_{ma_i}} \\
-   * @param diffedY array of differenced values
+    *
+    * @param diffedY array of differenced values
    * @return
    */
   def gradientlogLikelihoodCSSARMA(diffedY: Array[Double]): Array[Double] = {
@@ -382,7 +510,8 @@ class ARIMAModel(
   /**
    * Updates the error vector in place with a new (more recent) error
    * The newest error is placed in position 0, while older errors "fall off the end"
-   * @param errs array of errors of length q in ARIMA(p, d, q), holds errors for t-1 through t-q
+    *
+    * @param errs array of errors of length q in ARIMA(p, d, q), holds errors for t-1 through t-q
    * @param newError the error at time t
    * @return a modified array with the latest error placed into index 0
    */
@@ -406,7 +535,8 @@ class ARIMAModel(
    * initErrors = null)
    * calculates the 1-step ahead ARMA forecasts for series1 assuming current coefficients, and
    * initial MA errors of 0.
-   * @param ts Time series to use for AR terms
+    *
+    * @param ts Time series to use for AR terms
    * @param dest Time series holding initial values at each index
    * @param op Operation to perform between values in dest, and various combinations of ts, errors
    *           and intercept terms
@@ -466,7 +596,8 @@ class ARIMAModel(
    * inverse operations to obtain the original series of underlying errors.
    * To do so, we assume prior MA terms are 0.0, and prior AR are equal to the model's intercept or
    * 0.0 if fit without an intercept
-   * @param ts Time series of observations with this model's characteristics.
+    *
+    * @param ts Time series of observations with this model's characteristics.
    * @return The dest series, representing remaining errors, for convenience.
    */
   def removeTimeDependentEffects(ts: Vector, destTs: Vector): Vector = {
@@ -490,7 +621,8 @@ class ARIMAModel(
    * Given a timeseries, apply an ARIMA(p, d, q) model to it.
    * We assume that prior MA terms are 0.0 and prior AR terms are equal to the intercept or 0.0 if
    * fit without an intercept
-   * @param ts Time series of i.i.d. observations.
+    *
+    * @param ts Time series of i.i.d. observations.
    * @return The dest series, representing the application of the model to provided error
    *         terms, for convenience.
    */
@@ -510,7 +642,8 @@ class ARIMAModel(
 
   /**
    * Sample a series of size n assuming an ARIMA(p, d, q) process.
-   * @param n size of sample
+    *
+    * @param n size of sample
    * @return series reflecting ARIMA(p, d, q) process
    */
   def sample(n: Int, rand: RandomGenerator): Vector = {
@@ -524,7 +657,8 @@ class ARIMAModel(
    * prior to the start of the series are equal to the model's intercept term (or 0.0, if fit
    * without and intercept term).Meanwhile, MA terms prior to the start are assumed to be 0.0. If
    * there is differencing, the first d terms come from the original series.
-   * @param ts Timeseries to use as gold-standard. Each value (i) in the returning series
+    *
+    * @param ts Timeseries to use as gold-standard. Each value (i) in the returning series
    *           is a 1-step ahead forecast of ts(i). We use the difference between ts(i) -
    *           estimate(i) to calculate the error at time i, which is used for the moving
    *           average terms.
@@ -611,7 +745,8 @@ class ARIMAModel(
    * Always returns true for models with no AR terms.
    * See http://www.econ.ku.dk/metrics/Econometrics2_05_II/Slides/07_univariatetimeseries_2pp.pdf
    * for more information (specifically slides 23 - 25)
-   * @return indicator of whether model's AR parameters are stationary
+    *
+    * @return indicator of whether model's AR parameters are stationary
    */
   def isStationary(): Boolean = {
     if (p == 0) {
@@ -628,7 +763,8 @@ class ARIMAModel(
    * 1 + theta_1 * x + theta_2 * x + ... + theta_q * x&#94;q = 0. Please see
    * [[ARIMAModel.isStationary]] for more details.
    * Always returns true for models with no MA terms.
-   * @return indicator of whether model's MA parameters are invertible
+    *
+    * @return indicator of whether model's MA parameters are invertible
    */
   def isInvertible(): Boolean = {
     if (q == 0) {
@@ -643,7 +779,8 @@ class ARIMAModel(
   /**
    * Checks whether all roots of polynomial passed are outside unit circle. Uses Laguerre's method
    * see [[https://en.wikipedia.org/wiki/Laguerre%27s_method]] for more information
-   * @param poly the coefficients of the polynomial of order `poly.length`
+    *
+    * @param poly the coefficients of the polynomial of order `poly.length`
    * @return boolean indicating whether all roots are outside unit circle
    */
   private def allRootsOutsideUnitCircle(poly: Array[Double]): Boolean = {
@@ -652,5 +789,20 @@ class ARIMAModel(
     val initGuess = 0.0
     val roots = solver.solveAllComplex(poly, initGuess)
     !roots.exists(_.abs() <= 1.0)
+  }
+
+  /**
+    * Calculates an approximation to the Akaike Information Criterion (AIC). This is an approximation
+    * as we use the conditional likelihood, rather than the exact likelihood. Please see
+    * [[https://en.wikipedia.org/wiki/Akaike_information_criterion]] for more information on this
+    * measure.
+   *
+   * @param ts the timeseries to evaluate under current model
+    * @return an approximation to the AIC under the current model
+    */
+  def approxAIC(ts: Vector): Double = {
+    val conditionalLogLikelihood = logLikelihoodCSS(ts)
+    val interceptTerm = if (hasIntercept) 1 else 0
+    -2 * conditionalLogLikelihood + 2 * (p + q + interceptTerm)
   }
 }

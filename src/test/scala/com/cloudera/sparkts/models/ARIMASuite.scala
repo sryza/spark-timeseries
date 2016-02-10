@@ -15,11 +15,13 @@
 
 package com.cloudera.sparkts.models
 
-import com.cloudera.sparkts.UnivariateTimeSeries.differencesOfOrderD
+import com.cloudera.sparkts.UnivariateTimeSeries.{differencesOfOrderD, inverseDifferencesOfOrderD}
 import org.apache.commons.math3.random.MersenneTwister
 import org.apache.spark.mllib.linalg.DenseVector
 import org.scalatest.FunSuite
 import org.scalatest.Matchers._
+
+import scala.util.{Success, Try}
 
 class ARIMASuite extends FunSuite {
   test("compare with R") {
@@ -162,5 +164,37 @@ class ARIMASuite extends FunSuite {
     val model4 = new ARIMAModel(1, 0, 1, Array(-0.09341,  0.857361, -0.300821), hasIntercept = true)
     model4.isStationary() should be (true)
     model4.isInvertible() should be (true)
+  }
+
+  test("Auto fitting ARIMA models") {
+    val model1 = new ARIMAModel(2, 0, 0, Array(2.5, 0.4, 0.3), hasIntercept = true)
+    val rand = new MersenneTwister(10L)
+    val sampled = model1.sample(250, rand)
+
+    // a series with a high integration order
+    val highI = inverseDifferencesOfOrderD(sampled, 5)
+
+    // auto fitting without increasing the maxD parameter should result in a failure
+    val highIntegrationFailure = Try(ARIMA.autoFit(highI)).isFailure
+    highIntegrationFailure should be (true)
+
+    // but should work if we increase the differencing order limit
+    val highIntegrationWorks = Try(ARIMA.autoFit(highI, maxD = 10)).isSuccess
+    highIntegrationWorks should be (true)
+
+    // in this test, we'll throw an exception and not go on if the auto fit function fails
+    // the sample we're trying to model is I(0), and we can always fit a model with just the
+    // intercept, so a failure here would be indicative of other issues
+    val (maxP, maxQ) = (5, 5)
+    val fitted = Try(ARIMA.autoFit(sampled, maxP = maxP, maxQ = maxQ)) match {
+      case Success(model) => model
+      case _ => throw new Exception("Unable to fit model in test suite")
+    }
+    val fittedApproxAIC = fitted.approxAIC(sampled)
+    // The model should have a lower AIC than the dummy model (just intercept)
+    // testing other models effectively boils down to the function implementation
+    // so we don't do that here
+    val justIntercept = ARIMA.fitModel(0, fitted.d, 0, sampled, includeIntercept = true)
+    justIntercept.approxAIC(sampled) should be > fittedApproxAIC
   }
 }
