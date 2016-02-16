@@ -28,7 +28,7 @@
     <reflowSkin>
       <toc offsetTop="800">side</toc>
       <brand>
-        <name>Spark-TS</name>
+        <name>Time Series for Spark</name>
         <href>index.html</href>
       </brand>
       <theme>bootswatch-united</theme>

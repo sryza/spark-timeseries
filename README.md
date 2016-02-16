@@ -1,6 +1,6 @@
 [![Build Status](https://travis-ci.org/cloudera/spark-timeseries.svg)](https://travis-ci.org/cloudera/spark-timeseries)
 
-spark-ts
+Time Series for Spark: the `spark-ts` Package
 =============
 
 A Scala / Java / Python library for interacting with time series data on Apache Spark.
