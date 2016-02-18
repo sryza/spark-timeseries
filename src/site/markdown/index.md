@@ -2,13 +2,19 @@ title: Overview
 
 # Overview
 
-Time Series for Spark (distributed as the `spark-ts` package) is a Python and Scala library for
+Time Series for Spark (distributed as the `spark-ts` package) is a Scala / Java / Python library for
 analyzing large-scale time series data sets.  It is hosted
 [here](https://github.com/cloudera/spark-timeseries).
 
-Scaladoc is available [here](scaladocs/index.html).
+Post questions and comments to the [Google group](https://groups.google.com/forum/#!forum/spark-ts),
+or email them directly to <mailto:spark-ts@googlegroups.com>.
 
-Python doc is available [here](pydoc/py-modindex.html).
+Check out the [examples repository](https://github.com/sryza/spark-ts-examples) for a taste of what
+it's like to use the library.
+
+Check out the [Scaladoc](http://sryza.github.io/spark-timeseries/0.2.0/scaladocs/index.html),
+[Javadoc](http://sryza.github.io/spark-timeseries/0.2.0/apidocs/index.html), or
+[Python doc](http://sryza.github.io/spark-timeseries/0.2.0/pydoc/py-modindex.html).
 
 Time Series for Spark offers:
 
