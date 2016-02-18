@@ -5,13 +5,11 @@ Time Series for Spark (The `spark-ts` Package)
 
 A Scala / Java / Python library for interacting with time series data on Apache Spark.
 
+Post questions and comments to the [Google group](https://groups.google.com/forum/#!forum/spark-ts), or email it directly at <mailto:spark-ts@googlegroups.com>.
+
 Docs are available at http://sryza.github.io/spark-timeseries.
 
-Scaladoc is available at http://sryza.github.io/spark-timeseries/0.2.0/scaladocs/index.html.
-
-Javadoc is available at http://sryza.github.io/spark-timeseries/0.2.0/apidocs/index.html.
-
-Python doc is available at http://sryza.github.io/spark-timeseries/0.2.0/pydoc/py-modindex.html.
+Or check out the [Scaladoc](http://sryza.github.io/spark-timeseries/0.2.0/scaladocs/index.html), [Javadoc](http://sryza.github.io/spark-timeseries/0.2.0/apidocs/index.html), or [Python doc](http://sryza.github.io/spark-timeseries/0.2.0/pydoc/py-modindex.html).
 
 The aim here is to provide
 * A set of abstractions for manipulating large time series data sets, similar to
