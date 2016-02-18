@@ -472,13 +472,48 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector)])
 
   /**
    * Returns a TimeSeriesRDD rebased on top of a new index.  Any timestamps that exist in the new
-   * index but not in the existing index will be filled in with NaNs.
+   * index but not in the existing index will be filled in with NaNs.  [[resample]] offers similar
+   * functionality with richer semantics for aggregating values within windows.
    *
    * @param newIndex The DateTimeIndex for the new RDD
    */
   def withIndex(newIndex: DateTimeIndex): TimeSeriesRDD[K] = {
     val rebaser = TimeSeriesUtils.rebaser(index, newIndex, Double.NaN)
     mapSeries(rebaser, newIndex)
+  }
+
+  /**
+   * Returns a TimeSeriesRDD with each series resampled to a new date-time index. Resampling
+   * provides flexible semantics for specifying which date-times in each input series correspond to
+   * which date-times in the output series, and for aggregating observations when downsampling.
+   *
+   * Based on the closedRight and stampRight parameters, resampling partitions time into non-
+   * overlapping intervals, each corresponding to a date-time in the target index. Each resulting
+   * value in the output series is determined by applying an aggregation function over all the
+   * values that fall within the corresponding window in the input series. If no values in the
+   * input series fall within the window, a NaN is used.
+   *
+   * Compare with the equivalent functionality in Pandas:
+   * http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.resample.html
+   *
+   * @param targetIndex The date-time index of the resulting series.
+   * @param aggr Function for aggregating multiple points that fall within a window.
+   * @param closedRight If true, the windows are open on the left and closed on the right. Otherwise
+   *                    the windows are closed on the left and open on the right.
+   * @param stampRight If true, each date-time in the resulting series marks the end of a window.
+   *                   This means that all observations after the end of the last window will be
+   *                   ignored. Otherwise, each date-time in the resulting series marks the start of
+   *                   a window. This means that all observations after the end of the last window
+   *                   will be ignored.
+   * @return The values of the resampled series.
+   */
+
+  def resample(
+      targetIndex: DateTimeIndex,
+      aggr: (Array[Double], Int, Int) => Double,
+      closedRight: Boolean,
+      stampRight: Boolean): TimeSeriesRDD[K] = {
+    mapSeries(Resample.resample(_, index, targetIndex, aggr, closedRight, stampRight), targetIndex)
   }
 }
 
