@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/cloudera/spark-timeseries.svg)](https://travis-ci.org/cloudera/spark-timeseries)
+[![Build Status](https://travis-ci.org/sryza/spark-timeseries.svg)](https://travis-ci.org/sryza/spark-timeseries)
 
 Time Series for Spark (The `spark-ts` Package)
 =============
