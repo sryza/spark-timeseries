@@ -5,7 +5,8 @@ Time Series for Spark (The `spark-ts` Package)
 
 A Scala / Java / Python library for interacting with time series data on Apache Spark.
 
-Post questions and comments to the [Google group](https://groups.google.com/forum/#!forum/spark-ts), or email it directly at <mailto:spark-ts@googlegroups.com>.
+Post questions and comments to the [Google group](https://groups.google.com/forum/#!forum/spark-ts),
+or email them directly to <mailto:spark-ts@googlegroups.com>.
 
 Docs are available at http://sryza.github.io/spark-timeseries.
 
