@@ -12,9 +12,9 @@ or email them directly to <mailto:spark-ts@googlegroups.com>.
 Check out the [examples repository](https://github.com/sryza/spark-ts-examples) for a taste of what
 it's like to use the library.
 
-Check out the [Scaladoc](http://sryza.github.io/spark-timeseries/0.2.0/scaladocs/index.html),
-[Javadoc](http://sryza.github.io/spark-timeseries/0.2.0/apidocs/index.html), or
-[Python doc](http://sryza.github.io/spark-timeseries/0.2.0/pydoc/py-modindex.html).
+Check out the [Scaladoc](http://sryza.github.io/spark-timeseries/0.3.0/scaladocs/index.html),
+[Javadoc](http://sryza.github.io/spark-timeseries/0.3.0/apidocs/index.html), or
+[Python doc](http://sryza.github.io/spark-timeseries/0.3.0/pydoc/py-modindex.html).
 
 Time Series for Spark offers:
 
