@@ -1,0 +1,290 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html>
+        <head>
+          <title>models - Time Series for Spark 0.3.0 API - com.cloudera.sparkts.models</title>
+          <meta name="description" content="models - Time Series for Spark 0.3.0 API - com.cloudera.sparkts.models" />
+          <meta name="keywords" content="models Time Series for Spark 0.3.0 API com.cloudera.sparkts.models" />
+          <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+          
+      <link href="../../../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
+      <link href="../../../../lib/diagrams.css" media="screen" type="text/css" rel="stylesheet" id="diagrams-css" />
+      <script type="text/javascript">
+         if(top === self) {
+            var url = '../../../../index.html';
+            var hash = 'com.cloudera.sparkts.models.package';
+            var anchor = window.location.hash;
+            var anchor_opt = '';
+            if (anchor.length >= 1)
+              anchor_opt = '@' + anchor.substring(1);
+            window.location.href = url + '#' + hash + anchor_opt;
+         }
+   	  </script>
+    
+        </head>
+        <body class="value">
+      <div id="definition">
+        <img src="../../../../lib/package_big.png" />
+        <p id="owner"><a href="../../../package.html" class="extype" name="com">com</a>.<a href="../../package.html" class="extype" name="com.cloudera">cloudera</a>.<a href="../package.html" class="extype" name="com.cloudera.sparkts">sparkts</a></p>
+        <h1>models</h1>
+      </div>
+
+      <h4 id="signature" class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <span class="name">models</span>
+      </span>
+      </h4>
+      
+          <div id="comment" class="fullcommenttop"></div>
+        
+
+      <div id="mbrsel">
+        <div id="textfilter"><span class="pre"></span><span class="input"><input id="mbrsel-input" type="text" accesskey="/" /></span><span class="post"></span></div>
+        
+        
+        <div id="visbl">
+            <span class="filtertype">Visibility</span>
+            <ol><li class="public in"><span>Public</span></li><li class="all out"><span>All</span></li></ol>
+          </div>
+      </div>
+
+      <div id="template">
+        <div id="allMembers">
+        
+
+        <div id="types" class="types members">
+              <h3>Type Members</h3>
+              <ol><li name="com.cloudera.sparkts.models.ARGARCHModel" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ARGARCHModelextendsTimeSeriesModel"></a>
+      <a id="ARGARCHModel:ARGARCHModel"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="ARGARCHModel.html"><span class="name">ARGARCHModel</span></a><span class="result"> extends <a href="TimeSeriesModel.html" class="extype" name="com.cloudera.sparkts.models.TimeSeriesModel">TimeSeriesModel</a></span>
+      </span>
+      </h4>
+      <p class="comment cmt">A GARCH(1, 1) + AR(1) model, where
+  y(i) = c + phi * y(i - 1) + eta(i),
+and h(i), the variance of eta(i), is given by
+  h(i) = omega + alpha * eta(i) ** 2 + beta * h(i - 1) ** 2
+</p>
+    </li><li name="com.cloudera.sparkts.models.ARIMAModel" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ARIMAModelextendsTimeSeriesModel"></a>
+      <a id="ARIMAModel:ARIMAModel"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="ARIMAModel.html"><span class="name">ARIMAModel</span></a><span class="result"> extends <a href="TimeSeriesModel.html" class="extype" name="com.cloudera.sparkts.models.TimeSeriesModel">TimeSeriesModel</a></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.cloudera.sparkts.models.ARModel" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ARModelextendsTimeSeriesModel"></a>
+      <a id="ARModel:ARModel"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="ARModel.html"><span class="name">ARModel</span></a><span class="result"> extends <a href="TimeSeriesModel.html" class="extype" name="com.cloudera.sparkts.models.TimeSeriesModel">TimeSeriesModel</a></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.cloudera.sparkts.models.EGARCHModel" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="EGARCHModelextendsTimeSeriesModel"></a>
+      <a id="EGARCHModel:EGARCHModel"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="EGARCHModel.html"><span class="name">EGARCHModel</span></a><span class="result"> extends <a href="TimeSeriesModel.html" class="extype" name="com.cloudera.sparkts.models.TimeSeriesModel">TimeSeriesModel</a></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.cloudera.sparkts.models.EWMAModel" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="EWMAModelextendsTimeSeriesModel"></a>
+      <a id="EWMAModel:EWMAModel"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="EWMAModel.html"><span class="name">EWMAModel</span></a><span class="result"> extends <a href="TimeSeriesModel.html" class="extype" name="com.cloudera.sparkts.models.TimeSeriesModel">TimeSeriesModel</a></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.cloudera.sparkts.models.GARCHModel" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="GARCHModelextendsTimeSeriesModel"></a>
+      <a id="GARCHModel:GARCHModel"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="GARCHModel.html"><span class="name">GARCHModel</span></a><span class="result"> extends <a href="TimeSeriesModel.html" class="extype" name="com.cloudera.sparkts.models.TimeSeriesModel">TimeSeriesModel</a></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.cloudera.sparkts.models.RegressionARIMAModel" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="RegressionARIMAModelextendsTimeSeriesModel"></a>
+      <a id="RegressionARIMAModel:RegressionARIMAModel"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="RegressionARIMAModel.html"><span class="name">RegressionARIMAModel</span></a><span class="result"> extends <a href="TimeSeriesModel.html" class="extype" name="com.cloudera.sparkts.models.TimeSeriesModel">TimeSeriesModel</a></span>
+      </span>
+      </h4>
+      <p class="comment cmt"></p>
+    </li><li name="com.cloudera.sparkts.models.TimeSeriesModel" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="TimeSeriesModelextendsAnyRef"></a>
+      <a id="TimeSeriesModel:TimeSeriesModel"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="TimeSeriesModel.html"><span class="name">TimeSeriesModel</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">Models time dependent effects in a time series.</p>
+    </li></ol>
+            </div>
+
+        
+
+        <div id="values" class="values members">
+              <h3>Value Members</h3>
+              <ol><li name="com.cloudera.sparkts.models.ARGARCH" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ARGARCH"></a>
+      <a id="ARGARCH:ARGARCH"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="ARGARCH$.html"><span class="name">ARGARCH</span></a>
+      </span>
+      </h4>
+      
+    </li><li name="com.cloudera.sparkts.models.ARIMA" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ARIMA"></a>
+      <a id="ARIMA:ARIMA"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="ARIMA$.html"><span class="name">ARIMA</span></a>
+      </span>
+      </h4>
+      <p class="comment cmt">ARIMA models allow modeling timeseries as a function of prior values of the series
+(i.</p>
+    </li><li name="com.cloudera.sparkts.models.Autoregression" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Autoregression"></a>
+      <a id="Autoregression:Autoregression"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="Autoregression$.html"><span class="name">Autoregression</span></a>
+      </span>
+      </h4>
+      
+    </li><li name="com.cloudera.sparkts.models.EWMA" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="EWMA"></a>
+      <a id="EWMA:EWMA"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="EWMA$.html"><span class="name">EWMA</span></a>
+      </span>
+      </h4>
+      <p class="comment cmt">Fits an Exponentially Weight Moving Average model (EWMA) (aka.</p>
+    </li><li name="com.cloudera.sparkts.models.GARCH" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="GARCH"></a>
+      <a id="GARCH:GARCH"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="GARCH$.html"><span class="name">GARCH</span></a>
+      </span>
+      </h4>
+      
+    </li><li name="com.cloudera.sparkts.models.RegressionARIMA" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="RegressionARIMA"></a>
+      <a id="RegressionARIMA:RegressionARIMA"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="RegressionARIMA$.html"><span class="name">RegressionARIMA</span></a>
+      </span>
+      </h4>
+      <p class="comment cmt">This model is basically a regression with ARIMA error structure
+see
+<a href="https://onlinecourses.science.psu.edu/stat510/node/53" target="_blank">https://onlinecourses.science.psu.edu/stat510/node/53</a>
+<a href="https://www.otexts.org/fpp/9/1" target="_blank">https://www.otexts.org/fpp/9/1</a>
+<a href="http://robjhyndman.com/talks/RevolutionR/11-Dynamic-Regression.pdf" target="_blank">http://robjhyndman.com/talks/RevolutionR/11-Dynamic-Regression.pdf</a>
+The basic idea is that for usual regression models
+Y = B*X + e
+e should be IID ~ N(0,sigma<sup>2</sup>), but in time series problems, e tends to have time series
+characteristics.</p>
+    </li></ol>
+            </div>
+
+        
+
+        
+        </div>
+
+        <div id="inheritedMembers">
+        
+        
+        </div>
+
+        <div id="groupedMembers">
+        <div class="group" name="Ungrouped">
+              <h3>Ungrouped</h3>
+              
+            </div>
+        </div>
+
+      </div>
+
+      <div id="tooltip"></div>
+
+      <div id="footer">  </div>
+      <script defer="defer" type="text/javascript" id="jquery-js" src="../../../../lib/jquery.js"></script><script defer="defer" type="text/javascript" id="jquery-ui-js" src="../../../../lib/jquery-ui.js"></script><script defer="defer" type="text/javascript" id="tools-tooltip-js" src="../../../../lib/tools.tooltip.js"></script><script defer="defer" type="text/javascript" id="template-js" src="../../../../lib/template.js"></script>
+    </body>
+      </html>
