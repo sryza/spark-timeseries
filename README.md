@@ -10,7 +10,7 @@ or email them directly to <mailto:spark-ts@googlegroups.com>.
 
 Docs are available at http://sryza.github.io/spark-timeseries.
 
-Or check out the [Scaladoc](http://sryza.github.io/spark-timeseries/0.2.0/scaladocs/index.html), [Javadoc](http://sryza.github.io/spark-timeseries/0.2.0/apidocs/index.html), or [Python doc](http://sryza.github.io/spark-timeseries/0.2.0/pydoc/py-modindex.html).
+Or check out the [Scaladoc](http://sryza.github.io/spark-timeseries/0.3.0/scaladocs/index.html), [Javadoc](http://sryza.github.io/spark-timeseries/0.3.0/apidocs/index.html), or [Python doc](http://sryza.github.io/spark-timeseries/0.3.0/pydoc/py-modindex.html).
 
 The aim here is to provide
 * A set of abstractions for manipulating large time series data sets, similar to
