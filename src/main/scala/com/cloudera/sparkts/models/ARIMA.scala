@@ -59,8 +59,8 @@ object ARIMA {
    * `fitModel` verifies that parameters fit stationarity and invertibility requirements,
    * there is currently no function to transform them if they do not. It is up to the user
    * to make these changes as appropriate (or select a different model specification)
-    *
-    * @param p autoregressive order
+   *
+   * @param p autoregressive order
    * @param d differencing order
    * @param q moving average order
    * @param ts time series to which to fit an ARIMA(p, d, q) model
@@ -116,8 +116,8 @@ object ARIMA {
   /**
    * Fit an ARIMA model using conditional sum of squares estimator, optimized using unbounded
    * BOBYQA.
-    *
-    * @param p autoregressive order
+   *
+   * @param p autoregressive order
    * @param d differencing order
    * @param q moving average order
    * @param diffedY differenced time series, as appropriate
@@ -160,8 +160,8 @@ object ARIMA {
   /**
    * Fit an ARIMA model using conditional sum of squares estimator, optimized using conjugate
    * gradient descent
-    *
-    * @param p autoregressive order
+   *
+   * @param p autoregressive order
    * @param d differencing order
    * @param q moving average order
    * @param diffedY differenced time series, as appropriate
@@ -204,8 +204,8 @@ object ARIMA {
    * the OLS model are returned as initial parameter estimates.
    * See [[http://halweb.uc3m.es/esp/Personal/personas/amalonso/esp/TSAtema9.pdf]] for more
    * information.
-    *
-    * @param p autoregressive order
+   *
+   * @param p autoregressive order
    * @param q moving average order
    * @param y time series to be modeled
    * @param includeIntercept flag to include intercept
@@ -397,8 +397,8 @@ class ARIMAModel(
    * log likelihood based on conditional sum of squares. In contrast to logLikelihoodCSS the array
    * provided should correspond to an already differenced array, so that the function below
    * corresponds to the log likelihood for the ARMA rather than the ARIMA process
-    *
-    * @param diffedY differenced array
+   *
+   * @param diffedY differenced array
    * @return log likelihood of ARMA
    */
   def logLikelihoodCSSARMA(diffedY: Array[Double]): Double = {
@@ -432,8 +432,8 @@ class ARIMAModel(
    * \phi_{t-q}^{t-1}*\frac{\partial \epsilon_{t-q}^{t-1}}{\partial \theta_{ar_i}} \\
    * \frac{\partial\hat{y}}{\partial \theta_{ma_i}} =  \epsilon_{t - i} +
    * \phi_{t-q}^{t-1}*\frac{\partial \epsilon_{t-q}^{t-1}}{\partial \theta_{ma_i}} \\
-    *
-    * @param diffedY array of differenced values
+   *
+   * @param diffedY array of differenced values
    * @return
    */
   def gradientlogLikelihoodCSSARMA(diffedY: Array[Double]): Array[Double] = {
@@ -510,8 +510,8 @@ class ARIMAModel(
   /**
    * Updates the error vector in place with a new (more recent) error
    * The newest error is placed in position 0, while older errors "fall off the end"
-    *
-    * @param errs array of errors of length q in ARIMA(p, d, q), holds errors for t-1 through t-q
+   *
+   * @param errs array of errors of length q in ARIMA(p, d, q), holds errors for t-1 through t-q
    * @param newError the error at time t
    * @return a modified array with the latest error placed into index 0
    */
@@ -535,8 +535,8 @@ class ARIMAModel(
    * initErrors = null)
    * calculates the 1-step ahead ARMA forecasts for series1 assuming current coefficients, and
    * initial MA errors of 0.
-    *
-    * @param ts Time series to use for AR terms
+   *
+   * @param ts Time series to use for AR terms
    * @param dest Time series holding initial values at each index
    * @param op Operation to perform between values in dest, and various combinations of ts, errors
    *           and intercept terms
@@ -596,8 +596,8 @@ class ARIMAModel(
    * inverse operations to obtain the original series of underlying errors.
    * To do so, we assume prior MA terms are 0.0, and prior AR are equal to the model's intercept or
    * 0.0 if fit without an intercept
-    *
-    * @param ts Time series of observations with this model's characteristics.
+   *
+   * @param ts Time series of observations with this model's characteristics.
    * @return The dest series, representing remaining errors, for convenience.
    */
   def removeTimeDependentEffects(ts: Vector, destTs: Vector): Vector = {
@@ -621,8 +621,8 @@ class ARIMAModel(
    * Given a timeseries, apply an ARIMA(p, d, q) model to it.
    * We assume that prior MA terms are 0.0 and prior AR terms are equal to the intercept or 0.0 if
    * fit without an intercept
-    *
-    * @param ts Time series of i.i.d. observations.
+   *
+   * @param ts Time series of i.i.d. observations.
    * @return The dest series, representing the application of the model to provided error
    *         terms, for convenience.
    */
@@ -642,8 +642,8 @@ class ARIMAModel(
 
   /**
    * Sample a series of size n assuming an ARIMA(p, d, q) process.
-    *
-    * @param n size of sample
+   *
+   * @param n size of sample
    * @return series reflecting ARIMA(p, d, q) process
    */
   def sample(n: Int, rand: RandomGenerator): Vector = {
@@ -657,8 +657,8 @@ class ARIMAModel(
    * prior to the start of the series are equal to the model's intercept term (or 0.0, if fit
    * without and intercept term).Meanwhile, MA terms prior to the start are assumed to be 0.0. If
    * there is differencing, the first d terms come from the original series.
-    *
-    * @param ts Timeseries to use as gold-standard. Each value (i) in the returning series
+   *
+   * @param ts Timeseries to use as gold-standard. Each value (i) in the returning series
    *           is a 1-step ahead forecast of ts(i). We use the difference between ts(i) -
    *           estimate(i) to calculate the error at time i, which is used for the moving
    *           average terms.
@@ -745,8 +745,8 @@ class ARIMAModel(
    * Always returns true for models with no AR terms.
    * See http://www.econ.ku.dk/metrics/Econometrics2_05_II/Slides/07_univariatetimeseries_2pp.pdf
    * for more information (specifically slides 23 - 25)
-    *
-    * @return indicator of whether model's AR parameters are stationary
+   *
+   * @return indicator of whether model's AR parameters are stationary
    */
   def isStationary(): Boolean = {
     if (p == 0) {
@@ -763,8 +763,8 @@ class ARIMAModel(
    * 1 + theta_1 * x + theta_2 * x + ... + theta_q * x&#94;q = 0. Please see
    * [[ARIMAModel.isStationary]] for more details.
    * Always returns true for models with no MA terms.
-    *
-    * @return indicator of whether model's MA parameters are invertible
+   *
+   * @return indicator of whether model's MA parameters are invertible
    */
   def isInvertible(): Boolean = {
     if (q == 0) {
@@ -779,8 +779,8 @@ class ARIMAModel(
   /**
    * Checks whether all roots of polynomial passed are outside unit circle. Uses Laguerre's method
    * see [[https://en.wikipedia.org/wiki/Laguerre%27s_method]] for more information
-    *
-    * @param poly the coefficients of the polynomial of order `poly.length`
+   *
+   * @param poly the coefficients of the polynomial of order `poly.length`
    * @return boolean indicating whether all roots are outside unit circle
    */
   private def allRootsOutsideUnitCircle(poly: Array[Double]): Boolean = {
@@ -792,14 +792,14 @@ class ARIMAModel(
   }
 
   /**
-    * Calculates an approximation to the Akaike Information Criterion (AIC). This is an approximation
-    * as we use the conditional likelihood, rather than the exact likelihood. Please see
-    * [[https://en.wikipedia.org/wiki/Akaike_information_criterion]] for more information on this
-    * measure.
+   * Calculates an approximation to the Akaike Information Criterion (AIC). This is an approximation
+   * as we use the conditional likelihood, rather than the exact likelihood. Please see
+   * [[https://en.wikipedia.org/wiki/Akaike_information_criterion]] for more information on this
+   * measure.
    *
    * @param ts the timeseries to evaluate under current model
-    * @return an approximation to the AIC under the current model
-    */
+   * @return an approximation to the AIC under the current model
+   */
   def approxAIC(ts: Vector): Double = {
     val conditionalLogLikelihood = logLikelihoodCSS(ts)
     val interceptTerm = if (hasIntercept) 1 else 0
