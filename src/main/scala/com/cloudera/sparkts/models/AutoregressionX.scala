@@ -121,6 +121,7 @@ class ARXModel(
     val results = DenseVector.zeros[Double](predictors.length)
 
     for ((rowArray, rowIndex) <- predictors.zipWithIndex) {
+      results(rowIndex) = c
       for ((value, colIndex) <- rowArray.zipWithIndex) {
         results(rowIndex) += value * coefficients(colIndex)
       }
