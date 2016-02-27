@@ -172,7 +172,7 @@ class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix,
    * TimeSeries will be missing the first n date-times.
    */
   def differences(lag: Int): TimeSeries[K] = {
-    mapSeries(index.islice(lag, index.size), vec => diff(toBreeze(vec).toDenseVector, lag))
+    mapSeries(vec => diff(toBreeze(vec).toDenseVector, lag), index.islice(lag, index.size))
   }
 
   /**
@@ -186,7 +186,7 @@ class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix,
    * TimeSeries will be missing the first n date-times.
    */
   def quotients(lag: Int): TimeSeries[K] = {
-    mapSeries(index.islice(lag, index.size), vec => UnivariateTimeSeries.quotients(vec, lag))
+    mapSeries(vec => UnivariateTimeSeries.quotients(vec, lag), index.islice(lag, index.size))
   }
 
   /**
@@ -200,7 +200,7 @@ class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix,
    * compounded) returns.
    */
   def price2ret(): TimeSeries[K] = {
-    mapSeries(index.islice(1, index.size), vec => UnivariateTimeSeries.price2ret(vec, 1))
+    mapSeries(vec => UnivariateTimeSeries.price2ret(vec, 1), index.islice(1, index.size))
   }
 
   def univariateSeriesIterator(): Iterator[Vector] = {
@@ -234,7 +234,7 @@ class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix,
    * Applies a transformation to each series that preserves the time index.
    */
   def mapSeries(f: (Vector) => Vector): TimeSeries[K] = {
-    mapSeries(index, f)
+    mapSeries(f, index)
   }
 
   /**
@@ -253,7 +253,7 @@ class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix,
    * Applies a transformation to each series such that the resulting series align with the given
    * time index.
    */
-  def mapSeries(newIndex: DateTimeIndex, f: (Vector) => Vector): TimeSeries[K] = {
+  def mapSeries(f: (Vector) => Vector, newIndex: DateTimeIndex): TimeSeries[K] = {
     val newSize = newIndex.size
     val newData = new BDM[Double](newSize, data.cols)
     univariateSeriesIterator().zipWithIndex.foreach { case (vec, i) =>
@@ -302,7 +302,7 @@ class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix,
       aggr: (Array[Double], Int, Int) => Double,
       closedRight: Boolean,
       stampRight: Boolean): TimeSeries[K] = {
-    mapSeries(targetIndex, Resample.resample(_, index, targetIndex, aggr, closedRight, stampRight))
+    mapSeries(Resample.resample(_, index, targetIndex, aggr, closedRight, stampRight), targetIndex)
   }
 }
 

@@ -184,7 +184,7 @@ class JavaTimeSeries[K](val ts: TimeSeries[K])(implicit val kClassTag: ClassTag[
    * Applies a transformation to each series that preserves the time index.
    */
   def mapSeries(f: JFunction[Vector, Vector]): JavaTimeSeries[K] =
-    new JavaTimeSeries[K](ts.mapSeries(index, (v: Vector) => f.call(v)))
+    new JavaTimeSeries[K](ts.mapSeries((v: Vector) => f.call(v), index))
 
   /**
    * Applies a transformation to each series that preserves the time index. Passes the key along
@@ -197,8 +197,8 @@ class JavaTimeSeries[K](val ts: TimeSeries[K])(implicit val kClassTag: ClassTag[
    * Applies a transformation to each series such that the resulting series align with the given
    * time index.
    */
-  def mapSeries(newIndex: DateTimeIndex, f: JFunction[Vector, Vector]): JavaTimeSeries[K] = {
-    new JavaTimeSeries[K](ts.mapSeries(newIndex, (v: Vector) => f.call(v)))
+  def mapSeries(f: JFunction[Vector, Vector], newIndex: DateTimeIndex): JavaTimeSeries[K] = {
+    new JavaTimeSeries[K](ts.mapSeries((v: Vector) => f.call(v), newIndex))
   }
 
   def mapValues[U](f: JFunction[Vector, U]): java.util.List[(K, U)] =
