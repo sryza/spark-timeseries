@@ -319,7 +319,8 @@ object TimeSeriesStatisticalTests {
     val auxOLS = new OLSMultipleLinearRegression() // auxiliary OLS for bp test
     auxOLS.newSampleData(residualsSquared, origFactors) // u^2 = beta * X
     val bpstat = residuals.size * auxOLS.calculateRSquared()
-    val df = factors.numCols // auxOLS uses intercept term, so (# of regressors - 1) = # factors cols
+    // auxOLS uses intercept term, so (# of regressors - 1) = # factors cols
+    val df = factors.numCols
     (bpstat, 1 - new ChiSquaredDistribution(df).cumulativeProbability(bpstat))
   }
 
