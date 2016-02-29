@@ -124,7 +124,7 @@ private[sparkts] object Lag {
    * matrix of the form [a_-1 a_-2 b_-1 b_-2 c_-1 c_-2]
    * The original time series is not included in the matrix.
    */
-  def lagMatTrimBoth(x: Array[Array[Double]], maxLag: Int) : Array[Array[Double]] = {
+  def lagMatTrimBoth(x: Array[Array[Double]], maxLag: Int): Array[Array[Double]] = {
     lagMatTrimBoth(x, maxLag, false)
   }
 }

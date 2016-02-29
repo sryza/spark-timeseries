@@ -46,12 +46,12 @@ object AutoregressionX {
    * @return an ARXModel, which is an autoregressive model with exogenous variables
    */
   def fitModel(
-                y: Vector[Double],
-                x: Matrix[Double],
-                yMaxLag: Int,
-                xMaxLag: Int,
-                includeOriginalX: Boolean = true,
-                noIntercept: Boolean = false): ARXModel = {
+      y: Vector[Double],
+      x: Matrix[Double],
+      yMaxLag: Int,
+      xMaxLag: Int,
+      includeOriginalX: Boolean = true,
+      noIntercept: Boolean = false): ARXModel = {
     val maxLag = max(yMaxLag, xMaxLag)
     val arrY = y.toArray
     // Make left hand side, note that we must drop the first maxLag terms
@@ -69,11 +69,11 @@ object AutoregressionX {
 
 
   private[sparkts] def assemblePredictors(
-                                           y: Array[Double],
-                                           x: Array[Array[Double]],
-                                           yMaxLag: Int,
-                                           xMaxLag: Int,
-                                           includeOriginalX: Boolean = true): Array[Array[Double]] = {
+      y: Array[Double],
+      x: Array[Array[Double]],
+      yMaxLag: Int,
+      xMaxLag: Int,
+      includeOriginalX: Boolean = true): Array[Array[Double]] = {
     val maxLag = max(yMaxLag, xMaxLag)
     // AR terms from dependent variable (autoregressive portion)
     val arY = Lag.lagMatTrimBoth(y, yMaxLag)
@@ -92,22 +92,20 @@ object AutoregressionX {
   }
 }
 
-// Jose note: not extending timeseries model, since seems to me to be a different type of model
-// addingTimeDpendent...etc wouldn't apply here with the original signature, since we need
-// exogenous variables provided
 /**
- * An autoregressive model with exogenous variables
- * @param c an intercept term, zero if none desired
- * @param coefficients the coefficients for the various terms. The order of coefficients is as
+ * An autoregressive model with exogenous variables.
+ *
+ * @param c An intercept term, zero if none desired.
+ * @param coefficients The coefficients for the various terms. The order of coefficients is as
  *                     follows:
  *                     - Autoregressive terms for the dependent variable, in increasing order of lag
  *                     - For each column in the exogenous matrix (in their original order), the
  *                     lagged terms in increasing order of lag (excluding the non-lagged versions).
  *                     - The coefficients associated with the non-lagged exogenous matrix
- * @param yMaxLag the maximum lag order for the dependent variable
- * @param xMaxLag the maximum lag order for exogenous variables
- * @param includesOriginalX a boolean flag indicating if the non-lagged exogenous variables should
- *                         be included
+ * @param yMaxLag The maximum lag order for the dependent variable.
+ * @param xMaxLag The maximum lag order for exogenous variables.
+ * @param includesOriginalX A boolean flag indicating if the non-lagged exogenous variables should
+ *                         be included.
  */
 class ARXModel(
     val c: Double,
