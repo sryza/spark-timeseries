@@ -36,6 +36,14 @@ private[sparkts] object MatrixUtil {
     arrs
   }
 
+  def matToRowArrs(mat: Matrix[Double]): Array[Array[Double]] = {
+    val arrs = new Array[Array[Double]](mat.rows)
+    for (r <- 0 until mat.rows) {
+      arrs(r) = mat(r to r, 0 to mat.cols - 1).toDenseMatrix.toArray
+    }
+    arrs
+  }
+
   def arrsToMat(arrs: Iterator[Array[Double]]): DenseMatrix[Double] = {
     vecArrsToMats(arrs, arrs.length).next()
   }
