@@ -105,9 +105,9 @@ private[sparkts] object Lag {
    * matrix of the form [a_-1 a_-2 b_-1 b_-2 c_-1 c_-2]
    */
   def lagMatTrimBoth(
-                      x: Array[Array[Double]],
-                      maxLag: Int,
-                      includeOriginal: Boolean): Array[Array[Double]] = {
+      x: Array[Array[Double]],
+      maxLag: Int,
+      includeOriginal: Boolean): Array[Array[Double]] = {
     val xt = x.transpose
     // one matrix per column, consisting of all its lags
     val matrices = for (col <- xt) yield {
@@ -117,8 +117,14 @@ private[sparkts] object Lag {
     matrices.transpose.map(_.reduceLeft(_ ++ _))
   }
 
-  def lagMatTrimBoth(x: Array[Array[Double]], maxLag: Int)
-  : Array[Array[Double]] = {
+  /**
+   * Creates a lagged matrix from a current matrix (represented in row-array form). Lags each column
+   * the appropriate amount of times and then concatenates the columns.
+   * So given a matrix [a b c], where a/b/c are column vectors, and calling with lag of 2, becomes a
+   * matrix of the form [a_-1 a_-2 b_-1 b_-2 c_-1 c_-2]
+   * The original time series is not included in the matrix.
+   */
+  def lagMatTrimBoth(x: Array[Array[Double]], maxLag: Int) : Array[Array[Double]] = {
     lagMatTrimBoth(x, maxLag, false)
   }
 }

@@ -117,7 +117,9 @@ class AutoregressionXSuite extends FunSuite {
 
   test("predict using ARX model") {
     val c = 0
-    val xCoeffs = Array(-1.136026484226831e-08, 8.637677568908233e-07, 15238.143039368977, -7.993535860373772e-09, -5.198597570089805e-07, 1.5691547009557947e-08, 7.409621376205488e-08)
+    val xCoeffs = Array(-1.136026484226831e-08, 8.637677568908233e-07,
+      15238.143039368977, -7.993535860373772e-09, -5.198597570089805e-07,
+      1.5691547009557947e-08, 7.409621376205488e-08)
     val yMaxLag = 0
     val xMaxLag = 0
     val arxModel = new ARXModel(c, xCoeffs, yMaxLag, xMaxLag, includesOriginalX = true)

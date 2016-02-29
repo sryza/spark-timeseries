@@ -21,7 +21,7 @@ import com.cloudera.sparkts.MatrixUtil.{matToRowArrs, toBreeze}
 import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression
 
 /**
- * Models a timeseries as a function of itself (autoregressive terms) and exogenous variables, which
+ * Models a time series as a function of itself (autoregressive terms) and exogenous variables, which
  * are lagged up to degree xMaxLag.
  */
 object AutoregressionX {
@@ -29,11 +29,12 @@ object AutoregressionX {
    * Fit an autoregressive model with additional exogenous variables. The model predicts a value
    * at time t of a dependent variable, Y, as a function of previous values of Y, and a combination
    * of previous values of exogenous regressors X_i, and current values of exogenous regressors X_i.
-   * This is a generalization of an AR model, which is simple an ARX with no exogenous regressors.
+   * This is a generalization of an AR model, which is simply an ARX with no exogenous regressors.
    * The fitting procedure here is the same, using least squares. Note that all lags up to the
    * maxlag are included. In the case of the dependent variable the max lag is 'yMaxLag', while
    * for the exogenous variables the max lag is 'xMaxLag', with which each column in the original
    * matrix provided is lagged accordingly.
+   *
    * @param y the dependent variable, time series
    * @param x a matrix of exogenous variables
    * @param yMaxLag the maximum lag order for the dependent variable
@@ -109,15 +110,15 @@ object AutoregressionX {
  *                         be included
  */
 class ARXModel(
-                val c: Double,
-                val coefficients: Array[Double],
-                val yMaxLag: Int,
-                val xMaxLag: Int,
-                includesOriginalX: Boolean) {
-
+    val c: Double,
+    val coefficients: Array[Double],
+    val yMaxLag: Int,
+    val xMaxLag: Int,
+    includesOriginalX: Boolean) {
 
   def predict(y: Vector[Double], x: Matrix[Double]): Vector[Double] = {
-    val predictors = AutoregressionX.assemblePredictors(y.toArray, matToRowArrs(x), yMaxLag, xMaxLag, includesOriginalX)
+    val predictors = AutoregressionX.assemblePredictors(y.toArray, matToRowArrs(x), yMaxLag,
+      xMaxLag, includesOriginalX)
     val results = DenseVector.zeros[Double](predictors.length)
 
     for ((rowArray, rowIndex) <- predictors.zipWithIndex) {
