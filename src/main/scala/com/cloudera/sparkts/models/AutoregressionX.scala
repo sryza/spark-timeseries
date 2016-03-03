@@ -112,7 +112,7 @@ class ARXModel(
     val coefficients: Array[Double],
     val yMaxLag: Int,
     val xMaxLag: Int,
-    includesOriginalX: Boolean) {
+    includesOriginalX: Boolean) extends Serializable {
 
   def predict(y: Vector[Double], x: Matrix[Double]): Vector[Double] = {
     val predictors = AutoregressionX.assemblePredictors(y.toArray, matToRowArrs(x), yMaxLag,
