@@ -13,26 +13,19 @@
  * License.
  */
 
-package com.cloudera.sparkts
+package com.cloudera.sparkts.models
 
-import breeze.linalg._
-
-import org.apache.commons.math3.analysis.{MultivariateFunction, MultivariateVectorFunction}
-import org.apache.commons.math3.optim.{InitialGuess, MaxEval, MaxIter, SimpleBounds,
-SimpleValueChecker}
-import org.apache.commons.math3.optim.nonlinear.scalar.gradient.NonLinearConjugateGradientOptimizer
+import org.apache.commons.math3.analysis.{MultivariateFunction}
+import org.apache.commons.math3.optim.{InitialGuess, MaxEval, MaxIter, SimpleBounds}
 import org.apache.commons.math3.optim.nonlinear.scalar.noderiv.BOBYQAOptimizer
-import org.apache.commons.math3.optim.nonlinear.scalar.{GoalType, ObjectiveFunction,
-ObjectiveFunctionGradient}
-
-
+import org.apache.commons.math3.optim.nonlinear.scalar.{GoalType, ObjectiveFunction}
+import org.apache.spark.mllib.linalg._
 
 /**
  * TODO: add explanation
  */
-
 object HoltWinters {
-  def fitModel(ts: Vector[Double], m: Int, method: String = "BOBYQA"): HoltWintersModel = {
+  def fitModel(ts: Vector, m: Int, method: String = "BOBYQA"): HoltWintersModel = {
     method match {
       //case "CG" => fitModelWithCG(ts)
       case "BOBYQA" => fitModelWithBOBYQA(ts, m)
@@ -40,7 +33,7 @@ object HoltWinters {
     }
   }
 
-  def fitModelWithBOBYQA(ts: Vector[Double], m: Int): HoltWintersModel = {
+  def fitModelWithBOBYQA(ts: Vector, m: Int): HoltWintersModel = {
     val optimizer = new BOBYQAOptimizer(5)
     val objectiveFunction = new ObjectiveFunction(new MultivariateFunction() {
       def value(params: Array[Double]): Double = {
@@ -69,8 +62,8 @@ class HoltWintersModel(
    * @param ts A time series for which we want to calculate the SSE, given the current parameters
    * @return SSE
    */
-  def sse(ts: Vector[Double]): Double = {
-    val n = ts.length
+  def sse(ts: Vector): Double = {
+    val n = ts.size
     val smoothed = new DenseVector(Array.fill(n)(0.0))
     addTimeDependentEffects(ts, smoothed)
 
@@ -89,18 +82,18 @@ class HoltWintersModel(
   /**
    * {@inheritDoc}
    */
-  override def removeTimeDependentEffects(ts: Vector[Double], dest: Vector[Double] = null)
-  : Vector[Double] = {
+  override def removeTimeDependentEffects(ts: Vector, dest: Vector = null): Vector = {
     throw new UnsupportedOperationException("not yet implemented")
   }
 
   /**
    * {@inheritDoc}
    */
-  override def addTimeDependentEffects(ts: Vector[Double], dest: Vector[Double]): Vector[Double] = {
+  override def addTimeDependentEffects(ts: Vector, dest: Vector): Vector = {
+    val destArr = dest.toArray
     val fitted = getHoltWintersComponents(ts)._1
-    for (i <- 0 until dest.length) {
-      dest(i) = fitted(i)
+    for (i <- 0 until dest.size) {
+      destArr(i) = fitted(i)
     }
     dest
   }
@@ -111,20 +104,21 @@ class HoltWintersModel(
    * @param ts
    * @param dest
    */
-  def forecast(ts: Vector[Double], dest: Vector[Double]) = {
+  def forecast(ts: Vector, dest: Vector) = {
+    val destArr = dest.toArray
     val (fitted, level, trend, season) = getHoltWintersComponents(ts)
-    val n = ts.length
+    val n = ts.size
     var si = 0
     val levelVal = level(n - 1)
     val trendVal = trend(n - 1)
 
-    for (i <- 0 until dest.length) {
+    for (i <- 0 until dest.size) {
       // if in sample, fitted, else forecasted
       if (i > n - 1) {
           si = if ((i - n) % m == 0) n else (n - m) + ((i - n) % m)
-          dest(i) = levelVal + (i - n + 1) * trendVal + season(si - 1)
+          destArr(i) = levelVal + (i - n + 1) * trendVal + season(si - 1)
         } else {
-          dest(i) = fitted(i)
+          destArr(i) = fitted(i)
         }
       si += 1
     }
@@ -135,14 +129,13 @@ class HoltWintersModel(
    * TODO: explain
    * 3 components, level, trend, seasonality
    */
-  def getHoltWintersComponents(ts: Vector[Double])
-    : (Vector[Double], Vector[Double], Vector[Double], Vector[Double]) = {
-    val n = ts.length
+  def getHoltWintersComponents(ts: Vector): (Vector, Vector, Vector, Vector) = {
+    val n = ts.size
     require(n >= 2, "Requires length of at least 2")
 
-    val dest = new DenseVector(Array.fill(n)(0.0))
-    val level = new DenseVector(Array.fill(n)(0.0))
-    val trend = new DenseVector(Array.fill(n)(0.0))
+    val dest = new Array[Double](n)
+    val level = new Array[Double](n)
+    val trend = new Array[Double](n)
 
     // http://robjhyndman.com/hyndsight/hw-initialization/
     // We follow the simple method (1998), and leave as TODO
@@ -154,7 +147,7 @@ class HoltWintersModel(
     var si = 0
     dest(0) = initLevel + initTrend + season(0)
 
-    for (i <- 0 until ts.length - 1) {
+    for (i <- 0 until ts.size - 1) {
       si = if (i >= m) i - m else i
       level(i) = alpha * (ts(i) - season(si)) + (1 - alpha) * (prevLevel + prevTrend)
       trend(i) =  beta * (level(i) - prevLevel) + (1 - beta) * prevTrend
@@ -168,12 +161,12 @@ class HoltWintersModel(
       dest(i + 1) = level(i) + trend(i) + season(si + 1)
     }
 
-    (dest, level, trend, season)
+    (Vectors.dense(dest), Vectors.dense(level), Vectors.dense(trend), Vectors.dense(season))
   }
 
   //TODO: add check for length...bad method for short/noisy series as per source
   //TODO: implemente alternative start described in Hyndman 2008
-  def initHoltWintersSimple(ts: Vector[Double]): (Double, Double, Vector[Double]) = {
+  def initHoltWintersSimple(ts: Vector): (Double, Double, Array[Double]) = {
     val arrTs = ts.toArray
     val lm = arrTs.take(m).sum / m //average value for first m obs
     val bm = arrTs.take(m * 2).splitAt(m).zipped.map { case (prevx, x) =>
@@ -182,8 +175,6 @@ class HoltWintersModel(
     val siPrelim = arrTs.take(m).map(_ - lm)
     //first m periods initialized to seasonal values, rest zeroed out
     val si = siPrelim ++ Array.fill(arrTs.length - m)(0.0)
-    (lm, bm, new DenseVector(si))
+    (lm, bm, si)
   }
 }
-
-
