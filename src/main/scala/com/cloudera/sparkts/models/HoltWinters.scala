@@ -25,6 +25,7 @@ import org.apache.spark.mllib.linalg._
  * TODO: add explanation
  */
 object HoltWinters {
+  
   def fitModel(ts: Vector, m: Int, method: String = "BOBYQA"): HoltWintersModel = {
     method match {
       //case "CG" => fitModelWithCG(ts)
@@ -51,6 +52,7 @@ object HoltWinters {
     new HoltWintersModel(m, params(0), params(1), params(2))
   }
 }
+
 
 class HoltWintersModel(
   val m: Int,
@@ -97,7 +99,6 @@ class HoltWintersModel(
     }
     dest
   }
-
 
   /**
    * TODO, explain
@@ -177,4 +178,84 @@ class HoltWintersModel(
     val si = siPrelim ++ Array.fill(arrTs.length - m)(0.0)
     (lm, bm, si)
   }
+  
+  def getKernel(): (Array[Double]) = {
+    
+    if (m % 2 == 0){
+      var kernel = Array.fill(m+1)(1.0 / m)
+      kernel(0) = 0.5 / m
+      kernel(m) = 0.5 / m
+      kernel
+    }
+    else{
+      val kernel = Array.fill(m)(1.0 / m)
+      kernel
+    }
+    
+  }
+  
+  def convolve(inData: Array[Double],kernel: Array[Double]): (Array[Double]) = {
+    val kernelSize = kernel.size
+    val dataSize = inData.size
+    
+    val outData = new Array[Double](dataSize - kernelSize + 1)
+    
+    var end = 0
+		while (end <= dataSize - kernelSize) {
+			var sum = 0.0
+			for ( i <- 0 to kernelSize-1)
+			{		
+				sum += kernel(i) * inData(end+i)
+			}
+			
+			outData(end) = sum
+			end = end+1;
+		}
+
+    outData
+  }
+  
+  def initHoltWinters(ts: Vector): (Double, Double, Array[Double]) = {
+    val arrTs = ts.toArray
+    
+    // Decompose a window of time series into level trend and seasonal using standard convolution  
+    val kernel = getKernel()
+    val kernelSize = kernel.size
+    val trend = convolve(arrTs.take(m * 2), kernel)
+    
+    //var i = 0
+    //for(i <- 0 to trend.size-1) print(trend(i)+",")
+    
+    // Remove the trend from time series. Subtract for additive and divide for multiplicative                   
+	  val removeTrend = arrTs.take(m * 2).zip(
+	      Array.fill(((kernelSize - 1) / 2))(0.0) ++ trend ++ Array.fill(((kernelSize - 1) / 2))(0.0)).map{
+      case(a,t) => if(t == 0) 0 else (a - t) 
+    }
+    
+		// seasonal mean is sum of mean of all season values of that period
+    val seasonalMean = removeTrend.splitAt(m).zipped.map { case (prevx, x) =>
+        if(prevx == 0 || x == 0) (x + prevx) else (x + prevx) / 2
+      }
+    
+    val meanOfFigures = seasonalMean.sum / m
+      
+    // The seasonal mean is then centered and subtracted to get season
+    val initSeason = seasonalMean.map(_ - meanOfFigures )
+    
+    // Do Simple Linear Regression to find the initial level and trend
+    val indices = 1 to trend.size
+    val xbar = (indices.sum:Double) / indices.size
+    val ybar = trend.sum / trend.size
+		
+    val xxbar = indices.map( x => (x - xbar) * (x - xbar) ).sum
+    val xybar = indices.zip(trend).map{
+        case(x, y) => (x - xbar) * (y - ybar)
+      }.sum
+    
+    val initTrend = xybar / xxbar
+    val initLevel = ybar - (initTrend * xbar)
+    
+    (initLevel, initTrend, initSeason)
+  }
+  
 }
