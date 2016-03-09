@@ -105,7 +105,7 @@ class HourFrequency(_Frequency):
         self._jfreq = sc._jvm.com.cloudera.sparkts.HourFrequency(hours)
 
     def hours(self):
-        return self_jfreq.hours()
+        return self._jfreq.hours()
 
 class BusinessDayFrequency(object):
     """

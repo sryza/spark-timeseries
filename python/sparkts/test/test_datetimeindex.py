@@ -6,6 +6,9 @@ class DateTimeIndexTestCase(PySparkTestCase):
     def test_frequencies(self):
         bd = BusinessDayFrequency(1, 1, self.sc)
         self.assertEqual(bd.days(), 1)
+        
+        hf = HourFrequency(4, self.sc)
+        self.assertEqual(hf.hours(), 4)
     
     def test_uniform(self):
         freq = DayFrequency(3, self.sc)
