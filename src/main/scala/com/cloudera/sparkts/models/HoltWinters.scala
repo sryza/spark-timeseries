@@ -16,46 +16,44 @@
 package com.cloudera.sparkts.models
 
 import org.apache.commons.math3.analysis.{MultivariateFunction}
-import org.apache.commons.math3.optim.{InitialGuess, MaxEval, MaxIter, SimpleBounds}
-import org.apache.commons.math3.optim.nonlinear.scalar.noderiv.BOBYQAOptimizer
-import org.apache.commons.math3.optim.nonlinear.scalar.{GoalType, ObjectiveFunction}
 import org.apache.spark.mllib.linalg._
+import org.apache.commons.math3.optimization.direct.BOBYQAOptimizer
+import org.apache.commons.math3.optimization.GoalType
 
 /**
  * TODO: add explanation
  */
 object HoltWinters {
   
-  def fitModel(ts: Vector, m: Int, method: String = "BOBYQA"): HoltWintersModel = {
+  def fitModel(ts: Vector, period: Int, modelType: String = "additive", method: String = "BOBYQA"): HoltWintersModel = {
     method match {
       //case "CG" => fitModelWithCG(ts)
-      case "BOBYQA" => fitModelWithBOBYQA(ts, m)
+      case "BOBYQA" => fitModelWithBOBYQA(ts, period, modelType)
       case _ => throw new UnsupportedOperationException("Currently only supports 'CG' and 'BOBYQA'")
     }
   }
 
-  def fitModelWithBOBYQA(ts: Vector, m: Int): HoltWintersModel = {
+  def fitModelWithBOBYQA(ts: Vector, period: Int, modelType:String): HoltWintersModel = {
     val optimizer = new BOBYQAOptimizer(5)
-    val objectiveFunction = new ObjectiveFunction(new MultivariateFunction() {
+    val objectiveFunction = new MultivariateFunction() {
       def value(params: Array[Double]): Double = {
-        new HoltWintersModel(m, params(0), params(1), params(2)).sse(ts)
+        new HoltWintersModel(modelType, period, params(0), params(1), params(2)).sse(ts)
       }
-    })
-    // The starting guesses in R's stats:HoltWinters
-    val initGuess = new InitialGuess(Array(0.3, 0.1, 0.1))
-    val maxIter = new MaxIter(10000)
-    val maxEval = new MaxEval(10000)
+    }
     val goal = GoalType.MINIMIZE
-    val bounds = new SimpleBounds(Array(0.0, 0.0, 0.0), Array(1.0, 1.0, 1.0))
-    val optimal = optimizer.optimize(objectiveFunction, goal, bounds, initGuess, maxIter, maxEval)
-    val params = optimal.getPoint
-    new HoltWintersModel(m, params(0), params(1), params(2))
+    val params = Array(0.3,0.1,0.1)
+		val lower = Array(0.0,0.0,0.0)
+		val upper = Array(1.0,1.0,1.0)
+		
+    val optimal = optimizer.optimize(30000,objectiveFunction,goal,params,lower,upper)
+    val cmvalues = optimal.getPoint
+    new HoltWintersModel(modelType, period, cmvalues(0), cmvalues(1), cmvalues(2))
   }
 }
 
-
 class HoltWintersModel(
-  val m: Int,
+  val modelType: String,
+  val period: Int,
   val alpha: Double,
   val beta: Double,
   val gamma: Double) extends TimeSeriesModel {
@@ -71,13 +69,12 @@ class HoltWintersModel(
 
     var error = 0.0
     var sqrErrors = 0.0
-    var i = 0
-
-    while (i <  n) {
+    
+    for(i <- period to (n - 1)) {
       error = ts(i) - smoothed(i)
       sqrErrors += error * error
-      i += 1
     }
+    
     sqrErrors
   }
 
@@ -94,17 +91,19 @@ class HoltWintersModel(
   override def addTimeDependentEffects(ts: Vector, dest: Vector): Vector = {
     val destArr = dest.toArray
     val fitted = getHoltWintersComponents(ts)._1
-    for (i <- 0 until dest.size) {
+    for (i <- 0 to (dest.size - 1)) {
       destArr(i) = fitted(i)
     }
     dest
   }
 
+  
   /**
    * TODO, explain
    * @param ts
    * @param dest
    */
+  
   def forecast(ts: Vector, dest: Vector) = {
     val destArr = dest.toArray
     val (fitted, level, trend, season) = getHoltWintersComponents(ts)
@@ -116,7 +115,7 @@ class HoltWintersModel(
     for (i <- 0 until dest.size) {
       // if in sample, fitted, else forecasted
       if (i > n - 1) {
-          si = if ((i - n) % m == 0) n else (n - m) + ((i - n) % m)
+          si = if ((i - n) % period == 0) n else (n - period) + ((i - n) % period)
           destArr(i) = levelVal + (i - n + 1) * trendVal + season(si - 1)
         } else {
           destArr(i) = fitted(i)
@@ -135,60 +134,56 @@ class HoltWintersModel(
     require(n >= 2, "Requires length of at least 2")
 
     val dest = new Array[Double](n)
+    
     val level = new Array[Double](n)
     val trend = new Array[Double](n)
-
-    // http://robjhyndman.com/hyndsight/hw-initialization/
-    // We follow the simple method (1998), and leave as TODO
-    // to initalize using the 2008 suggestion
-    val (initLevel, initTrend, season) = initHoltWintersSimple(ts)
-
-    var prevTrend = initLevel
-    var prevLevel = initTrend
-    var si = 0
-    dest(0) = initLevel + initTrend + season(0)
-
-    for (i <- 0 until ts.size - 1) {
-      si = if (i >= m) i - m else i
-      level(i) = alpha * (ts(i) - season(si)) + (1 - alpha) * (prevLevel + prevTrend)
-      trend(i) =  beta * (level(i) - prevLevel) + (1 - beta) * prevTrend
-      // We'll stick to this variant, so that we can impose constraints on parameters
-      // easily with BOBYQA
-      if (i >= m ) { // only update seasonality after the first m periods
-        season(i) = gamma * (ts(i) - level(i)) + (1 - gamma) * season(si)
-      }
-      prevLevel = level(i)
-      prevTrend = trend(i)
-      dest(i + 1) = level(i) + trend(i) + season(si + 1)
+    val season = new Array[Double](n)
+    
+    val (initLevel, initTrend, initSeason) = initHoltWinters(ts)
+    level(0) = initLevel
+    trend(0) = initTrend
+    for(i <- 0 to (initSeason.size - 1)){
+      season(i) = initSeason(i)
     }
-
+    
+    for (i <- 0 to (n - period - 1)) {
+      dest(i + period) = level(i) + trend(i) + season(i)
+      
+      val levelWeight = ts(i + period) - season(i)
+      level(i+1) = alpha * levelWeight + (1 - alpha) * (level(i) + trend(i))
+      
+      trend(i+1) =  beta * (level(i+1) - level(i)) + (1 - beta) * trend(i)
+      
+      val seasonWeight = ts(i + period) - level(i+1)
+      season(i+period) = gamma * seasonWeight + (1 - gamma) * season(i)
+    }
+    
     (Vectors.dense(dest), Vectors.dense(level), Vectors.dense(trend), Vectors.dense(season))
   }
 
   //TODO: add check for length...bad method for short/noisy series as per source
-  //TODO: implemente alternative start described in Hyndman 2008
   def initHoltWintersSimple(ts: Vector): (Double, Double, Array[Double]) = {
     val arrTs = ts.toArray
-    val lm = arrTs.take(m).sum / m //average value for first m obs
-    val bm = arrTs.take(m * 2).splitAt(m).zipped.map { case (prevx, x) =>
+    val lm = arrTs.take(period).sum / period //average value for first m obs
+    val bm = arrTs.take(period * 2).splitAt(period).zipped.map { case (prevx, x) =>
         x - prevx
-      }.sum / (m * m)
-    val siPrelim = arrTs.take(m).map(_ - lm)
+      }.sum / (period * period)
+    val siPrelim = arrTs.take(period).map(_ - lm)
     //first m periods initialized to seasonal values, rest zeroed out
-    val si = siPrelim ++ Array.fill(arrTs.length - m)(0.0)
+    val si = siPrelim ++ Array.fill(arrTs.length - period)(0.0)
     (lm, bm, si)
   }
   
   def getKernel(): (Array[Double]) = {
     
-    if (m % 2 == 0){
-      var kernel = Array.fill(m+1)(1.0 / m)
-      kernel(0) = 0.5 / m
-      kernel(m) = 0.5 / m
+    if (period % 2 == 0){
+      var kernel = Array.fill(period+1)(1.0 / period)
+      kernel(0) = 0.5 / period
+      kernel(period) = 0.5 / period
       kernel
     }
     else{
-      val kernel = Array.fill(m)(1.0 / m)
+      val kernel = Array.fill(period)(1.0 / period)
       kernel
     }
     
@@ -201,9 +196,9 @@ class HoltWintersModel(
     val outData = new Array[Double](dataSize - kernelSize + 1)
     
     var end = 0
-		while (end <= dataSize - kernelSize) {
+		while (end <= (dataSize - kernelSize)) {
 			var sum = 0.0
-			for ( i <- 0 to kernelSize-1)
+			for ( i <- 0 to (kernelSize - 1))
 			{		
 				sum += kernel(i) * inData(end+i)
 			}
@@ -215,29 +210,31 @@ class HoltWintersModel(
     outData
   }
   
+  // http://robjhyndman.com/hyndsight/hw-initialization/
+  // We initialize using the 2008 suggestion
   def initHoltWinters(ts: Vector): (Double, Double, Array[Double]) = {
     val arrTs = ts.toArray
     
     // Decompose a window of time series into level trend and seasonal using standard convolution  
     val kernel = getKernel()
     val kernelSize = kernel.size
-    val trend = convolve(arrTs.take(m * 2), kernel)
+    val trend = convolve(arrTs.take(period * 2), kernel)
     
     //var i = 0
     //for(i <- 0 to trend.size-1) print(trend(i)+",")
     
     // Remove the trend from time series. Subtract for additive and divide for multiplicative                   
-	  val removeTrend = arrTs.take(m * 2).zip(
+	  val removeTrend = arrTs.take(period * 2).zip(
 	      Array.fill(((kernelSize - 1) / 2))(0.0) ++ trend ++ Array.fill(((kernelSize - 1) / 2))(0.0)).map{
       case(a,t) => if(t == 0) 0 else (a - t) 
     }
     
 		// seasonal mean is sum of mean of all season values of that period
-    val seasonalMean = removeTrend.splitAt(m).zipped.map { case (prevx, x) =>
+    val seasonalMean = removeTrend.splitAt(period).zipped.map { case (prevx, x) =>
         if(prevx == 0 || x == 0) (x + prevx) else (x + prevx) / 2
       }
     
-    val meanOfFigures = seasonalMean.sum / m
+    val meanOfFigures = seasonalMean.sum / period
       
     // The seasonal mean is then centered and subtracted to get season
     val initSeason = seasonalMean.map(_ - meanOfFigures )
