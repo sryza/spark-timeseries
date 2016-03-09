@@ -110,17 +110,21 @@ class HourFrequency(_Frequency):
 class BusinessDayFrequency(object):
     """
     A frequency that can be used for a uniform DateTimeIndex, where the period is given in
-    business days.
+    business days.  The first day of the business week is specified where Monday=1, Tuesday=2,
+    and so on.
     """
 
-    def __init__(self, bdays, sc):
-        self._jfreq = sc._jvm.com.cloudera.sparkts.BusinessDayFrequency(bdays)
+    def __init__(self, bdays, firstDayOfWeek, sc):
+        self._jfreq = sc._jvm.com.cloudera.sparkts.BusinessDayFrequency(bdays, firstDayOfWeek)
 
     def __eq__(self, other):
          return self._jfreq.equals(other._jfreq)
 
     def __ne__(self, other):
         return not self.__eq__(other)
+
+    def days(self):
+        return self._jfreq.days()
 
 def uniform(start, end=None, periods=None, freq=None, sc=None):
     """
