@@ -17,37 +17,45 @@ package com.cloudera.sparkts.models
 
 import org.apache.commons.math3.analysis.{MultivariateFunction}
 import org.apache.spark.mllib.linalg._
-import org.apache.commons.math3.optimization.direct.BOBYQAOptimizer
-import org.apache.commons.math3.optimization.GoalType
+import org.apache.commons.math3.optim.MaxIter
+import org.apache.commons.math3.optim.nonlinear.scalar.ObjectiveFunction
+import org.apache.commons.math3.optim.MaxEval
+import org.apache.commons.math3.optim.SimpleBounds
+import org.apache.commons.math3.optim.nonlinear.scalar.noderiv.BOBYQAOptimizer
+import org.apache.commons.math3.optim.InitialGuess
+import org.apache.commons.math3.optim.nonlinear.scalar.GoalType
+
 
 /**
  * TODO: add explanation
  */
 object HoltWinters {
   
+  // We can add support of CMAES Optimizer and multiplicative model.
   def fitModel(ts: Vector, period: Int, modelType: String = "additive", method: String = "BOBYQA"): HoltWintersModel = {
     method match {
-      //case "CG" => fitModelWithCG(ts)
       case "BOBYQA" => fitModelWithBOBYQA(ts, period, modelType)
-      case _ => throw new UnsupportedOperationException("Currently only supports 'CG' and 'BOBYQA'")
+      case _ => throw new UnsupportedOperationException("Currently only supports 'BOBYQA'")
     }
   }
 
   def fitModelWithBOBYQA(ts: Vector, period: Int, modelType:String): HoltWintersModel = {
-    val optimizer = new BOBYQAOptimizer(5)
-    val objectiveFunction = new MultivariateFunction() {
+    val optimizer = new BOBYQAOptimizer(7)
+    val objectiveFunction = new ObjectiveFunction(new MultivariateFunction() {
       def value(params: Array[Double]): Double = {
         new HoltWintersModel(modelType, period, params(0), params(1), params(2)).sse(ts)
       }
-    }
+    })
+    
+    // The starting guesses in R's stats:HoltWinters
+    val initGuess = new InitialGuess(Array(0.3, 0.1, 0.1))
+    val maxIter = new MaxIter(30000)
+    val maxEval = new MaxEval(30000)
     val goal = GoalType.MINIMIZE
-    val params = Array(0.3,0.1,0.1)
-		val lower = Array(0.0,0.0,0.0)
-		val upper = Array(1.0,1.0,1.0)
-		
-    val optimal = optimizer.optimize(30000,objectiveFunction,goal,params,lower,upper)
-    val cmvalues = optimal.getPoint
-    new HoltWintersModel(modelType, period, cmvalues(0), cmvalues(1), cmvalues(2))
+    val bounds = new SimpleBounds(Array(0.0, 0.0, 0.0), Array(1.0, 1.0, 1.0))
+    val optimal = optimizer.optimize(objectiveFunction, goal, bounds, initGuess, maxIter, maxEval)
+    val params = optimal.getPoint
+    new HoltWintersModel(modelType, period, params(0), params(1), params(2))
   }
 }
 
@@ -70,6 +78,7 @@ class HoltWintersModel(
     var error = 0.0
     var sqrErrors = 0.0
     
+    // We predict only from period by using the first period - 1 elements.
     for(i <- period to (n - 1)) {
       error = ts(i) - smoothed(i)
       sqrErrors += error * error
@@ -99,7 +108,8 @@ class HoltWintersModel(
 
   
   /**
-   * TODO, explain
+   * Final prediction Value is sum of level trend and season
+   * But in R's stats:HoltWinters additional weight is given for trend
    * @param ts
    * @param dest
    */
@@ -108,19 +118,17 @@ class HoltWintersModel(
     val destArr = dest.toArray
     val (fitted, level, trend, season) = getHoltWintersComponents(ts)
     val n = ts.size
-    var si = 0
-    val levelVal = level(n - 1)
-    val trendVal = trend(n - 1)
 
+    val finalLevel = level(n - period)
+    val finalTrend = trend(n - period)
+    val finalSeason = new Array[Double](period)
+    
+    for(i <- 0 until period){
+      finalSeason(i) = season(i + n - period)
+    }
+    
     for (i <- 0 until dest.size) {
-      // if in sample, fitted, else forecasted
-      if (i > n - 1) {
-          si = if ((i - n) % period == 0) n else (n - period) + ((i - n) % period)
-          destArr(i) = levelVal + (i - n + 1) * trendVal + season(si - 1)
-        } else {
-          destArr(i) = fitted(i)
-        }
-      si += 1
+      destArr(i) = (finalLevel + (i + 1) * finalTrend) + finalSeason(i % period) 
     }
     dest
   }
