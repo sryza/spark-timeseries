@@ -1,6 +1,9 @@
-from random import random
+from . import _py2java_double_array
+from _model import PyModel
 
 from pyspark.mllib.common import _py2java, _java2py
+from pyspark.mllib.linalg import Vectors
+
 
 """
 ARIMA models allow modeling timeseries as a function of prior values of the series
@@ -18,12 +21,6 @@ integrated time series.
 
 
 """
-
-def _py2java_double_array(vals, gw):
-    result = gw.new_array(gw.jvm.double, len(vals))
-    for i in range(0, len(vals)):
-        result[i] = vals[i]
-    return result
 
 def autofit(ts, maxp=5, maxd=2, maxq=5, sc=None):
     """
@@ -57,6 +54,8 @@ def autofit(ts, maxp=5, maxd=2, maxq=5, sc=None):
     
     returns an ARIMAModel
     """
+    assert sc != None, "Missing SparkContext"
+    
     jmodel = sc._jvm.com.cloudera.sparkts.models.ARIMA.autoFit(_py2java(sc, ts), maxp, maxd, maxq)
     return ARIMAModel(jmodel=jmodel, sc=sc)
 
@@ -98,15 +97,19 @@ def fit_model(p, d, q, ts, includeIntercept=True, method="css-cgd", userInitPara
     
     returns an ARIMAModel
     """
+    assert sc != None, "Missing SparkContext"
+    
     jvm = sc._jvm
     jmodel = jvm.com.cloudera.sparkts.models.ARIMA.fitModel(p, d, q, _py2java(sc, ts), includeIntercept, method, _py2java(sc, userInitParams))
     return ARIMAModel(jmodel=jmodel, sc=sc)
 
-class ARIMAModel(object):
+class ARIMAModel(PyModel):
     def __init__(self, p=0, d=0, q=0, coefficients=None, hasIntercept=False, jmodel=None, sc=None):
+        assert sc != None, "Missing SparkContext"
+
         self._ctx = sc
         if jmodel == None:
-            self._jmodel = self._ctx._jvm.com.cloudera.sparkts.models.ARIMAModel(p, d, q, _py2java(self._ctx, coefficients), hasIntercept)
+            self._jmodel = self._ctx._jvm.com.cloudera.sparkts.models.ARIMAModel(p, d, q, _py2java_double_array(coefficients, self._ctx._gateway), hasIntercept)
         else:
             self._jmodel = jmodel
             
@@ -175,44 +178,6 @@ class ARIMAModel(object):
         # need to copy diffedy to a double[] for Java
         result =  self._jmodel.gradientlogLikelihoodCSSARMA(_py2java_double_array(diffedy, self._ctx._gateway))
         return _java2py(self._ctx, result)
-
-    def remove_time_dependent_effects(self, ts, destts):
-        """
-        Given a timeseries, assume that it is the result of an ARIMA(p, d, q) process, and apply
-        inverse operations to obtain the original series of underlying errors.
-        To do so, we assume prior MA terms are 0.0, and prior AR are equal to the model's intercept or
-        0.0 if fit without an intercept
-        
-        Parameters
-        ----------
-        ts:
-            Time series of observations with this model's characteristics as a DenseVector
-        destts:
-            Time series with removed time-dependent effects as a DenseVector.
-        
-        returns The dest series, representing remaining errors, for convenience.
-        """
-        result =  self._jmodel.removeTimeDependentEffects(_py2java(self._ctx, ts), _py2java(self._ctx, destts))
-        return _java2py(self._ctx, result)
-    
-    def add_time_dependent_effects(self, ts, destts):
-        """
-        Given a timeseries, apply an ARIMA(p, d, q) model to it.
-        We assume that prior MA terms are 0.0 and prior AR terms are equal to the intercept or 0.0 if
-        fit without an intercept
-        
-        Parameters
-        ----------
-        ts:
-            Time series of i.i.d. observations as a DenseVector
-        destts:
-            Time series with added time-dependent effects as a DenseVector.
-        
-        returns the dest series, representing the application of the model to provided error
-         terms, for convenience.
-        """
-        result =  self._jmodel.addTimeDependentEffects(_py2java(self._ctx, ts), _py2java(self._ctx, destts))
-        return _java2py(self._ctx, result)
     
     def sample(self, n):
         """
@@ -269,7 +234,7 @@ class ARIMAModel(object):
         """
         return self._jmodel.isStationary()
     
-    def is_invertable(self):
+    def is_invertible(self):
         """
         Checks if MA parameters result in an invertible model. Checks this by solving the roots for
         1 + theta_1 * x + theta_2 * x + ... + theta_q * x&#94;q = 0. Please see
@@ -278,7 +243,7 @@ class ARIMAModel(object):
         
         Returns true if the model's MA parameters are invertible
         """
-        return self._jmodel.isInvertable()
+        return self._jmodel.isInvertible()
     
     def approx_aic(self, ts):
         """
