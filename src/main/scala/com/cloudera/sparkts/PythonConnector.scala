@@ -18,6 +18,8 @@ package com.cloudera.sparkts
 import java.nio.ByteBuffer
 import java.time._
 
+import scala.collection.mutable.ArrayBuffer
+
 import org.apache.spark.mllib.linalg.{DenseVector, Vector}
 
 import org.apache.spark.api.java.function.{PairFunction, Function}
@@ -42,6 +44,16 @@ private object PythonConnector {
       i += 1
     }
   }
+  
+  def arrayListToSeq(list: java.util.ArrayList[Any]): Seq[Any] = {
+    // implement with ArrayBuffer
+    var result = ArrayBuffer[Any]()
+    if (list != null) {
+      result = ArrayBuffer[Any](list.toArray: _*)
+    }
+    result
+  }
+  
 }
 
 private class BytesToKeyAndSeries extends PairFunction[Array[Byte], String, Vector] {
