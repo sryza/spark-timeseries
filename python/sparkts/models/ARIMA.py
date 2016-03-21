@@ -207,7 +207,7 @@ class ARIMAModel(PyModel):
             Timeseries to use as gold-standard. Each value (i) in the returning series
             is a 1-step ahead forecast of ts(i). We use the difference between ts(i) -
             estimate(i) to calculate the error at time i, which is used for the moving
-            average terms.
+            average terms. Numpy array.
         nFuture:
             Periods in the future to forecast (beyond length of ts)
             
@@ -216,7 +216,7 @@ class ARIMAModel(PyModel):
         zero and prior predictions are used for any AR terms.
         
         """
-        jts = _py2java(self._ctx, ts)
+        jts = _py2java(self._ctx, Vectors.dense(ts))
         jfore = self._jmodel.forecast(jts, nfuture)
         return _java2py(self._ctx, jfore)
     
@@ -259,4 +259,4 @@ class ARIMAModel(PyModel):
             
         Returns an approximation to the AIC under the current model as a double
         """
-        return self._jmodel.approxAIC(_py2java(self._ctx, ts))
+        return self._jmodel.approxAIC(_py2java(self._ctx, Vectors.dense(ts)))
