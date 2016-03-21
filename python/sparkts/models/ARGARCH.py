@@ -13,14 +13,14 @@ def fit_model(ts, sc=None):
     Parameters
     ----------
     ts:
-        the time series to which we want to fit a AR+GARCH model
+        the time series to which we want to fit a AR+GARCH model as a Numpy array
         
     Returns an ARGARCH model
     """
     assert sc != None, "Missing SparkContext"
     
     jvm = sc._jvm
-    jmodel = jvm.com.cloudera.sparkts.models.ARGARCH.fitModel(_py2java(sc, ts))
+    jmodel = jvm.com.cloudera.sparkts.models.ARGARCH.fitModel(_py2java(sc, Vectors.dense(ts)))
     return ARGARCHModel(jmodel=jmodel, sc=sc)
 
 class ARGARCHModel(PyModel):

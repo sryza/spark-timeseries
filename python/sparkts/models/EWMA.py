@@ -24,14 +24,14 @@ def fit_model(ts, sc=None):
     Parameters
     ----------
     ts:
-        the time series to which we want to fit an EWMA model
+        the time series to which we want to fit an EWMA model as a Numpy array
         
     Returns an EWMA model
     """
     assert sc != None, "Missing SparkContext"
 
     jvm = sc._jvm
-    jmodel = jvm.com.cloudera.sparkts.models.EWMA.fitModel(_py2java(sc, ts))
+    jmodel = jvm.com.cloudera.sparkts.models.EWMA.fitModel(_py2java(sc, Vectors.dense(ts)))
     return EWMAModel(jmodel=jmodel, sc=sc)
 
 class EWMAModel(PyModel):

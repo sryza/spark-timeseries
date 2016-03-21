@@ -42,7 +42,7 @@ def autofit(ts, maxp=5, maxd=2, maxq=5, sc=None):
     Parameters
     ----------
     ts:
-        time series to which to automatically fit an ARIMA model
+        time series to which to automatically fit an ARIMA model as a Numpy array
     maxP:
         limit for the AR order
     maxD:
@@ -56,7 +56,7 @@ def autofit(ts, maxp=5, maxd=2, maxq=5, sc=None):
     """
     assert sc != None, "Missing SparkContext"
     
-    jmodel = sc._jvm.com.cloudera.sparkts.models.ARIMA.autoFit(_py2java(sc, ts), maxp, maxd, maxq)
+    jmodel = sc._jvm.com.cloudera.sparkts.models.ARIMA.autoFit(_py2java(sc, Vectors.dense(ts)), maxp, maxd, maxq)
     return ARIMAModel(jmodel=jmodel, sc=sc)
 
 def fit_model(p, d, q, ts, includeIntercept=True, method="css-cgd", userInitParams=None, sc=None):
@@ -79,7 +79,7 @@ def fit_model(p, d, q, ts, includeIntercept=True, method="css-cgd", userInitPara
     q:
         moving average order
     ts:
-        time series to which to fit an ARIMA(p, d, q) model as a DenseVector
+        time series to which to fit an ARIMA(p, d, q) model as a Numpy array.
     includeIntercept:
         if true the model is fit with an intercept term. Default is true
     method:
@@ -88,10 +88,10 @@ def fit_model(p, d, q, ts, includeIntercept=True, method="css-cgd", userInitPara
         conditional sum of squares. The first uses BOBYQA for optimization, while
         the second uses conjugate gradient descent. Default is 'css-cgd'
     userInitParams:
-        A set of user provided initial parameters for optimization. If null
-        (default), initialized using Hannan-Rissanen algorithm. If provided,
+        A set of user provided initial parameters for optimization as a float list.
+        If null (default), initialized using Hannan-Rissanen algorithm. If provided,
         order of parameter should be: intercept term, AR parameters (in
-        increasing order of lag), MA parameters (in increasing order of lag)
+        increasing order of lag), MA parameters (in increasing order of lag).
     sc:
         The SparkContext, required.
     
@@ -100,7 +100,7 @@ def fit_model(p, d, q, ts, includeIntercept=True, method="css-cgd", userInitPara
     assert sc != None, "Missing SparkContext"
     
     jvm = sc._jvm
-    jmodel = jvm.com.cloudera.sparkts.models.ARIMA.fitModel(p, d, q, _py2java(sc, ts), includeIntercept, method, _py2java(sc, userInitParams))
+    jmodel = jvm.com.cloudera.sparkts.models.ARIMA.fitModel(p, d, q, _py2java(sc, Vectors.dense(ts)), includeIntercept, method, _py2java_double_array(sc, userInitParams))
     return ARIMAModel(jmodel=jmodel, sc=sc)
 
 class ARIMAModel(PyModel):

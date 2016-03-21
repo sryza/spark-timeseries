@@ -1,6 +1,7 @@
 from . import _py2java_double_array
 from _model import PyModel
 
+from pyspark.mllib.linalg import Vectors
 from pyspark.mllib.common import _py2java, _java2py
 
 def fit_model(ts, maxLag=1, noIntercept=False, sc=None):
@@ -10,12 +11,14 @@ def fit_model(ts, maxLag=1, noIntercept=False, sc=None):
     Parameters
     ----------
     ts:
-        the time series to which we want to fit an autoregression model
+        the time series to which we want to fit an autoregression model as a Numpy array
+        
+    Returns an ARModel
     """
     assert sc != None, "Missing SparkContext"
     
     jvm = sc._jvm
-    jmodel = jvm.com.cloudera.sparkts.models.Autoregression.fitModel(_py2java(sc, ts), maxLag, noIntercept)
+    jmodel = jvm.com.cloudera.sparkts.models.Autoregression.fitModel(_py2java(sc, Vectors.dense(ts)), maxLag, noIntercept)
     return ARModel(jmodel=jmodel, sc=sc)
 
 

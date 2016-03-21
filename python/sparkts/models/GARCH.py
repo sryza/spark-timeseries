@@ -13,14 +13,14 @@ def fit_model(ts, sc=None):
     Parameters
     ----------
     ts:
-        the time series to which we want to fit a GARCH model
+        the time series to which we want to fit a GARCH model as a Numpy array
         
     Returns a GARCH model
     """
     assert sc != None, "Missing SparkContext"
     
     jvm = sc._jvm
-    jmodel = jvm.com.cloudera.sparkts.models.GARCH.fitModel(_py2java(sc, ts))
+    jmodel = jvm.com.cloudera.sparkts.models.GARCH.fitModel(_py2java(sc, Vectors.dense(ts)))
     return GARCHModel(jmodel=jmodel, sc=sc)
 
 class GARCHModel(PyModel):
@@ -45,7 +45,7 @@ class GARCHModel(PyModel):
         
         Returns an 3-element array containing the gradient for the alpha, beta, and omega parameters.
         """
-        gradient = self._jmodel.gradient(_py2java(self._ctx, ts))
+        gradient = self._jmodel.gradient(_py2java(self._ctx, Vectors.dense(ts)))
         return _java2py(self._ctx, gradient)
     
     def log_likelihood(self, ts):
@@ -54,7 +54,7 @@ class GARCHModel(PyModel):
         
         Based on http://www.unc.edu/~jbhill/Bollerslev_GARCH_1986.pdf
         """
-        likelihood = self._jmodel.logLikelihood(_py2java(self._ctx, ts))
+        likelihood = self._jmodel.logLikelihood(_py2java(self._ctx, Vectors.dense(ts)))
         return _java2py(self._ctx, likelihood)
     
     def sample(self, n):

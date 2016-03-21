@@ -22,9 +22,9 @@ def fit_model(ts, regressors, method="cochrane-orcutt", optimizationArgs=None, s
     Parameters
     ----------
     ts:
-        time series to which to fit an ARIMA model as a DenseVector
+        time series to which to fit an ARIMA model as a Numpy array
     regressors:
-        regression matrix as a DenseMatrix
+        regression matrix as a Numpy array
     method:
         Regression method. Currently, only "cochrane-orcutt" is supported.
     optimizationArgs:
@@ -38,7 +38,7 @@ def fit_model(ts, regressors, method="cochrane-orcutt", optimizationArgs=None, s
     
     jvm = sc._jvm
     
-    jmodel = jvm.com.cloudera.sparkts.models.RegressionARIMA.fitModel(_nparray2breezevector(sc, ts.toArray()), _nparray2breezematrix(sc, regressors.toArray()), method, _py2scala_seq(optimizationArgs, sc._gateway))
+    jmodel = jvm.com.cloudera.sparkts.models.RegressionARIMA.fitModel(_nparray2breezevector(sc, ts), _nparray2breezematrix(sc, regressors), method, _py2scala_seq(sc, optimizationArgs))
     return RegressionARIMAModel(jmodel=jmodel, sc=sc)
 
 def fit_cochrane_orcutt(ts, regressors, maxIter=10, sc=None):
@@ -61,9 +61,9 @@ def fit_cochrane_orcutt(ts, regressors, maxIter=10, sc=None):
     Parameters
     ----------
     ts:
-        Vector of size N for time series data to create the model for
+        Vector of size N for time series data to create the model for as a Numpy array
     regressors:
-        Matrix N X K for the timed values for K regressors over N time points
+        Matrix N X K for the timed values for K regressors over N time points as a Numpy array
     maxIter:
         maximum number of iterations in iterative cochrane-orchutt estimation
     
@@ -74,7 +74,10 @@ def fit_cochrane_orcutt(ts, regressors, maxIter=10, sc=None):
     
     jvm = sc._jvm
     
-    jmodel = jvm.com.cloudera.sparkts.models.RegressionARIMA.fitCochraneOrcutt(_nparray2breezevector(sc, ts.toArray()), _nparray2breezematrix(sc, regressors.toArray()), maxIter)
+    fnord = _nparray2breezematrix(sc, regressors)
+    print fnord
+    
+    jmodel = jvm.com.cloudera.sparkts.models.RegressionARIMA.fitCochraneOrcutt(_nparray2breezevector(sc, ts), _nparray2breezematrix(sc, regressors), maxIter)
     return RegressionARIMAModel(jmodel=jmodel, sc=sc)
     
 

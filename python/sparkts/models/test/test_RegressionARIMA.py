@@ -3,7 +3,6 @@ import numpy as np
 
 from sparkts.test.test_utils import PySparkTestCase
 
-from pyspark.mllib.linalg import Vectors, Matrices
 from sparkts.models import RegressionARIMA
 from sparkts.models.RegressionARIMA import RegressionARIMAModel
 
@@ -24,8 +23,8 @@ class FitRegressionARIMAModelTestCase(PySparkTestCase):
             381, 381, 383, 384, 387, 392, 396
         ]
         
-        Y = Vectors.dense(metal)
-        regressors = Matrices.dense(len(vendor), 1, vendor)
+        Y = np.array(metal)
+        regressors = np.array(vendor).reshape(len(vendor), 1)
         
         regARIMA = RegressionARIMA.fit_model(Y, regressors, method="cochrane-orcutt", optimizationArgs=[10], sc=self.sc)
         beta = regARIMA.regressionCoeff
@@ -43,12 +42,12 @@ class FitRegressionARIMAModelTestCase(PySparkTestCase):
         ]
         
         stock = [
-            159.3, 161.2, 162.8, 164.6, 165.9, 167.9, 168.3, 169.7, 170.5, 171.6, 173.9,
-            176.1, 178.0, 179.1, 180.2, 181.2, 181.6, 182.5, 183.3, 184.3
+            159.3, 161.2, 162.8, 164.6, 165.9, 167.9, 168.3, 169.7, 170.5, 171.6,
+            173.9, 176.1, 178.0, 179.1, 180.2, 181.2, 181.6, 182.5, 183.3, 184.3
         ]
         
-        Y = Vectors.dense(expenditure)
-        regressors = Matrices.dense(len(stock), 1, stock)
+        Y = np.array(expenditure)
+        regressors = np.array(stock).reshape(len(stock), 1)
         
         regARIMA = RegressionARIMA.fit_cochrane_orcutt(Y, regressors, 11, sc=self.sc)
         beta = regARIMA.regressionCoeff

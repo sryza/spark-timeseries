@@ -22,9 +22,9 @@ def fit_model(y, x, yMaxLag, xMaxLag, includesOriginalX=True, noIntercept=False,
     Parameters
     ----------
     y:
-            the dependent variable, time series
+            the dependent variable, time series as a Numpy array
     x:
-            a matrix of exogenous variables
+            a matrix of exogenous variables as a Numpy array
     yMaxLag:
             the maximum lag order for the dependent variable
     xMaxLag:
@@ -81,5 +81,5 @@ class ARXModel(PyModel):
         self.xMaxLag = self._jmodel.xMaxLag()
     
     def predict(self, y, x):
-        prediction = self._jmodel.predict(_nparray2breezevector(self._ctx, y.toArray()), _nparray2breezematrix(self._ctx, x.toArray()))
+        prediction = self._jmodel.predict(_nparray2breezevector(self._ctx, y), _nparray2breezematrix(self._ctx, x))
         return _java2py(self._ctx, prediction.toArray(None))

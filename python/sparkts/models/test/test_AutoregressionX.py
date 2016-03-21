@@ -23,8 +23,8 @@ class FitAutoregressionXModelTestCase(PySparkTestCase):
         xMaxLag = 0
         arxModel = ARXModel(c, xCoeffs, yMaxLag, xMaxLag, includesOriginalX=True, sc=self.sc)
 
-        y = Vectors.dense([100])
-        x = Matrices.dense(1, 7, [465,1,0.006562479,24,1,0,51])
+        y = np.array([100])
+        x = np.array([465,1,0.006562479,24,1,0,51])
 
         results = arxModel.predict(y, x)
         self.assertEqual(len(results), 1)
