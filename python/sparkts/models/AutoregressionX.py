@@ -41,7 +41,7 @@ def fit_model(y, x, yMaxLag, xMaxLag, includesOriginalX=True, noIntercept=False,
     assert sc != None, "Missing SparkContext"
     
     jvm = sc._jvm
-    jmodel = jvm.com.cloudera.sparkts.models.AutoregressionX.fitModel(_nparray2breezevector(y.toArray(), sc), _nparray2breezematrix(x.toArray(), sc), yMaxLag, xMaxLag, includesOriginalX, noIntercept)
+    jmodel = jvm.com.cloudera.sparkts.models.AutoregressionX.fitModel(_nparray2breezevector(sc, y.toArray()), _nparray2breezematrix(sc, x.toArray()), yMaxLag, xMaxLag, includesOriginalX, noIntercept)
     return ARXModel(jmodel=jmodel, sc=sc)
     
 
@@ -71,7 +71,7 @@ class ARXModel(PyModel):
         
         self._ctx = sc
         if jmodel == None:
-            self._jmodel = self._ctx._jvm.com.cloudera.sparkts.models.ARXModel(float(c), _py2java_double_array(coefficients, self._ctx._gateway), yMaxLag, xMaxLag, includesOriginalX)
+            self._jmodel = self._ctx._jvm.com.cloudera.sparkts.models.ARXModel(float(c), _py2java_double_array(self._ctx, coefficients), yMaxLag, xMaxLag, includesOriginalX)
         else:
             self._jmodel = jmodel
         
@@ -81,5 +81,5 @@ class ARXModel(PyModel):
         self.xMaxLag = self._jmodel.xMaxLag()
     
     def predict(self, y, x):
-        prediction = self._jmodel.predict(_nparray2breezevector(y.toArray(), self._ctx), _nparray2breezematrix(x.toArray(), self._ctx))
+        prediction = self._jmodel.predict(_nparray2breezevector(self._ctx, y.toArray()), _nparray2breezematrix(self._ctx, x.toArray()))
         return _java2py(self._ctx, prediction.toArray(None))

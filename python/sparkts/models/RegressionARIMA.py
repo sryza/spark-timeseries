@@ -38,7 +38,7 @@ def fit_model(ts, regressors, method="cochrane-orcutt", optimizationArgs=None, s
     
     jvm = sc._jvm
     
-    jmodel = jvm.com.cloudera.sparkts.models.RegressionARIMA.fitModel(_nparray2breezevector(ts.toArray(), sc=sc), _nparray2breezematrix(regressors.toArray(), sc=sc), method, _py2scala_seq(optimizationArgs, sc._gateway))
+    jmodel = jvm.com.cloudera.sparkts.models.RegressionARIMA.fitModel(_nparray2breezevector(sc, ts.toArray()), _nparray2breezematrix(sc, regressors.toArray()), method, _py2scala_seq(optimizationArgs, sc._gateway))
     return RegressionARIMAModel(jmodel=jmodel, sc=sc)
 
 def fit_cochrane_orcutt(ts, regressors, maxIter=10, sc=None):
@@ -74,7 +74,7 @@ def fit_cochrane_orcutt(ts, regressors, maxIter=10, sc=None):
     
     jvm = sc._jvm
     
-    jmodel = jvm.com.cloudera.sparkts.models.RegressionARIMA.fitCochraneOrcutt(_nparray2breezevector(ts.toArray(), sc), _nparray2breezematrix(regressors.toArray(), sc), maxIter)
+    jmodel = jvm.com.cloudera.sparkts.models.RegressionARIMA.fitCochraneOrcutt(_nparray2breezevector(sc, ts.toArray()), _nparray2breezematrix(sc, regressors.toArray()), maxIter)
     return RegressionARIMAModel(jmodel=jmodel, sc=sc)
     
 
@@ -95,7 +95,7 @@ class RegressionARIMAModel(PyModel):
 
         self._ctx = sc
         if jmodel == None:
-            self._jmodel = self._ctx._jvm.com.cloudera.sparkts.models.RegressionARIMAModel(_py2java_double_array(regressionCoeff, self._ctx._gateway), _py2java_int_array(arimaOrders, self._ctx._gateway), _py2scala_arraybuffer(arimaCoeff, self._ctx._gateway))
+            self._jmodel = self._ctx._jvm.com.cloudera.sparkts.models.RegressionARIMAModel(_py2java_double_array(self._ctx, regressionCoeff), _py2java_int_array(self._ctx, arimaOrders), _py2scala_arraybuffer(self._ctx, arimaCoeff))
         else:
             self._jmodel = jmodel
             

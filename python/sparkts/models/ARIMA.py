@@ -109,7 +109,7 @@ class ARIMAModel(PyModel):
 
         self._ctx = sc
         if jmodel == None:
-            self._jmodel = self._ctx._jvm.com.cloudera.sparkts.models.ARIMAModel(p, d, q, _py2java_double_array(coefficients, self._ctx._gateway), hasIntercept)
+            self._jmodel = self._ctx._jvm.com.cloudera.sparkts.models.ARIMAModel(p, d, q, _py2java_double_array(self._ctx, coefficients), hasIntercept)
         else:
             self._jmodel = jmodel
             
@@ -149,7 +149,7 @@ class ARIMAModel(PyModel):
         returns log likelihood of ARMA as a double
         """
         # need to copy diffedy to a double[] for Java
-        likelihood =  self._jmodel.logLikelihoodCSSARMA(_py2java_double_array(diffedy, self._ctx._gateway))
+        likelihood =  self._jmodel.logLikelihoodCSSARMA(_py2java_double_array(self._ctx, diffedy))
         return _java2py(self._ctx, likelihood)
         
     def gradient_log_likelihood_css_arma(self, diffedy):
@@ -176,7 +176,7 @@ class ARIMAModel(PyModel):
         returns the gradient log likelihood as an array of double
         """
         # need to copy diffedy to a double[] for Java
-        result =  self._jmodel.gradientlogLikelihoodCSSARMA(_py2java_double_array(diffedy, self._ctx._gateway))
+        result =  self._jmodel.gradientlogLikelihoodCSSARMA(_py2java_double_array(self._ctx, diffedy))
         return _java2py(self._ctx, result)
     
     def sample(self, n):

@@ -25,7 +25,7 @@ class ARModel(PyModel):
         
         self._ctx = sc
         if jmodel == None:
-            self._jmodel = self._ctx._jvm.com.cloudera.sparkts.models.ARModel(c, _py2java_double_array(coefficients, self._ctx._gateway))
+            self._jmodel = self._ctx._jvm.com.cloudera.sparkts.models.ARModel(c, _py2java_double_array(self._ctx, coefficients))
         else:
             self._jmodel = jmodel
         
