@@ -31,10 +31,6 @@ class FitARIMAModelTestCase(PySparkTestCase):
         self.assertAlmostEqual(ar, 0.55, delta=0.01)
         self.assertAlmostEqual(ma, 1.03, delta=0.01)
     
-    @unittest.skip("""
-    Test isn't working at the moment. model.sample(1000) results in a TooManyEvaluationsException
-    and sampling with fewer values results in a newModel that doesn't match the original model.
-    """)
     def test_remodel_sample_data(self):
         """
         Data sampled from a given model should result in a similar model if fit again.

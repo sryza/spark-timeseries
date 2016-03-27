@@ -104,7 +104,7 @@ def fit_model(p, d, q, ts, includeIntercept=True, method="css-cgd", userInitPara
     return ARIMAModel(jmodel=jmodel, sc=sc)
 
 class ARIMAModel(PyModel):
-    def __init__(self, p=0, d=0, q=0, coefficients=None, hasIntercept=False, jmodel=None, sc=None):
+    def __init__(self, p=0, d=0, q=0, coefficients=None, hasIntercept=True, jmodel=None, sc=None):
         assert sc != None, "Missing SparkContext"
 
         self._ctx = sc
