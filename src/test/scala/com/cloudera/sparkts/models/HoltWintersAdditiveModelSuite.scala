@@ -4,7 +4,7 @@ import org.scalatest.FunSuite
 import org.apache.spark.mllib.linalg._
 import org.scalatest.Matchers._
 
-class HoltWintersSuite extends FunSuite {
+class HoltWintersAdditiveModelSuite extends FunSuite {
 
       /*
 
