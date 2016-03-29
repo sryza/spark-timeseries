@@ -128,7 +128,10 @@ class HoltWintersModel(
     }
     
     for (i <- 0 until dest.size) {
-      destArr(i) = (finalLevel + (i + 1) * finalTrend) + finalSeason(i % period) 
+      if(modelType.equalsIgnoreCase("additive"))
+        destArr(i) = (finalLevel + (i + 1) * finalTrend) + finalSeason(i % period) 
+      else
+        destArr(i) = (finalLevel + (i + 1) * finalTrend) * finalSeason(i % period) 
     }
     dest
   }
@@ -155,14 +158,25 @@ class HoltWintersModel(
     }
     
     for (i <- 0 to (n - period - 1)) {
-      dest(i + period) = level(i) + trend(i) + season(i)
+      dest(i + period) = level(i) + trend(i)
       
-      val levelWeight = ts(i + period) - season(i)
+      // Add the seasonal factor for additive and multiply for multiplicative model.
+
+      if(modelType.equalsIgnoreCase("additive")) dest(i + period) += season(i)
+      else dest(i + period) *= season(i)
+      
+      var levelWeight = 0.0
+      if(modelType.equalsIgnoreCase("additive")) levelWeight = ts(i + period) - season(i)
+      else levelWeight = ts(i + period) / season(i)
+      
       level(i+1) = alpha * levelWeight + (1 - alpha) * (level(i) + trend(i))
       
       trend(i+1) =  beta * (level(i+1) - level(i)) + (1 - beta) * trend(i)
       
-      val seasonWeight = ts(i + period) - level(i+1)
+      var seasonWeight = 0.0
+      if(modelType.equalsIgnoreCase("additive")) seasonWeight = ts(i + period) - level(i+1)
+      else seasonWeight = ts(i + period) / level(i+1)
+      
       season(i+period) = gamma * seasonWeight + (1 - gamma) * season(i)
     }
     
@@ -234,7 +248,14 @@ class HoltWintersModel(
     // Remove the trend from time series. Subtract for additive and divide for multiplicative                   
 	  val removeTrend = arrTs.take(period * 2).zip(
 	      Array.fill(((kernelSize - 1) / 2))(0.0) ++ trend ++ Array.fill(((kernelSize - 1) / 2))(0.0)).map{
-      case(a,t) => if(t == 0) 0 else (a - t) 
+      case(a,t) => 
+        if(t != 0){
+          if(modelType.equalsIgnoreCase("additive")) (a - t) 
+          else (a / t)
+        }
+        else{
+          0
+        }
     }
     
 		// seasonal mean is sum of mean of all season values of that period
@@ -244,8 +265,8 @@ class HoltWintersModel(
     
     val meanOfFigures = seasonalMean.sum / period
       
-    // The seasonal mean is then centered and subtracted to get season
-    val initSeason = seasonalMean.map(_ - meanOfFigures )
+    // The seasonal mean is then centered and removed to get season. Subtract for additive and divide for multiplicative  
+    val initSeason = if(modelType.equalsIgnoreCase("additive")) seasonalMean.map(_ - meanOfFigures ) else seasonalMean.map(_ / meanOfFigures )
     
     // Do Simple Linear Regression to find the initial level and trend
     val indices = 1 to trend.size
