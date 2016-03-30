@@ -13,7 +13,6 @@ X = np.random.normal(size=(nRows, nCols))
 intercept = np.random.normal() * 10
 
 class FitAutoregressionXModelTestCase(PySparkTestCase):
-    @unittest.skip("results don't match Scala right now")
     def test_predict(self):
         c = 0
         xCoeffs = [-1.136026484226831e-08, 8.637677568908233e-07,
@@ -28,4 +27,4 @@ class FitAutoregressionXModelTestCase(PySparkTestCase):
 
         results = arxModel.predict(y, x)
         self.assertEqual(len(results), 1)
-        self.assertAlmostEqual(results[0], 465, delta=0.0001)
+        self.assertAlmostEqual(results[0], y[0], delta=0.0001)

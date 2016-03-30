@@ -7,7 +7,6 @@ from sparkts.models import RegressionARIMA
 from sparkts.models.RegressionARIMA import RegressionARIMAModel
 
 class FitRegressionARIMAModelTestCase(PySparkTestCase):
-    @unittest.skip("results don't match Scala right now")
     def test_cochrane_orcutt_empdata_with_maxiter(self):
         metal = [
             44.2, 44.3, 44.4, 43.4, 42.8, 44.3, 44.4, 44.8, 44.4, 43.1, 42.6, 42.4, 42.2,
@@ -17,7 +16,7 @@ class FitRegressionARIMAModelTestCase(PySparkTestCase):
         ]
         
         vendor = [
-            22.0, 317, 319, 323, 327, 328, 325, 326, 330, 334, 337, 341, 322, 318, 320,
+            322.0, 317, 319, 323, 327, 328, 325, 326, 330, 334, 337, 341, 322, 318, 320,
             326, 332, 334, 335, 336, 335, 338, 342, 348, 330, 326, 329, 337, 345, 350, 351, 354, 355, 357,
             362, 368, 348, 345, 349, 355, 362, 367, 366, 370, 371, 375, 380, 385, 361, 354, 357, 367, 376,
             381, 381, 383, 384, 387, 392, 396
@@ -26,7 +25,7 @@ class FitRegressionARIMAModelTestCase(PySparkTestCase):
         Y = np.array(metal)
         regressors = np.array(vendor).reshape(len(vendor), 1)
         
-        regARIMA = RegressionARIMA.fit_model(Y, regressors, method="cochrane-orcutt", optimizationArgs=[10], sc=self.sc)
+        regARIMA = RegressionARIMA.fit_model(Y, regressors, method="cochrane-orcutt", optimizationArgs=[1], sc=self.sc)
         beta = regARIMA.regressionCoeff
         self.assertAlmostEqual(beta[0], 28.918, delta=0.01)
         self.assertAlmostEqual(beta[1], 0.0479, delta=0.001)
