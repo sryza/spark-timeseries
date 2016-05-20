@@ -13,6 +13,7 @@ Docs are available at http://sryza.github.io/spark-timeseries.
 Or check out the [Scaladoc](http://sryza.github.io/spark-timeseries/0.3.0/scaladocs/index.html), [Javadoc](http://sryza.github.io/spark-timeseries/0.3.0/apidocs/index.html), or [Python doc](http://sryza.github.io/spark-timeseries/0.3.0/pydoc/py-modindex.html).
 
 The aim here is to provide
+
 * A set of abstractions for manipulating large time series data sets, similar to
   what's provided for smaller data sets in
   [Pandas](http://pandas.pydata.org/pandas-docs/dev/timeseries.html),
@@ -24,6 +25,7 @@ The aim here is to provide
   and a variety of Matlab and R packages.
 
 The library sits on a few other excellent Java and Scala libraries.
+
 * [Breeze](https://github.com/scalanlp/breeze) for NumPy-like, BLAS-able linear algebra.
 * [java.time](https://docs.oracle.com/javase/8/docs/api/index.html?java/time/package-summary.html) for dates and times. 
 * [Apache Commons Math](https://commons.apache.org/proper/commons-math/) for general math and
