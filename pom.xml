@@ -458,7 +458,7 @@
       </properties>
     </profile>
     <profile>
-      <id>spark-1.6.1</id>
+      <id>spark-1.6</id>
       <properties>
         <spark.version>1.6.1</spark.version>
         <breeze.version>0.12</breeze.version>
