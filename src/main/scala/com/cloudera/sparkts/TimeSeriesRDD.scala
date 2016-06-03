@@ -21,7 +21,7 @@ import java.sql.Timestamp
 import java.time._
 import java.util.Arrays
 
-import breeze.linalg.{DenseMatrix => BDM, DenseVector => BDV, diff}
+import breeze.linalg.{diff, DenseMatrix => BDM, DenseVector => BDV}
 import com.cloudera.sparkts.MatrixUtil._
 import com.cloudera.sparkts.TimeSeriesUtils._
 import org.apache.hadoop.conf.Configuration
@@ -35,6 +35,7 @@ import org.apache.spark.sql.{DataFrame, Row, SQLContext}
 import org.apache.spark.util.StatCounter
 
 import scala.collection.mutable.ArrayBuffer
+import scala.math._
 import scala.reflect.ClassTag
 
 /**
@@ -515,6 +516,42 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector)])
       stampRight: Boolean): TimeSeriesRDD[K] = {
     mapSeries(Resample.resample(_, index, targetIndex, aggr, closedRight, stampRight), targetIndex)
   }
+
+  /**
+    * Returns a TimeSeriesRDD where each time series is summed with a running n-window.
+    * Align specifies whether the index of the result should be left- or right-aligned
+    * or centered (default) compared to the rolling window of observations.
+    */
+  def rollsum(n: Int, align: OptAlign = OptAlign.Center): TimeSeriesRDD[K] = {
+    mapSeries(
+      UnivariateTimeSeries.rollsum(_, n),
+      align match {
+        case OptAlign.Right => index.islice(n - 1, index.size)
+        case OptAlign.Center => index.islice(floor((n - 1) / 2).toInt,
+          floor((n - 1) / 2).toInt + index.size - n + 1)
+        case OptAlign.Left => index.islice(0, index.size - n + 1)
+      }
+    )
+  }
+
+  /**
+    * Returns a TimeSeriesRDD where each time series is summed.
+    */
+  def sum(): TimeSeriesRDD[K] = rollsum(index.size)
+
+  /**
+    * Returns a TimeSeriesRDD where each time series is averaged with a running n-window.
+    * Align specifies whether the index of the result should be left- or right-aligned
+    * or centered (default) compared to the rolling window of observations.
+    */
+  def rollmean(n: Int, align: OptAlign = OptAlign.Center): TimeSeriesRDD[K] = {
+    rollsum(n, align).mapSeries(vec => new DenseVector(vec.toArray.map(_ / n)))
+  }
+
+  /**
+    * Returns a TimeSeriesRDD where each time series is averaged.
+    */
+  def mean(): TimeSeriesRDD[K] = rollmean(index.size)
 }
 
 object TimeSeriesRDD {
