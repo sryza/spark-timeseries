@@ -312,7 +312,7 @@ class TimeSeriesRDDSuite extends FunSuite with LocalSparkContext with ShouldMatc
       new DenseVector((20 to 27).toArray.map(_.toDouble)))
   }
 
-  test("center rollsum") {
+  test("rollmean") {
     val conf = new SparkConf().setMaster("local").setAppName(getClass.getName)
     TimeSeriesKryoRegistrator.registerKryoClasses(conf)
     sc = new SparkContext(conf)
@@ -322,34 +322,21 @@ class TimeSeriesRDDSuite extends FunSuite with LocalSparkContext with ShouldMatc
       .map(x => (x(0).toString, x))
     val start = ZonedDateTime.of(2015, 4, 9, 0, 0, 0, 0, ZoneId.of("Z"))
     val index = uniform(start, 10, 1.businessDays)
-    val rdd = new TimeSeriesRDD[String](index, sc.parallelize(vecs)).rollsum(5, OptAlign.Center)
-    val contents = rdd.collectAsMap()
+    val rdd = new TimeSeriesRDD[String](index, sc.parallelize(vecs))
+    val rdd_right = rdd.rollmean(5, OptAlign.Right)
+    val rdd_center = rdd.rollmean(5, OptAlign.Center)
+    val rdd_left = rdd.rollmean(5, OptAlign.Left)
 
-    val start_roll = ZonedDateTime.of(2015, 4, 13, 0, 0, 0, 0, ZoneId.of("Z"))
-    rdd.index should be (uniform(start_roll, 6, 1.businessDays))
+    // Check index
+    val start_right = ZonedDateTime.of(2015, 4, 15, 0, 0, 0, 0, ZoneId.of("Z"))
+    rdd_right.index should be (uniform(start_right, 6, 1.businessDays))
+    val start_center = ZonedDateTime.of(2015, 4, 13, 0, 0, 0, 0, ZoneId.of("Z"))
+    rdd_center.index should be (uniform(start_center, 6, 1.businessDays))
+    val start_left = ZonedDateTime.of(2015, 4, 9, 0, 0, 0, 0, ZoneId.of("Z"))
+    rdd_left.index should be (uniform(start_left, 6, 1.businessDays))
 
-    contents.size should be (3)
-    contents("0.0") should be (new DenseVector((10 to 35 by 5).map(_.toDouble).toArray))
-    contents("10.0") should be (new DenseVector((60 to 85 by 5).map(_.toDouble).toArray))
-    contents("20.0") should be (new DenseVector((110 to 135 by 5).map(_.toDouble).toArray))
-  }
-
-  test("right rollmean") {
-    val conf = new SparkConf().setMaster("local").setAppName(getClass.getName)
-    TimeSeriesKryoRegistrator.registerKryoClasses(conf)
-    sc = new SparkContext(conf)
-    val vecs = Array(0 until 10, 10 until 20, 20 until 30)
-      .map(_.map(x => x.toDouble).toArray)
-      .map(new DenseVector(_))
-      .map(x => (x(0).toString, x))
-    val start = ZonedDateTime.of(2015, 4, 9, 0, 0, 0, 0, ZoneId.of("Z"))
-    val index = uniform(start, 10, 1.businessDays)
-    val rdd = new TimeSeriesRDD[String](index, sc.parallelize(vecs)).rollmean(5, OptAlign.Center)
-    val contents = rdd.collectAsMap()
-
-    val start_roll = ZonedDateTime.of(2015, 4, 13, 0, 0, 0, 0, ZoneId.of("Z"))
-    rdd.index should be (uniform(start_roll, 6, 1.businessDays))
-
+    // Check actual rolling mean
+    val contents = rdd_left.collectAsMap()
     contents.size should be (3)
     contents("0.0") should be (new DenseVector((2 to 7).map(_.toDouble).toArray))
     contents("10.0") should be (new DenseVector((12 to 17).map(_.toDouble).toArray))
