@@ -155,7 +155,7 @@ object TimeSeriesStatisticalTests {
     } else {
       ADF_TAU_LARGEP(regression)(n - 1)
     }
-    new NormalDistribution().cumulativeProbability(polyval(tauCoef.reverse, testStat))
+    new NormalDistribution().cumulativeProbability(polyval(tauCoef, testStat))
   }
 
   private def vanderflipped(vec: Array[Double], n: Int): Matrix = {
