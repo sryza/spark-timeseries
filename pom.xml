@@ -37,7 +37,7 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <java.version>1.8</java.version>
     <scala.minor.version>2.11</scala.minor.version>
-    <scala.complete.version>${scala.minor.version}.4</scala.complete.version>
+    <scala.complete.version>${scala.minor.version}.8</scala.complete.version>
     <spark.version>2.0.0</spark.version>
     <breeze.version>0.12</breeze.version>
   </properties>
@@ -451,17 +451,10 @@
 
   <profiles>
     <profile>
-      <id>scala-2.11</id>
+      <id>scala-2.10</id>
       <properties>
-        <scala.minor.version>2.11</scala.minor.version>
+        <scala.minor.version>2.10</scala.minor.version>
         <scala.complete.version>${scala.minor.version}.6</scala.complete.version>
-      </properties>
-    </profile>
-    <profile>
-      <id>spark-1.6</id>
-      <properties>
-        <spark.version>1.6.1</spark.version>
-        <breeze.version>0.12</breeze.version>
       </properties>
     </profile>
   </profiles>
