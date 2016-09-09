@@ -815,7 +815,7 @@ class ARIMAModel(
 */
 object PolynomialRootFinder {
 
-  def findRoots(coefficients: Array[Double]): Complex = {
+  def findRoots(coefficients: Array[Double]): Array[Complex] = {
 
     val N = coefficients.length - 1
     val companionMatrix = MatrixUtils.createRealMatrix(N, N)
