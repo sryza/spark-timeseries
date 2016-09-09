@@ -20,6 +20,8 @@ import com.cloudera.sparkts.Lag
 import com.cloudera.sparkts.MatrixUtil.{toBreeze, dvBreezeToSpark}
 import com.cloudera.sparkts.UnivariateTimeSeries.{differencesOfOrderD, inverseDifferencesOfOrderD}
 import com.cloudera.sparkts.stats.TimeSeriesStatisticalTests.kpsstest
+import org.apache.commons.math3.complex.Complex
+import org.apache.commons.math3.linear.{RealMatrix, MatrixUtils, EigenDecomposition}
 import org.apache.commons.math3.analysis.solvers.LaguerreSolver
 import org.apache.commons.math3.analysis.{MultivariateFunction, MultivariateVectorFunction}
 import org.apache.commons.math3.optim.nonlinear.scalar.gradient.NonLinearConjugateGradientOptimizer
@@ -804,5 +806,35 @@ class ARIMAModel(
     val conditionalLogLikelihood = logLikelihoodCSS(ts)
     val interceptTerm = if (hasIntercept) 1 else 0
     -2 * conditionalLogLikelihood + 2 * (p + q + interceptTerm)
+  }
+}
+
+/**
+* Uses an eigenvalue decomposition to find the roots of a real-valued matrix, adapted for Apache Commons
+* Math 3. See: http://stackoverflow.com/questions/13805644/finding-roots-of-polynomial-in-java
+*/
+object PolynomialRootFinder {
+
+  def findRoots(coefficients: Array[Double]): Complex = {
+
+    val N = coefficients.length - 1
+    val companionMatrix = MatrixUtils.createRealMatrix(N, N)
+
+    val a = coefficients(N)
+    val lastRow = new Array[Double](N)
+    for (i <- 0 until N) {
+      lastRow(i) = -coefficients(i)/a
+    }
+    companionMatrix.setRow(N - 1, lastRow)
+    companionMatrix.setSubMatrix(MatrixUtils.createRealIdentityMatrix(N - 1).getData(), 0, 1)
+
+    val evd = new EigenDecomposition(companionMatrix)
+    val real = evd.getRealEigenvalues
+    val imag = evd.getImagEigenvalues
+    val roots = new Array[Complex](real.length)
+    for (i <- 0 until roots.length) {
+      roots(i) = new Complex(real(i), imag(i))
+    }
+    roots
   }
 }
