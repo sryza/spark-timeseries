@@ -786,10 +786,7 @@ class ARIMAModel(
    * @return boolean indicating whether all roots are outside unit circle
    */
   private def allRootsOutsideUnitCircle(poly: Array[Double]): Boolean = {
-    val solver = new LaguerreSolver()
-    // TODO: make smarter
-    val initGuess = 0.0
-    val roots = solver.solveAllComplex(poly, initGuess)
+    val roots = PolynomialRootFinder.findRoots(poly)
     !roots.exists(_.abs() <= 1.0)
   }
 
@@ -818,6 +815,9 @@ object PolynomialRootFinder {
   def findRoots(coefficients: Array[Double]): Array[Complex] = {
 
     val N = coefficients.length - 1
+    if (N < 1) {
+      return new Array[Complex](0)
+    }
     val companionMatrix = MatrixUtils.createRealMatrix(N, N)
 
     val a = coefficients(N)
@@ -826,7 +826,9 @@ object PolynomialRootFinder {
       lastRow(i) = -coefficients(i)/a
     }
     companionMatrix.setRow(N - 1, lastRow)
-    companionMatrix.setSubMatrix(MatrixUtils.createRealIdentityMatrix(N - 1).getData(), 0, 1)
+    if (N > 1) {
+      companionMatrix.setSubMatrix(MatrixUtils.createRealIdentityMatrix(N - 1).getData(), 0, 1)
+    }
 
     val evd = new EigenDecomposition(companionMatrix)
     val real = evd.getRealEigenvalues
