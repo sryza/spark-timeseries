@@ -20,16 +20,32 @@
   <version>0.4.0-SNAPSHOT</version>
   <packaging>jar</packaging>
   <name>Time Series for Spark</name>
+  <description>A library for analyzing large-scale time series data.</description>
+  <url>http://sryza.github.io/spark-timeseries</url>
+
+  <licenses>
+    <license>
+      <name>The Apache License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+    </license>
+  </licenses>
+
+ <developers>
+    <developer>
+      <name>Sandy Ryza</name>
+      <email>sandyryza@gmail.com</email>
+    </developer>
+  </developers>
 
   <prerequisites>
     <maven>3.1.1</maven>
   </prerequisites>
 
   <scm>
-    <connection>scm:git:https://github.com/cloudera/spark-timeseries.git</connection>
-    <url>scm:git:https://github.com/cloudera/spark-timeseries.git</url>
-    <developerConnection>scm:git:https://github.com/cloudera/spark-timeseries.git</developerConnection>
-    <tag>sparkts-0.3.0</tag>
+    <connection>scm:git:https://github.com/sryza/spark-timeseries.git</connection>
+    <url>scm:git:https://github.com/sryza/spark-timeseries.git</url>
+    <developerConnection>scm:git:https://github.com/sryza/spark-timeseries.git</developerConnection>
+    <tag>master</tag>
   </scm>
 
   <properties>
