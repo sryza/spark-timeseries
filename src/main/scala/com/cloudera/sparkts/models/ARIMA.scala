@@ -786,8 +786,31 @@ class ARIMAModel(
    * @return boolean indicating whether all roots are outside unit circle
    */
   private def allRootsOutsideUnitCircle(poly: Array[Double]): Boolean = {
-    val roots = PolynomialRootFinder.findRoots(poly)
+    val roots = findRoots(poly)
     !roots.exists(_.abs() <= 1.0)
+  }
+
+  /**
+   * Uses an eigenvalue decomposition to find the roots of a real-valued matrix, adapted for Apache Commons
+   * Math 3. See: http://stackoverflow.com/questions/13805644/finding-roots-of-polynomial-in-java
+   */
+  private def findRoots(coefficients: Array[Double]): Array[Complex] = {
+    val n = coefficients.length - 1
+    if (n < 1) {
+      return new Array[Complex](0)
+    }
+
+    val companionMatrix = MatrixUtils.createRealMatrix(n, n)
+    val a = coefficients(n)
+    val lastRow = coefficients.slice(0, n).map(c => -c/a)
+    companionMatrix.setRow(n - 1, lastRow)
+    if (n > 1) {
+      companionMatrix.setSubMatrix(MatrixUtils.createRealIdentityMatrix(n - 1).getData(), 0, 1)
+    }
+
+    val evd = new EigenDecomposition(companionMatrix)
+    val roots = evd.getRealEigenvalues.zip(evd.getImagEigenvalues)
+    return roots.map {case (real, imag) => new Complex(real, imag)}
   }
 
   /**
@@ -803,39 +826,5 @@ class ARIMAModel(
     val conditionalLogLikelihood = logLikelihoodCSS(ts)
     val interceptTerm = if (hasIntercept) 1 else 0
     -2 * conditionalLogLikelihood + 2 * (p + q + interceptTerm)
-  }
-}
-
-/**
-* Uses an eigenvalue decomposition to find the roots of a real-valued matrix, adapted for Apache Commons
-* Math 3. See: http://stackoverflow.com/questions/13805644/finding-roots-of-polynomial-in-java
-*/
-object PolynomialRootFinder {
-
-  def findRoots(coefficients: Array[Double]): Array[Complex] = {
-    val n = coefficients.length - 1
-    if (n < 1) {
-      return new Array[Complex](0)
-    }
-    val companionMatrix = MatrixUtils.createRealMatrix(n, n)
-
-    val a = coefficients(n)
-    val lastRow = new Array[Double](n)
-    for (i <- 0 until n) {
-      lastRow(i) = -coefficients(i)/a
-    }
-    companionMatrix.setRow(n - 1, lastRow)
-    if (n > 1) {
-      companionMatrix.setSubMatrix(MatrixUtils.createRealIdentityMatrix(n - 1).getData(), 0, 1)
-    }
-
-    val evd = new EigenDecomposition(companionMatrix)
-    val real = evd.getRealEigenvalues
-    val imag = evd.getImagEigenvalues
-    val roots = new Array[Complex](real.length)
-    for (i <- 0 until roots.length) {
-      roots(i) = new Complex(real(i), imag(i))
-    }
-    roots
   }
 }
