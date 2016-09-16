@@ -805,7 +805,8 @@ class ARIMAModel(
     val lastRow = coefficients.slice(0, n).map(c => -c/a)
     companionMatrix.setRow(n - 1, lastRow)
     if (n > 1) {
-      companionMatrix.setSubMatrix(MatrixUtils.createRealIdentityMatrix(n - 1).getData(), 0, 1)
+      companionMatrix.setSubMatrix(MatrixUtils
+        .createRealIdentityMatrix(n - 1).getData(), 0, 1)
     }
 
     val evd = new EigenDecomposition(companionMatrix)
