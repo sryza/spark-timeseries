@@ -23,19 +23,27 @@ import org.scalatest.Matchers._
 class ARIMAXSuite extends FunSuite {
   // Data from http://www.robjhyndman.com/data/ - command to use this data available on website
   // robjhyndman.com/talks/RevolutionR/exercises1.pdf
-  val gdp_train =  scala.io.Source.fromInputStream(getClass.getClassLoader.getResourceAsStream("data_train.csv"))
-    .getLines().drop(1).map(a => a.split(",",4).map(_.trim).slice(3,4).map(va => va.toDouble)).toArray.flatten
-  val sales_train =  scala.io.Source.fromInputStream(getClass.getClassLoader.getResourceAsStream("data_train.csv"))
-    .getLines().drop(1).map(a => a.split(",",4).map(_.trim).slice(1,2).map(va => va.toDouble)).toArray.flatten
-  val adBudget_train = scala.io.Source.fromInputStream(getClass.getClassLoader.getResourceAsStream("data_train.csv"))
-    .getLines().drop(1).map(a => a.split(",",4).map(_.trim).slice(2,3).map(va => va.toDouble)).toArray.flatten
 
-  val gdp_test =  scala.io.Source.fromInputStream(getClass.getClassLoader.getResourceAsStream("data_test.csv"))
-    .getLines().drop(1).map(a => a.split(",",4).map(_.trim).slice(3,4).map(va => va.toDouble)).toArray.flatten
-  val sales_test =  scala.io.Source.fromInputStream(getClass.getClassLoader.getResourceAsStream("data_test.csv"))
-    .getLines().drop(1).map(a => a.split(",",4).map(_.trim).slice(1,2).map(va => va.toDouble)).toArray.flatten
-  val adBudget_test = scala.io.Source.fromInputStream(getClass.getClassLoader.getResourceAsStream("data_test.csv"))
-    .getLines().drop(1).map(a => a.split(",",4).map(_.trim).slice(2,3).map(va => va.toDouble)).toArray.flatten
+  def getTrainData(col1: Int, col2: Int) = {
+    val train = scala.io.Source.fromInputStream(getClass.getClassLoader.getResourceAsStream("data_train.csv")).getLines()
+
+    train.drop(1).map(a => a.split(",",4).map(_.trim).slice(col1,col2).map(va => va.toDouble)).toArray.flatten
+  }
+
+  def getTestData(col1: Int, col2: Int) = {
+    val test = scala.io.Source.fromInputStream(getClass.getClassLoader.getResourceAsStream("data_test.csv")).getLines()
+
+    test.drop(1).map(a => a.split(",",4).map(_.trim).slice(col1,col2).map(va => va.toDouble)).toArray.flatten
+  }
+
+
+  val gdp_train = getTrainData(3,4)
+  val sales_train =  getTrainData(1,2)
+  val adBudget_train = getTrainData(2,3)
+
+  val gdp_test = getTestData(3,4)
+  val sales_test = getTestData(1,2)
+  val adBudget_test = getTestData(2,3)
 
   val tsTrain = new DenseVector(gdp_train)
   val xregTrain = new DenseMatrix(rows = sales_train.length, cols = 2, data = sales_train ++ adBudget_train)
@@ -57,11 +65,11 @@ class ARIMAXSuite extends FunSuite {
     val ts = new DenseVector(t.toArray)
     var sum = 0.0
     ts.values.map( va => sum += va)
-    sum/t.length
+    sum / t.length
   }
   def maxDeviation(mean: Double, ts: BreezeDenseVector[Double]): Double ={
     var max = 0.0
-    for (t <- ts){
+    for (t <- ts) {
       val error = Math.abs(t - mean)
       if (error > max) max = error }
     max
@@ -71,66 +79,72 @@ class ARIMAXSuite extends FunSuite {
   test("MAX(0,0,1) 1 true - first data set"){
     val model = ARIMAX.fitModel(0, 0, 1, tsTrain, xregTrain, 1)
     assert(model.coefficients.length == 6)
-    val results = model.predict(tsTest, xregTest)
+    val results = model.forecast(tsTest, xregTest)
     results.length should be (tsTest.length)
+    val avg = mean(tsTest)
 
-    for ( i <- results ){
-      i should be (mean(tsTest) +- 10)
+    for (i <- results ) {
+      i should be (avg +- 10)
     }
   }
 
   test("MAX(0,0,2) 1 true"){
     val model = ARIMAX.fitModel(0, 0, 2, tsTrain_2, xregTrain_2, 1)
     assert(model.coefficients.length == 11)
-    val results = model.predict(tsTest_2, xregTest_2)
+    val results = model.forecast(tsTest_2, xregTest_2)
     results.length should be (tsTest_2.length)
+    val avg = mean(tsTest_2)
 
-    for ( i <- results ){
-      i should be (mean(tsTest_2) +- 2)
+    for (i <- results ) {
+      i should be (avg +- 2)
     }
   }
   test("IMAX(0,1,1) 1 true"){
     val model = ARIMAX.fitModel(0, 1, 1, tsTrain_2, xregTrain_2, 1)
     assert(model.coefficients.length == 10)
-    val results = model.predict(tsTest_2, xregTest_2)
+    val results = model.forecast(tsTest_2, xregTest_2)
     results.length should be (tsTest_2.length)
+    val avg = mean(tsTest_2)
 
-    for ( i <- results ){
-      i should be (mean(tsTest_2) +- 2)
+    for (i <- results ) {
+      i should be (avg +- 2)
     }
   }
 
   test("ARIMAX(2,1,1) 1 true false - first data set"){
     val model = ARIMAX.fitModel(2, 1, 1, tsTrain, xregTrain, 1, includeIntercept = false)
     assert(model.coefficients.length == 8)
-    val results = model.predict(tsTest, xregTest)
+    val results = model.forecast(tsTest, xregTest)
     results.length should be (tsTest.length)
-    
+    val avg = mean(tsTest)
+
     // The timeseries data are quite scattered that's why we multiply max deviation by 2 
-    for ( i <- results ){
-      i should be (mean(tsTest) +- maxDeviation(mean(tsTest),tsTest )*2)
+    for (i <- results ) {
+      i should be (avg +- maxDeviation(mean(tsTest),tsTest )*2)
     }
   }
 
   test("ARIMAX(1,1,1) 1 true true"){
     val model = ARIMAX.fitModel(1, 1, 1, tsTrain_2, xregTrain_2, 1)
     assert(model.coefficients.length == 11)
-    val results = model.predict(tsTest_2, xregTest_2)
+    val results = model.forecast(tsTest_2, xregTest_2)
     results.length should be (tsTest_2.length)
-    
-    for ( i <- results ){
-      i should be (mean(tsTest_2) +- 5)
+    val avg = mean(tsTest_2)
+
+    for (i <- results ) {
+      i should be (avg +- 5)
     }
   }
 
   test("ARIMAX(2,1,1) 1 true false"){
     val model = ARIMAX.fitModel(2, 1, 1, tsTrain_2, xregTrain_2, 1, includeIntercept = false)
     assert(model.coefficients.length == 12)
-    val results = model.predict(tsTest_2, xregTest_2)
+    val results = model.forecast(tsTest_2, xregTest_2)
     results.length should be (tsTest_2.length)
+    val avg = mean(tsTest_2)
 
-    for ( i <- results ){
-      i should be (mean(tsTest_2) +- 10)
+    for (i <- results ) {
+      i should be (avg +- 10)
     }
   }
 }

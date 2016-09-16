@@ -211,7 +211,7 @@ object ARIMA {
    * @param includeIntercept flag to include intercept
    * @return initial ARMA(p, d, q) parameter estimates
    */
-  def hannanRissanenInit(
+  private[models] def hannanRissanenInit(
       p: Int,
       q: Int,
       y: Array[Double],

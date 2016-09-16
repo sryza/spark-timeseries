@@ -56,15 +56,17 @@ object ARIMAX {
     *                            increasing order of lag), MA parameters (in increasing order of lag) and
     *                            coefficients for exogenous variables (xregMaxLag + 1) for each column.
     */
-  def fitModel(p: Int,
-               d: Int,
-               q: Int,
-               ts: Vector,
-               xreg: Matrix[Double],
-               xregMaxLag: Int,
-               includeOriginalXreg: Boolean = true,
-               includeIntercept: Boolean = true,
-               userInitParams: Option[Array[Double]] = None): ARIMAXModel = {
+  def fitModel(
+      p: Int,
+      d: Int,
+      q: Int,
+      ts: Vector,
+      xreg: Matrix[Double],
+      xregMaxLag: Int,
+      includeOriginalXreg: Boolean = true,
+      includeIntercept: Boolean = true,
+      userInitParams: Option[Array[Double]] = None): ARIMAXModel = {
+
     val differentialTs = differencesOfOrderD(ts, d).toArray.drop(d)
 
     val initParams = userInitParams match {
@@ -84,7 +86,15 @@ object ARIMAX {
     model
   }
 
-  private def estimateARXCoefficients(ts: Vector, xreg: Matrix[Double], p: Int, d: Int, xregMaxLag: Int, includeOriginalXreg: Boolean, includeIntercept: Boolean): Array[Double] = {
+  private def estimateARXCoefficients(
+              ts: Vector,
+              xreg: Matrix[Double],
+              p: Int,
+              d: Int,
+              xregMaxLag: Int,
+              includeOriginalXreg: Boolean,
+              includeIntercept: Boolean): Array[Double] = {
+
     // [Time series data and exogenous values differentiate (http://robjhyndman.com/hyndsight/arimax/)
     val tsVector = new BreezeDenseVector(ts.toArray)
     val xregVector = new BreezeDenseVector(xreg.toArray)
@@ -98,7 +108,11 @@ object ARIMAX {
     c ++ arxModel.coefficients
   }
 
-  private def estimateMACoefficients(p: Int, q: Int, differentialTs: Array[Double], includeIntercept: Boolean): Array[Double] = {
+  private def estimateMACoefficients(
+              p: Int,
+              q: Int,
+              differentialTs: Array[Double],
+              includeIntercept: Boolean): Array[Double] = {
     ARIMA.hannanRissanenInit(p, q, differentialTs, includeIntercept).takeRight(q)
   }
 
@@ -184,7 +198,7 @@ class ARIMAXModel(
     * @param xreg       A matrix of exogenous variables
     * @return A series consisting of fitted forecasts for timeseries value using exogenous variables.
     */
-  def predict(timeSeries: BreezeDenseVector[Double], xreg: Matrix[Double]): BreezeDenseVector[Double] = {
+  def forecast(timeSeries: BreezeDenseVector[Double], xreg: Matrix[Double]): BreezeDenseVector[Double] = {
     val ts = new DenseVector(timeSeries.toArray)
     val nFuture: Int = xreg.rows
     val maxLag = math.max(p, q)
