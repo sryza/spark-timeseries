@@ -813,21 +813,20 @@ class ARIMAModel(
 object PolynomialRootFinder {
 
   def findRoots(coefficients: Array[Double]): Array[Complex] = {
-
-    val N = coefficients.length - 1
-    if (N < 1) {
+    val n = coefficients.length - 1
+    if (n < 1) {
       return new Array[Complex](0)
     }
-    val companionMatrix = MatrixUtils.createRealMatrix(N, N)
+    val companionMatrix = MatrixUtils.createRealMatrix(n, n)
 
-    val a = coefficients(N)
-    val lastRow = new Array[Double](N)
-    for (i <- 0 until N) {
+    val a = coefficients(n)
+    val lastRow = new Array[Double](n)
+    for (i <- 0 until n) {
       lastRow(i) = -coefficients(i)/a
     }
-    companionMatrix.setRow(N - 1, lastRow)
-    if (N > 1) {
-      companionMatrix.setSubMatrix(MatrixUtils.createRealIdentityMatrix(N - 1).getData(), 0, 1)
+    companionMatrix.setRow(n - 1, lastRow)
+    if (n > 1) {
+      companionMatrix.setSubMatrix(MatrixUtils.createRealIdentityMatrix(n - 1).getData(), 0, 1)
     }
 
     val evd = new EigenDecomposition(companionMatrix)
