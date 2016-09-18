@@ -323,9 +323,9 @@ class TimeSeriesRDDSuite extends FunSuite with LocalSparkContext with ShouldMatc
     val start = ZonedDateTime.of(2015, 4, 9, 0, 0, 0, 0, ZoneId.of("Z"))
     val index = uniform(start, 10, 1.businessDays)
     val rdd = new TimeSeriesRDD[String](index, sc.parallelize(vecs))
-    val rdd_right = rdd.rollmean(5, OptAlign.Right)
-    val rdd_center = rdd.rollmean(5, OptAlign.Center)
-    val rdd_left = rdd.rollmean(5, OptAlign.Left)
+    val rdd_right = rdd.rollMean(5, "Right")
+    val rdd_center = rdd.rollMean(5, "Center")
+    val rdd_left = rdd.rollMean(5, "Left")
 
     // Check index
     val start_right = ZonedDateTime.of(2015, 4, 15, 0, 0, 0, 0, ZoneId.of("Z"))
