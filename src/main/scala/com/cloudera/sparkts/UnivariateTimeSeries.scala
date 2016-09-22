@@ -493,5 +493,10 @@ object UnivariateTimeSeries {
     }
     addedTs
   }
+
+  def rollSum(ts: Vector, n: Int): Vector = {
+    new DenseVector(ts.toArray.sliding(n).toList.map(_.sum).toIndexedSeq.toArray[Double])
+  }
+
 }
 
