@@ -378,7 +378,7 @@ object ARIMA {
      * Uses an eigenvalue decomposition to find the roots of a real-valued matrix, adapted for Apache Commons
      * Math 3. See: http://stackoverflow.com/questions/13805644/finding-roots-of-polynomial-in-java
      */
-    def findRoots(coefficients: Array[Double]): Array[Complex] = {
+    private[models] def findRoots(coefficients: Array[Double]): Array[Complex] = {
       val n = coefficients.length - 1
       if (n < 1) {
         return new Array[Complex](0)
