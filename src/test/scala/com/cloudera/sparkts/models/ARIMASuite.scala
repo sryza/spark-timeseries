@@ -197,4 +197,16 @@ class ARIMASuite extends FunSuite {
     val justIntercept = ARIMA.fitModel(0, fitted.d, 0, sampled, includeIntercept = true)
     justIntercept.approxAIC(sampled) should be > fittedApproxAIC
   }
+
+  test("Polynomial eigensolver should find easy root") {
+    ARIMA.findRoots(Array(1, -0.4))(0).abs() should be (2.5)
+  }
+
+  // To compare with R:
+  // roots <- abs(polyroot(c(1, 0.5, -0.3, 1.9, -3.0, 0.5)))
+  test("Polynomial eigensolver should find harder roots") {
+    val roots = ARIMA.findRoots(Array(1, 0.5, -0.3, 1.9, -3.0, 0.5))
+    roots.map(x => (x.abs() * 1E5).round / 1E5) should contain theSameElementsAs
+            Array(0.77959, 0.55383, 0.77959, 1.12229, 5.29438)
+  }
 }
