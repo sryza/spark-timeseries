@@ -208,7 +208,11 @@ object TimeSeriesStatisticalTests {
    */
   def adftest(ts: Vector, maxLag: Int, regression: String = "c"): (Double, Double) = {
     val breezeTs = toBreeze(ts)
-    val tsDiff = UnivariateTimeSeries.differencesAtLag(ts, 1)
+    
+    // The vector that we get back from differencesAtLag preserves the first element so that so that the vector
+    // returned is size-preserving.  For ADF, we just want the differenced values, so we slice to get a vector
+    // that excludes the first element.
+    val tsDiff = new DenseVector(UnivariateTimeSeries.differencesAtLag(ts, 1).toArray.slice(1, ts.size))
     val lagMat = Lag.lagMatTrimBoth(tsDiff, maxLag, true)
     val nObs = lagMat.numRows
 
