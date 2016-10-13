@@ -17,7 +17,7 @@ package com.cloudera.sparkts.models
 
 import com.cloudera.sparkts.UnivariateTimeSeries.{differencesOfOrderD, inverseDifferencesOfOrderD}
 import org.apache.commons.math3.random.MersenneTwister
-import org.apache.spark.mllib.linalg.{DenseVector, Vector}
+import org.apache.spark.mllib.linalg.DenseVector
 import org.scalatest.FunSuite
 import org.scalatest.Matchers._
 
