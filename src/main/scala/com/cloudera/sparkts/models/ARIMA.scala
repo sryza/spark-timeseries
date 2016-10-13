@@ -714,7 +714,7 @@ class ARIMAModel(
 
     // copy over last maxLag values, to use in iterateARMA for forward curve
     val forward = new BreezeDenseVector[Double](Array.fill(nFuture + maxLag)(0.0))
-    forward(0 until maxLag) := hist(-maxLag to -1)
+    if(maxLag > 0) forward(0 until maxLag) := hist(-maxLag to -1)
     // use self as ts to take AR from same series, use self as goldStandard to induce future errors
     // of zero, and use prior moving average errors as initial error terms for MA
     iterateARMA(forward, forward, _ + _, goldStandard = forward, initMATerms = maTerms)
