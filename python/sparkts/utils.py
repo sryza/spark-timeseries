@@ -2,6 +2,7 @@ import sys
 import os
 import logging
 import pandas as pd
+from datetime import datetime
 
 from glob import glob
 
@@ -43,5 +44,7 @@ def datetime_to_nanos(dt):
         return pd.Timestamp(dt).value
     elif isinstance(dt, long):
         return dt
+    elif isinstance(dt, datetime):
+	return  long(dt.strftime("%s%f"))*1000
 
     raise ValueError
