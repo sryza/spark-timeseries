@@ -12,7 +12,7 @@ if mo:
 else:
     raise RuntimeError("Unable to find version string in %s." % (VERSIONFILE,))
 
-JAR_FILE = 'sparkts-' + version_string + '-jar-with-dependencies.jar'
+JAR_FILE = 'sparkts-' + version_string + '-SNAPSHOT-jar-with-dependencies.jar'
 
 setup(
     name='sparkts',
