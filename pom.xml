@@ -17,7 +17,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.cloudera.sparkts</groupId>
   <artifactId>sparkts</artifactId>
-  <version>0.4.1-SNAPSHOT</version>
+  <version>0.4.1</version>
   <packaging>jar</packaging>
   <name>Time Series for Spark</name>
   <description>A library for analyzing large-scale time series data.</description>
@@ -45,7 +45,7 @@
     <connection>scm:git:https://github.com/sryza/spark-timeseries.git</connection>
     <url>scm:git:https://github.com/sryza/spark-timeseries.git</url>
     <developerConnection>scm:git:https://github.com/sryza/spark-timeseries.git</developerConnection>
-    <tag>master</tag>
+    <tag>sparkts-0.4.1</tag>
   </scm>
 
   <properties>
