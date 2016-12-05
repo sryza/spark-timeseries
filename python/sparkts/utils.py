@@ -45,6 +45,6 @@ def datetime_to_nanos(dt):
     elif isinstance(dt, long):
         return dt
     elif isinstance(dt, datetime):
-	return  long(dt.strftime("%s%f"))*1000
+	return long(dt.strftime("%s%f")) * 1000
 
     raise ValueError
