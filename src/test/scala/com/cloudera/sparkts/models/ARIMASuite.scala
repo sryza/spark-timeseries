@@ -119,6 +119,18 @@ class ARIMASuite extends FunSuite {
     model.coefficients(0) should be (mean +- 1e-4)
   }
 
+  test("Fitting ARIMA(0, 0, 0) with intercept term results in model with average as the forecast") {
+    val rand = new MersenneTwister(10L)
+    val sampled = new DenseVector(Array.fill(100)(rand.nextGaussian))
+    val model = ARIMA.fitModel(0, 0, 0, sampled)
+    val mean = sampled.toArray.sum / sampled.size
+    model.coefficients(0) should be (mean +- 1e-4)
+    val forecast = model.forecast(sampled, 10)
+    for(i <- 100 until 110) {
+      forecast(i) should be (mean +- 1e-4)
+    }
+  }
+
   test("Fitting an integrated time series of order 3") {
     // > set.seed(10)
     // > vals <- arima.sim(list(ma = c(0.2), order = c(0, 3, 1)), 200)

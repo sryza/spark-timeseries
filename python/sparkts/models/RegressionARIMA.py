@@ -75,7 +75,7 @@ def fit_cochrane_orcutt(ts, regressors, maxIter=10, sc=None):
     jvm = sc._jvm
     
     fnord = _nparray2breezematrix(sc, regressors)
-    print fnord
+    print(fnord)
     
     jmodel = jvm.com.cloudera.sparkts.models.RegressionARIMA.fitCochraneOrcutt(_nparray2breezevector(sc, ts), _nparray2breezematrix(sc, regressors), maxIter)
     return RegressionARIMAModel(jmodel=jmodel, sc=sc)
