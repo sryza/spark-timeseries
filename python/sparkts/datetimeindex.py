@@ -168,3 +168,69 @@ def irregular(timestamps, sc):
         arr[i] = datetime_to_nanos(timestamps[i])
     return DateTimeIndex(dtmodule.irregular(arr))
 
+class MillisecondFrequency(_Frequency):
+    """
+    A frequency that can be used for a uniform DateTimeIndex, where the period is given in milliseconds.
+    """
+
+    def __init__(self, milliseconds, sc):
+        self._jfreq = sc._jvm.com.cloudera.sparkts.MillisecondFrequency(milliseconds)
+
+    def milliseconds(self):
+        return self._jfreq.milliseconds()
+
+
+class MicrosecondFrequency(_Frequency):
+    """
+    A frequency that can be used for a uniform DateTimeIndex, where the period is given in microseconds.
+    """
+
+    def __init__(self, microseconds, sc):
+        self._jfreq = sc._jvm.com.cloudera.sparkts.MicrosecondFrequency(microseconds)
+
+    def microseconds(self):
+        return self._jfreq.microseconds()
+
+class SecondFrequency(_Frequency):
+    """
+    A frequency that can be used for a uniform DateTimeIndex, where the period is given in seconds.
+    """
+
+    def __init__(self, seconds, sc):
+        self._jfreq = sc._jvm.com.cloudera.sparkts.SecondFrequency(seconds)
+
+    def seconds(self):
+        return self._jfreq.seconds()
+
+class MinuteFrequency(_Frequency):
+    """
+    A frequency that can be used for a uniform DateTimeIndex, where the period is given in minutes.
+    """
+
+    def __init__(self, minutes, sc): 
+        self._jfreq = sc._jvm.com.cloudera.sparkts.MinuteFrequency(minutes)
+
+    def minutes(self):
+        return self._jfreq.minutes()
+
+class MonthFrequency(_Frequency):
+    """
+    A frequency that can be used for a uniform DateTimeIndex, where the period is given in months.
+    """
+
+    def __init__(self, months, sc):
+        self._jfreq = sc._jvm.com.cloudera.sparkts.MonthFrequency(months)
+
+    def months(self):
+        return self._jfreq.months()
+
+class YearFrequency(_Frequency):
+    """
+    A frequency that can be used for a uniform DateTimeIndex, where the period is given in years.
+    """
+
+    def __init__(self, years, sc):
+        self._jfreq = sc._jvm.com.cloudera.sparkts.YearFrequency(years)
+
+    def years(self):
+        return self._jfreq.years()
