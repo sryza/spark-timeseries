@@ -27,7 +27,7 @@ import org.apache.spark.mllib.linalg.Vector;
 import org.apache.spark.mllib.linalg.distributed.IndexedRow;
 import org.apache.spark.mllib.linalg.distributed.IndexedRowMatrix;
 import org.apache.spark.mllib.linalg.distributed.RowMatrix;
-import org.apache.spark.sql.DataFrame;
+import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.Row$;
 import org.apache.spark.sql.SQLContext;
@@ -190,8 +190,8 @@ public class JavaTimeSeriesRDDFactoryTest implements Serializable {
         JavaTimeSeriesRDD<String> tsRdd = JavaTimeSeriesRDDFactory.timeSeriesRDD(
                 index, rdd);
 
-        DataFrame samplesDF = tsRdd.toInstantsDataFrame(sqlContext);
-        Row[] sampleRows = samplesDF.collect();
+        Dataset<Row> samplesDF = tsRdd.toInstantsDataFrame(sqlContext);
+        Row[] sampleRows = (Row[])samplesDF.collect();
         String[] columnNames = samplesDF.columns();
         String[] columnNamesTail = new String[columnNames.length - 1];
         System.arraycopy(columnNames, 1, columnNamesTail, 0, columnNamesTail.length);
@@ -205,7 +205,7 @@ public class JavaTimeSeriesRDDFactoryTest implements Serializable {
           rowFrom(Timestamp.from(start.plusDays(1).toInstant()), untilBy(1, 20, 4)),
           rowFrom(Timestamp.from(start.plusDays(2).toInstant()), untilBy(2, 20, 4)),
           rowFrom(Timestamp.from(start.plusDays(3).toInstant()), untilBy(3, 20, 4))
-        }, sampleRows);
+        }, (Row[])sampleRows);
 
         sc.close();
     }
@@ -337,7 +337,7 @@ public class JavaTimeSeriesRDDFactoryTest implements Serializable {
         JavaTimeSeriesRDD<String> tsRdd = JavaTimeSeriesRDDFactory.timeSeriesRDD(
                 index, rdd);
 
-        DataFrame obsDF = tsRdd.toObservationsDataFrame(sqlContext, "timestamp", "key", "value");
+        Dataset<Row> obsDF = tsRdd.toObservationsDataFrame(sqlContext, "timestamp", "key", "value");
         JavaTimeSeriesRDD<String> tsRddFromDF = JavaTimeSeriesRDDFactory
                 .timeSeriesRDDFromObservations(
                     index, obsDF, "timestamp", "key", "value");
@@ -348,8 +348,8 @@ public class JavaTimeSeriesRDDFactoryTest implements Serializable {
                 tsRddFromDF.sortByKey().collect().toArray()
         );
 
-        Row[] df1 = obsDF.collect();
-        Row[] df2 = tsRddFromDF.toObservationsDataFrame(
+        Row[] df1 = (Row[])obsDF.collect();
+        Row[] df2 = (Row[])tsRddFromDF.toObservationsDataFrame(
                 sqlContext, "timestamp", "key", "value").collect();
 
         Comparator<Row> comparator = (r1, r2) -> {

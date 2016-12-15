@@ -20,6 +20,8 @@ import com.cloudera.sparkts.Lag
 import com.cloudera.sparkts.MatrixUtil.{toBreeze, dvBreezeToSpark}
 import com.cloudera.sparkts.UnivariateTimeSeries.{differencesOfOrderD, inverseDifferencesOfOrderD}
 import com.cloudera.sparkts.stats.TimeSeriesStatisticalTests.kpsstest
+import org.apache.commons.math3.complex.Complex
+import org.apache.commons.math3.linear.{RealMatrix, MatrixUtils, EigenDecomposition}
 import org.apache.commons.math3.analysis.solvers.LaguerreSolver
 import org.apache.commons.math3.analysis.{MultivariateFunction, MultivariateVectorFunction}
 import org.apache.commons.math3.optim.nonlinear.scalar.gradient.NonLinearConjugateGradientOptimizer
@@ -211,7 +213,7 @@ object ARIMA {
    * @param includeIntercept flag to include intercept
    * @return initial ARMA(p, d, q) parameter estimates
    */
-  private def hannanRissanenInit(
+  private[models] def hannanRissanenInit(
       p: Int,
       q: Int,
       y: Array[Double],
@@ -371,6 +373,30 @@ object ARIMA {
 
     curBestModel
   }
+
+    /**
+     * Uses an eigenvalue decomposition to find the roots of a real-valued matrix, adapted for Apache Commons
+     * Math 3. See: http://stackoverflow.com/questions/13805644/finding-roots-of-polynomial-in-java
+     */
+    private[models] def findRoots(coefficients: Array[Double]): Array[Complex] = {
+      val n = coefficients.length - 1
+      if (n < 1) {
+        return new Array[Complex](0)
+      }
+
+      val companionMatrix = MatrixUtils.createRealMatrix(n, n)
+      val a = coefficients(n)
+      val lastRow = coefficients.slice(0, n).map(c => -c/a)
+      companionMatrix.setRow(n - 1, lastRow)
+      if (n > 1) {
+        companionMatrix.setSubMatrix(MatrixUtils
+          .createRealIdentityMatrix(n - 1).getData(), 0, 1)
+      }
+
+      val evd = new EigenDecomposition(companionMatrix)
+      val roots = evd.getRealEigenvalues.zip(evd.getImagEigenvalues)
+      return roots.map {case (real, imag) => new Complex(real, imag)}
+    }
 }
 
 class ARIMAModel(
@@ -688,7 +714,7 @@ class ARIMAModel(
 
     // copy over last maxLag values, to use in iterateARMA for forward curve
     val forward = new BreezeDenseVector[Double](Array.fill(nFuture + maxLag)(0.0))
-    if(maxLag>0) forward(0 until maxLag) := hist(-maxLag to -1)
+    if (maxLag > 0) forward(0 until maxLag) := hist(-maxLag to -1)
     // use self as ts to take AR from same series, use self as goldStandard to induce future errors
     // of zero, and use prior moving average errors as initial error terms for MA
     iterateARMA(forward, forward, _ + _, goldStandard = forward, initMATerms = maTerms)
@@ -784,10 +810,7 @@ class ARIMAModel(
    * @return boolean indicating whether all roots are outside unit circle
    */
   private def allRootsOutsideUnitCircle(poly: Array[Double]): Boolean = {
-    val solver = new LaguerreSolver()
-    // TODO: make smarter
-    val initGuess = 0.0
-    val roots = solver.solveAllComplex(poly, initGuess)
+    val roots = ARIMA.findRoots(poly)
     !roots.exists(_.abs() <= 1.0)
   }
 

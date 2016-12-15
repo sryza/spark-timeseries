@@ -23,7 +23,7 @@ import org.apache.spark.{TaskContext, Partition}
 import org.apache.spark.api.java.{JavaSparkContext, JavaRDD, JavaPairRDD}
 import org.apache.spark.mllib.linalg.Vector
 import org.apache.spark.mllib.linalg.distributed.{RowMatrix, IndexedRowMatrix}
-import org.apache.spark.sql.{DataFrame, SQLContext}
+import org.apache.spark.sql.{DataFrame, Dataset, Row, SQLContext}
 import org.apache.spark.util.StatCounter
 
 import scala.reflect.ClassTag
@@ -280,7 +280,7 @@ object JavaTimeSeriesRDD {
    */
   def javaTimeSeriesRDDFromObservations(
      targetIndex: DateTimeIndex,
-     df: DataFrame,
+     df: Dataset[Row],
      tsCol: String,
      keyCol: String,
      valueCol: String): JavaTimeSeriesRDD[String] =

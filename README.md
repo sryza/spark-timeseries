@@ -53,7 +53,7 @@ To run Python tests (requires [nose](https://nose.readthedocs.org/en/latest/)):
     
 To run a spark-shell with spark-ts and its dependencies on the classpath:
 
-    spark-shell --jars target/sparkts-$VERSION-jar-with-dependencies.jar
+    spark-shell --jars target/sparkts-$VERSION-SNAPSHOT-jar-with-dependencies.jar
     
 ### Releasing
 
@@ -86,7 +86,7 @@ to as DOCS_REPO.  Then:
 
 To build a Python source distribution, first build with Maven, then:
 
-    cp target/sparkts-$VERSION-jar-with-dependencies.jar python/sparkts/
+    cp target/sparkts-$VERSION-SNAPSHOT-jar-with-dependencies.jar python/sparkts/
     cd python
     python setup.py sdist
 

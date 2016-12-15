@@ -21,7 +21,7 @@ import java.sql.Timestamp
 import java.time._
 import java.util.Arrays
 
-import breeze.linalg.{DenseMatrix => BDM, DenseVector => BDV, diff}
+import breeze.linalg.{diff, DenseMatrix => BDM, DenseVector => BDV}
 import com.cloudera.sparkts.MatrixUtil._
 import com.cloudera.sparkts.TimeSeriesUtils._
 import org.apache.hadoop.conf.Configuration
@@ -35,6 +35,7 @@ import org.apache.spark.sql.{DataFrame, Row, SQLContext}
 import org.apache.spark.util.StatCounter
 
 import scala.collection.mutable.ArrayBuffer
+import scala.math._
 import scala.reflect.ClassTag
 
 /**
@@ -177,6 +178,7 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector)])
 
   /**
    * Returns a TimeSeriesRDD that's a sub-slice of the given series.
+ *
    * @param start The start date the for slice.
    * @param end The end date for the slice (inclusive).
    */
@@ -188,6 +190,7 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector)])
 
   /**
    * Returns a TimeSeriesRDD that's a sub-slice of the given series.
+ *
    * @param start The start date the for slice.
    * @param end The end date for the slice (inclusive).
    */
@@ -412,6 +415,7 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector)])
    * supported for cases with a uniform time series index. See
    * [[http://spark.apache.org/docs/latest/mllib-data-types.html]] for more information on the
    * matrix data structure
+ *
    * @param nPartitions number of partitions, default to -1, which represents the same number
    *                    as currently used for the TimeSeriesRDD
    * @return an equivalent IndexedRowMatrix
@@ -439,6 +443,7 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector)])
    * of the type of time index.  See
    * [[http://spark.apache.org/docs/latest/mllib-data-types.html]] for more information on the
    * matrix data structure
+ *
    * @return an equivalent RowMatrix
    */
   def toRowMatrix(nPartitions: Int = -1): RowMatrix = {
@@ -515,6 +520,56 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector)])
       stampRight: Boolean): TimeSeriesRDD[K] = {
     mapSeries(Resample.resample(_, index, targetIndex, aggr, closedRight, stampRight), targetIndex)
   }
+
+  /**
+    * Returns a TimeSeriesRDD where each time series is summed with a running n-window.
+    * Align specifies whether the index of the result should be left- or right-aligned
+    * or centered (default) compared to the rolling window of observations.
+    *
+    * Right alignment means that, in the output series, the value at each time point
+    * will be computed using the values in the input series at the previous N time points.
+    * Left alignment is similar, but uses the values in the following N time points.
+    *
+    * @param n Rolling window size
+    * @param align Alignment
+    */
+  def rollSum(n: Int, align: String = "Center"): TimeSeriesRDD[K] = {
+    mapSeries(
+      UnivariateTimeSeries.rollSum(_, n),
+      align match {
+        case "Right" => index.islice(n - 1, index.size)
+        case "Center" => index.islice(floor((n - 1) / 2).toInt,
+          floor((n - 1) / 2).toInt + index.size - n + 1)
+        case "Left" => index.islice(0, index.size - n + 1)
+      }
+    )
+  }
+
+  /**
+    * Returns a TimeSeriesRDD where each time series is summed.
+    */
+  def sum(): TimeSeriesRDD[K] = rollSum(index.size)
+
+  /**
+    * Returns a TimeSeriesRDD where each time series is averaged with a running n-window.
+    * Align specifies whether the index of the result should be left- or right-aligned
+    * or centered (default) compared to the rolling window of observations.
+    *
+    * Right alignment means that, in the output series, the value at each time point
+    * will be computed using the values in the input series at the previous N time points.
+    * Left alignment is similar, but uses the values in the following N time points.
+    *
+    * @param n Rolling window size
+    * @param align Alignment
+    */
+  def rollMean(n: Int, align: String = "Center"): TimeSeriesRDD[K] = {
+    rollSum(n, align).mapSeries(vec => new DenseVector(vec.toArray.map(_ / n)))
+  }
+
+  /**
+    * Returns a TimeSeriesRDD where each time series is averaged.
+    */
+  def mean(): TimeSeriesRDD[K] = rollMean(index.size)
 }
 
 object TimeSeriesRDD {

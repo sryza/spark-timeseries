@@ -19,8 +19,9 @@ import com.cloudera.sparkts.*;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.sql.DataFrame;
 import org.apache.spark.mllib.linalg.Vector;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import scala.Tuple3;
 import scala.reflect.ClassTag$;
 
@@ -88,10 +89,11 @@ public final class JavaTimeSeriesRDDFactory {
      */
     public static JavaTimeSeriesRDD<String> timeSeriesRDDFromObservations(
             DateTimeIndex targetIndex,
-            DataFrame df,
+            Dataset<Row> df,
             String tsCol,
             String keyCol,
             String valueCol) {
+
         return JAVA_TIME_SERIES_RDD.javaTimeSeriesRDDFromObservations(
                 targetIndex,
                 df,

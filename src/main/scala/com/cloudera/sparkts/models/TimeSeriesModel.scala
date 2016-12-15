@@ -20,7 +20,7 @@ import org.apache.spark.mllib.linalg.Vector
 /**
  * Models time dependent effects in a time series.
  */
-trait TimeSeriesModel {
+trait TimeSeriesModel extends Serializable {
   /**
    * Takes a time series that is assumed to have this model's characteristics and returns a time
    * series with time-dependent effects of this model removed.

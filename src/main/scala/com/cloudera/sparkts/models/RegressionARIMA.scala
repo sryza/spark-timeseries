@@ -70,9 +70,9 @@ object RegressionARIMA {
    *
    * Outline of the method :
    * 1) OLS Regression for Y (timeseries) over regressors (X)
-   * 2)Apply auto correlation test (Durbin-Watson test) over residuals , to test whether e_t still
+   * 2) Apply auto correlation test (Durbin-Watson test) over residuals , to test whether e_t still
    * have auto-regressive structure
-   * 3)if test fails stop , else update update coefficients (B's) accordingly and go back to step 1)
+   * 3) if test fails stop , else update update coefficients (B's) accordingly and go back to step 1)
    *
    * @param ts : Vector of size N for time series data to create the model for
    * @param regressors Matrix N X K for the timed values for K regressors over N time points
