@@ -511,7 +511,7 @@ class DateTimeIndexSuite extends FunSuite with ShouldMatchers {
     )
 
     val labels = Array("a", "b", "c")
-    val ts: TimeSeries[String] = timeSeriesFromIrregularSamples(samples, labels)
+    val ts: TimeSeries[String] = TimeSeries.timeSeriesFromIrregularSamples(samples, labels)
     val lagFrequency = new MinuteFrequency(1)
     val startIndex = ts.index.insertionLoc(lagFrequency.advance(ts.index.first, 2))
     val startIndex2 = ts.index.locAtOrAfterDateTime(lagFrequency.advance(ts.index.first, 2))
