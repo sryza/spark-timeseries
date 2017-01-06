@@ -584,11 +584,11 @@ class HybridDateTimeIndex(
   override def locAtOrAfterDateTime(dt: ZonedDateTime): Int = {
     val loc = binarySearch(0, indices.length - 1, dt)._2
     if (loc >= 0) {
-      sizeOnLeft(loc) + indices(loc).insertionLoc(dt)
-    } else if (dt.isBefore(first)) {
-      0
-    } else {
+      sizeOnLeft(loc) + indices(loc).locAtOrAfterDateTime(dt)
+    } else if (dt.isAfter(last)) {
       size
+    } else {
+      0
     }
   }
 

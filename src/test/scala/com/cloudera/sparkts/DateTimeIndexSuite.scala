@@ -520,5 +520,32 @@ class DateTimeIndexSuite extends FunSuite with ShouldMatchers {
     startIndex2 should be (2)
   }
 
-  
+  test("hybrid - locAtOrBeforeDatetime and locAtOrAfterDatetime") {
+    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+    val index1 = uniform(ZonedDateTime.of(2015, 4, 10, 0, 0, 0, 0, UTC),
+      5, new DayFrequency(2), UTC)
+    val index2 = irregular(Array(
+      "2015-04-19 00:00:00",
+      "2015-04-20 00:00:00",
+      "2015-04-21 00:00:00",
+      "2015-04-25 00:00:00",
+      "2015-04-28 00:00:00"
+    ).map(text => LocalDateTime.parse(text, formatter).atZone(UTC)), UTC)
+    val index3 = uniform(ZonedDateTime.of(2015, 5, 10, 0, 0, 0, 0, UTC),
+      5, new DayFrequency(2), UTC)
+
+    val index = hybrid(Array(index1, index2, index3))
+
+    index.locAtOrBeforeDateTime(ZonedDateTime.of(2015, 4, 17, 0, 0, 0, 0, UTC)) should be (3)
+    index.locAtOrBeforeDateTime(ZonedDateTime.of(2015, 5, 15, 0, 0, 0, 0, UTC)) should be (12)
+    index.locAtOrBeforeDateTime(ZonedDateTime.of(2015, 4, 28, 0, 0, 0, 0, UTC)) should be (9)
+    index.locAtOrBeforeDateTime(ZonedDateTime.of(2015, 4, 27, 0, 0, 0, 0, UTC)) should be (8)
+
+    index.locAtOrAfterDateTime(ZonedDateTime.of(2015, 4, 12, 0, 0, 0, 0, UTC)) should be (1)
+    index.locAtOrAfterDateTime(ZonedDateTime.of(2015, 4, 13, 0, 0, 0, 0, UTC)) should be (2)
+    index.locAtOrAfterDateTime(ZonedDateTime.of(2015, 4, 21, 0, 0, 0, 0, UTC)) should be (7)
+    index.locAtOrAfterDateTime(ZonedDateTime.of(2015, 4, 23, 0, 0, 0, 0, UTC)) should be (8)
+    index.locAtOrAfterDateTime(ZonedDateTime.of(2015, 5, 18, 0, 0, 0, 0, UTC)) should be (14)
+  }
+
 }
