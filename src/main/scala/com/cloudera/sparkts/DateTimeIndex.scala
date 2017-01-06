@@ -107,6 +107,14 @@ trait DateTimeIndex extends Serializable {
   def locAtDateTime(dt: Long): Int
 
   /**
+    * The location of the given date-time. If the index contains the date-time more than once,
+    * returns its first appearance. If the given date-time does not appear in the index, returns the
+    * location of the closest anterior DateTime that exists.
+    */
+  def locAtOrBeforeDateTime(dt: ZonedDateTime): Int
+  def locAtOrAfterDateTime(dt: ZonedDateTime): Int
+
+  /**
    * The location at which the given date-time could be inserted. It is the location of the first
    * date-time that is greater than the given date-time. If the given date-time is greater than
    * or equal to the last date-time in the index, the index size is returned.
@@ -202,6 +210,36 @@ class UniformDateTimeIndex(
 
   override def locAtDateTime(dt: Long): Int = {
     locAtDateTime(longToZonedDateTime(dt, dateTimeZone))
+  }
+
+  override def locAtOrBeforeDateTime(dt: ZonedDateTime): Int = {
+    val loc = frequency.difference(first, dt)
+    if (loc >= 0 && loc < size) {
+      if (dateTimeAtLoc(loc).compareTo(dt) > 0) {
+        loc - 1
+      } else {
+        loc
+      }
+    } else if (loc < 0) {
+      0
+    } else {
+      size
+    }
+  }
+
+  override def locAtOrAfterDateTime(dt: ZonedDateTime): Int = {
+    val loc = frequency.difference(first, dt)
+    if (loc >= 0 && loc < size) {
+      if (dateTimeAtLoc(loc).compareTo(dt) < 0) {
+        loc + 1
+      } else {
+        loc
+      }
+    } else if (loc < 0) {
+      0
+    } else {
+      size
+    }
   }
 
   override def insertionLoc(dt: ZonedDateTime): Int = {
@@ -319,6 +357,28 @@ class IrregularDateTimeIndex(
   override def locAtDateTime(dt: Long): Int = {
     val loc = java.util.Arrays.binarySearch(instants, dt)
     if (loc < 0) -1 else loc
+  }
+
+  override def locAtOrBeforeDateTime(dt: ZonedDateTime): Int = {
+    var loc = java.util.Arrays.binarySearch(instants, zonedDateTimeToLong(dt))
+    if (loc >= 0) {
+      while (loc > 0 && instants(loc) > zonedDateTimeToLong(dt)) loc -= 1
+      loc
+    } else {
+      -loc - 2
+    }
+  }
+
+  override def locAtOrAfterDateTime(dt: ZonedDateTime): Int = {
+    val instant = zonedDateTimeToLong(dt)
+    var loc = java.util.Arrays.binarySearch(instants, instant)
+    if (loc >= 0) {
+      while (loc < size && instants(loc) < instant) loc += 1
+
+      loc
+    } else {
+      -loc - 1
+    }
   }
 
   override def insertionLoc(dt: ZonedDateTime): Int = {
@@ -508,6 +568,28 @@ class HybridDateTimeIndex(
 
   override def locAtDateTime(dt: Long): Int = {
     locAtDateTime(longToZonedDateTime(dt, dateTimeZone))
+  }
+
+  override def locAtOrBeforeDateTime(dt: ZonedDateTime): Int = {
+    val loc = binarySearch(0, indices.length - 1, dt)._2
+    if (loc >= 0) {
+      sizeOnLeft(loc) + indices(loc).locAtOrBeforeDateTime(dt)
+    } else if (dt.isBefore(first)) {
+      0
+    } else {
+      size
+    }
+  }
+
+  override def locAtOrAfterDateTime(dt: ZonedDateTime): Int = {
+    val loc = binarySearch(0, indices.length - 1, dt)._2
+    if (loc >= 0) {
+      sizeOnLeft(loc) + indices(loc).locAtOrAfterDateTime(dt)
+    } else if (dt.isAfter(last)) {
+      size
+    } else {
+      0
+    }
   }
 
   override def insertionLoc(dt: ZonedDateTime): Int = {

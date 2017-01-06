@@ -304,4 +304,248 @@ class DateTimeIndexSuite extends FunSuite with ShouldMatchers {
     val loc8 = index.locAtDateTime(ZonedDateTime.of(2015, 5, 19, 0, 0, 0, 0, UTC))
     loc8 should be (-1)
   }
+
+  test("locAtOrBeforeDateTime - test case 1") {
+    // 1. create an irregular datetime index
+    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.of("Z"))
+    val index = irregular(Array(
+      "2015-04-14 00:00:00",
+      "2015-04-15 00:00:00",
+      "2015-04-17 00:00:00",
+      "2015-04-22 00:00:00",
+      "2015-04-25 00:00:00"
+    ).map(text => ZonedDateTime.parse(text, formatter)), UTC)
+
+    // 2. test
+    val zdtText = "2015-04-16 00:00:00"
+    val zdt = ZonedDateTime.parse(zdtText, formatter)
+    val i = index.locAtOrBeforeDateTime(zdt)
+
+    i should be (1)
+  }
+
+  test("locAtOrBeforeDateTime - test case 2") {
+    // 1. create an irregular datetime index
+    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.of("Z"))
+    val index = irregular(Array(
+      "2015-04-14 00:00:01",
+      "2015-04-14 00:00:02",
+      "2015-04-14 00:00:03",
+      "2015-04-14 00:00:04",
+      "2015-04-14 00:00:05"
+    ).map(text => ZonedDateTime.parse(text, formatter)), UTC)
+
+    // 2. test
+    val zdtText = "2015-04-14 00:00:01"
+    val zdt = ZonedDateTime.parse(zdtText, formatter)
+    val i = index.locAtOrBeforeDateTime(zdt)
+
+    i should be (0)
+  }
+
+  test("locAtOrBeforeDateTime - test case 3") {
+    // 1. create an irregular datetime index
+    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.of("Z"))
+    val index = irregular(Array(
+      "2015-04-14 00:00:01",
+      "2015-04-14 00:00:02",
+      "2015-04-14 00:00:03",
+      "2015-04-14 00:00:04",
+      "2015-04-14 00:00:05"
+    ).map(text => ZonedDateTime.parse(text, formatter)), UTC)
+
+    // 2. test
+    val zdtText = "2015-04-14 00:00:05"
+    val zdt = ZonedDateTime.parse(zdtText, formatter)
+    val i = index.locAtOrBeforeDateTime(zdt)
+
+    i should be (4)
+  }
+
+  test("locAtOrBeforeDateTime - test case 4") {
+    // 1. create an irregular datetime index
+    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.of("Z"))
+    val index = irregular(Array(
+      "2015-04-14 00:00:01",
+      "2015-04-14 00:00:04",
+      "2015-04-14 00:00:06",
+      "2015-04-14 00:00:07",
+      "2015-04-14 00:00:08"
+    ).map(text => ZonedDateTime.parse(text, formatter)), UTC)
+
+    // 2. test
+    val zdtText = "2015-04-14 00:00:05"
+    val zdt = ZonedDateTime.parse(zdtText, formatter)
+    val i = index.locAtOrBeforeDateTime(zdt)
+
+    i should be (1)
+  }
+
+  test("locAtOrBeforeDateTime - test case 5") {
+    // 1. create an irregular datetime index
+    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.of("Z"))
+    val index = irregular(Array(
+      "2015-04-14 00:00:01",
+      "2015-04-14 00:00:04",
+      "2015-04-14 00:00:06",
+      "2015-04-14 00:00:07",
+      "2015-04-14 00:00:08"
+    ).map(text => ZonedDateTime.parse(text, formatter)), UTC)
+
+    // 2. test
+    val zdtText = "2015-04-14 00:00:15"
+    val zdt = ZonedDateTime.parse(zdtText, formatter)
+    val i = index.locAtOrBeforeDateTime(zdt)
+
+    i should be (4)
+  }
+
+  test("locAtOrAfterDateTime vs insertionLoc - test case 1") {
+    // 1. create an irregular datetime index
+    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.of("Z"))
+    val index = irregular(Array(
+      "2015-04-14 00:00:00",
+      "2015-04-15 00:00:00",
+      "2015-04-17 00:00:00",
+      "2015-04-22 00:00:00",
+      "2015-04-25 00:00:00"
+    ).map(text => ZonedDateTime.parse(text, formatter)), UTC)
+
+    // 2. test
+    val zdtText = "2015-04-16 00:00:00"
+    val zdt = ZonedDateTime.parse(zdtText, formatter)
+    val i = index.insertionLoc(zdt)
+
+    i should be (2)
+  }
+
+  test("locAtOrAfterDateTime vs insertionLoc - test case 2") {
+    // 1. create an irregular datetime index
+    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.of("Z"))
+    val index = irregular(Array(
+      "2015-04-14 00:00:01",
+      "2015-04-14 00:00:02",
+      "2015-04-14 00:00:03",
+      "2015-04-14 00:00:04",
+      "2015-04-14 00:00:05"
+    ).map(text => ZonedDateTime.parse(text, formatter)), UTC)
+
+    // 2. test
+    val zdtText = "2015-04-14 00:00:01"
+    val zdt = ZonedDateTime.parse(zdtText, formatter)
+    val i = index.insertionLoc(zdt)
+
+    i should be (1)
+  }
+
+  test("locAtOrAfterDateTime vs insertionLoc - test case 3") {
+    // 1. create an irregular datetime index
+    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.of("Z"))
+    val index = irregular(Array(
+      "2015-04-14 00:00:01",
+      "2015-04-14 00:00:02",
+      "2015-04-14 00:00:03",
+      "2015-04-14 00:00:04",
+      "2015-04-14 00:00:05"
+    ).map(text => ZonedDateTime.parse(text, formatter)), UTC)
+
+    // 2. test
+    val zdtText = "2015-04-14 00:00:05"
+    val zdt = ZonedDateTime.parse(zdtText, formatter)
+    val i = index.insertionLoc(zdt)
+
+    i should be (5)
+  }
+
+  test("locAtOrAfterDateTime vs insertionLoc - test case 4") {
+    // 1. create an irregular datetime index
+    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.of("Z"))
+    val index = irregular(Array(
+      "2015-04-14 00:00:01",
+      "2015-04-14 00:00:04",
+      "2015-04-14 00:00:06",
+      "2015-04-14 00:00:07",
+      "2015-04-14 00:00:08"
+    ).map(text => ZonedDateTime.parse(text, formatter)), UTC)
+
+    // 2. test
+    val zdtText = "2015-04-14 00:00:05"
+    val zdt = ZonedDateTime.parse(zdtText, formatter)
+    val i = index.insertionLoc(zdt)
+
+    i should be (2)
+  }
+
+  test("locAtOrAfterDateTime vs insertionLoc - test case 5") {
+    // 1. create an irregular datetime index
+    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.of("Z"))
+    val index = irregular(Array(
+      "2015-04-14 00:00:01",
+      "2015-04-14 00:00:04",
+      "2015-04-14 00:00:06",
+      "2015-04-14 00:00:07",
+      "2015-04-14 00:00:08"
+    ).map(text => ZonedDateTime.parse(text, formatter)), UTC)
+
+    // 2. test
+    val zdtText = "2015-04-14 00:00:15"
+    val zdt = ZonedDateTime.parse(zdtText, formatter)
+    val i = index.insertionLoc(zdt)
+
+    i should be (5)
+  }
+
+  test("locAtOrAfterDateTime vs insertionLoc - test case 6") {
+    val dt = ZonedDateTime.of(2015, 4, 8, 0, 0, 0, 0, ZoneId.of("Z"))
+    val samples = Array(
+      ((dt, Array(1.0, 2.0, 3.0))),
+      ((dt.plusMinutes(1), Array(4.0, 5.0, 6.0))),
+      ((dt.plusMinutes(2), Array(5.5, 6.5, 7.0))),
+      ((dt.plusMinutes(4), Array(7.9, 8.9, 9.9))),
+      ((dt.plusMinutes(7), Array(7.0, 8.0, 9.0))),
+      ((dt.plusMinutes(7).plusSeconds(5), Array(7.1, 8.2, 9.3))),
+      ((dt.plusMinutes(7).plusSeconds(15), Array(7.4, 8.4, 9.4))),
+      ((dt.plusMinutes(8), Array(6.0, 7.0, 8.0))),
+      ((dt.plusMinutes(12), Array(7.0, 8.0, 9.0))),
+      ((dt.plusMinutes(14), Array(10.5, 11.6, 12.7)))
+    )
+
+    val labels = Array("a", "b", "c")
+    val ts: TimeSeries[String] = TimeSeries.timeSeriesFromIrregularSamples(samples, labels)
+    val lagFrequency = new MinuteFrequency(1)
+    val startIndex = ts.index.insertionLoc(lagFrequency.advance(ts.index.first, 2))
+    val startIndex2 = ts.index.locAtOrAfterDateTime(lagFrequency.advance(ts.index.first, 2))
+
+    startIndex should be (3)
+    startIndex2 should be (2)
+  }
+
+  test("hybrid - locAtOrBeforeDatetime and locAtOrAfterDatetime") {
+    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+    val index1 = uniform(ZonedDateTime.of(2015, 4, 10, 0, 0, 0, 0, UTC),
+      5, new DayFrequency(2), UTC)
+    val index2 = irregular(Array(
+      "2015-04-19 00:00:00",
+      "2015-04-20 00:00:00",
+      "2015-04-21 00:00:00",
+      "2015-04-25 00:00:00",
+      "2015-04-28 00:00:00"
+    ).map(text => LocalDateTime.parse(text, formatter).atZone(UTC)), UTC)
+    val index3 = uniform(ZonedDateTime.of(2015, 5, 10, 0, 0, 0, 0, UTC),
+      5, new DayFrequency(2), UTC)
+
+    val index = hybrid(Array(index1, index2, index3))
+
+    index.locAtOrBeforeDateTime(ZonedDateTime.of(2015, 4, 17, 0, 0, 0, 0, UTC)) should be (3)
+    index.locAtOrBeforeDateTime(ZonedDateTime.of(2015, 5, 15, 0, 0, 0, 0, UTC)) should be (12)
+    index.locAtOrBeforeDateTime(ZonedDateTime.of(2015, 4, 28, 0, 0, 0, 0, UTC)) should be (9)
+    index.locAtOrBeforeDateTime(ZonedDateTime.of(2015, 4, 27, 0, 0, 0, 0, UTC)) should be (8)
+
+    index.locAtOrAfterDateTime(ZonedDateTime.of(2015, 4, 12, 0, 0, 0, 0, UTC)) should be (1)
+    index.locAtOrAfterDateTime(ZonedDateTime.of(2015, 4, 13, 0, 0, 0, 0, UTC)) should be (2)
+    index.locAtOrAfterDateTime(ZonedDateTime.of(2015, 4, 21, 0, 0, 0, 0, UTC)) should be (7)
+    index.locAtOrAfterDateTime(ZonedDateTime.of(2015, 4, 23, 0, 0, 0, 0, UTC)) should be (8)
+    index.locAtOrAfterDateTime(ZonedDateTime.of(2015, 5, 18, 0, 0, 0, 0, UTC)) should be (14)
+  }
+
 }
