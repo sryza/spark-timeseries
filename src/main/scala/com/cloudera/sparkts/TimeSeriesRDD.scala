@@ -31,7 +31,7 @@ import org.apache.spark.mllib.linalg.distributed.{IndexedRow, IndexedRowMatrix, 
 import org.apache.spark.mllib.linalg.{DenseMatrix, DenseVector, Vector, Vectors}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{DataFrame, Row, SQLContext}
+import org.apache.spark.sql._
 import org.apache.spark.util.StatCounter
 
 import scala.collection.mutable.ArrayBuffer
@@ -475,6 +475,35 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector)])
     ps.close()
   }
 
+  def saveAsParquetDataFrame(path: String, spark: SparkSession): Unit = {
+    // Write out contents
+    import spark.implicits._
+    spark.sqlContext.setConf("spark.sql.parquet.compression.codec.", "snappy")
+
+    // NOTE: toDF() doesn't work with generic types, need to force String type (which should encompass
+    // most other types, even complex ones if toString() is implemented properly)
+    val df = parent.map(pair => {
+      if (pair == null)
+      {
+        ("", Vectors.dense(Array[Double]()))
+      } else {
+        if (pair._1 == null)
+        {
+          ("", Vectors.dense(Array[Double]()))
+        } else if (pair._2 == null) {
+          ("", Vectors.dense(Array[Double]()))
+        } else {
+          (pair._1.toString(), Vectors.dense(pair._2.toArray))
+        }
+      }
+    }).toDF()
+
+    df.write.mode(SaveMode.Overwrite).parquet(path)
+
+    // Write out time index
+    spark.sparkContext.parallelize(Array(index.toString())).saveAsTextFile(path + ".idx")
+  }
+
   /**
    * Returns a TimeSeriesRDD rebased on top of a new index.  Any timestamps that exist in the new
    * index but not in the existing index will be filled in with NaNs.  [[resample]] offers similar
@@ -686,6 +715,22 @@ object TimeSeriesRDD {
     is.close()
 
     new TimeSeriesRDD[String](dtIndex, rdd)
+  }
+
+  /**
+    * Loads a TimeSeriesRDD from a parquet file and a date-time index.
+    */
+  def timeSeriesRDDFromParquet(path: String, spark: SparkSession) = {
+    val df = spark.read.parquet(path)
+
+    import spark.implicits._
+    val parent = df.map(row => (row(0).toString(), Vectors.dense(row(1).asInstanceOf[Vector].toArray)))
+
+    // Write out time index
+    val textDateTime: String = spark.sparkContext.textFile(path + ".idx").collect().head
+    val index = DateTimeIndex.fromString(textDateTime)
+
+    new TimeSeriesRDD[String](index, parent.rdd)
   }
 
   /**
