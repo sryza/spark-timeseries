@@ -475,20 +475,33 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector)])
     ps.close()
   }
 
+  /**
+    * Writes out the contents of this TimeSeriesRDD to a parquet file in the provided path
+    * with an accompanying file in the same directory including the time index.
+    *
+    * Because TimeSeriesRDDs are structured such that each element of the RDD is a (key, column)
+    * pair, the parquet file will have the same column-based representation.
+    *
+    * To instantiate a TimeSeriesRDD from a file written using this method, call
+    * TimeSeriesRDD.timeSeriesRDDFromParquet().
+    *
+    * @param path: full HDFS path to the file to save to. The datetime index file will be
+    *            saved to the same path, but with a ".idx" extension appended to it.
+    *
+    * @param spark: your current SparkSession instance.
+    */
   def saveAsParquetDataFrame(path: String, spark: SparkSession): Unit = {
     // Write out contents
     import spark.implicits._
     spark.sqlContext.setConf("spark.sql.parquet.compression.codec.", "snappy")
 
-    // NOTE: toDF() doesn't work with generic types, need to force String type (which should encompass
-    // most other types, even complex ones if toString() is implemented properly)
+    // NOTE: toDF() doesn't work with generic types, need to force String type (which should
+    // encompass most other types, even complex ones if toString() is implemented properly)
     val df = parent.map(pair => {
-      if (pair == null)
-      {
+      if (pair == null) {
         ("", Vectors.dense(Array[Double]()))
       } else {
-        if (pair._1 == null)
-        {
+        if (pair._1 == null) {
           ("", Vectors.dense(Array[Double]()))
         } else if (pair._2 == null) {
           ("", Vectors.dense(Array[Double]()))
