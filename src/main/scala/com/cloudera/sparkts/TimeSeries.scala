@@ -16,12 +16,13 @@
 package com.cloudera.sparkts
 
 import java.time._
-import breeze.linalg.{diff, DenseMatrix => BDM, DenseVector => BDV}
-import org.apache.spark.mllib.linalg.{DenseMatrix, Vector}
 
+import breeze.linalg.{Axis, diff, DenseMatrix => BDM, DenseVector => BDV}
+import org.apache.spark.mllib.linalg.{DenseMatrix, Vector}
 import MatrixUtil._
 import TimeSeries._
 
+import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
 
 class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix,
@@ -228,6 +229,37 @@ class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix,
   def toInstants(): IndexedSeq[(ZonedDateTime, Vector)] = {
     (0 until data.rows).map(rowIndex => (index.dateTimeAtLoc(rowIndex),
       fromBreeze(dataToBreeze(rowIndex, ::).inner.toVector)))
+  }
+
+  /**
+    * This function applies the filterExpression on each row (instant)
+    * of the TimeSeries, keeping only the rows for which the condition
+    * is true on the specified columns (in filterColumns).
+    */
+  def filterByInstant( filterExpression: (Double) => Boolean,
+                       filterColumns: Array[K])
+                     (implicit kClassTag: ClassTag[K]) = {
+    val vectors = this.univariateKeyAndSeriesIterator().filter(pair => filterColumns
+      .contains(pair._1)).toArray
+    val numRows = vectors.head._2.length
+
+    val rowsToDelete = ListBuffer[Int]()
+    val newNanosArray = ListBuffer[Long]()
+    for (row <- 0 until numRows)
+    {
+      val values = vectors.map(v => v._2(row))
+      if (values.filter(filterExpression(_)).length > 0)
+      {
+        newNanosArray += TimeSeriesUtils.zonedDateTimeToLong(this.index.dateTimeAtLoc(row))
+      } else {
+        rowsToDelete += row
+      }
+    }
+
+    val newData = dataToBreeze.delete(rowsToDelete, Axis._0)
+    val newIndex = new IrregularDateTimeIndex(newNanosArray.toList.toArray, this.index.zone)
+
+    new TimeSeries[K](newIndex, newData, this.keys)
   }
 
   /**

@@ -87,4 +87,23 @@ class TimeSeriesSuite extends FunSuite with ShouldMatchers {
     toBreeze(laggedTimeSeries.data) should be (
       DenseMatrix((3.0, 7.0, 6.0), (4.0, 8.0, 7.0), (5.0, 9.0, 8.0)))
   }
+
+  test("filterByInstant") {
+    val dt = ZonedDateTime.of(2015, 4, 8, 0, 0, 0, 0, ZoneId.of("Z"))
+    val samples = Array(
+      ((dt, Array(1.0, 2.0, 3.0))),
+      ((dt.plusDays(1), Array(4.0, 5.0, 6.0))),
+      ((dt.plusDays(2), Array(7.0, 8.0, 9.0))),
+      ((dt.plusDays(4), Array(10.0, 11.0, 12.0)))
+    )
+
+    val labels = Array("a", "b", "c")
+    val ts = timeSeriesFromIrregularSamples(samples, labels)
+
+    ts.data.numRows should be (4)
+    val filteredTS = ts.filterByInstant(v => v > 5.0, Array("b"))
+    filteredTS.data.numRows should be (2)
+    filteredTS.toInstants()(0)._1.isAfter(dt.plusDays(1)) should be (true)
+    filteredTS.toInstants()(1)._1.isAfter(dt.plusDays(1)) should be (true)
+  }
 }

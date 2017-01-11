@@ -151,6 +151,39 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector)])
   }
 
   /**
+    * This function applies the filterExpression on each row (instant)
+    * of the TimeSeriesRDD, keeping only the rows for which the condition
+    * is true on the specified columns (in filterColumns).
+    */
+  def filterByInstant( filterExpression: (Double) => Boolean,
+                       filterColumns: Array[K]): TimeSeriesRDD[K] = {
+
+    val zero = new Array[Boolean](index.size)
+    def merge(arr: Array[Boolean], rec: (K, Vector)): Array[Boolean] = {
+      if (filterColumns.contains(rec._1)) {
+        var i = 0
+        while (i < arr.length) {
+          if (filterExpression(rec._2(i)) == false)
+            arr(i) |= true
+          i += 1
+        }
+      }
+      arr
+    }
+    def comb(arr1: Array[Boolean], arr2: Array[Boolean]): Array[Boolean] = {
+      arr1.zip(arr2).map(x => x._1 || x._2)
+    }
+    val filteredOut = aggregate(zero)(merge, comb)
+
+    val activeIndices = filteredOut.zipWithIndex.filter(!_._1).map(_._2)
+    val newDates = activeIndices.map(index.dateTimeAtLoc)
+    val newIndex = DateTimeIndex.irregular(newDates, index.zone)
+    mapSeries(series => {
+      new DenseVector(activeIndices.map(x => series(x)))
+    }, newIndex)
+  }
+
+  /**
    * Return a TimeSeriesRDD with all instants removed that have a NaN in one of the series.
    */
   def removeInstantsWithNaNs(): TimeSeriesRDD[K] = {
