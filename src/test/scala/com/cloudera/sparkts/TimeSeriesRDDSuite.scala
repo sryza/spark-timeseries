@@ -339,6 +339,9 @@ class TimeSeriesRDDSuite extends FunSuite with LocalSparkContext with ShouldMatc
   }
 
   test("filterByInstant") {
+    val conf = new SparkConf().setMaster("local").setAppName(getClass.getName)
+    TimeSeriesKryoRegistrator.registerKryoClasses(conf)
+    sc = new SparkContext(conf)
     val vecs = Array(0 until 10, 10 until 20, 20 until 30)
       .map(_.map(x => x.toDouble).toArray)
       .map(new DenseVector(_))
