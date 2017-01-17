@@ -18,20 +18,15 @@ package com.cloudera.sparkts
 import java.io.File
 import java.nio.file.Files
 import java.sql.Timestamp
-
 import java.time._
 
-import org.apache.spark.mllib.linalg.{Vector, DenseVector}
+import org.apache.spark.mllib.linalg.{DenseVector, Vector}
 
 import scala.Double.NaN
-
 import com.cloudera.sparkts.DateTimeIndex._
-
 import org.apache.spark.sql.{Row, SQLContext}
-
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.mllib.linalg.distributed.IndexedRow
-
 import org.scalatest.{FunSuite, ShouldMatchers}
 
 import scala.collection.Map
@@ -342,4 +337,38 @@ class TimeSeriesRDDSuite extends FunSuite with LocalSparkContext with ShouldMatc
     contents("10.0") should be (new DenseVector((12 to 17).map(_.toDouble).toArray))
     contents("20.0") should be (new DenseVector((22 to 27).map(_.toDouble).toArray))
   }
+
+  test("filterByInstant") {
+    val conf = new SparkConf().setMaster("local").setAppName(getClass.getName)
+    TimeSeriesKryoRegistrator.registerKryoClasses(conf)
+    sc = new SparkContext(conf)
+    val vecs = Array(0 until 10, 10 until 20, 20 until 30)
+      .map(_.map(x => x.toDouble).toArray)
+      .map(new DenseVector(_))
+      .map(x => (x(0).toString, x))
+    val start = ZonedDateTime.of(2015, 4, 9, 0, 0, 0, 0, ZoneId.of("Z"))
+    val index = uniform(start, 10, new DayFrequency(1))
+
+    val rdd = new TimeSeriesRDD[String](index, sc.parallelize(vecs))
+    val rddFiltered = rdd.filterByInstant(v => v % 2 == 1, Array("20.0"))
+
+    val instants = rddFiltered.toInstants()
+    instants.persist()
+
+    instants.count() should be (5)
+
+    val collected = instants.collect()
+    collected(0)._2(0) should be (1.0)
+    collected(0)._2(1) should be (11.0)
+    collected(0)._2(2) should be (21.0)
+
+    collected(1)._2(0) should be (3.0)
+    collected(1)._2(1) should be (13.0)
+    collected(1)._2(2) should be (23.0)
+
+    collected(4)._2(0) should be (9.0)
+    collected(4)._2(1) should be (19.0)
+    collected(4)._2(2) should be (29.0)
+  }
+
 }
