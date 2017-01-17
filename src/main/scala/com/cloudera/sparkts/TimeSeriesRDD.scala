@@ -151,12 +151,12 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector)])
   }
 
   /**
-    * This function applies the filterExpression on each row (instant)
+    * This function applies the filterExpression to each element of each row (instant)
     * of the TimeSeriesRDD, keeping only the rows for which the condition
     * is true on the specified columns (in filterColumns).
     */
-  def filterByInstant( filterExpression: (Double) => Boolean,
-                       filterColumns: Array[K]): TimeSeriesRDD[K] = {
+  def filterByInstant(filterExpression: (Double) => Boolean,
+                      filterColumns: Array[K]): TimeSeriesRDD[K] = {
 
     val zero = new Array[Boolean](index.size)
     def merge(arr: Array[Boolean], rec: (K, Vector)): Array[Boolean] = {

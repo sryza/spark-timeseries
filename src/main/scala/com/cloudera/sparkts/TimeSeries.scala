@@ -232,24 +232,22 @@ class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix,
   }
 
   /**
-    * This function applies the filterExpression on each row (instant)
-    * of the TimeSeries, keeping only the rows for which the condition
-    * is true on the specified columns (in filterColumns).
+    * This function applies the filterExpression to each element of each row (instant)
+    * of the TimeSeries, keeping only the rows for which the condition is true on the
+    * specified columns (in filterColumns).
     */
-  def filterByInstant( filterExpression: (Double) => Boolean,
-                       filterColumns: Array[K])
+  def filterByInstant(filterExpression: (Double) => Boolean,
+                      filterColumns: Array[K])
                      (implicit kClassTag: ClassTag[K]) = {
-    val vectors = this.univariateKeyAndSeriesIterator().filter(pair => filterColumns
+    val vectors = univariateKeyAndSeriesIterator().filter(pair => filterColumns
       .contains(pair._1)).toArray
     val numRows = vectors.head._2.length
 
     val rowsToDelete = ListBuffer[Int]()
     val newNanosArray = ListBuffer[Long]()
-    for (row <- 0 until numRows)
-    {
+    for (row <- 0 until numRows) {
       val values = vectors.map(v => v._2(row))
-      if (values.filter(filterExpression(_)).length > 0)
-      {
+      if (values.filter(filterExpression(_)).length > 0) {
         newNanosArray += TimeSeriesUtils.zonedDateTimeToLong(this.index.dateTimeAtLoc(row))
       } else {
         rowsToDelete += row
