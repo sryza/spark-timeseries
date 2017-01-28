@@ -8,6 +8,11 @@ A Scala / Java / Python library for interacting with time series data on Apache 
 Post questions and comments to the [Google group](https://groups.google.com/forum/#!forum/spark-ts),
 or email them directly to <mailto:spark-ts@googlegroups.com>.
 
+### Note: The spark-ts library is no longer under active development by me (Sandy).  I unfortunately no longer have bandwidth to develop features, answer all questions on the mailing list, or fix all bugs that are filed.
+
+### That said, I remain happy to review pull requests and do whatever I can to aid others in advancing the library.
+
+
 Docs are available at http://sryza.github.io/spark-timeseries.
 
 Or check out the [Scaladoc](http://sryza.github.io/spark-timeseries/0.3.0/scaladocs/index.html), [Javadoc](http://sryza.github.io/spark-timeseries/0.3.0/apidocs/index.html), or [Python doc](http://sryza.github.io/spark-timeseries/0.3.0/pydoc/py-modindex.html).
