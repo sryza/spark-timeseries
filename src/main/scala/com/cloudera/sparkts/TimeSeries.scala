@@ -184,8 +184,7 @@ class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix,
   def timeDifferences(baseFrequency: Frequency): TimeSeries[K] = {
     // first calculate the new index
     var startIndex = index.locAtOrBeforeDateTime(baseFrequency.advance(index.first, 1))
-    if (startIndex == 0)
-    {
+    if (startIndex == 0) {
       startIndex = 1
     }
     val newIndex = index.islice(startIndex, index.size)
@@ -193,25 +192,21 @@ class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix,
     // now calculate the differences of the time series
     mapSeries(vec => {
       var output = Array[Double]()
-      for (i <- startIndex until index.size)
-      {
-        if (vec(i).isNaN())
-        {
+      for (i <- startIndex until index.size) {
+        if (vec(i).isNaN()) {
           output = output :+ Double.NaN
         } else {
           val prevInstant = baseFrequency.advance(index.dateTimeAtLoc(i), -1)
           var prevLoc = index.locAtOrBeforeDateTime(prevInstant)
 
-          while (vec(prevLoc).isNaN() && prevLoc > 0)
-          {
+          while (vec(prevLoc).isNaN() && prevLoc > 0) {
             prevLoc = prevLoc - 1
           }
           if (prevLoc == -1) prevLoc = 0
 
-          if (vec(prevLoc).isNaN())
+          if (vec(prevLoc).isNaN()) {
             output = output :+ Double.NaN // (any value - NaN) = NaN
-          else
-          {
+          } else {
             val valueDiff = vec(i) - vec(prevLoc)
             output = output :+ valueDiff
           }
