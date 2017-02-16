@@ -172,8 +172,24 @@ class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix,
     * Returns a TimeSeries where each individual time series is differenced with the given time
     * frequency.
     *
-    * The new TimeSeries will be missing data (truncated) up to the first instance of the provided
-    * lag period. This operation otherwise preserves the date/time index: no resampling occurs.
+    * Example:
+    * t    value
+    * 1pm  3.5
+    * 2pm  3.6
+    * 10pm 4.6
+    * 11pm 5.9
+    * 12pm 6.6
+    * And we difference by a frequency of 10 hours, we get:
+    *
+    * t    d(value)
+    * 11pm 2.4
+    * 12pm 3.0
+    *
+    * The process is as follows: for each timestamp t, find the value at (t - frequency).
+    * If there is none, go back to the previous available value. If there is none, discard t
+    * because we cannot difference it. This results in discarding all values earlier than time
+    * after the first available value in the time series, because they cannot be differenced due
+    * to missing information.
     *
     * It handles the NaN values in the following way:
     *
@@ -181,9 +197,10 @@ class TimeSeries[K](val index: DateTimeIndex, val data: DenseMatrix,
     * if x(t) is NaN, the result is NaN. If x(t-k) is NaN but x(t) is not, however, it looks for
     * the most recent non-NaN value before t-k and uses that to calculate the difference.
     */
-  def timeDifferences(baseFrequency: Frequency): TimeSeries[K] = {
+  def differencesByFrequency(baseFrequency: Frequency): TimeSeries[K] = {
     // first calculate the new index
-    var startIndex = index.locAtOrBeforeDateTime(baseFrequency.advance(index.first, 1))
+    val startDateTime = baseFrequency.advance(index.first, 1)
+    var startIndex = index.locAtOrAfterDateTime(startDateTime)
     if (startIndex == 0) {
       startIndex = 1
     }

@@ -107,7 +107,7 @@ class TimeSeriesSuite extends FunSuite with ShouldMatchers {
     filteredTS.toInstants()(1)._1.isAfter(dt.plusDays(1)) should be (true)
   }
 
-  test("timeDifferences") {
+  test("differencesByFrequency example 1") {
     val dt = ZonedDateTime.of(2015, 4, 8, 0, 0, 0, 0, ZoneId.of("Z"))
     val samples = Array(
       ((dt, Array(1.0, 2.0, 3.0))),
@@ -125,7 +125,7 @@ class TimeSeriesSuite extends FunSuite with ShouldMatchers {
     val labels = Array("a", "b", "c")
     val ts = timeSeriesFromIrregularSamples(samples, labels)
 
-    val differencedTS = ts.timeDifferences(new MinuteFrequency(1))
+    val differencedTS = ts.differencesByFrequency(new MinuteFrequency(1))
 
     differencedTS.toInstants()(0)._1.getMinute() should be (1)
     differencedTS.toInstants()(1)._1.getMinute() should be (2)
@@ -137,7 +137,6 @@ class TimeSeriesSuite extends FunSuite with ShouldMatchers {
     differencedTS.toInstants()(7)._1.getMinute() should be (12)
     differencedTS.toInstants()(8)._1.getMinute() should be (14)
 
-
     differencedTS.toInstants()(0)._2.toArray should be (Array(3.0, 3.0, 3.0))
     differencedTS.toInstants()(1)._2.toArray should be (Array(1.5, 1.5, 1.0))
     differencedTS.toInstants()(2)._2.toArray should be (Array(1.5, 1.5, 2.0))
@@ -147,7 +146,25 @@ class TimeSeriesSuite extends FunSuite with ShouldMatchers {
     arrayShouldBe(differencedTS.toInstants()(6)._2.toArray, Array(-1.0, -1.0, -1.0), 0.01)
     arrayShouldBe(differencedTS.toInstants()(7)._2.toArray, Array(1.0, 1.0, 1.0), 0.01)
     arrayShouldBe(differencedTS.toInstants()(8)._2.toArray, Array(3.5, 3.6, 3.7), 0.01)
+  }
 
+  test("differencesByFrequency example 2") {
+    val dt = ZonedDateTime.of(2015, 4, 8, 1, 0, 0, 0, ZoneId.of("Z"))
+    val samples = Array(
+      ((dt, Array(3.5))),
+      ((dt.plusHours(1), Array(3.6))),
+      ((dt.plusHours(9), Array(4.6))),
+      ((dt.plusHours(10), Array(5.9)))
+    )
+
+    val labels = Array("a")
+    val ts = timeSeriesFromIrregularSamples(samples, labels)
+
+    // This should only return 1 timestamp: 11pm, with value: 2.4
+    val differencedTS = ts.differencesByFrequency(new HourFrequency(10))
+
+    differencedTS.head._2.size shouldBe (1)
+    differencedTS.head._2(0) shouldBe (2.4 +- 0.01)
   }
 
   def arrayShouldBe(left: Array[Double], right: Array[Double], tol: Double) = {
