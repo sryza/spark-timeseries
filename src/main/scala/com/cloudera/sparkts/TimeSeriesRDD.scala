@@ -263,7 +263,15 @@ class TimeSeriesRDD[K](val index: DateTimeIndex, parent: RDD[(K, Vector)])
    * Gets stats like min, max, mean, and standard deviation for each time series.
    */
   def seriesStats(): RDD[StatCounter] = {
-    map(kt => new StatCounter(kt._2.valuesIterator))
+      map(kt => new StatCounter(kt._2.valuesIterator))
+  }
+
+  /**
+   * Gets stats like min, max, mean, and standard deviation for each time series and includes the key for the
+   * time-series
+   */
+  def seriesStatsWithkey(): RDD[(K, StatCounter)] = {
+    map(kt => (kt._1, new StatCounter(kt._2.valuesIterator)))
   }
 
   /**
