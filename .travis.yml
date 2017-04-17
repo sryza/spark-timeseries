@@ -1,8 +1,21 @@
 language: java
 sudo: false
 jdk: oraclejdk8
-install: mvn ${SPARK} ${SCALA} -Dmaven.javadoc.skip=true -DskipTests=true -B -V -Dgpg.skip=true install
-script: mvn ${SPARK} ${SCALA} -Dmaven.javadoc.skip=true -q -B -Dgpg.skip=true verify
+
+install:
+  - wget http://d3kbcqa49mib13.cloudfront.net/spark-1.5.2-bin-hadoop2.6.tgz; tar xzf spark-1.5.2-bin-hadoop2.6.tgz
+  - python --version
+  - pip --version
+  - pip install --user --upgrade pip
+  - pip --version
+  - pip install --user pandas setuptools
+  - pip install --user linecache2
+  - mvn ${SPARK} ${SCALA} -Dmaven.javadoc.skip=true -DskipTests=true -B -V -Dgpg.skip=true install
+
+script:
+  - mvn ${SPARK} ${SCALA} -Dmaven.javadoc.skip=true -q -B -Dgpg.skip=true verify
+  - cd python; PATH=$HOME/.local/bin:$PATH SPARK_HOME=$HOME/spark-1.5.2-bin-hadoop2.6 python ./setup.py test
+
 env:
   global:
     - MAVEN_OPTS=-Xmx2g
@@ -14,3 +27,4 @@ env:
 cache:
   directories:
     - $HOME/.m2
+    - $HOME/spark-1.5.2-bin-hadoop2.6
