@@ -339,6 +339,7 @@
           </execution>
         </executions>
       </plugin>
+      <!-- clenaup artifact sign 
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-gpg-plugin</artifactId>
@@ -357,6 +358,7 @@
           <executable>gpg2</executable>
         </configuration>
       </plugin>
+      -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-deploy-plugin</artifactId>
