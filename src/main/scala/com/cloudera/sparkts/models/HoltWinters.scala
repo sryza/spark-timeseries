@@ -15,6 +15,7 @@
 
 package com.cloudera.sparkts.models
 
+import com.cloudera.sparkts.api.java.BOBYQAOptimizerCustom
 import org.apache.commons.math3.analysis.MultivariateFunction
 import org.apache.spark.mllib.linalg._
 import org.apache.commons.math3.optim.MaxIter
@@ -64,7 +65,7 @@ object HoltWinters {
   }
 
   def fitModelWithBOBYQA(ts: Vector, period: Int, modelType:String): HoltWintersModel = {
-    val optimizer = new BOBYQAOptimizer(7)
+    val optimizer = new BOBYQAOptimizerCustom(7)
     val objectiveFunction = new ObjectiveFunction(new MultivariateFunction() {
       def value(params: Array[Double]): Double = {
         new HoltWintersModel(modelType, period, params(0), params(1), params(2)).sse(ts)
